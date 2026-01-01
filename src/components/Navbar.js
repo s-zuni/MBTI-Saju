@@ -1,67 +1,74 @@
-import React, { useState } from 'react';
-import { Sparkles, Menu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, User, Heart, ShoppingCart, Clock, Menu, Star } from 'lucide-react';
 
-const Navbar = ({
-  openSignupModal,
-}) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const Navbar = ({ openSignupModal }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => window.location.reload()}
-        >
-          <Sparkles className="w-6 h-6 text-indigo-500" />
-          <span className="text-xl font-bold tracking-tight text-gray-900">
-            MBTIJU
-          </span>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3' : 'bg-transparent py-5'
+      }`}>
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
+        {/* Logo */}
+        <div className="flex items-center gap-2 cursor-pointer group">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:rotate-6 transition-transform">
+            <Star className="w-6 h-6 text-white fill-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-slate-900">MBTIJU</span>
         </div>
 
-        <div className="hidden md:flex items-center gap-8">
-          <a href="/" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-            홈
-          </a>
-          <a href="/" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-            유형 도감
-          </a>
-          <a href="/" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-            커뮤니티
-          </a>
-          <a href="/" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-            스토어
-          </a>
+        {/* Search Bar Placeholder (Reference Image Style) */}
+        <div className="hidden md:flex flex-1 max-w-xl mx-4">
+          <div className="w-full relative group">
+            <input
+              type="text"
+              placeholder="당신의 운명을 검색해보세요"
+              className="w-full bg-slate-100/80 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 px-12 py-3 rounded-full outline-none transition-all placeholder:text-slate-400 text-sm"
+              readOnly
+              onClick={openSignupModal}
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500" />
+          </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
-          <button
-            onClick={openSignupModal}
-            className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-full shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5"
-          >
-            무료 분석 시작
-          </button>
+        {/* Actions */}
+        <div className="flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-600">
+            <a href="#" className="hover:text-indigo-600 transition-colors">홈</a>
+            <a href="#" className="hover:text-indigo-600 transition-colors">운세</a>
+            <a href="#" className="hover:text-indigo-600 transition-colors">MBTI</a>
+            <a href="#" className="hover:text-indigo-600 transition-colors">스토어</a>
+          </div>
+
+          <div className="flex items-center gap-4 md:gap-5 border-l border-slate-200 pl-6">
+            <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
+              <User className="w-6 h-6" />
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">마이</span>
+            </button>
+            <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
+              <Heart className="w-6 h-6" />
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
+            </button>
+            <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
+              <ShoppingCart className="w-6 h-6" />
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
+            </button>
+            <button
+              onClick={openSignupModal}
+              className="md:hidden p-1 text-slate-900"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
-        <button
-          className="md:hidden p-2 text-gray-600"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <Menu className="w-6 h-6" />
-        </button>
       </div>
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-100 p-4 flex flex-col gap-4 shadow-lg">
-          <a href="/" className="text-base font-medium text-gray-600 py-2">
-            홈
-          </a>
-          <button
-            onClick={openSignupModal}
-            className="w-full py-3 text-indigo-600 font-bold bg-indigo-50 rounded-xl"
-          >
-            무료 분석 시작하기
-          </button>
-        </div>
-      )}
     </nav>
   );
 };

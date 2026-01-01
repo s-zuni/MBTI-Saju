@@ -1,0 +1,14 @@
+﻿
+> mbti-app@0.1.0 build
+> craco build
+
+Creating an optimized production build...
+Failed to compile.
+
+[eslint] 
+src\App.js
+  Line 210:29:  'ArrowRight' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+
