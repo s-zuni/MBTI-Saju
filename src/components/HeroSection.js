@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
-const HeroSection = () => {
+const HeroSection = ({ onStart }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-blue-50 to-transparent rounded-[100%] blur-3xl -z-10 opacity-60 pointer-events-none"></div>
@@ -18,7 +18,10 @@ const HeroSection = () => {
           복잡한 분석은 AI에게 맡기고, 당신은 해답만 확인하면 됩니다.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-lg font-bold rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+          <button
+            onClick={onStart}
+            className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-lg font-bold rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+          >
             내 운명 분석하기 <ArrowRight className="w-5 h-5" />
           </button>
         </div>

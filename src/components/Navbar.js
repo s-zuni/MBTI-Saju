@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Menu } from 'lucide-react';
 
 const Navbar = ({
-  user,
-  openLoginModal,
   openSignupModal,
-  openMyPageModal,
-  handleLogout,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -39,29 +35,6 @@ const Navbar = ({
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          {!user ? (
-            <button
-              onClick={openLoginModal}
-              className="text-sm font-medium text-gray-600 hover:text-indigo-600 px-4 py-2 border border-gray-200 rounded-full hover:border-indigo-200 transition-all"
-            >
-              로그인
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={openMyPageModal}
-                className="text-sm font-medium text-gray-600 hover:text-indigo-600 px-4 py-2 border border-gray-200 rounded-full hover:border-indigo-200 transition-all"
-              >
-                마이페이지
-              </button>
-              <button
-                onClick={handleLogout}
-                className="text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
-                로그아웃
-              </button>
-            </>
-          )}
           <button
             onClick={openSignupModal}
             className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-full shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5"
