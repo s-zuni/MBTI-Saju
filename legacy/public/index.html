@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTIJU - 나를 알아가는 가장 명쾌한 시간</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- 3. Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // [중요] Firebase 설정 (본인의 Firebase 콘솔 설정으로 교체 필요)
+        // 현재는 예시 설정이므로 작동하지 않을 수 있습니다. Firebase 프로젝트를 생성하고 설정을 가져와야 합니다.
+        const firebaseConfig = JSON.parse(__firebase_config || '{}'); 
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mbtiju-app';
+
+        window.auth = auth;
+        window.db = db;
+        window.provider = provider;
+        window.signInWithPopup = signInWithPopup;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.appId = appId; // 전역 변수 설정
+
+        // 인증 상태 모니터링
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.body.classList.add('logged-in');
+                document.getElementById('navLoginBtn').classList.add('hidden');
+                document.getElementById('navMyBtn').classList.remove('hidden');
+                document.getElementById('navLogoutBtn').classList.remove('hidden');
+                
+                // 마이페이지 데이터 로드
+                loadMyPage(user.uid);
+            } else {
+                document.body.classList.remove('logged-in');
+                document.getElementById('navLoginBtn').classList.remove('hidden');
+                document.getElementById('navMyBtn').classList.add('hidden');
+                document.getElementById('navLogoutBtn').classList.add('hidden');
+            }
+        });
+    </script>
+    
+    <!-- 4. 폰트 설정 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    
+    <style>
+        body { font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' },
+                        teal: { 50: '#f0fdfa', 400: '#2dd4bf', 500: '#14b8a6' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.reload()">
+                <i data-lucide="sparkles" class="w-6 h-6 text-indigo-500"></i>
+                <span class="text-xl font-bold tracking-tight text-gray-900">MBTIJU</span>
+            </div>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-indigo-600">홈</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-indigo-600">유형 도감</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-indigo-600">커뮤니티</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-indigo-600">스토어</a>
+            </div>
+
+            <div class="hidden md:flex items-center gap-4">
+                <button id="navLoginBtn" onclick="openLoginModal()" class="text-sm font-medium text-gray-600 hover:text-indigo-600 px-4 py-2 border border-gray-200 rounded-full hover:border-indigo-200 transition-all">로그인</button>
+                <button id="navMyBtn" onclick="openMyPageModal()" class="hidden text-sm font-medium text-gray-600 hover:text-indigo-600 px-4 py-2 border border-gray-200 rounded-full hover:border-indigo-200 transition-all">마이페이지</button>
+                <button id="navLogoutBtn" onclick="handleLogout()" class="hidden text-sm font-medium text-gray-500 hover:text-gray-700">로그아웃</button>
+                <button onclick="openSignupModal()" class="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-full shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5">무료 분석 시작</button>
+            </div>
+             <button class="md:hidden p-2 text-gray-600" onclick="toggleMobileMenu()">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+         <div id="mobileMenu" class="hidden md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-100 p-4 flex flex-col gap-4 shadow-lg">
+            <a href="#" class="text-base font-medium text-gray-600 py-2">홈</a>
+            <button onclick="openSignupModal()" class="w-full py-3 text-indigo-600 font-bold bg-indigo-50 rounded-xl">무료 분석 시작하기</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 px-6 overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-blue-50 to-transparent rounded-[100%] blur-3xl -z-10 opacity-60 pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto text-center animate-fade-in">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-indigo-100 shadow-sm mb-6">
+                <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                <span class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">AI 기반 운명 분석</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6">
+                나를 알아가는<br class="md:hidden" /> 가장 <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-teal-500">명쾌한 시간</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+                MBTI의 심리학과 사주의 지혜를 결합하여 당신의 가능성을 발견하세요.<br class="hidden md:block" />
+                복잡한 분석은 AI에게 맡기고, 당신은 해답만 확인하면 됩니다.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button onclick="openSignupModal()" class="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-lg font-bold rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                    내 운명 분석하기 <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-12 px-6 mt-20">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-5 h-5 text-gray-400"></i>
+                <span class="font-bold text-gray-400">MBTIJU</span>
+            </div>
+            <div class="text-sm text-gray-400">© 2025 MBTIJU Corp. All rights reserved.</div>
+        </div>
+    </footer>
+
+
+    <!-- ================= MODALS ================= -->
+    <div id="modalOverlay" class="fixed inset-0 z-[100] hidden items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAllModals()"></div>
+        
+        <div id="modalContent" class="relative bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto animate-fade-in">
+            
+            <!-- 1. SIGNUP & ANALYZE FORM -->
+            <div id="signupFormView" class="hidden p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-900">회원가입 및 무료 분석</h3>
+                    <button onclick="closeAllModals()" class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+                </div>
+
+                <form onsubmit="handleSignupAndAnalyze(event)" class="space-y-4">
+                    <!-- 계정 정보 -->
+                    <div class="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i data-lucide="lock" class="w-4 h-4 text-indigo-500"></i> 계정 정보</h4>
+                        <input type="email" id="signupEmail" required placeholder="이메일 (아이디로 사용)" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                        <input type="password" id="signupPw" required placeholder="비밀번호 (6자 이상)" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                        <button type="button" onclick="handleGoogleLogin()" class="w-full py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Google로 계속하기
+                        </button>
+                    </div>
+
+                    <!-- 분석 정보 -->
+                    <div class="space-y-3 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                        <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-indigo-500"></i> 분석 정보</h4>
+                        <input id="inputName" required placeholder="이름 (홍길동)" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                             <select id="inputGender" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                                <option value="">성별</option><option>남성</option><option>여성</option>
+                            </select>
+                            <select id="inputMbti" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                                <option value="">MBTI</option>
+                                <option>ISTJ</option><option>ISFJ</option><option>INFJ</option><option>INTJ</option>
+                                <option>ISTP</option><option>ISFP</option><option>INFP</option><option>INTP</option>
+                                <option>ESTP</option><option>ESFP</option><option>ENFP</option><option>ENTP</option>
+                                <option>ESTJ</option><option>ESFJ</option><option>ENFJ</option><option>ENTJ</option>
+                            </select>
+                        </div>
+                        <input type="date" id="inputBirthDate" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                        
+                        <!-- 출생 시간 & 모름 체크박스 -->
+                        <div class="flex items-center gap-2">
+                            <select id="inputBirthHour" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                                <option value="">시</option>
+                                <!-- JS로 0~23 채움 -->
+                            </select>
+                            <select id="inputBirthMinute" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none text-sm">
+                                <option value="">분</option>
+                                <option value="00">00분</option><option value="10">10분</option><option value="20">20분</option>
+                                <option value="30">30분</option><option value="40">40분</option><option value="50">50분</option>
+                            </select>
+                        </div>
+                         <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox" id="birthTimeUnknown" onchange="toggleBirthTimeInputs()" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            출생 시간을 모릅니다
+                        </label>
+                    </div>
+
+                    <div id="signupError" class="hidden text-red-500 text-sm text-center"></div>
+
+                    <button type="submit" id="signupBtn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all">
+                        분석 및 가입 완료
+                    </button>
+                    <p class="text-center text-xs text-gray-400">이미 계정이 있으신가요? <button type="button" onclick="openLoginModal()" class="text-indigo-600 font-bold underline">로그인</button></p>
+                </form>
+            </div>
+
+
+            <!-- 2. LOGIN FORM -->
+            <div id="loginFormView" class="hidden p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-900">로그인</h3>
+                    <button onclick="closeAllModals()" class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+                </div>
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <input type="email" id="loginEmail" required placeholder="이메일" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none">
+                    <input type="password" id="loginPw" required placeholder="비밀번호" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 outline-none">
+                    
+                    <div id="loginError" class="hidden text-red-500 text-sm text-center"></div>
+
+                    <button type="submit" id="loginBtn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all">로그인</button>
+                    <button type="button" onclick="handleGoogleLogin()" class="w-full py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        Google로 로그인
+                    </button>
+                    <p class="text-center text-xs text-gray-400">아직 계정이 없으신가요? <button type="button" onclick="openSignupModal()" class="text-indigo-600 font-bold underline">무료 분석 시작</button></p>
+                </form>
+            </div>
+
+            <!-- 3. MY PAGE VIEW -->
+            <div id="myPageView" class="hidden p-6 space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-900">마이페이지</h3>
+                    <button onclick="closeAllModals()" class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+                </div>
+                
+                <div id="myPageLoading" class="text-center py-10"><svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+                
+                <div id="myPageContent" class="hidden space-y-6">
+                    <div class="text-center">
+                        <div class="inline-block p-3 bg-indigo-100 rounded-full mb-3"><i data-lucide="user" class="w-8 h-8 text-indigo-600"></i></div>
+                        <h2 id="mpName" class="text-2xl font-bold text-gray-900"></h2>
+                        <p id="mpInfo" class="text-gray-500 text-sm"></p>
+                    </div>
+
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                        <h4 class="text-lg font-bold text-indigo-700 mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5"></i> 사주 분석</h4>
+                        <div id="mpSaju" class="text-gray-700 text-sm leading-relaxed"></div>
+                    </div>
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                        <h4 class="text-lg font-bold text-indigo-700 mb-3 flex items-center gap-2"><i data-lucide="brain" class="w-5 h-5"></i> MBTI 분석</h4>
+                        <div id="mpMbti" class="text-gray-700 text-sm leading-relaxed"></div>
+                    </div>
+                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+                        <h4 class="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">🤝 핵심 성향 (결합)</h4>
+                        <div id="mpTrait" class="text-indigo-800 text-sm leading-relaxed"></div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white border border-gray-200 p-4 rounded-xl">
+                            <h4 class="font-bold text-gray-900 mb-2">💼 추천 직업</h4>
+                            <div id="mpJobs" class="text-gray-600 text-sm"></div>
+                        </div>
+                        <div class="bg-white border border-gray-200 p-4 rounded-xl">
+                            <h4 class="font-bold text-gray-900 mb-2">❤️ 추천 궁합</h4>
+                            <div id="mpMatch" class="text-gray-600 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script>
+        lucide.createIcons();
+
+        // [Init] 시간 옵션 생성
+        const hourSelect = document.getElementById('inputBirthHour');
+        for (let i = 0; i < 24; i++) {
+            const val = String(i).padStart(2, '0');
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val + '시';
+            hourSelect.appendChild(opt);
+        }
+
+        // [UI] 모달 제어
+        function showModal(viewId) {
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            document.getElementById('modalOverlay').classList.add('flex');
+            
+            ['signupFormView', 'loginFormView', 'myPageView'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+            
+            // Re-render icons inside modal
+            lucide.createIcons();
+        }
+
+        function closeAllModals() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('modalOverlay').classList.remove('flex');
+        }
+
+        function openSignupModal() { showModal('signupFormView'); }
+        function openLoginModal() { showModal('loginFormView'); }
+        function openMyPageModal() { 
+            const user = window.auth.currentUser;
+            if (user) {
+                showModal('myPageView'); 
+                loadMyPage(user.uid);
+            } else {
+                alert('로그인이 필요합니다.');
+                openLoginModal();
+            }
+        }
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+
+        // [UI] 출생 시간 '모름' 토글
+        function toggleBirthTimeInputs() {
+            const unknown = document.getElementById('birthTimeUnknown').checked;
+            const h = document.getElementById('inputBirthHour');
+            const m = document.getElementById('inputBirthMinute');
+            h.disabled = unknown;
+            m.disabled = unknown;
+            if(unknown) { h.value = ''; m.value = ''; }
+        }
+
+        // [Formatter]
+        function formatValue(value) {
+            if (typeof value === 'object' && value !== null) {
+                return Object.entries(value).map(([k, v]) => {
+                    let valStr = (typeof v === 'object') ? JSON.stringify(v) : v;
+                    if (!isNaN(k)) return `<div class="mb-1">${valStr}</div>`;
+                    return `<div class="mb-1"><span class="font-bold text-indigo-600 mr-2">· ${k}:</span>${valStr}</div>`;
+                }).join('');
+            }
+            return String(value || '').replace(/\n/g, '<br>');
+        }
+
+        // [Auth & Logic] 회원가입 + 분석
+        async function handleSignupAndAnalyze(e) {
+            e.preventDefault();
+            const btn = document.getElementById('signupBtn');
+            const errorDiv = document.getElementById('signupError');
+            
+            btn.disabled = true;
+            btn.textContent = '분석 및 가입 중...';
+            errorDiv.classList.add('hidden');
+
+            const email = document.getElementById('signupEmail').value;
+            const pw = document.getElementById('signupPw').value;
+            const name = document.getElementById('inputName').value;
+            const gender = document.getElementById('inputGender').value;
+            const mbti = document.getElementById('inputMbti').value;
+            const birthDate = document.getElementById('inputBirthDate').value;
+            
+            // 시간 처리
+            const unknown = document.getElementById('birthTimeUnknown').checked;
+            let birthTime = '모름';
+            if (!unknown) {
+                const h = document.getElementById('inputBirthHour').value;
+                const m = document.getElementById('inputBirthMinute').value;
+                if (!h || !m) {
+                    errorDiv.textContent = '출생 시간을 선택하거나 "모름"을 체크해주세요.';
+                    errorDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.textContent = '분석 및 가입 완료';
+                    return;
+                }
+                birthTime = `${h}:${m}`;
+            }
+
+            try {
+                // 1. 분석 API 호출
+                const payload = { name, gender, birth_date: birthDate, birth_time: birthTime, mbti };
+                const res = await fetch('/api', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) throw new Error('분석 서버 오류');
+                const analysisData = await res.json();
+
+                // 2. Firebase 회원가입
+                const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, pw);
+                const user = userCredential.user;
+
+                // 3. Firestore 저장 (users/{uid}/analysis/latest)
+                // RULE 1 준수: /artifacts/{appId}/users/{userId}/analysis
+                // 여기서는 간단히 사용자 문서를 저장합니다.
+                const userDocRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid);
+                
+                await window.setDoc(userDocRef, {
+                    profile: payload,
+                    result: analysisData,
+                    createdAt: new Date().toISOString()
+                });
+
+                // 완료 -> 마이페이지 이동
+                openMyPageModal();
+
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '분석 및 가입 완료';
+            }
+        }
+
+        // [Auth] 로그인
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pw = document.getElementById('loginPw').value;
+            const errorDiv = document.getElementById('loginError');
+
+            try {
+                await window.signInWithEmailAndPassword(window.auth, email, pw);
+                closeAllModals(); // 로그인 성공 시 모달 닫기 (onAuthStateChanged가 UI 업데이트)
+            } catch (err) {
+                errorDiv.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // [Auth] 구글 로그인 (팝업)
+        async function handleGoogleLogin() {
+            try {
+                await window.signInWithPopup(window.auth, window.provider);
+                // 구글 로그인 성공 후, 추가 정보 입력이 필요할 수 있으나 여기서는 단순히 로그인 처리
+                closeAllModals();
+            } catch (err) {
+                alert('로그인 실패: ' + err.message);
+            }
+        }
+
+        // [Auth] 로그아웃
+        async function handleLogout() {
+            await window.signOut(window.auth);
+            window.location.reload();
+        }
+
+        // [Firestore] 마이페이지 데이터 로드
+        async function loadMyPage(uid) {
+            const loading = document.getElementById('myPageLoading');
+            const content = document.getElementById('myPageContent');
+            
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
+            try {
+                // RULE 1 준수
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', uid);
+                const docSnap = await window.getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const profile = data.profile;
+                    const result = data.result;
+
+                    document.getElementById('mpName').textContent = `${profile.name}님`;
+                    document.getElementById('mpInfo').textContent = `${profile.birth_date} (${profile.birth_time}) · ${profile.mbti}`;
+
+                    document.getElementById('mpSaju').innerHTML = formatValue(result.saju);
+                    document.getElementById('mpMbti').innerHTML = formatValue(result.mbti);
+                    document.getElementById('mpTrait').innerHTML = formatValue(result.trait);
+                    document.getElementById('mpJobs').innerHTML = formatValue(result.jobs);
+                    document.getElementById('mpMatch').innerHTML = formatValue(result.match);
+
+                    loading.classList.add('hidden');
+                    content.classList.remove('hidden');
+                } else {
+                    // 데이터 없음 (가입은 했으나 분석 안 함 -> 분석 유도)
+                    content.innerHTML = '<div class="text-center py-10"><p class="mb-4">아직 분석 내역이 없습니다.</p><button onclick="openSignupModal()" class="text-indigo-600 font-bold underline">지금 분석하기</button></div>';
+                    loading.classList.add('hidden');
+                    content.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                loading.innerHTML = '<p class="text-red-500">데이터를 불러오지 못했습니다.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
