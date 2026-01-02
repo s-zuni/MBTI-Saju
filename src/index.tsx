@@ -4,7 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+console.log('App starting...');
 const rootElement = document.getElementById('root');
+console.log('Root element:', rootElement);
 if (!rootElement) {
   throw new Error('Failed to find the root element');
 }
