@@ -9,7 +9,6 @@ import MyPage from './components/MyPage'; // New import
 // Removed unused imports: Modal, SignupModal, Sparkles, Brain, Users, Briefcase, Heart, X, ArrowRight
 
 function App() {
-  console.log('App: Rendering component');
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisModalMode, setAnalysisModalMode] = useState('signup'); // 'signup' or 'login'
 
