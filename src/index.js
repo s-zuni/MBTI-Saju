@@ -4,11 +4,21 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+window.onerror = function (message, source, lineno, colno, error) {
+  alert('Global Error: ' + message + '\nAt: ' + source + ':' + lineno + ':' + colno);
+};
+
+window.onunhandledrejection = function (event) {
+  alert('Unhandled Rejection: ' + event.reason);
+};
+
+console.log('index.js executes');
+const rootElement = document.getElementById('root');
+if (!rootElement) alert('Error: #root element not found!');
+
+const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
 
 // If you want to start measuring performance in your app, pass a function
