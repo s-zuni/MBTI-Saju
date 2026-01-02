@@ -46,21 +46,36 @@ const AnalysisModal = ({ isOpen, onClose }) => {
     setLoading(true);
     setAuthError('');
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          redirectTo: window.location.origin, // Redirects back to your app after email verification
-        },
+          data: {
+            full_name: name,
+            gender: gender,
+            mbti: mbti,
+            birth_date: birthDate,
+            birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
+          }
+        }
       });
 
-      if (error) throw error;
-      if (!data.user) {
+      if (signUpError) throw signUpError;
+      if (!signUpData.user) {
         setAuthError('Sign up failed: No user data received.');
         return;
       }
 
-      alert('회원가입이 성공적으로 완료되었습니다! 이메일을 확인하여 계정을 인증해주세요.');
+      // After successful sign-up, sign in the user to create a session immediately
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+      
+      alert('회원가입이 성공적으로 완료되었습니다!');
       onClose(); // Close modal on success
 
     } catch (error) {
