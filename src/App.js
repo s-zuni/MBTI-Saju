@@ -10,21 +10,27 @@ import MyPage from './components/MyPage'; // New import
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [analysisModalMode, setAnalysisModalMode] = useState('signup'); // 'signup' or 'login'
 
-  const closeAnalysisModal = () => {
+  const openModal = (mode) => {
+    setAnalysisModalMode(mode);
+    setShowAnalysisModal(true);
+  };
+
+  const closeModal = () => {
     setShowAnalysisModal(false);
   };
 
   return (
     <BrowserRouter>
       <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
-        <Navbar onOpenAnalysisModal={() => setShowAnalysisModal(true)} />
+        <Navbar onLoginClick={() => openModal('login')} onSignupClick={() => openModal('signup')} />
 
         <Routes>
           <Route path="/" element={
             <>
-              <HeroSection onStart={() => setShowAnalysisModal(true)} />
-              <FeatureGrids onStart={() => setShowAnalysisModal(true)} />
+              <HeroSection onStart={() => openModal('signup')} />
+              <FeatureGrids onStart={() => openModal('signup')} />
 
               {/* Featured Analysis Section */}
               <section className="py-24 bg-slate-50/50 relative">
@@ -71,7 +77,7 @@ function App() {
         </Routes>
 
         {/* Conditionally render the new AnalysisModal */}
-        <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} />
+        <AnalysisModal isOpen={showAnalysisModal} onClose={closeModal} mode={analysisModalMode} />
       </div>
     </BrowserRouter>
   );

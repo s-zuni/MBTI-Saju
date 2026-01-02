@@ -3,7 +3,7 @@ import { Search, User, Heart, ShoppingCart, Clock, Menu, Star, LogOut } from 'lu
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate } from 'react-router-dom'; // For navigation
 
-const Navbar = ({ onOpenAnalysisModal }) => { // Renamed prop for clarity
+const Navbar = ({ onLoginClick, onSignupClick }) => { // Renamed prop for clarity
   const [isScrolled, setIsScrolled] = useState(false);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ const Navbar = ({ onOpenAnalysisModal }) => { // Renamed prop for clarity
       navigate('/mypage'); // Navigate to MyPage
     } else {
       // This case should ideally not happen if the button is conditionally rendered
-      onOpenAnalysisModal();
+      onSignupClick();
     }
   };
 
@@ -75,7 +75,7 @@ const Navbar = ({ onOpenAnalysisModal }) => { // Renamed prop for clarity
               placeholder="당신의 운명을 검색해보세요"
               className="w-full bg-slate-100/80 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 px-12 py-3 rounded-full outline-none transition-all placeholder:text-slate-400 text-sm"
               readOnly
-              onClick={onOpenAnalysisModal} // Opens analysis modal
+              onClick={onSignupClick} // Opens analysis modal
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500" />
           </div>
@@ -111,13 +111,22 @@ const Navbar = ({ onOpenAnalysisModal }) => { // Renamed prop for clarity
                 </button>
               </>
             ) : (
-              <button
-                onClick={onOpenAnalysisModal}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
-                disabled={loading}
-              >
-                무료 분석 시작
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onLoginClick}
+                  className="px-4 py-2 text-slate-900 font-semibold rounded-full hover:bg-slate-100 transition-colors text-sm"
+                  disabled={loading}
+                >
+                  로그인
+                </button>
+                <button
+                  onClick={onSignupClick}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
+                  disabled={loading}
+                >
+                  회원가입
+                </button>
+              </div>
             )}
             <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
               <Heart className="w-6 h-6" />
@@ -128,7 +137,7 @@ const Navbar = ({ onOpenAnalysisModal }) => { // Renamed prop for clarity
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
             </button>
             <button
-              onClick={onOpenAnalysisModal} // Also opens analysis modal for mobile/menu
+              onClick={onSignupClick} // Also opens analysis modal for mobile/menu
               className="md:hidden p-1 text-slate-900"
               disabled={loading}
             >

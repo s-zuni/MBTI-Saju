@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient'; // Adjust path if necessary
 
 const MBTI_TYPES = [
@@ -11,43 +11,85 @@ const MBTI_TYPES = [
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')); // Every 5 minutes
 
-const AnalysisModal = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState(1); // 1: Data Input, 2: Account Creation
+const AnalysisModal = ({ isOpen, onClose, mode: initialMode = 'signup' }) => {
+  const [mode, setMode] = useState(initialMode); // 'signup' or 'login'
+  const [step, setStep] = useState(1); // For signup flow: 1: Data Input, 2: Account Creation
+  
+  // Signup fields
   const [name, setName] = useState('');
-  const [gender, setGender] = useState(''); // 'male', 'female'
+  const [gender, setGender] = useState('');
   const [mbti, setMbti] = useState('');
-  const [birthDate, setBirthDate] = useState(''); // YYYY-MM-DD
+  const [birthDate, setBirthDate] = useState('');
   const [birthHour, setBirthHour] = useState('00');
   const [birthMinute, setBirthMinute] = useState('00');
   const [unknownBirthTime, setUnknownBirthTime] = useState(false);
 
+  // Common fields for login/signup
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    // When the modal opens, set the mode from props and reset fields
+    if (isOpen) {
+      setMode(initialMode);
+      resetFields();
+    }
+  }, [isOpen, initialMode]);
+
+  const resetFields = () => {
+    setName('');
+    setGender('');
+    setMbti('');
+    setBirthDate('');
+    setBirthHour('00');
+    setBirthMinute('00');
+    setUnknownBirthTime(false);
+    setEmail('');
+    setPassword('');
+    setAuthError('');
+    setStep(1);
+    setLoading(false);
+  };
+
 
   if (!isOpen) return null;
 
   const handleNext = () => {
     // Basic validation for Step 1 before proceeding
     if (!name || !gender || !mbti || !birthDate) {
-      setAuthError('Please fill in all required fields in Step 1.');
+      setAuthError('이름, 성별, MBTI, 생년월일을 모두 입력해주세요.');
       return;
     }
     setAuthError(''); // Clear any previous errors
     setStep(2);
   };
-
-  const handleBirthDateChange = (e) => {
-    setBirthDate(e.target.value);
+  
+  const handleLogin = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      alert('로그인 되었습니다!');
+      onClose();
+    } catch (error) {
+      setAuthError(error.message || '로그인 중 에러가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEmailSignup = async () => {
     setLoading(true);
     setAuthError('');
     try {
-      // Sign up the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -61,21 +103,10 @@ const AnalysisModal = ({ isOpen, onClose }) => {
         }
       });
 
-      if (signUpError) throw signUpError;
-      if (!signUpData.user) {
-        setAuthError('Sign up failed: No user data received.');
-        return;
-      }
+      if (error) throw error;
+      if (!data.user) throw new Error('회원가입에 실패했습니다.');
 
-      // After successful sign-up, sign in the user to create a session immediately
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-      
-      alert('회원가입이 성공적으로 완료되었습니다!');
+      alert('회원가입이 완료되었습니다! 확인 이메일을 확인해주세요.');
       onClose(); // Close modal on success
 
     } catch (error) {
@@ -86,47 +117,38 @@ const AnalysisModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleAuth = async () => {
     setLoading(true);
     setAuthError('');
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin, // Redirects back to your app after Google login
+          redirectTo: window.location.origin,
         },
       });
 
       if (error) throw error;
-      // Supabase will handle redirection and session creation
 
     } catch (error) {
-      setAuthError(error.message || 'An unexpected error occurred during Google signup.');
-      console.error('Google Signup Error:', error);
+      setAuthError(error.message || 'Google 로그인/회원가입 중 에러가 발생했습니다.');
+      console.error('Google Auth Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-      <div className="relative p-8 border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <h3 className="text-3xl font-black text-slate-900 mb-6">
-          {step === 1 ? '무료 분석 시작하기' : '계정 생성하기'}
-        </h3>
-        {authError && (
-          <div className="bg-rose-50 border border-rose-100 text-rose-600 text-sm font-medium px-4 py-3 rounded-2xl relative mb-4" role="alert">
-            <span className="block sm:inline">{authError}</span>
-          </div>
-        )}
-        {step === 1 && (
-          // Step 1: Data Input
-          <div>
-            <p className="text-slate-500 font-medium mb-6">
-              맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.
-            </p>
-            <form className="space-y-5">
-              <div>
+  const SignupForm = () => (
+    <>
+      {step === 1 && (
+        // Step 1: Data Input
+        <div>
+          <p className="text-slate-500 font-medium mb-6">
+            맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.
+          </p>
+          <form className="space-y-5">
+            {/* ... Form fields for name, gender, mbti etc. ... */}
+             <div>
                 <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
                   이름
                 </label>
@@ -207,7 +229,7 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                   name="birthDate"
                   id="birthDate"
                   value={birthDate}
-                  onChange={handleBirthDateChange}
+                  onChange={(e) => setBirthDate(e.target.value)}
                   className="input-field"
                   required
                 />
@@ -267,35 +289,35 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                   출생 시간 모름
                 </label>
               </div>
-            </form>
+          </form>
 
-            <div className="mt-8">
-              <button
-                type="button"
-                className="btn-primary w-full py-3 text-lg"
-                onClick={handleNext}
-                disabled={loading}
-              >
-                다음
-              </button>
-            </div>
+          <div className="mt-8">
+            <button
+              type="button"
+              className="btn-primary w-full py-3 text-lg"
+              onClick={handleNext}
+              disabled={loading}
+            >
+              다음
+            </button>
           </div>
-        )}
-        {step === 2 && (
-          // Step 2: Account Creation
-          <div>
-            <p className="text-slate-500 font-medium mb-6">
+        </div>
+      )}
+      {step === 2 && (
+        // Step 2: Account Creation
+        <div>
+           <p className="text-slate-500 font-medium mb-6">
               분석 결과를 저장하고 보려면 계정을 생성하세요.
             </p>
             <form className="space-y-5">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="email-signup" className="block text-sm font-bold text-slate-700 mb-2">
                         이메일
                     </label>
                     <input
                         type="email"
                         name="email"
-                        id="email"
+                        id="email-signup"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="input-field"
@@ -303,13 +325,13 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="password" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="password-signup" className="block text-sm font-bold text-slate-700 mb-2">
                         비밀번호
                     </label>
                     <input
                         type="password"
                         name="password"
-                        id="password"
+                        id="password-signup"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="input-field"
@@ -329,10 +351,10 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                 <button
                     type="button"
                     className="btn-secondary w-full py-3 text-lg"
-                    onClick={handleGoogleSignup}
+                    onClick={handleGoogleAuth}
                     disabled={loading}
                 >
-                    Google로 회원가입
+                    Google로 계속하기
                 </button>
             </div>
             <div className="mt-6">
@@ -346,8 +368,100 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                 뒤로
               </button>
             </div>
+        </div>
+      )}
+    </>
+  );
+
+  const LoginForm = () => (
+     <div>
+        <p className="text-slate-500 font-medium mb-6">
+            계정에 로그인하여 분석 결과를 확인하세요.
+        </p>
+        <form className="space-y-5">
+            <div>
+                <label htmlFor="email-login" className="block text-sm font-bold text-slate-700 mb-2">
+                    이메일
+                </label>
+                <input
+                    type="email"
+                    name="email"
+                    id="email-login"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-field"
+                    required
+                />
+            </div>
+            <div>
+                <label htmlFor="password-login" className="block text-sm font-bold text-slate-700 mb-2">
+                    비밀번호
+                </label>
+                <input
+                    type="password"
+                    name="password"
+                    id="password-login"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input-field"
+                    required
+                />
+            </div>
+        </form>
+        <div className="mt-8 flex flex-col space-y-4">
+            <button
+                type="button"
+                className="btn-primary w-full py-3 text-lg"
+                onClick={handleLogin}
+                disabled={loading}
+            >
+                {loading ? '로그인 중...' : '로그인'}
+            </button>
+            <button
+                type="button"
+                className="btn-secondary w-full py-3 text-lg"
+                onClick={handleGoogleAuth}
+                disabled={loading}
+            >
+                Google로 계속하기
+            </button>
+        </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+      <div className="relative p-8 border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <h3 className="text-3xl font-black text-slate-900 mb-2">
+          {mode === 'login' ? '로그인' : (step === 1 ? '무료 분석 시작하기' : '계정 생성하기')}
+        </h3>
+
+        <div className='text-center mb-6'>
+          {mode === 'login' ? (
+            <p className="text-sm text-slate-500">
+              계정이 없으신가요?{' '}
+              <button onClick={() => setMode('signup')} className="font-bold text-indigo-600 hover:underline">
+                회원가입
+              </button>
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500">
+              이미 계정이 있으신가요?{' '}
+              <button onClick={() => setMode('login')} className="font-bold text-indigo-600 hover:underline">
+                로그인
+              </button>
+            </p>
+          )}
+        </div>
+
+        {authError && (
+          <div className="bg-rose-50 border border-rose-100 text-rose-600 text-sm font-medium px-4 py-3 rounded-2xl relative mb-4" role="alert">
+            <span className="block sm:inline">{authError}</span>
           </div>
         )}
+
+        {mode === 'login' ? <LoginForm /> : <SignupForm />}
+        
         <button
           className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
           onClick={onClose}
