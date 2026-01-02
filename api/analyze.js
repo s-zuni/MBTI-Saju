@@ -1,4 +1,6 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const fetch = require('node-fetch');
+
+const OPENAI_API_KEY = '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';
 
 module.exports = async (req, res) => {
   // CORS configuration
@@ -16,36 +18,35 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    const { name, gender, birth_date, birth_time, mbti } = req.body;
+    const { name, gender, birthDate, birthTime, mbti } = req.body;
 
-    if (!name || !gender || !birth_date || !birth_time || !mbti) {
-      return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
+    if (!name || !gender || !birthDate || !birthTime || !mbti) {
+      return res.status(400).json({ error: 'All fields (name, gender, birthDate, birthTime, mbti) are required.' });
     }
 
     try {
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyCHnto6h-UThCVTRQ9f7ctM1ECrnmnwRWU");
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
       const systemPrompt = `
-        당신은 MBTI와 사주 명리학을 결합한 전문 컨설턴트입니다.
-        생년월일시를 통해 사주팔자를 분석하고, 이를 MBTI와 결합하여 통찰력 있는 조언을 제공하세요.
-        말투는 친절하고 전문적이어야 하며, 각 항목당 공백 포함 300자 내외로 작성하세요.
+        You are an expert consultant specializing in the fusion of MBTI and traditional Korean Saju (Four Pillars of Destiny).
+        Your role is to analyze a user's date and time of birth to understand their Saju, and then synthesize these insights with their MBTI profile to provide deep, actionable advice.
+        Maintain a friendly yet professional tone. Each section of the analysis should be around 150-200 characters long (including spaces).
       `;
 
       const userQuery = `
-        아래 정보를 바탕으로 분석해 주세요.
-        이름: ${name}, 성별: ${gender}
-        생년월일: ${birth_date}, 출생시간: ${birth_time}
-        MBTI: ${mbti}
+        Please analyze the following user information.
+        - Name: ${name}
+        - Gender: ${gender}
+        - Date of Birth: ${birthDate}
+        - Time of Birth: ${birthTime === 'Unknown' ? 'Time unknown' : birthTime}
+        - MBTI: ${mbti}
 
-        다음 5가지를 JSON 형식으로 분석해 주세요.
-        1. 사주 분석 (saju): 사주팔자의 기운과 특징
-        2. MBTI 분석 (mbti): 해당 유형의 성격적 특징
-        3. 공통 성향 (trait): 사주와 MBTI가 만났을 때 나타나는 핵심 성향 (결합 분석)
-        4. 추천 직업 (jobs): 성향에 맞는 직업군과 이유
-        5. 추천 궁합 (match): 잘 맞는 MBTI나 사주 특징
+        Provide your analysis in the following 5 sections, formatted as a JSON object.
+        1. Saju Analysis (saju): Analyze the energy and characteristics of the user's Saju.
+        2. MBTI Analysis (mbti): Describe the key personality traits of the user's MBTI type.
+        3. Trait Synthesis (trait): Explain the core tendencies that emerge when the user's Saju and MBTI are combined.
+        4. Recommended Jobs (jobs): Suggest suitable career paths based on the synthesized profile and explain why.
+        5. Compatibility Match (match): Advise on compatible MBTI types or Saju characteristics for relationships.
 
-        응답은 반드시 아래 JSON 구조를 따라야 하며, 다른 텍스트 없이 JSON만 출력하세요:
+        Your response MUST be ONLY the JSON object, with no other text before or after it. The JSON structure should be:
         {
           "saju": "...",
           "mbti": "...",
@@ -54,22 +55,38 @@ module.exports = async (req, res) => {
           "match": "..."
         }
       `;
-
-      const result = await model.generateContent([systemPrompt, userQuery]);
-      const responseText = result.response.text();
       
-      // Attempt to parse JSON from response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-          const content = JSON.parse(jsonMatch[0]);
-          res.status(200).json(content);
-      } else {
-          throw new Error("Invalid response format from AI");
+      const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo-1106', // This model is good at following JSON instructions
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userQuery }
+          ],
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!apiResponse.ok) {
+        const errorBody = await apiResponse.text();
+        console.error('OpenAI API Error:', errorBody);
+        throw new Error(`OpenAI API request failed with status ${apiResponse.status}`);
       }
 
+      const responseData = await apiResponse.json();
+      const content = JSON.parse(responseData.choices[0].message.content);
+      
+      res.status(200).json(content);
+
     } catch (error) {
-      console.error('API Error:', error);
-      res.status(500).json({ error: '분석 중 오류가 발생했습니다.' });
+      console.error('Server Error:', error);
+      res.status(500).json({ error: 'An error occurred during the analysis.' });
     }
   } else {
     res.status(405).json({ error: 'Method Not Allowed' });
