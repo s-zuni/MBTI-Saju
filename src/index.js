@@ -4,12 +4,19 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+console.log('index.js: Starting initialization...');
+const rootElement = document.getElementById('root');
+console.log('index.js: rootElement found:', !!rootElement);
+
+const root = ReactDOM.createRoot(rootElement);
+console.log('index.js: React root created');
+
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+console.log('index.js: Render called');
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
