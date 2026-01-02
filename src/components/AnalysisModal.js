@@ -49,6 +49,9 @@ const AnalysisModal = ({ isOpen, onClose }) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          redirectTo: window.location.origin, // Redirects back to your app after email verification
+        },
       });
 
       if (error) throw error;
