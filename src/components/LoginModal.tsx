@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-const LoginModal = ({ isOpen, handleLogin, openSignupModal, closeAllModals }) => {
+interface LoginModalProps {
+  isOpen: boolean;
+  handleLogin: (email: string, password: string) => Promise<string | undefined>;
+  openSignupModal: () => void;
+  closeAllModals: () => void;
+}
+
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, handleLogin, openSignupModal, closeAllModals }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -9,7 +16,7 @@ const LoginModal = ({ isOpen, handleLogin, openSignupModal, closeAllModals }) =>
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setLoginError(''); // Clear previous errors

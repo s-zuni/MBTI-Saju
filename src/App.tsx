@@ -10,9 +10,9 @@ import MyPage from './components/MyPage'; // New import
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [analysisModalMode, setAnalysisModalMode] = useState('signup'); // 'signup' or 'login'
+  const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
 
-  const openModal = (mode) => {
+  const openModal = (mode: 'signup' | 'login') => {
     setAnalysisModalMode(mode);
     setShowAnalysisModal(true);
   };

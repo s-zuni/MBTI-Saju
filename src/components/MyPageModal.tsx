@@ -1,7 +1,24 @@
 import React from 'react';
 import { X, User, Sparkles, Brain } from 'lucide-react';
 
-const MyPageModal = ({ closeAllModals, myPageData }) => {
+interface MyPageModalProps {
+  closeAllModals: () => void;
+  myPageData: {
+    profile: {
+      name: string;
+      birth_date: string;
+      birth_time: string;
+      mbti: string;
+    };
+    saju: string;
+    mbti: string;
+    trait: string;
+    jobs: string;
+    match: string;
+  } | null;
+}
+
+const MyPageModal: React.FC<MyPageModalProps> = ({ closeAllModals, myPageData }) => {
   return (
     <div id="myPageView" className="p-6 space-y-6">
       <div className="flex items-center justify-between pb-4 border-b border-gray-100">

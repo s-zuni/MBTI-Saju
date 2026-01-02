@@ -2,26 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, ShoppingCart, Clock, Menu, Star, LogOut } from 'lucide-react'; // Added LogOut icon
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate } from 'react-router-dom'; // For navigation
+import type { Session } from '@supabase/supabase-js';
 
-const Navbar = ({ onLoginClick, onSignupClick }) => { // Renamed prop for clarity
+interface NavbarProps {
+  onLoginClick: () => void;
+  onSignupClick: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         if (event === 'SIGNED_OUT') {
-            navigate('/'); // Redirect to home on logout
+          navigate('/'); // Redirect to home on logout
         }
       }
     );
 
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
+      setSession(session);
     });
 
 
@@ -30,8 +36,8 @@ const Navbar = ({ onLoginClick, onSignupClick }) => { // Renamed prop for clarit
     };
     window.addEventListener('scroll', handleScroll);
     return () => {
-        window.removeEventListener('scroll', handleScroll);
-        authListener.unsubscribe(); // Clean up the auth listener
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe(); // Correctly clean up the auth listener
     };
   }, [navigate]);
 

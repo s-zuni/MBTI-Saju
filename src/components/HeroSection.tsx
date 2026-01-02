@@ -1,7 +1,11 @@
 import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-const HeroSection = ({ onStart }) => {
+interface HeroSectionProps {
+  onStart: () => void;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
   return (
     <div className="relative pt-32 pb-20 overflow-hidden">
       {/* Background Ornaments */}

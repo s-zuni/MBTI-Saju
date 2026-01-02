@@ -3,12 +3,27 @@ import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, Sparkles, Key, Users, Calendar } from 'lucide-react'; // Import icons
 
-const MyPage = () => {
+interface Profile {
+  name: string;
+  email: string | undefined;
+  gender: string;
+  mbti: string;
+  birth_date: string;
+  birth_time: string | null;
+}
+
+interface Analysis {
+  keywords: string;
+  commonalities: string;
+  fortune2026: string;
+}
+
+const MyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [analysis, setAnalysis] = useState(null); // Will hold the new analysis
-  const [error, setError] = useState(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,18 +37,18 @@ const MyPage = () => {
         navigate('/'); // Redirect if no session
         return;
       }
-      
+
       const user = session.user;
-      
+
       // The user object from auth might contain the metadata we need.
       // Let's check user_metadata first.
       const { full_name, gender, mbti, birth_date, birth_time } = user.user_metadata;
 
       if (full_name && mbti && birth_date) {
         setProfile({
-            name: full_name,
-            email: user.email,
-            gender, mbti, birth_date, birth_time
+          name: full_name,
+          email: user.email,
+          gender, mbti, birth_date, birth_time
         });
       } else {
         // Fallback to 'profiles' table if metadata is incomplete
@@ -42,11 +57,11 @@ const MyPage = () => {
           .select('name, gender, mbti, birth_date, birth_time, email')
           .eq('id', user.id)
           .single();
-        
+
         if (profileError) {
-            setError('프로필 정보를 불러오는데 실패했습니다.');
+          setError('프로필 정보를 불러오는데 실패했습니다.');
         } else {
-            setProfile(profileData);
+          setProfile(profileData);
         }
       }
 
@@ -55,44 +70,46 @@ const MyPage = () => {
 
     fetchProfileData();
   }, [navigate]);
-  
+
   const handleGenerateAnalysis = async () => {
     setAnalysisLoading(true);
     setError(null);
 
     try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) {
-            throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
-        }
-        
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-                name: profile.name,
-                gender: profile.gender,
-                birthDate: profile.birth_date,
-                birthTime: profile.birth_time,
-                mbti: profile.mbti,
-            })
-        });
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
+      }
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '분석 중 오류가 발생했습니다.');
-        }
+      if (!profile) throw new Error('프로필 정보가 없습니다.');
 
-        const analysisData = await response.json();
-        setAnalysis(analysisData);
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          name: profile.name,
+          gender: profile.gender,
+          birthDate: profile.birth_date,
+          birthTime: profile.birth_time,
+          mbti: profile.mbti,
+        })
+      });
 
-    } catch (e) {
-        setError(e.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '분석 중 오류가 발생했습니다.');
+      }
+
+      const analysisData = await response.json();
+      setAnalysis(analysisData);
+
+    } catch (e: any) {
+      setError(e.message);
     } finally {
-        setAnalysisLoading(false);
+      setAnalysisLoading(false);
     }
   };
 
@@ -102,13 +119,13 @@ const MyPage = () => {
     navigate('/');
   };
 
-  const renderAnalysisSection = (Icon, title, content) => (
+  const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string) => (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-lg shadow-slate-200/40 p-8">
-        <div className="flex items-center gap-3 mb-4">
-            <Icon className="w-6 h-6 text-indigo-500" />
-            <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
-        </div>
-        <p className="text-slate-600 leading-relaxed font-medium">{content}</p>
+      <div className="flex items-center gap-3 mb-4">
+        <Icon className="w-6 h-6 text-indigo-500" />
+        <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+      </div>
+      <p className="text-slate-600 leading-relaxed font-medium">{content}</p>
     </div>
   );
 
@@ -162,31 +179,31 @@ const MyPage = () => {
         </div>
 
         {analysis ? (
-            <div className="space-y-8 animate-fade-up">
-                {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
-                {renderAnalysisSection(Users, "두 결과의 공통점 및 특이사항", analysis.commonalities)}
-                {renderAnalysisSection(Calendar, "2026년 간단 운세", analysis.fortune2026)}
-            </div>
+          <div className="space-y-8 animate-fade-up">
+            {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
+            {renderAnalysisSection(Users, "두 결과의 공통점 및 특이사항", analysis.commonalities)}
+            {renderAnalysisSection(Calendar, "2026년 간단 운세", analysis.fortune2026)}
+          </div>
         ) : (
-            <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-slate-100">
-                <Sparkles className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-slate-800 mb-3">아직 분석 결과가 없습니다</h2>
-                <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 AI 기반 종합 분석을 받아보세요.</p>
-                <button 
-                    onClick={handleGenerateAnalysis}
-                    className="btn-primary w-full sm:w-auto px-10 py-4 text-lg font-bold flex items-center justify-center gap-2 mx-auto"
-                    disabled={analysisLoading}
-                >
-                    {analysisLoading ? (
-                        <>
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            <span>분석 중입니다...</span>
-                        </>
-                    ) : (
-                        "AI로 내 운명 분석하기"
-                    )}
-                </button>
-            </div>
+          <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-slate-100">
+            <Sparkles className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">아직 분석 결과가 없습니다</h2>
+            <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 AI 기반 종합 분석을 받아보세요.</p>
+            <button
+              onClick={handleGenerateAnalysis}
+              className="btn-primary w-full sm:w-auto px-10 py-4 text-lg font-bold flex items-center justify-center gap-2 mx-auto"
+              disabled={analysisLoading}
+            >
+              {analysisLoading ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>분석 중입니다...</span>
+                </>
+              ) : (
+                "AI로 내 운명 분석하기"
+              )}
+            </button>
+          </div>
         )}
       </div>
     </div>

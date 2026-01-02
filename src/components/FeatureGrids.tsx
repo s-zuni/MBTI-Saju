@@ -11,7 +11,11 @@ const categories = [
     { icon: Building2, label: '커뮤니티', color: 'text-slate-500', bg: 'bg-slate-100' },
 ];
 
-const FeatureGrids = ({ onStart }) => {
+interface FeatureGridsProps {
+    onStart: () => void;
+}
+
+const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart }) => {
     return (
         <div className="section-container !py-4">
             {/* Category Icons Bar (Reference Style) */}

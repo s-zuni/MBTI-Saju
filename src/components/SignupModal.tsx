@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { X, Sparkles, User, Calendar, Clock, Brain, Loader2, ChevronRight } from 'lucide-react';
 
-const SignupModal = ({ handleSignup, closeAllModals, isLoading, error }) => {
+interface SignupModalProps {
+  handleSignup: (e: React.FormEvent) => void;
+  closeAllModals: () => void;
+  isLoading: boolean;
+  error: string | null;
+}
+
+const SignupModal: React.FC<SignupModalProps> = ({ handleSignup, closeAllModals, isLoading, error }) => {
   const [birthTimeUnknown, setBirthTimeUnknown] = useState(false);
 
   return (
