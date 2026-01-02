@@ -57,24 +57,7 @@ const AnalysisModal = ({ isOpen, onClose }) => {
         return;
       }
 
-      // If signup successful, save profile data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            name: name,
-            gender: gender,
-            mbti: mbti,
-            birth_date: birthDate,
-            birth_time: unknownBirthTime ? 'Unknown' : `${birthHour}:${birthMinute}`,
-            email: email, // Store email in profile for easy access
-          },
-        ]);
-
-      if (profileError) throw profileError;
-
-      alert('Account created successfully! Please check your email to verify your account.');
+      alert('회원가입이 성공적으로 완료되었습니다! 이메일을 확인하여 계정을 인증해주세요.');
       onClose(); // Close modal on success
 
     } catch (error) {
@@ -108,26 +91,26 @@ const AnalysisModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-      <div className="relative p-8 border w-full max-w-lg shadow-lg rounded-md bg-white">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6">
-          {step === 1 ? 'Start Your Free Analysis' : 'Create Your Account'}
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+      <div className="relative p-8 border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <h3 className="text-3xl font-black text-slate-900 mb-6">
+          {step === 1 ? '무료 분석 시작하기' : '계정 생성하기'}
         </h3>
         {authError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div className="bg-rose-50 border border-rose-100 text-rose-600 text-sm font-medium px-4 py-3 rounded-2xl relative mb-4" role="alert">
             <span className="block sm:inline">{authError}</span>
           </div>
         )}
         {step === 1 && (
           // Step 1: Data Input
           <div>
-            <p className="text-gray-700 mb-4">
-              Please enter your details for a personalized MBTI & Saju analysis.
+            <p className="text-slate-500 font-medium mb-6">
+              맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.
             </p>
-            <form className="space-y-4">
+            <form className="space-y-5">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Name
+                <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+                  이름
                 </label>
                 <input
                   type="text"
@@ -135,16 +118,16 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="input-field"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  성별
                 </label>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-6">
                   <div className="flex items-center">
                     <input
                       id="gender-male"
@@ -156,7 +139,7 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                       className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                     />
                     <label htmlFor="gender-male" className="ml-2 block text-sm text-gray-900">
-                      Male
+                      남성
                     </label>
                   </div>
                   <div className="flex items-center">
@@ -170,25 +153,25 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                       className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                     />
                     <label htmlFor="gender-female" className="ml-2 block text-sm text-gray-900">
-                      Female
+                      여성
                     </label>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="mbti" className="block text-sm font-medium text-gray-700">
-                  MBTI Type
+                <label htmlFor="mbti" className="block text-sm font-bold text-slate-700 mb-2">
+                  MBTI 유형
                 </label>
                 <select
                   id="mbti"
                   name="mbti"
                   value={mbti}
                   onChange={(e) => setMbti(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="input-field appearance-none"
                   required
                 >
-                  <option value="">Select MBTI</option>
+                  <option value="">MBTI 선택</option>
                   {MBTI_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {type}
@@ -198,8 +181,8 @@ const AnalysisModal = ({ isOpen, onClose }) => {
               </div>
 
               <div>
-                <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
-                  Birth Date (Gregorian)
+                <label htmlFor="birthDate" className="block text-sm font-bold text-slate-700 mb-2">
+                  생년월일 (양력)
                 </label>
                 <input
                   type="date"
@@ -207,46 +190,46 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                   id="birthDate"
                   value={birthDate}
                   onChange={handleBirthDateChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="input-field"
                   required
                 />
               </div>
 
               <div className="flex items-center space-x-4">
                 <div className="flex-1">
-                  <label htmlFor="birthHour" className="block text-sm font-medium text-gray-700">
-                    Birth Hour
+                  <label htmlFor="birthHour" className="block text-sm font-bold text-slate-700 mb-2">
+                    출생 시간
                   </label>
                   <select
                     id="birthHour"
                     name="birthHour"
                     value={birthHour}
                     onChange={(e) => setBirthHour(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="input-field appearance-none"
                     disabled={unknownBirthTime}
                   >
                     {HOURS.map((hour) => (
                       <option key={hour} value={hour}>
-                        {hour}
+                        {hour}시
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="birthMinute" className="block text-sm font-medium text-gray-700">
-                    Birth Minute
+                  <label htmlFor="birthMinute" className="block text-sm font-bold text-slate-700 mb-2">
+                    출생 분
                   </label>
                   <select
                     id="birthMinute"
                     name="birthMinute"
                     value={birthMinute}
                     onChange={(e) => setBirthMinute(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="input-field appearance-none"
                     disabled={unknownBirthTime}
                   >
                     {MINUTES.map((minute) => (
                       <option key={minute} value={minute}>
-                        {minute}
+                        {minute}분
                       </option>
                     ))}
                   </select>
@@ -263,19 +246,19 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                   className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
                 />
                 <label htmlFor="unknownBirthTime" className="ml-2 block text-sm text-gray-900">
-                  Unknown Birth Time
+                  출생 시간 모름
                 </label>
               </div>
             </form>
 
-            <div className="mt-6 flex justify-end gap-x-4">
+            <div className="mt-8">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="btn-primary w-full py-3 text-lg"
                 onClick={handleNext}
                 disabled={loading}
               >
-                Next
+                다음
               </button>
             </div>
           </div>
@@ -283,13 +266,13 @@ const AnalysisModal = ({ isOpen, onClose }) => {
         {step === 2 && (
           // Step 2: Account Creation
           <div>
-            <p className="text-gray-700 mb-4">
-              Create an account to save and view your analysis results.
+            <p className="text-slate-500 font-medium mb-6">
+              분석 결과를 저장하고 보려면 계정을 생성하세요.
             </p>
-            <form className="space-y-4">
+            <form className="space-y-5">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
+                    <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
+                        이메일
                     </label>
                     <input
                         type="email"
@@ -297,13 +280,13 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                         id="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="input-field"
                         required
                     />
                 </div>
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
+                    <label htmlFor="password" className="block text-sm font-bold text-slate-700 mb-2">
+                        비밀번호
                     </label>
                     <input
                         type="password"
@@ -311,48 +294,49 @@ const AnalysisModal = ({ isOpen, onClose }) => {
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="input-field"
                         required
                     />
                 </div>
             </form>
-            <div className="mt-6 flex flex-col space-y-4">
+            <div className="mt-8 flex flex-col space-y-4">
                 <button
                     type="button"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="btn-primary w-full py-3 text-lg"
                     onClick={handleEmailSignup}
                     disabled={loading}
                 >
-                    {loading ? 'Signing Up...' : 'Sign Up with Email'}
+                    {loading ? '회원가입 중...' : '이메일로 회원가입'}
                 </button>
                 <button
                     type="button"
-                    className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="btn-secondary w-full py-3 text-lg"
                     onClick={handleGoogleSignup}
                     disabled={loading}
                 >
-                    Sign Up with Google
+                    Google로 회원가입
                 </button>
             </div>
-            <div className="mt-6 flex justify-start">
+            <div className="mt-6">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1 group"
                 onClick={() => setStep(1)}
                 disabled={loading}
               >
-                Back
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left group-hover:-translate-x-1 transition-transform"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                뒤로
               </button>
             </div>
           </div>
         )}
         <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
           onClick={onClose}
           disabled={loading}
         >
-          <span className="sr-only">Close</span>
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <span className="sr-only">닫기</span>
+          <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
