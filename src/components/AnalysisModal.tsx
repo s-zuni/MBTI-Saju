@@ -17,138 +17,23 @@ interface AnalysisModalProps {
   mode?: 'signup' | 'login';
 }
 
-const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup' }) => {
-  const [mode, setMode] = useState(initialMode); // 'signup' or 'login'
-  const [step, setStep] = useState(1); // For signup flow: 1: Data Input, 2: Account Creation
-
-  // Signup fields
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState('');
-  const [mbti, setMbti] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthHour, setBirthHour] = useState('00');
-  const [birthMinute, setBirthMinute] = useState('00');
-  const [unknownBirthTime, setUnknownBirthTime] = useState(false);
-
-  // Common fields for login/signup
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [loading, setLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
-
-  useEffect(() => {
-    // Set the mode when the modal opens or the initialMode prop changes.
-    setMode(initialMode);
-  }, [initialMode]);
-
-  const resetFields = useCallback(() => {
-    setName('');
-    setGender('');
-    setMbti('');
-    setBirthDate('');
-    setBirthHour('00');
-    setBirthMinute('00');
-    setUnknownBirthTime(false);
-    setEmail('');
-    setPassword('');
-    setAuthError('');
-    setStep(1);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    // Reset fields only when the modal transitions from closed to open.
-    if (isOpen) {
-      resetFields();
-    }
-  }, [isOpen, resetFields]);
-
-
-  if (!isOpen) return null;
-
-  const handleNext = () => {
-    // Basic validation for Step 1 before proceeding
-    if (!name || !gender || !mbti || !birthDate) {
-      setAuthError('이름, 성별, MBTI, 생년월일을 모두 입력해주세요.');
-      return;
-    }
-    setAuthError(''); // Clear any previous errors
-    setStep(2);
-  };
-
-  const handleLogin = async () => {
-    setLoading(true);
-    setAuthError('');
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      alert('로그인 되었습니다!');
-      onClose();
-    } catch (error: any) {
-      setAuthError(error.message || '로그인 중 에러가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailSignup = async () => {
-    setLoading(true);
-    setAuthError('');
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-            gender: gender,
-            mbti: mbti,
-            birth_date: birthDate,
-            birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
-          }
-        }
-      });
-
-      if (error) throw error;
-      if (!data.user) throw new Error('회원가입에 실패했습니다.');
-
-      alert('회원가입이 완료되었습니다! 확인 이메일을 확인해주세요.');
-      onClose(); // Close modal on success
-
-    } catch (error: any) {
-      setAuthError(error.message || 'An unexpected error occurred during signup.');
-      console.error('Email Signup Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setLoading(true);
-    setAuthError('');
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-
-      if (error) throw error;
-
-    } catch (error: any) {
-      setAuthError(error.message || 'Google 로그인/회원가입 중 에러가 발생했습니다.');
-      console.error('Google Auth Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const SignupForm = () => (
+const SignupForm: React.FC<any> = ({
+  step,
+  name, setName,
+  gender, setGender,
+  mbti, setMbti,
+  birthDate, setBirthDate,
+  birthHour, setBirthHour,
+  birthMinute, setBirthMinute,
+  unknownBirthTime, setUnknownBirthTime,
+  email, setEmail,
+  password, setPassword,
+  loading,
+  handleNext,
+  handleEmailSignup,
+  handleGoogleAuth,
+  setStep
+}) => (
     <>
       {step === 1 && (
         // Step 1: Data Input
@@ -383,7 +268,13 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     </>
   );
 
-  const LoginForm = () => (
+const LoginForm: React.FC<any> = ({
+  email, setEmail,
+  password, setPassword,
+  loading,
+  handleLogin,
+  handleGoogleAuth
+}) => (
     <div>
       <p className="text-slate-500 font-medium mb-6">
         계정에 로그인하여 분석 결과를 확인하세요.
@@ -439,6 +330,137 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     </div>
   );
 
+const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup' }) => {
+  const [mode, setMode] = useState(initialMode); // 'signup' or 'login'
+  const [step, setStep] = useState(1); // For signup flow: 1: Data Input, 2: Account Creation
+
+  // Signup fields
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState('');
+  const [mbti, setMbti] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthHour, setBirthHour] = useState('00');
+  const [birthMinute, setBirthMinute] = useState('00');
+  const [unknownBirthTime, setUnknownBirthTime] = useState(false);
+
+  // Common fields for login/signup
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+
+  const resetFields = useCallback(() => {
+    setName('');
+    setGender('');
+    setMbti('');
+    setBirthDate('');
+    setBirthHour('00');
+    setBirthMinute('00');
+    setUnknownBirthTime(false);
+    setEmail('');
+    setPassword('');
+    setAuthError('');
+    setStep(1);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    // Set the mode when the modal opens or the initialMode prop changes.
+    setMode(initialMode);
+  }, [initialMode]);
+
+  useEffect(() => {
+    // Reset fields only when the modal transitions from closed to open.
+    if (isOpen) {
+      resetFields();
+    }
+  }, [isOpen, resetFields]);
+
+
+  if (!isOpen) return null;
+
+  const handleNext = () => {
+    // Basic validation for Step 1 before proceeding
+    if (!name || !gender || !mbti || !birthDate) {
+      setAuthError('이름, 성별, MBTI, 생년월일을 모두 입력해주세요.');
+      return;
+    }
+    setAuthError(''); // Clear any previous errors
+    setStep(2);
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      alert('로그인 되었습니다!');
+      onClose();
+    } catch (error: any) {
+      setAuthError(error.message || '로그인 중 에러가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSignup = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            gender: gender,
+            mbti: mbti,
+            birth_date: birthDate,
+            birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
+          }
+        }
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error('회원가입에 실패했습니다.');
+
+      alert('회원가입이 완료되었습니다! 확인 이메일을 확인해주세요.');
+      onClose(); // Close modal on success
+
+    } catch (error: any) {
+      setAuthError(error.message || 'An unexpected error occurred during signup.');
+      console.error('Email Signup Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+
+    } catch (error: any) {
+      setAuthError(error.message || 'Google 로그인/회원가입 중 에러가 발생했습니다.');
+      console.error('Google Auth Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
       <div className="relative p-8 border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -470,7 +492,44 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           </div>
         )}
 
-        {mode === 'login' ? <LoginForm /> : <SignupForm />}
+        {mode === 'login' ? (
+          <LoginForm
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            loading={loading}
+            handleLogin={handleLogin}
+            handleGoogleAuth={handleGoogleAuth}
+          />
+        ) : (
+            <SignupForm
+              step={step}
+              name={name}
+              setName={setName}
+              gender={gender}
+              setGender={setGender}
+              mbti={mbti}
+              setMbti={setMbti}
+              birthDate={birthDate}
+              setBirthDate={setBirthDate}
+              birthHour={birthHour}
+              setBirthHour={setBirthHour}
+              birthMinute={birthMinute}
+              setBirthMinute={setBirthMinute}
+              unknownBirthTime={unknownBirthTime}
+              setUnknownBirthTime={setUnknownBirthTime}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              loading={loading}
+              handleNext={handleNext}
+              handleEmailSignup={handleEmailSignup}
+              handleGoogleAuth={handleGoogleAuth}
+              setStep={setStep}
+            />
+        )}
 
         <button
           className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
