@@ -92,8 +92,16 @@ const MyPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '분석 중 오류가 발생했습니다.');
+        let errorMessage = '분석 중 오류가 발생했습니다.';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response.json() fails, try reading text
+          const errorText = await response.text();
+          if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
 
       const analysisData = await response.json();

@@ -2,8 +2,8 @@ import React from 'react';
 import { ArrowRight, Sparkles, MapPin, Ticket, Plane, Package, Hotel, Building2, TrainFront, Compass, Utensils, Heart } from 'lucide-react';
 
 const categories = [
-    { icon: Sparkles, label: '나의운세', color: 'text-purple-500', bg: 'bg-purple-50' },
-    { icon: Compass, label: 'MBTI', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { icon: Sparkles, label: '오늘의운세', color: 'text-purple-500', bg: 'bg-purple-50' },
+    { icon: Compass, label: 'MBTI & 사주', color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { icon: Plane, label: '궁합여행', color: 'text-sky-500', bg: 'bg-sky-50' },
     { icon: Hotel, label: '힐링장소', color: 'text-teal-500', bg: 'bg-teal-50' },
     { icon: Ticket, label: '추천직업', color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -13,9 +13,11 @@ const categories = [
 
 interface FeatureGridsProps {
     onStart: () => void;
+    onFortuneClick: () => void;
+    onMbtiSajuClick: () => void;
 }
 
-const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart }) => {
+const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart, onFortuneClick, onMbtiSajuClick }) => {
     return (
         <div className="section-container !py-4">
             {/* Category Icons Bar (Reference Style) */}
@@ -23,7 +25,11 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart }) => {
                 {categories.map((cat, i) => (
                     <button
                         key={i}
-                        onClick={onStart}
+                        onClick={() => {
+                            if (i === 0) onFortuneClick();
+                            else if (i === 1) onMbtiSajuClick();
+                            else onStart();
+                        }}
                         className="flex flex-col items-center gap-2 min-w-[70px] group"
                     >
                         <div className={`w-14 h-14 ${cat.bg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>

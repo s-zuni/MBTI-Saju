@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, ShoppingCart, Clock, Menu, Star, LogOut } from 'lucide-react'; // Added LogOut icon
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate } from 'react-router-dom'; // For navigation
-import type { Session } from '@supabase/supabase-js';
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -20,7 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         setSession(session);
         if (event === 'SIGNED_OUT') {
           navigate('/'); // Redirect to home on logout
@@ -29,8 +29,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
     );
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
+      setSession(data.session);
     });
 
 
@@ -109,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-600">
             <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="hover:text-indigo-600 transition-colors">홈</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); }} className="hover:text-indigo-600 transition-colors">나의 운세</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); }} className="hover:text-indigo-600 transition-colors">오늘의 운세</a>
             <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); }} className="hover:text-indigo-600 transition-colors">MBTI & 사주</a>
             <a href="#" className="hover:text-indigo-600 transition-colors">스토어</a>
           </div>
@@ -194,7 +194,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
             {/* Mobile Navigation Links */}
             <div className="flex flex-col gap-2 text-sm font-semibold text-slate-600 mb-4">
               <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">홈</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">나의 운세</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">오늘의 운세</a>
               <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">MBTI & 사주</a>
               <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">스토어</a>
             </div>
@@ -203,7 +203,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
             <div className="border-t border-slate-200 pt-4">
               {session ? (
                 <div className="flex items-center justify-between">
-                   <button
+                  <button
                     onClick={() => {
                       handleMyPageClick();
                       setIsMobileMenuOpen(false);

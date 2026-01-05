@@ -8,14 +8,14 @@ import AnalysisModal from './components/AnalysisModal';
 import MyPage from './components/MyPage'; // New import
 import FortuneModal from './components/FortuneModal';
 import MbtiSajuModal from './components/MbtiSajuModal';
-// Removed unused imports: Modal, SignupModal, Sparkles, Brain, Users, Briefcase, Heart, X, ArrowRight
+import { supabase } from './supabaseClient';
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
   const [showFortuneModal, setShowFortuneModal] = useState(false);
   const [showMbtiSajuModal, setShowMbtiSajuModal] = useState(false);
-  
+
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
@@ -70,8 +70,8 @@ function App() {
   return (
     <BrowserRouter>
       <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
-        <Navbar 
-          onLoginClick={() => openAnalysisModal('login')} 
+        <Navbar
+          onLoginClick={() => openAnalysisModal('login')}
           onSignupClick={() => openAnalysisModal('signup')}
           onFortuneClick={handleFetchFortune}
           onMbtiSajuClick={openMbtiSajuModal}
@@ -81,7 +81,11 @@ function App() {
           <Route path="/" element={
             <>
               <HeroSection onStart={() => openAnalysisModal('signup')} />
-              <FeatureGrids onStart={() => openAnalysisModal('signup')} />
+              <FeatureGrids
+                onStart={() => openAnalysisModal('signup')}
+                onFortuneClick={handleFetchFortune}
+                onMbtiSajuClick={openMbtiSajuModal}
+              />
 
               {/* Featured Analysis Section */}
               <section className="py-24 bg-slate-50/50 relative">
