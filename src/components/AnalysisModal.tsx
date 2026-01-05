@@ -38,12 +38,16 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   const [authError, setAuthError] = useState('');
 
   useEffect(() => {
-    // When the modal opens, set the mode from props and reset fields
+    // Set the mode when the modal opens or the initialMode prop changes.
+    setMode(initialMode);
+  }, [initialMode]);
+
+  useEffect(() => {
+    // Reset fields only when the modal transitions from closed to open.
     if (isOpen) {
-      setMode(initialMode);
       resetFields();
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen]);
 
   const resetFields = () => {
     setName('');

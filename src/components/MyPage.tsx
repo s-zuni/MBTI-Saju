@@ -42,7 +42,7 @@ const MyPage: React.FC = () => {
 
       // The user object from auth might contain the metadata we need.
       // Let's check user_metadata first.
-      const { full_name, gender, mbti, birth_date, birth_time } = user.user_metadata;
+      const { full_name, gender, mbti, birth_date, birth_time, analysis } = user.user_metadata;
 
       if (full_name && mbti && birth_date) {
         setProfile({
@@ -50,6 +50,9 @@ const MyPage: React.FC = () => {
           email: user.email,
           gender, mbti, birth_date, birth_time
         });
+        if (analysis) {
+          setAnalysis(analysis);
+        }
       } else {
         // Fallback to 'profiles' table if metadata is incomplete
         const { data: profileData, error: profileError } = await supabase
@@ -105,6 +108,17 @@ const MyPage: React.FC = () => {
 
       const analysisData = await response.json();
       setAnalysis(analysisData);
+
+      // Save the analysis to user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { ...profile, analysis: analysisData }
+      });
+
+      if (updateError) {
+        // We can choose to notify the user, but for now, we'll just log it.
+        // The analysis is still visible for the current session.
+        console.error('Failed to save analysis to user profile:', updateError);
+      }
 
     } catch (e: any) {
       setError(e.message);
