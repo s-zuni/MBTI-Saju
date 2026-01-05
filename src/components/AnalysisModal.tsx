@@ -350,6 +350,22 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  const translateAuthError = (message: string): string => {
+    if (message.includes('Invalid login credentials')) {
+      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    }
+    if (message.includes('User already registered')) {
+      return '이미 가입된 이메일입니다.';
+    }
+    if (message.includes('Password should be at least 6 characters')) {
+      return '비밀번호는 6자 이상이어야 합니다.';
+    }
+    if (message.includes('Unable to validate email address: invalid format')) {
+      return '올바른 이메일 형식이 아닙니다.';
+    }
+    return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+  };
+
   const resetFields = useCallback(() => {
     setName('');
     setGender('');
@@ -402,7 +418,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       alert('로그인 되었습니다!');
       onClose();
     } catch (error: any) {
-      setAuthError(error.message || '로그인 중 에러가 발생했습니다.');
+      setAuthError(translateAuthError(error.message));
     } finally {
       setLoading(false);
     }
@@ -433,12 +449,13 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       onClose(); // Close modal on success
 
     } catch (error: any) {
-      setAuthError(error.message || 'An unexpected error occurred during signup.');
+      setAuthError(translateAuthError(error.message));
       console.error('Email Signup Error:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleGoogleAuth = async () => {
     setLoading(true);

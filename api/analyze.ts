@@ -5,8 +5,8 @@ type VercelRequest = any;
 type VercelResponse = any;
 
 // It's crucial to use environment variables for Supabase credentials
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
