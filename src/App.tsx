@@ -5,16 +5,25 @@ import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
 import FeatureGrids from './components/FeatureGrids';
 import AnalysisModal from './components/AnalysisModal';
-import MyPage from './components/MyPage'; // New import
+import MyPage from './components/MyPage';
 import FortuneModal from './components/FortuneModal';
 import MbtiSajuModal from './components/MbtiSajuModal';
 import { supabase } from './supabaseClient';
+import BottomNav from './components/BottomNav';
+import CommunityPage from './components/CommunityPage';
+import RecommendationModal from './components/RecommendationModal';
+import CompatibilityModal from './components/CompatibilityModal';
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
   const [showFortuneModal, setShowFortuneModal] = useState(false);
   const [showMbtiSajuModal, setShowMbtiSajuModal] = useState(false);
+
+  // New Modal States
+  const [showRecModal, setShowRecModal] = useState(false);
+  const [recModalTab, setRecModalTab] = useState<'travel' | 'career'>('travel');
+  const [showCompModal, setShowCompModal] = useState(false);
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
@@ -66,10 +75,19 @@ function App() {
   const openMbtiSajuModal = () => setShowMbtiSajuModal(true);
   const closeMbtiSajuModal = () => setShowMbtiSajuModal(false);
 
+  const openRecModal = (tab: 'travel' | 'career') => {
+    setRecModalTab(tab);
+    setShowRecModal(true);
+  };
+  const closeRecModal = () => setShowRecModal(false);
+
+  const openCompModal = () => setShowCompModal(true);
+  const closeCompModal = () => setShowCompModal(false);
+
 
   return (
     <BrowserRouter>
-      <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
+      <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0"> {/* Added padding for BottomNav */}
         <Navbar
           onLoginClick={() => openAnalysisModal('login')}
           onSignupClick={() => openAnalysisModal('signup')}
@@ -85,6 +103,9 @@ function App() {
                 onStart={() => openAnalysisModal('signup')}
                 onFortuneClick={handleFetchFortune}
                 onMbtiSajuClick={openMbtiSajuModal}
+                onTravelClick={() => openRecModal('travel')}
+                onJobClick={() => openRecModal('career')}
+                onCompatibilityClick={openCompModal}
               />
 
               {/* Featured Analysis Section */}
@@ -128,13 +149,22 @@ function App() {
             </>
           } />
           <Route path="/mypage" element={<MyPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} /> {/* New route for Supabase OAuth */}
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
+
+        <BottomNav
+          onFortuneClick={handleFetchFortune}
+          onMbtiSajuClick={openMbtiSajuModal}
+        />
 
         {/* Conditionally render the new AnalysisModal */}
         <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />
         <FortuneModal isOpen={showFortuneModal} onClose={closeFortuneModal} fortune={fortune} loading={isFortuneLoading} />
         <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} />
+
+        <RecommendationModal isOpen={showRecModal} onClose={closeRecModal} initialTab={recModalTab} />
+        <CompatibilityModal isOpen={showCompModal} onClose={closeCompModal} />
       </div>
     </BrowserRouter>
   );

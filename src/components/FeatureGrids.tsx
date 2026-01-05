@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Sparkles, MapPin, Ticket, Plane, Package, Hotel, Building2, TrainFront, Compass, Utensils, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const categories = [
     { icon: Sparkles, label: '오늘의운세', color: 'text-purple-500', bg: 'bg-purple-50' },
@@ -15,9 +16,21 @@ interface FeatureGridsProps {
     onStart: () => void;
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
+    onTravelClick: () => void;
+    onJobClick: () => void;
+    onCompatibilityClick: () => void;
 }
 
-const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart, onFortuneClick, onMbtiSajuClick }) => {
+const FeatureGrids: React.FC<FeatureGridsProps> = ({
+    onStart,
+    onFortuneClick,
+    onMbtiSajuClick,
+    onTravelClick,
+    onJobClick,
+    onCompatibilityClick
+}) => {
+    const navigate = useNavigate();
+
     return (
         <div className="section-container !py-4">
             {/* Category Icons Bar (Reference Style) */}
@@ -28,6 +41,10 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart, onFortuneClick, on
                         onClick={() => {
                             if (i === 0) onFortuneClick();
                             else if (i === 1) onMbtiSajuClick();
+                            else if (i === 2) onTravelClick();
+                            else if (i === 3) onTravelClick(); // Healing Place -> Travel
+                            else if (i === 4) onJobClick();
+                            else if (i === 6) navigate('/community');
                             else onStart();
                         }}
                         className="flex flex-col items-center gap-2 min-w-[70px] group"
@@ -64,7 +81,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({ onStart, onFortuneClick, on
 
                 <div className="grid grid-cols-1 gap-6">
                     <div
-                        onClick={onStart}
+                        onClick={onCompatibilityClick}
                         className="relative h-[128px] bg-slate-50 rounded-3xl border border-slate-100 p-6 flex flex-col justify-center cursor-pointer hover:bg-white hover:shadow-lg transition-all"
                     >
                         <div className="flex justify-between items-center">
