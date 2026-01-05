@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient'; // Adjust path if necessary
 
 const MBTI_TYPES = [
@@ -42,14 +42,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setMode(initialMode);
   }, [initialMode]);
 
-  useEffect(() => {
-    // Reset fields only when the modal transitions from closed to open.
-    if (isOpen) {
-      resetFields();
-    }
-  }, [isOpen]);
-
-  const resetFields = () => {
+  const resetFields = useCallback(() => {
     setName('');
     setGender('');
     setMbti('');
@@ -62,7 +55,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setAuthError('');
     setStep(1);
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // Reset fields only when the modal transitions from closed to open.
+    if (isOpen) {
+      resetFields();
+    }
+  }, [isOpen, resetFields]);
 
 
   if (!isOpen) return null;
