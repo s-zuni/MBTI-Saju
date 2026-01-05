@@ -6,31 +6,82 @@ import Footer from './components/Footer';
 import FeatureGrids from './components/FeatureGrids';
 import AnalysisModal from './components/AnalysisModal';
 import MyPage from './components/MyPage'; // New import
+import FortuneModal from './components/FortuneModal';
+import MbtiSajuModal from './components/MbtiSajuModal';
 // Removed unused imports: Modal, SignupModal, Sparkles, Brain, Users, Briefcase, Heart, X, ArrowRight
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
+  const [showFortuneModal, setShowFortuneModal] = useState(false);
+  const [showMbtiSajuModal, setShowMbtiSajuModal] = useState(false);
+  
+  const [fortune, setFortune] = useState<string | null>(null);
+  const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
-  const openModal = (mode: 'signup' | 'login') => {
+
+  const openAnalysisModal = (mode: 'signup' | 'login') => {
     setAnalysisModalMode(mode);
     setShowAnalysisModal(true);
   };
 
-  const closeModal = () => {
+  const closeAnalysisModal = () => {
     setShowAnalysisModal(false);
   };
+
+  const handleFetchFortune = async () => {
+    setIsFortuneLoading(true);
+    setFortune(null);
+    setShowFortuneModal(true); // Open modal immediately
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+
+      const response = await fetch('/api/fortune', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch fortune.");
+      }
+
+      const data = await response.json();
+      setFortune(data.fortune);
+
+    } catch (error: any) {
+      console.error(error);
+      setFortune("운세를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsFortuneLoading(false);
+    }
+  };
+
+  const closeFortuneModal = () => setShowFortuneModal(false);
+
+  const openMbtiSajuModal = () => setShowMbtiSajuModal(true);
+  const closeMbtiSajuModal = () => setShowMbtiSajuModal(false);
+
 
   return (
     <BrowserRouter>
       <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
-        <Navbar onLoginClick={() => openModal('login')} onSignupClick={() => openModal('signup')} />
+        <Navbar 
+          onLoginClick={() => openAnalysisModal('login')} 
+          onSignupClick={() => openAnalysisModal('signup')}
+          onFortuneClick={handleFetchFortune}
+          onMbtiSajuClick={openMbtiSajuModal}
+        />
 
         <Routes>
           <Route path="/" element={
             <>
-              <HeroSection onStart={() => openModal('signup')} />
-              <FeatureGrids onStart={() => openModal('signup')} />
+              <HeroSection onStart={() => openAnalysisModal('signup')} />
+              <FeatureGrids onStart={() => openAnalysisModal('signup')} />
 
               {/* Featured Analysis Section */}
               <section className="py-24 bg-slate-50/50 relative">
@@ -77,7 +128,9 @@ function App() {
         </Routes>
 
         {/* Conditionally render the new AnalysisModal */}
-        <AnalysisModal isOpen={showAnalysisModal} onClose={closeModal} mode={analysisModalMode} />
+        <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />
+        <FortuneModal isOpen={showFortuneModal} onClose={closeFortuneModal} fortune={fortune} loading={isFortuneLoading} />
+        <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} />
       </div>
     </BrowserRouter>
   );

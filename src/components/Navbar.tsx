@@ -7,9 +7,11 @@ import type { Session } from '@supabase/supabase-js';
 interface NavbarProps {
   onLoginClick: () => void;
   onSignupClick: () => void;
+  onFortuneClick: () => void;
+  onMbtiSajuClick: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneClick, onMbtiSajuClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,8 +58,23 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick }) => {
     if (session) {
       navigate('/mypage'); // Navigate to MyPage
     } else {
-      // This case should ideally not happen if the button is conditionally rendered
-      onSignupClick();
+      onLoginClick();
+    }
+  };
+
+  const handleFortuneClick = () => {
+    if (session) {
+      onFortuneClick();
+    } else {
+      onLoginClick();
+    }
+  };
+
+  const handleMbtiSajuClick = () => {
+    if (session) {
+      onMbtiSajuClick();
+    } else {
+      onLoginClick();
     }
   };
 
@@ -91,9 +108,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick }) => {
         {/* Actions */}
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-600">
-            <a href="#" className="hover:text-indigo-600 transition-colors">홈</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">운세</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">MBTI</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="hover:text-indigo-600 transition-colors">홈</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); }} className="hover:text-indigo-600 transition-colors">나의 운세</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); }} className="hover:text-indigo-600 transition-colors">MBTI & 사주</a>
             <a href="#" className="hover:text-indigo-600 transition-colors">스토어</a>
           </div>
 
@@ -176,9 +193,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick }) => {
 
             {/* Mobile Navigation Links */}
             <div className="flex flex-col gap-2 text-sm font-semibold text-slate-600 mb-4">
-              <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">홈</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">운세</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">MBTI</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">홈</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">나의 운세</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">MBTI & 사주</a>
               <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">스토어</a>
             </div>
 

@@ -54,18 +54,8 @@ const MyPage: React.FC = () => {
           setAnalysis(analysis);
         }
       } else {
-        // Fallback to 'profiles' table if metadata is incomplete
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('name, gender, mbti, birth_date, birth_time, email')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          setError('프로필 정보를 불러오는데 실패했습니다.');
-        } else {
-          setProfile(profileData);
-        }
+        // If essential metadata is missing, it indicates an incomplete profile.
+        setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
       }
 
       setLoading(false);
