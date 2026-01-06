@@ -85,6 +85,15 @@ function App() {
   const closeCompModal = () => setShowCompModal(false);
 
 
+  const handleStart = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      handleFetchFortune();
+    } else {
+      openAnalysisModal('signup');
+    }
+  };
+
   return (
     <BrowserRouter>
       <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0"> {/* Added padding for BottomNav */}
@@ -98,9 +107,9 @@ function App() {
         <Routes>
           <Route path="/" element={
             <>
-              <HeroSection onStart={() => openAnalysisModal('signup')} />
+              <HeroSection onStart={handleStart} />
               <FeatureGrids
-                onStart={() => openAnalysisModal('signup')}
+                onStart={handleStart}
                 onFortuneClick={handleFetchFortune}
                 onMbtiSajuClick={openMbtiSajuModal}
                 onTravelClick={() => openRecModal('travel')}
