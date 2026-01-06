@@ -55,7 +55,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             You are an expert consultant specializing in the fusion of MBTI and traditional Korean Saju (Four Pillars of Destiny).
             Your role is to analyze a user's information and provide a concise, insightful analysis of about 700 characters in total.
             Maintain a friendly, encouraging, and professional tone.
-            The response MUST be a JSON object with three keys: "keywords", "commonalities", and "fortune2026".
+            The response MUST be in Korean (Hangul).
+            The response MUST be a JSON object with two keys: "keywords" and "commonalities".
             Each section should be a string.
             `;
 
@@ -70,7 +71,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             Provide your analysis in a JSON object with the following structure:
             1. "keywords": Identify 3-4 key personality keywords from both the user's Saju and MBTI.
             2. "commonalities": Briefly explain the common points and unique characteristics found between the Saju and MBTI results.
-            3. "fortune2026": Provide a simple, positive fortune for the year 2026 based on the overall analysis.
             `;
 
             const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
