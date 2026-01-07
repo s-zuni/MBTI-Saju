@@ -178,7 +178,13 @@ function App() {
               <Footer />
             </>
           } />
-          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage" element={
+            <MyPage
+              onOpenMbtiSaju={openMbtiSajuModal}
+              onOpenHealing={openHealingModal}
+              onOpenCompatibility={openCompModal}
+            />
+          } />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>

@@ -16,14 +16,22 @@ interface Profile {
 interface Analysis {
   keywords: string;
   commonalities: string;
-  // fortune2026: string; // Removed per user request
-  typeDescription?: string; // Saju Day Master description from AI
-  elementAnalysis?: string; // Element analysis from AI
-  detailedAnalysis?: string; // Detailed analysis from AI
-  saju?: any; // Full Saju calculation result
+  typeDescription?: string;
+  elementAnalysis?: string;
+  detailedAnalysis?: string; // Kept for legacy compatibility, but not displayed
+  mbtiAnalysis?: string;
+  sajuAnalysis?: string;
+  fusedAnalysis?: string;
+  saju?: any;
 }
 
-const MyPage: React.FC = () => {
+interface MyPageProps {
+  onOpenMbtiSaju: () => void;
+  onOpenHealing: () => void;
+  onOpenCompatibility: () => void;
+}
+
+const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCompatibility }) => {
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -45,9 +53,6 @@ const MyPage: React.FC = () => {
       }
 
       const user = session.user;
-
-      // The user object from auth might contain the metadata we need.
-      // Let's check user_metadata first.
       const { full_name, gender, mbti, birth_date, birth_time, analysis } = user.user_metadata;
 
       if (full_name && mbti && birth_date) {
@@ -60,7 +65,6 @@ const MyPage: React.FC = () => {
           setAnalysis(analysis);
         }
       } else {
-        // If essential metadata is missing, it indicates an incomplete profile.
         setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
       }
 
@@ -130,8 +134,6 @@ const MyPage: React.FC = () => {
       });
 
       if (updateError) {
-        // We can choose to notify the user, but for now, we'll just log it.
-        // The analysis is still visible for the current session.
         console.error('Failed to save analysis to user profile:', updateError);
       }
 
@@ -213,7 +215,7 @@ const MyPage: React.FC = () => {
         </div>
 
         {analysis ? (
-          <div className="space-y-8 animate-fade-up">
+          <div className="space-y-6 animate-fade-up">
             {/* Saju Type Section */}
             {analysis.typeDescription && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/50 p-8">
@@ -229,10 +231,43 @@ const MyPage: React.FC = () => {
             {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
             {renderAnalysisSection(Users, "두 결과의 공통점 및 특이사항", analysis.commonalities)}
 
-            {/* 2026 Fortune is REMOVED */}
+            {/* Navigation Buttons for Deep Analysis */}
+            <div className="grid md:grid-cols-2 gap-4 mt-8">
+              <button
+                onClick={onOpenMbtiSaju}
+                className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group"
+              >
+                <span className="text-2xl mb-2">🔮</span>
+                <div>
+                  <h3 className="text-xl font-bold mb-1">내 MBTI & 사주<br />심층 분석 보러가기</h3>
+                  <p className="text-indigo-100 text-sm opacity-0 group-hover:opacity-100 transition-opacity">나에 대해 더 깊이 알아보기 &rarr;</p>
+                </div>
+              </button>
 
-            {/* Detailed Analysis Section */}
-            {analysis.detailedAnalysis && renderAnalysisSection(Sparkles, "종합 정밀 분석", analysis.detailedAnalysis, true)}
+              <div className="grid gap-4">
+                <button
+                  onClick={onOpenHealing}
+                  className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
+                >
+                  <span className="text-2xl bg-teal-50 p-3 rounded-full">🌿</span>
+                  <div>
+                    <h3 className="font-bold text-lg">나에게 맞는 여행지 추천</h3>
+                    <p className="text-slate-500 text-sm">힐링이 필요하다면?</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={onOpenCompatibility}
+                  className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
+                >
+                  <span className="text-2xl bg-rose-50 p-3 rounded-full">💑</span>
+                  <div>
+                    <h3 className="font-bold text-lg">궁합 보러 가기</h3>
+                    <p className="text-slate-500 text-sm">그 사람과의 시너지는?</p>
+                  </div>
+                </button>
+              </div>
+            </div>
 
             <div className='text-center mt-12'>
               <button

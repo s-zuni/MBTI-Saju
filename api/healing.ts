@@ -17,12 +17,15 @@ export default async (req: any, res: any) => {
         Recommend a healing spot (Cafe, Park, Cultural Site) and an activity in a specific region requested by the user.
         Base the recommendation on their MBTI and Saju elements (e.g., if they lack Water, recommend a river view cafe).
         
+        **STYLE**: Use Emojis (🌿, ☕, ⛰️) to decorate the text.
         Response MUST be in Korean.
+        
         Output JSON format:
         {
-            "place": "Specific Name or Type of Place",
-            "activity": "Suggested activity (e.g., reading, meditation, walking)",
-            "reason": "Why this fits their energy (approx 200-300 chars)."
+            "place": "Specific Name of the Place (e.g. Starfield Library)",
+            "placeType": "Category (e.g. Cafe, Park, Temple)",
+            "activity": "Suggested activity (e.g. reading, meditation)",
+            "reason": "Why this fits their energy (approx 200 chars)."
         }
         `;
 
