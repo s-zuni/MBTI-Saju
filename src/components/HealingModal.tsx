@@ -40,10 +40,12 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose }) => {
     // Level 2: City (Si/Gu)
     const [city, setCity] = useState((REGION_MAP['서울'] && REGION_MAP['서울'][0]) || '');
 
+    const currentCities = REGION_MAP[province];
+
     useEffect(() => {
         // Reset city when province changes
-        if (REGION_MAP[province] && REGION_MAP[province].length > 0) {
-            setCity(REGION_MAP[province][0] || '');
+        if (currentCities && currentCities.length > 0) {
+            setCity(currentCities[0] || '');
         } else {
             setCity('');
         }
@@ -132,12 +134,12 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose }) => {
                                         className="input-field appearance-none"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
-                                        disabled={!REGION_MAP[province] || REGION_MAP[province].length === 0}
+                                        disabled={!currentCities || currentCities.length === 0}
                                     >
-                                        {REGION_MAP[province]?.map(c => (
+                                        {currentCities?.map(c => (
                                             <option key={c} value={c}>{c}</option>
                                         ))}
-                                        {(!REGION_MAP[province] || REGION_MAP[province].length === 0) && (
+                                        {(!currentCities || currentCities.length === 0) && (
                                             <option value="">전체</option>
                                         )}
                                     </select>
