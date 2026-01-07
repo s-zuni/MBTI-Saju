@@ -78,7 +78,9 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
     let minute = 0;
 
     if (birthTime) {
-        [hour, minute] = birthTime.split(':').map(Number);
+        const parts = birthTime.split(':').map(Number);
+        hour = parts[0] ?? 0;
+        minute = parts[1] ?? 0;
     } else {
         // If unknown, typically set to Sas (09:30-11:30) or treat specially.
         // For simplicity, we might default to 00:00 or handle 'unknown' logically in prompt 
