@@ -13,6 +13,9 @@ import BottomNav from './components/BottomNav';
 import CommunityPage from './components/CommunityPage';
 import RecommendationModal from './components/RecommendationModal';
 import CompatibilityModal from './components/CompatibilityModal';
+import TripModal from './components/TripModal';
+import HealingModal from './components/HealingModal';
+import JobModal from './components/JobModal';
 
 function App() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -24,6 +27,9 @@ function App() {
   const [showRecModal, setShowRecModal] = useState(false);
   const [recModalTab, setRecModalTab] = useState<'travel' | 'career'>('travel');
   const [showCompModal, setShowCompModal] = useState(false);
+  const [showTripModal, setShowTripModal] = useState(false);
+  const [showHealingModal, setShowHealingModal] = useState(false);
+  const [showJobModal, setShowJobModal] = useState(false);
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
@@ -47,12 +53,15 @@ function App() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("User not authenticated");
 
+      const birthDate = session.user.user_metadata.birth_date;
+
       const response = await fetch('/api/fortune', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
-        }
+        },
+        body: JSON.stringify({ birthDate })
       });
 
       if (!response.ok) {
@@ -75,6 +84,7 @@ function App() {
   const openMbtiSajuModal = () => setShowMbtiSajuModal(true);
   const closeMbtiSajuModal = () => setShowMbtiSajuModal(false);
 
+  // RecModal (Legacy or specific uses)
   const openRecModal = (tab: 'travel' | 'career') => {
     setRecModalTab(tab);
     setShowRecModal(true);
@@ -83,6 +93,16 @@ function App() {
 
   const openCompModal = () => setShowCompModal(true);
   const closeCompModal = () => setShowCompModal(false);
+
+  // New Handlers
+  const openTripModal = () => setShowTripModal(true);
+  const closeTripModal = () => setShowTripModal(false);
+
+  const openHealingModal = () => setShowHealingModal(true);
+  const closeHealingModal = () => setShowHealingModal(false);
+
+  const openJobModal = () => setShowJobModal(true);
+  const closeJobModal = () => setShowJobModal(false);
 
 
   const handleStart = async () => {
@@ -112,8 +132,9 @@ function App() {
                 onStart={handleStart}
                 onFortuneClick={handleFetchFortune}
                 onMbtiSajuClick={openMbtiSajuModal}
-                onTravelClick={() => openRecModal('travel')}
-                onJobClick={() => openRecModal('career')}
+                onTripClick={openTripModal}
+                onHealingClick={openHealingModal}
+                onJobClick={openJobModal}
                 onCompatibilityClick={openCompModal}
               />
 
@@ -174,6 +195,10 @@ function App() {
 
         <RecommendationModal isOpen={showRecModal} onClose={closeRecModal} initialTab={recModalTab} />
         <CompatibilityModal isOpen={showCompModal} onClose={closeCompModal} />
+
+        <TripModal isOpen={showTripModal} onClose={closeTripModal} />
+        <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
+        <JobModal isOpen={showJobModal} onClose={closeJobModal} />
       </div>
     </BrowserRouter>
   );

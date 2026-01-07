@@ -16,9 +16,10 @@ interface Profile {
 interface Analysis {
   keywords: string;
   commonalities: string;
-  fortune2026: string;
+  // fortune2026: string; // Removed per user request
   typeDescription?: string; // Saju Day Master description from AI
   elementAnalysis?: string; // Element analysis from AI
+  detailedAnalysis?: string; // Detailed analysis from AI
   saju?: any; // Full Saju calculation result
 }
 
@@ -147,13 +148,13 @@ const MyPage: React.FC = () => {
     navigate('/');
   };
 
-  const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string) => (
+  const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-lg shadow-slate-200/40 p-8">
       <div className="flex items-center gap-3 mb-4">
         <Icon className="w-6 h-6 text-indigo-500" />
         <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
       </div>
-      <p className="text-slate-600 leading-relaxed font-medium">{content}</p>
+      <p className={`text-slate-600 leading-relaxed font-medium ${isLongText ? 'whitespace-pre-line' : ''}`}>{content}</p>
     </div>
   );
 
@@ -227,7 +228,11 @@ const MyPage: React.FC = () => {
 
             {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
             {renderAnalysisSection(Users, "두 결과의 공통점 및 특이사항", analysis.commonalities)}
-            {renderAnalysisSection(Calendar, "2026년 간단 운세", analysis.fortune2026)}
+
+            {/* 2026 Fortune is REMOVED */}
+
+            {/* Detailed Analysis Section */}
+            {analysis.detailedAnalysis && renderAnalysisSection(Sparkles, "종합 정밀 분석", analysis.detailedAnalysis, true)}
 
             <div className='text-center mt-12'>
               <button

@@ -39,17 +39,45 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     }
 
     if (req.method === 'POST') {
+        const { birthDate } = req.body;
+        console.log("Fortune Request Body:", req.body); // Check what we receive
+
+        // Simple Zodiac Calculation Function
+        const getZodiacSign = (dateStr: string) => {
+            if (!dateStr) return 'Unknown';
+            const date = new Date(dateStr);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+
+            if ((month == 1 && day <= 20) || (month == 12 && day >= 22)) return "Capricorn (염소자리)";
+            if ((month == 1 && day >= 21) || (month == 2 && day <= 18)) return "Aquarius (물병자리)";
+            if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces (물고기자리)";
+            if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Aries (양자리)";
+            if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Taurus (황소자리)";
+            if ((month == 5 && day >= 21) || (month == 6 && day <= 21)) return "Gemini (쌍둥이자리)";
+            if ((month == 6 && day >= 22) || (month == 7 && day <= 22)) return "Cancer (게자리)";
+            if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leo (사자자리)";
+            if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgo (처녀자리)";
+            if ((month == 9 && day >= 23) || (month == 10 && day <= 23)) return "Libra (천칭자리)";
+            if ((month == 10 && day >= 24) || (month == 11 && day <= 22)) return "Scorpio (전갈자리)";
+            if ((month == 11 && day >= 23) || (month == 12 && day <= 21)) return "Sagittarius (궁수자리)";
+            return "Unknown";
+        };
+
+        const zodiac = getZodiacSign(birthDate);
+
         try {
             const systemPrompt = `
-                You are a wise and friendly fortune teller.
-                Your role is to provide a positive and encouraging "Today's Fortune" for a user.
+                You are a wise and friendly fortune teller using Western Astrology (Zodiac Signs).
+                Your role is to provide a positive and encouraging "Today's Fortune" for a user with the Zodiac sign: ${zodiac}.
                 The response MUST be a JSON object with one key: "fortune".
                 The value should be a string of about 200-400 Korean characters.
+                Start by mentioning their Zodiac sign (e.g., "오늘의 물병자리 운세는...").
                 Maintain a warm and hopeful tone.
             `;
 
             const userQuery = `
-                Please provide today's fortune for me.
+                Please provide today's fortune for me. My birthdate is ${birthDate} (${zodiac}).
             `;
 
             const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {

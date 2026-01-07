@@ -44,7 +44,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
 
         if (req.method === 'POST') {
-            const { myProfile, partnerProfile } = req.body;
+            const { myProfile, partnerProfile, relationshipType = 'lover' } = req.body;
 
             if (!myProfile || !partnerProfile) {
                 return res.status(400).json({ error: 'Missing profile information.' });
@@ -54,15 +54,25 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
             const partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
 
+            const relationshipKoreanMap: { [key: string]: string } = {
+                lover: '연인 (Lover)',
+                friend: '친구 (Friend)',
+                family: '가족 (Family)',
+                colleague: '동료 (Colleague)',
+                other: '그 외 (Other)'
+            };
+            const relationshipStr = relationshipKoreanMap[relationshipType] || '연인';
+
             const systemPrompt = `
             You are an expert relationship consultant specializing in MBTI and traditional Korean Saju (Four Pillars of Destiny).
             Analyze the compatibility between two people based on their profiles.
+            The relationship type is: ${relationshipStr}.
             Maintain a friendly, insightful, and professional tone.
             The response MUST be in Korean (Hangul).
             The response MUST be a JSON object with the following keys:
             - "score": A compatibility score between 0 and 100 (number).
             - "desc": A detailed paragraph explaining the compatibility, strengths, and advice (string).
-            - "keywords": 3 key phrases summarizing the relationship (e.g., "상호보완", "불꽃같은 사랑") (string).
+            - "keywords": 3 key phrases summarizing the relationship (e.g., "상호보완", "티키타카 친구") (string).
             `;
 
             const userQuery = `
@@ -78,7 +88,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             - Saju Day Master: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})
             - Elements: Wood ${partnerSaju.elementRatio.wood}%, Fire ${partnerSaju.elementRatio.fire}%, Earth ${partnerSaju.elementRatio.earth}%, Metal ${partnerSaju.elementRatio.metal}%, Water ${partnerSaju.elementRatio.water}%
 
-            Analyze their compatibility based on MBTI interaction and Saju elemental balance/harmony.
+            Analyze their compatibility as "${relationshipStr}" based on MBTI interaction and Saju elemental balance/harmony.
             `;
 
             const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {

@@ -55,17 +55,24 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             // Calculate Saju
             const sajuResult = calculateSaju(birthDate, birthTime);
 
+            // Translate elements to Korean for the prompt to avoid English leakage
+            const elementKoreanMap: { [key: string]: string } = {
+                wood: '목(Wood)', fire: '화(Fire)', earth: '토(Earth)', metal: '금(Metal)', water: '수(Water)'
+            };
+
             const systemPrompt = `
             You are an expert consultant specializing in the fusion of MBTI and traditional Korean Saju (Four Pillars of Destiny).
-            Your role is to analyze a user's information and provide a concise, insightful analysis.
+            Your role is to analyze a user's information and provide a COMPREHENSIVE and DETAILED analysis (approx. 1 page length in content).
             Maintain a friendly, encouraging, and professional tone.
             The response MUST be in Korean (Hangul).
+            DO NOT use English terms for Saju elements (e.g., do NOT use 'Metal', 'Wood'). ALWAYS use Korean terms like '금(Metal)', '목(Wood)', or just '금', '목'.
+            
             The response MUST be a JSON object with the following keys:
             - "keywords": 3-4 key personality keywords (string).
             - "commonalities": Explanation of common points between Saju and MBTI (string).
-            - "fortune2026": A brief fortune for the year 2026 (string).
             - "typeDescription": A description of their Saju Day Master type (e.g., "섬세한 보석 신금") (string).
             - "elementAnalysis": A brief analysis of their element distribution (e.g., "물(수)이 많아 지혜롭지만...") (string).
+            - "detailedAnalysis": A deep dive into their personality, potential, and life path combining MBTI and Saju (string, long text).
             `;
 
             const userQuery = `
@@ -81,7 +88,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             - Element Connection:
               Wood: ${sajuResult.elements.wood}, Fire: ${sajuResult.elements.fire}, Earth: ${sajuResult.elements.earth}, Metal: ${sajuResult.elements.metal}, Water: ${sajuResult.elements.water}
 
-            Provide the JSON response based on this.
+            Provide the JSON response based on this. Ensure "Metal" is displayed as "금" or "금(Metal)" and never just "Metal".
             `;
 
             const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {

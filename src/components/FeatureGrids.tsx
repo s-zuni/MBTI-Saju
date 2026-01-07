@@ -17,7 +17,8 @@ interface FeatureGridsProps {
     onStart: () => void;
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
-    onTravelClick: () => void;
+    onTripClick: () => void;
+    onHealingClick: () => void;
     onJobClick: () => void;
     onCompatibilityClick: () => void;
 }
@@ -26,7 +27,8 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
     onStart,
     onFortuneClick,
     onMbtiSajuClick,
-    onTravelClick,
+    onTripClick,
+    onHealingClick,
     onJobClick,
     onCompatibilityClick
 }) => {
@@ -35,8 +37,8 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
     const handleCardClick = (index: number) => {
         if (index === 0) onFortuneClick();
         else if (index === 1) onMbtiSajuClick();
-        else if (index === 2) onTravelClick();
-        else if (index === 3) onTravelClick(); // Healing Place
+        else if (index === 2) onTripClick();
+        else if (index === 3) onHealingClick();
         else if (index === 4) onJobClick();
         else if (index === 6) onCompatibilityClick();
         else if (index === 7) navigate('/community');
