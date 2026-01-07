@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -6,6 +6,14 @@ interface MbtiSajuModalProps {
 }
 
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -16,12 +24,12 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
         </h3>
 
         <div className="text-slate-600 leading-relaxed font-medium space-y-4">
-            <p>
+          <p>
             MBTI는 개인의 선호도를 바탕으로 16가지 성격 유형을 제시하는 자기보고식 성격 유형 검사입니다. 각 유형은 개인이 에너지를 얻는 방식, 정보를 인식하는 형태, 판단을 내리는 기준, 그리고 선호하는 삶의 패턴에 따라 결정됩니다. 이를 통해 자신과 타인을 더 깊이 이해할 수 있습니다.
-            </p>
-            <p>
+          </p>
+          <p>
             사주(四柱)는 사람이 태어난 연, 월, 일, 시를 바탕으로 그 사람의 타고난 운명과 길흉화복을 알아보는 동양의 전통적인 명리학입니다. 네 개의 기둥(四柱)에 해당하는 간지(干支)를 통해 개인의 기질, 잠재력, 그리고 삶의 큰 흐름을 예측하고 조언을 얻습니다.
-            </p>
+          </p>
         </div>
 
         <button

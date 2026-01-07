@@ -9,16 +9,18 @@ const MBTI_TYPES = [
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')); // Every 5 minutes
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 interface AnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode?: 'signup' | 'login';
+  mode?: 'signup' | 'login' | 'edit';
+  initialData?: any;
 }
 
 const SignupForm: React.FC<any> = ({
   step,
+  mode,
   name, setName,
   gender, setGender,
   mbti, setMbti,
@@ -34,239 +36,239 @@ const SignupForm: React.FC<any> = ({
   handleGoogleAuth,
   setStep
 }) => (
-    <>
-      {step === 1 && (
-        // Step 1: Data Input
-        <div>
-          <p className="text-slate-500 font-medium mb-6">
-            맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.
-          </p>
-          <form className="space-y-5">
-            {/* ... Form fields for name, gender, mbti etc. ... */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
-                이름
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-field"
-                required
-              />
-            </div>
+  <>
+    {step === 1 && (
+      // Step 1: Data Input
+      <div>
+        <p className="text-slate-500 font-medium mb-6">
+          {mode === 'edit' ? '정보를 수정해주세요.' : '맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.'}
+        </p>
+        <form className="space-y-5">
+          {/* ... Form fields for name, gender, mbti etc. ... */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+              이름
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                성별
-              </label>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center">
-                  <input
-                    id="gender-male"
-                    name="gender"
-                    type="radio"
-                    value="male"
-                    checked={gender === 'male'}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                  />
-                  <label htmlFor="gender-male" className="ml-2 block text-sm text-gray-900">
-                    남성
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    id="gender-female"
-                    name="gender"
-                    type="radio"
-                    value="female"
-                    checked={gender === 'female'}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                  />
-                  <label htmlFor="gender-female" className="ml-2 block text-sm text-gray-900">
-                    여성
-                  </label>
-                </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              성별
+            </label>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center">
+                <input
+                  id="gender-male"
+                  name="gender"
+                  type="radio"
+                  value="male"
+                  checked={gender === 'male'}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                />
+                <label htmlFor="gender-male" className="ml-2 block text-sm text-gray-900">
+                  남성
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="gender-female"
+                  name="gender"
+                  type="radio"
+                  value="female"
+                  checked={gender === 'female'}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                />
+                <label htmlFor="gender-female" className="ml-2 block text-sm text-gray-900">
+                  여성
+                </label>
               </div>
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="mbti" className="block text-sm font-bold text-slate-700 mb-2">
-                MBTI 유형
+          <div>
+            <label htmlFor="mbti" className="block text-sm font-bold text-slate-700 mb-2">
+              MBTI 유형
+            </label>
+            <select
+              id="mbti"
+              name="mbti"
+              value={mbti}
+              onChange={(e) => setMbti(e.target.value)}
+              className="input-field appearance-none"
+              required
+            >
+              <option value="">MBTI 선택</option>
+              {MBTI_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="birthDate" className="block text-sm font-bold text-slate-700 mb-2">
+              생년월일 (양력)
+            </label>
+            <input
+              type="date"
+              name="birthDate"
+              id="birthDate"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <label htmlFor="birthHour" className="block text-sm font-bold text-slate-700 mb-2">
+                출생 시간
               </label>
               <select
-                id="mbti"
-                name="mbti"
-                value={mbti}
-                onChange={(e) => setMbti(e.target.value)}
+                id="birthHour"
+                name="birthHour"
+                value={birthHour}
+                onChange={(e) => setBirthHour(e.target.value)}
                 className="input-field appearance-none"
-                required
+                disabled={unknownBirthTime}
               >
-                <option value="">MBTI 선택</option>
-                {MBTI_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                {HOURS.map((hour) => (
+                  <option key={hour} value={hour}>
+                    {hour}시
                   </option>
                 ))}
               </select>
             </div>
-
-            <div>
-              <label htmlFor="birthDate" className="block text-sm font-bold text-slate-700 mb-2">
-                생년월일 (양력)
+            <div className="flex-1">
+              <label htmlFor="birthMinute" className="block text-sm font-bold text-slate-700 mb-2">
+                출생 분
               </label>
-              <input
-                type="date"
-                name="birthDate"
-                id="birthDate"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="input-field"
-                required
-              />
+              <select
+                id="birthMinute"
+                name="birthMinute"
+                value={birthMinute}
+                onChange={(e) => setBirthMinute(e.target.value)}
+                className="input-field appearance-none"
+                disabled={unknownBirthTime}
+              >
+                {MINUTES.map((minute) => (
+                  <option key={minute} value={minute}>
+                    {minute}분
+                  </option>
+                ))}
+              </select>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <label htmlFor="birthHour" className="block text-sm font-bold text-slate-700 mb-2">
-                  출생 시간
-                </label>
-                <select
-                  id="birthHour"
-                  name="birthHour"
-                  value={birthHour}
-                  onChange={(e) => setBirthHour(e.target.value)}
-                  className="input-field appearance-none"
-                  disabled={unknownBirthTime}
-                >
-                  {HOURS.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {hour}시
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="birthMinute" className="block text-sm font-bold text-slate-700 mb-2">
-                  출생 분
-                </label>
-                <select
-                  id="birthMinute"
-                  name="birthMinute"
-                  value={birthMinute}
-                  onChange={(e) => setBirthMinute(e.target.value)}
-                  className="input-field appearance-none"
-                  disabled={unknownBirthTime}
-                >
-                  {MINUTES.map((minute) => (
-                    <option key={minute} value={minute}>
-                      {minute}분
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                id="unknownBirthTime"
-                name="unknownBirthTime"
-                type="checkbox"
-                checked={unknownBirthTime}
-                onChange={(e) => setUnknownBirthTime(e.target.checked)}
-                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-              />
-              <label htmlFor="unknownBirthTime" className="ml-2 block text-sm text-gray-900">
-                출생 시간 모름
-              </label>
-            </div>
-          </form>
-
-          <div className="mt-8">
-            <button
-              type="button"
-              className="btn-primary w-full py-3 text-lg"
-              onClick={handleNext}
-              disabled={loading}
-            >
-              다음
-            </button>
           </div>
+
+          <div className="flex items-center">
+            <input
+              id="unknownBirthTime"
+              name="unknownBirthTime"
+              type="checkbox"
+              checked={unknownBirthTime}
+              onChange={(e) => setUnknownBirthTime(e.target.checked)}
+              className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+            <label htmlFor="unknownBirthTime" className="ml-2 block text-sm text-gray-900">
+              출생 시간 모름
+            </label>
+          </div>
+        </form>
+
+        <div className="mt-8">
+          <button
+            type="button"
+            className="btn-primary w-full py-3 text-lg"
+            onClick={handleNext}
+            disabled={loading}
+          >
+            {loading ? '저장 중...' : (mode === 'edit' ? '수정 완료' : '다음')}
+          </button>
         </div>
-      )}
-      {step === 2 && (
-        // Step 2: Account Creation
-        <div>
-          <p className="text-slate-500 font-medium mb-6">
-            분석 결과를 저장하고 보려면 계정을 생성하세요.
-          </p>
-          <form className="space-y-5">
-            <div>
-              <label htmlFor="email-signup" className="block text-sm font-bold text-slate-700 mb-2">
-                이메일
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email-signup"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="password-signup" className="block text-sm font-bold text-slate-700 mb-2">
-                비밀번호
-              </label>
-              <input
-                type="password"
-                name="password"
-                id="password-signup"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-                required
-              />
-            </div>
-          </form>
-          <div className="mt-8 flex flex-col space-y-4">
-            <button
-              type="button"
-              className="btn-primary w-full py-3 text-lg"
-              onClick={handleEmailSignup}
-              disabled={loading}
-            >
-              {loading ? '회원가입 중...' : '이메일로 회원가입'}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary w-full py-3 text-lg"
-              onClick={handleGoogleAuth}
-              disabled={loading}
-            >
-              Google로 계속하기
-            </button>
+      </div>
+    )}
+    {step === 2 && (
+      // Step 2: Account Creation
+      <div>
+        <p className="text-slate-500 font-medium mb-6">
+          분석 결과를 저장하고 보려면 계정을 생성하세요.
+        </p>
+        <form className="space-y-5">
+          <div>
+            <label htmlFor="email-signup" className="block text-sm font-bold text-slate-700 mb-2">
+              이메일
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email-signup"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-field"
+              required
+            />
           </div>
-          <div className="mt-6">
-            <button
-              type="button"
-              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1 group"
-              onClick={() => setStep(1)}
-              disabled={loading}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left group-hover:-translate-x-1 transition-transform"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
-              뒤로
-            </button>
+          <div>
+            <label htmlFor="password-signup" className="block text-sm font-bold text-slate-700 mb-2">
+              비밀번호
+            </label>
+            <input
+              type="password"
+              name="password"
+              id="password-signup"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input-field"
+              required
+            />
           </div>
+        </form>
+        <div className="mt-8 flex flex-col space-y-4">
+          <button
+            type="button"
+            className="btn-primary w-full py-3 text-lg"
+            onClick={handleEmailSignup}
+            disabled={loading}
+          >
+            {loading ? '회원가입 중...' : '이메일로 회원가입'}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary w-full py-3 text-lg"
+            onClick={handleGoogleAuth}
+            disabled={loading}
+          >
+            Google로 계속하기
+          </button>
         </div>
-      )}
-    </>
-  );
+        <div className="mt-6">
+          <button
+            type="button"
+            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1 group"
+            onClick={() => setStep(1)}
+            disabled={loading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left group-hover:-translate-x-1 transition-transform"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+            뒤로
+          </button>
+        </div>
+      </div>
+    )}
+  </>
+);
 
 const LoginForm: React.FC<any> = ({
   email, setEmail,
@@ -275,66 +277,66 @@ const LoginForm: React.FC<any> = ({
   handleLogin,
   handleGoogleAuth
 }) => (
-    <div>
-      <p className="text-slate-500 font-medium mb-6">
-        계정에 로그인하여 분석 결과를 확인하세요.
-      </p>
-      <form className="space-y-5">
-        <div>
-          <label htmlFor="email-login" className="block text-sm font-bold text-slate-700 mb-2">
-            이메일
-          </label>
-          <input
-            type="email"
-            name="email"
-            id="email-login"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="password-login" className="block text-sm font-bold text-slate-700 mb-2">
-            비밀번호
-          </label>
-          <input
-            type="password"
-            name="password"
-            id="password-login"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-      </form>
-      <div className="mt-8 flex flex-col space-y-4">
-        <button
-          type="button"
-          className="btn-primary w-full py-3 text-lg"
-          onClick={handleLogin}
-          disabled={loading}
-        >
-          {loading ? '로그인 중...' : '로그인'}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary w-full py-3 text-lg"
-          onClick={handleGoogleAuth}
-          disabled={loading}
-        >
-          Google로 계속하기
-        </button>
+  <div>
+    <p className="text-slate-500 font-medium mb-6">
+      계정에 로그인하여 분석 결과를 확인하세요.
+    </p>
+    <form className="space-y-5">
+      <div>
+        <label htmlFor="email-login" className="block text-sm font-bold text-slate-700 mb-2">
+          이메일
+        </label>
+        <input
+          type="email"
+          name="email"
+          id="email-login"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+          required
+        />
       </div>
+      <div>
+        <label htmlFor="password-login" className="block text-sm font-bold text-slate-700 mb-2">
+          비밀번호
+        </label>
+        <input
+          type="password"
+          name="password"
+          id="password-login"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+          required
+        />
+      </div>
+    </form>
+    <div className="mt-8 flex flex-col space-y-4">
+      <button
+        type="button"
+        className="btn-primary w-full py-3 text-lg"
+        onClick={handleLogin}
+        disabled={loading}
+      >
+        {loading ? '로그인 중...' : '로그인'}
+      </button>
+      <button
+        type="button"
+        className="btn-secondary w-full py-3 text-lg"
+        onClick={handleGoogleAuth}
+        disabled={loading}
+      >
+        Google로 계속하기
+      </button>
     </div>
-  );
+  </div>
+);
 
-const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup' }) => {
-  const [mode, setMode] = useState(initialMode); // 'signup' or 'login'
-  const [step, setStep] = useState(1); // For signup flow: 1: Data Input, 2: Account Creation
+const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup', initialData }) => {
+  const [mode, setMode] = useState(initialMode); // 'signup', 'login', or 'edit'
+  const [step, setStep] = useState(1);
 
-  // Signup fields
+  // Signup/Edit fields
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [mbti, setMbti] = useState('');
@@ -367,19 +369,37 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   };
 
   const resetFields = useCallback(() => {
-    setName('');
-    setGender('');
-    setMbti('');
-    setBirthDate('');
-    setBirthHour('00');
-    setBirthMinute('00');
-    setUnknownBirthTime(false);
-    setEmail('');
-    setPassword('');
+    if (initialData && initialMode === 'edit') {
+      setName(initialData.name || '');
+      setGender(initialData.gender || '');
+      setMbti(initialData.mbti || '');
+      setBirthDate(initialData.birth_date || '');
+
+      if (initialData.birth_time) {
+        const [h, m] = initialData.birth_time.split(':');
+        setBirthHour(h);
+        setBirthMinute(m);
+        setUnknownBirthTime(false);
+      } else {
+        setBirthHour('00');
+        setBirthMinute('00');
+        setUnknownBirthTime(true);
+      }
+    } else {
+      setName('');
+      setGender('');
+      setMbti('');
+      setBirthDate('');
+      setBirthHour('00');
+      setBirthMinute('00');
+      setUnknownBirthTime(false);
+      setEmail('');
+      setPassword('');
+    }
     setAuthError('');
     setStep(1);
     setLoading(false);
-  }, []);
+  }, [initialData, initialMode]);
 
   useEffect(() => {
     // Set the mode when the modal opens or the initialMode prop changes.
@@ -443,10 +463,23 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       });
 
       if (error) throw error;
-      if (!data.user) throw new Error('회원가입에 실패했습니다.');
 
-      alert('회원가입이 완료되었습니다! 확인 이메일을 확인해주세요.');
-      onClose(); // Close modal on success
+      // Auto-login check: if session exists, we are good.
+      if (data.session) {
+        alert('회원가입 및 로그인이 완료되었습니다!');
+        onClose();
+        window.location.reload();
+      } else {
+        // If no session, it might need email confirmation, BUT user asked to skip it.
+        // We can try to sign in immediately just in case email confirmation is OFF but session wasn't returned for some reason
+        // Or we just tell them success.
+        // Since user said "make it so I don't have to check email", they likely turned off "Confirm Email" in Supabase.
+        // If "Confirm Email" is OFF, Supabase returns a session.
+        // If it didn't return a session, "Confirm Email" might still be ON.
+        // We'll show a message but simpler.
+        alert('회원가입이 완료되었습니다. (이메일 확인이 필요할 수 있습니다)');
+        onClose();
+      }
 
     } catch (error: any) {
       setAuthError(translateAuthError(error.message));
@@ -455,7 +488,6 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       setLoading(false);
     }
   };
-
 
   const handleGoogleAuth = async () => {
     setLoading(true);
@@ -478,11 +510,57 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     }
   };
 
+  const handleUpdate = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: name,
+          gender: gender,
+          mbti: mbti,
+          birth_date: birthDate,
+          birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
+        }
+      });
+
+      if (error) throw error;
+
+      alert('프로필이 수정되었습니다.');
+      onClose();
+      window.location.reload();
+
+    } catch (error: any) {
+      setAuthError(error.message || '프로필 수정 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Keyboard Navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Enter') {
+        // Logic to trigger primary action based on mode/step
+        if (mode === 'login') handleLogin();
+        else if (mode === 'signup' || mode === 'edit') {
+          if (step === 1 && mode !== 'edit') handleNext();
+          else if (mode === 'edit') handleUpdate();
+          else if (step === 2) handleEmailSignup();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, mode, step, onClose, handleLogin, handleNext, handleUpdate, handleEmailSignup]); // Dependencies
+
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
       <div className="relative p-8 border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
         <h3 className="text-3xl font-black text-slate-900 mb-2">
-          {mode === 'login' ? '로그인' : (step === 1 ? '무료 분석 시작하기' : '계정 생성하기')}
+          {mode === 'login' ? '로그인' : (mode === 'edit' ? '프로필 수정' : (step === 1 ? '무료 분석 시작하기' : '계정 생성하기'))}
         </h3>
 
         <div className='text-center mb-6'>
@@ -519,34 +597,34 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
             handleLogin={handleLogin}
             handleGoogleAuth={handleGoogleAuth}
           />
-        ) : (
-            <SignupForm
-              step={step}
-              name={name}
-              setName={setName}
-              gender={gender}
-              setGender={setGender}
-              mbti={mbti}
-              setMbti={setMbti}
-              birthDate={birthDate}
-              setBirthDate={setBirthDate}
-              birthHour={birthHour}
-              setBirthHour={setBirthHour}
-              birthMinute={birthMinute}
-              setBirthMinute={setBirthMinute}
-              unknownBirthTime={unknownBirthTime}
-              setUnknownBirthTime={setUnknownBirthTime}
-              email={email}
-              setEmail={setEmail}
-              password={password}
-              setPassword={setPassword}
-              loading={loading}
-              handleNext={handleNext}
-              handleEmailSignup={handleEmailSignup}
-              handleGoogleAuth={handleGoogleAuth}
-              setStep={setStep}
-            />
-        )}
+        ) : <SignupForm
+          step={step}
+          mode={mode} // Pass mode
+          name={name}
+          setName={setName}
+          gender={gender}
+          setGender={setGender}
+          mbti={mbti}
+          setMbti={setMbti}
+          birthDate={birthDate}
+          setBirthDate={setBirthDate}
+          birthHour={birthHour}
+          setBirthHour={setBirthHour}
+          birthMinute={birthMinute}
+          setBirthMinute={setBirthMinute}
+          unknownBirthTime={unknownBirthTime}
+          setUnknownBirthTime={setUnknownBirthTime}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          loading={loading}
+          handleNext={mode === 'edit' ? handleUpdate : handleNext}
+          handleEmailSignup={handleEmailSignup}
+          handleGoogleAuth={handleGoogleAuth}
+          setStep={setStep}
+        />
+        }
 
         <button
           className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"

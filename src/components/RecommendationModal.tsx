@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, MapPin, Briefcase } from 'lucide-react';
 
 interface RecommendationModalProps {
@@ -9,6 +9,14 @@ interface RecommendationModalProps {
 
 const RecommendationModal: React.FC<RecommendationModalProps> = ({ isOpen, onClose, initialTab = 'travel' }) => {
     const [activeTab, setActiveTab] = useState<'travel' | 'career'>(initialTab);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen) onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
