@@ -29,10 +29,6 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         setError(null);
     };
 
-    // ... (useEffect remains handled by diff chunk matching) ...
-    // Note: useEffect logic is fine, no changes needed there unless we need to reset.
-
-    // ... (handleAnalyze update) ...
     const handleAnalyze = async () => {
         if (!partnerName || !partnerMbti || !partnerBirthDate) {
             setError('상대방의 정보를 모두 입력해주세요.');
@@ -69,12 +65,6 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 },
                 body: JSON.stringify({ myProfile, partnerProfile, relationshipType })
             });
-            // ...
-            // UI Update down below
-            /* 
-            Need to insert the Select UI. I will do this in a separate chunk or careful larger chunk. 
-            Checking line 141 (select MBTI) - I'll insert Relationship selector BEFORE or AFTER it. 
-            */
 
             if (!response.ok) {
                 const errData = await response.json();
@@ -90,6 +80,26 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
             setLoading(false);
         }
     };
+
+    // Reset fields when modal opens
+    useEffect(() => {
+        if (isOpen) resetFields();
+    }, [isOpen]);
+
+    // Handle Keyboard Events
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+            if (e.key === 'Enter') handleAnalyze();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose, partnerName, partnerMbti, partnerBirthDate, partnerBirthTime, relationshipType]);
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
