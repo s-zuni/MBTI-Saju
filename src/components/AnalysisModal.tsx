@@ -413,9 +413,6 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     }
   }, [isOpen, resetFields]);
 
-
-  if (!isOpen) return null;
-
   const handleNext = () => {
     // Basic validation for Step 1 before proceeding
     if (!name || !gender || !mbti || !birthDate) {
@@ -554,7 +551,10 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, mode, step, onClose, handleLogin, handleNext, handleUpdate, handleEmailSignup]); // Dependencies
+  }, [isOpen, mode, step, onClose, handleLogin, handleNext, handleUpdate, handleEmailSignup]);
+
+  if (!isOpen) return null;
+
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
