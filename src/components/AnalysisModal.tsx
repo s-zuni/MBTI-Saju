@@ -209,14 +209,15 @@ const SignupForm: React.FC<any> = ({
         <form className="space-y-5">
           <div>
             <label htmlFor="email-signup" className="block text-sm font-bold text-slate-700 mb-2">
-              이메일
+              아이디
             </label>
             <input
-              type="email"
+              type="text"
               name="email"
               id="email-signup"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="아이디를 입력하세요"
               className="input-field"
               required
             />
@@ -284,14 +285,15 @@ const LoginForm: React.FC<any> = ({
     <form className="space-y-5">
       <div>
         <label htmlFor="email-login" className="block text-sm font-bold text-slate-700 mb-2">
-          이메일
+          아이디
         </label>
         <input
-          type="email"
+          type="text"
           name="email"
           id="email-login"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="아이디를 입력하세요"
           className="input-field"
           required
         />
@@ -354,16 +356,16 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
   const translateAuthError = (message: string): string => {
     if (message.includes('Invalid login credentials')) {
-      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+      return '아이디 또는 비밀번호가 올바르지 않습니다.';
     }
     if (message.includes('User already registered')) {
-      return '이미 가입된 이메일입니다.';
+      return '이미 사용 중인 아이디입니다.';
     }
     if (message.includes('Password should be at least 6 characters')) {
       return '비밀번호는 6자 이상이어야 합니다.';
     }
     if (message.includes('Unable to validate email address: invalid format')) {
-      return '올바른 이메일 형식이 아닙니다.';
+      return '올바른 아이디 형식이 아닙니다.';
     }
     // Fallback: debugging mode - show actual error
     return `오류가 발생했습니다: ${message}`;
@@ -428,8 +430,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setLoading(true);
     setAuthError('');
     try {
+      // Append dummy domain for Supabase email requirement
+      const emailToUse = email.includes('@') ? email : `${email}@mbtisaju.local`;
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailToUse,
         password,
       });
       if (error) throw error;
@@ -446,8 +451,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setLoading(true);
     setAuthError('');
     try {
+      // Append dummy domain
+      const emailToUse = email.includes('@') ? email : `${email}@mbtisaju.local`;
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: emailToUse,
         password,
         options: {
           data: {
@@ -465,18 +473,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       if (data.session) {
         alert('회원가입 및 로그인이 완료되었습니다!');
         onClose();
-        // window.location.reload(); // Removed to prevent state reset
       } else {
-        // If session is missing (e.g. email confirmation required but we want to auto-login for testing),
-        // try to sign in immediately.
         const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-          email,
+          email: emailToUse,
           password,
         });
 
         if (loginError) {
-          // If login also fails, it likely genuinely needs email confirmation
-          alert('회원가입이 완료되었습니다. 이메일 확인이 필요할 수 있습니다.');
+          alert('회원가입이 완료되었습니다.');
           onClose();
         } else if (loginData.session) {
           alert('회원가입 및 로그인이 완료되었습니다!');
@@ -531,7 +535,6 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
       alert('프로필이 수정되었습니다.');
       onClose();
-      // window.location.reload(); // Removed
 
     } catch (error: any) {
       setAuthError(error.message || '프로필 수정 중 오류가 발생했습니다.');
