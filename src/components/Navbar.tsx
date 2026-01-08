@@ -49,8 +49,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Logout Error:', error.message);
-      setLoading(false);
     }
+    setLoading(false); // Always reset loading state
     // Auth state change listener will handle navigation
   };
 
