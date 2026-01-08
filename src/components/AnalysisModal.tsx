@@ -365,7 +365,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     if (message.includes('Unable to validate email address: invalid format')) {
       return '올바른 이메일 형식이 아닙니다.';
     }
-    return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    // Fallback: debugging mode - show actual error
+    return `오류가 발생했습니다: ${message}`;
   };
 
   const resetFields = useCallback(() => {
