@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -9,6 +9,7 @@ import MyPage from './components/MyPage';
 import FortuneModal from './components/FortuneModal';
 import MbtiSajuModal from './components/MbtiSajuModal';
 import { supabase } from './supabaseClient';
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import BottomNav from './components/BottomNav';
 import CommunityPage from './components/CommunityPage';
 import RecommendationModal from './components/RecommendationModal';
@@ -16,8 +17,12 @@ import CompatibilityModal from './components/CompatibilityModal';
 import TripModal from './components/TripModal';
 import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
+import SplashScreen from './components/SplashScreen';
 
 function App() {
+  // Only show splash screen on mobile devices (width <= 768px)
+  const [showSplash, setShowSplash] = useState(window.innerWidth <= 768);
+
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
   const [showFortuneModal, setShowFortuneModal] = useState(false);
@@ -33,7 +38,21 @@ function App() {
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
+      setSession(data.session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const openAnalysisModal = (mode: 'signup' | 'login') => {
     setAnalysisModalMode(mode);
@@ -106,13 +125,16 @@ function App() {
 
 
   const handleStart = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       handleFetchFortune();
     } else {
       openAnalysisModal('signup');
     }
   };
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   return (
     <BrowserRouter>
@@ -192,6 +214,8 @@ function App() {
         <BottomNav
           onFortuneClick={handleFetchFortune}
           onMbtiSajuClick={openMbtiSajuModal}
+          onLoginClick={() => openAnalysisModal('login')}
+          isAuthenticated={!!session}
         />
 
         {/* Conditionally render the new AnalysisModal */}

@@ -5,18 +5,28 @@ import { useNavigate, useLocation } from 'react-router-dom';
 interface BottomNavProps {
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
+    onLoginClick: () => void;
+    isAuthenticated: boolean;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, isAuthenticated }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const handleProtectedNavigation = (path: string) => {
+        if (isAuthenticated) {
+            navigate(path);
+        } else {
+            onLoginClick();
+        }
+    };
+
     const navItems = [
         { icon: Home, label: '홈', path: '/', onClick: () => navigate('/') },
-        { icon: Sparkles, label: '운세', onClick: onFortuneClick }, // Today's Fortune
-        { icon: Compass, label: '분석', onClick: onMbtiSajuClick }, // MBTI & Saju / Compatibility
+        { icon: Sparkles, label: '운세', onClick: onFortuneClick },
+        { icon: Compass, label: '분석', onClick: onMbtiSajuClick },
         { icon: Users, label: '커뮤니티', path: '/community', onClick: () => navigate('/community') },
-        { icon: User, label: '마이', path: '/mypage', onClick: () => navigate('/mypage') },
+        { icon: User, label: '마이', path: '/mypage', onClick: () => handleProtectedNavigation('/mypage') },
     ];
 
     return (
