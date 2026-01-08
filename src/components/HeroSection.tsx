@@ -25,7 +25,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
 
         <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-fade-up [animation-delay:200ms]">
           MBTI의 심리학과 사주의 지혜를 결합하여 당신의 가능성을 발견하세요.<br className="hidden md:block" />
-          복잡한 분석은 AI에게 맡기고, 당신은 해답만 확인하면 됩니다.
+          정교한 명리학 데이터와 MBTI 심리 통계를 분석하여, AI가 깊이 있고 신뢰할 수 있는 해답을 제시합니다.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up [animation-delay:400ms]">
@@ -37,7 +37,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
             <ArrowRight className="w-5 h-5" />
           </button>
           <button
-            onClick={onStart}
+            onClick={() => alert('준비 중인 기능입니다.')}
             className="w-full sm:w-auto px-10 py-5 bg-white text-slate-900 border border-slate-200 rounded-full font-bold text-lg hover:bg-slate-50 transition-all"
           >
             서비스 원리 알아보기

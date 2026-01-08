@@ -40,6 +40,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
         else if (index === 2) onTripClick();
         else if (index === 3) onHealingClick();
         else if (index === 4) onJobClick();
+        else if (index === 5) alert('준비 중인 기능입니다.');
         else if (index === 6) onCompatibilityClick();
         else if (index === 7) navigate('/community');
         else onStart();

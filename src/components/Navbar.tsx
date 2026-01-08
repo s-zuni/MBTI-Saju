@@ -108,10 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
         {/* Actions */}
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-600">
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="hover:text-indigo-600 transition-colors">홈</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); }} className="hover:text-indigo-600 transition-colors">오늘의 운세</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); }} className="hover:text-indigo-600 transition-colors">MBTI & 사주</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">스토어</a>
+            {/* Links removed as requested */}
           </div>
 
           <div className="flex items-center gap-4 md:gap-5 border-l border-slate-200 pl-6">
@@ -193,10 +190,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
 
             {/* Mobile Navigation Links */}
             <div className="flex flex-col gap-2 text-sm font-semibold text-slate-600 mb-4">
-              <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">홈</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); handleFortuneClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">오늘의 운세</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); handleMbtiSajuClick(); setIsMobileMenuOpen(false); }} className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">MBTI & 사주</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors p-2 rounded-md hover:bg-slate-100">스토어</a>
+              {/* Links removed as requested */}
             </div>
 
             {/* Mobile User Actions */}

@@ -461,21 +461,26 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
       if (error) throw error;
 
-      // Auto-login check: if session exists, we are good.
       if (data.session) {
         alert('회원가입 및 로그인이 완료되었습니다!');
         onClose();
-        window.location.reload();
+        // window.location.reload(); // Removed to prevent state reset
       } else {
-        // If no session, it might need email confirmation, BUT user asked to skip it.
-        // We can try to sign in immediately just in case email confirmation is OFF but session wasn't returned for some reason
-        // Or we just tell them success.
-        // Since user said "make it so I don't have to check email", they likely turned off "Confirm Email" in Supabase.
-        // If "Confirm Email" is OFF, Supabase returns a session.
-        // If it didn't return a session, "Confirm Email" might still be ON.
-        // We'll show a message but simpler.
-        alert('회원가입이 완료되었습니다. (이메일 확인이 필요할 수 있습니다)');
-        onClose();
+        // If session is missing (e.g. email confirmation required but we want to auto-login for testing),
+        // try to sign in immediately.
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (loginError) {
+          // If login also fails, it likely genuinely needs email confirmation
+          alert('회원가입이 완료되었습니다. 이메일 확인이 필요할 수 있습니다.');
+          onClose();
+        } else if (loginData.session) {
+          alert('회원가입 및 로그인이 완료되었습니다!');
+          onClose();
+        }
       }
 
     } catch (error: any) {
@@ -525,7 +530,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
       alert('프로필이 수정되었습니다.');
       onClose();
-      window.location.reload();
+      // window.location.reload(); // Removed
 
     } catch (error: any) {
       setAuthError(error.message || '프로필 수정 중 오류가 발생했습니다.');
