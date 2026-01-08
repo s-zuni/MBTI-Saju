@@ -431,7 +431,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setAuthError('');
     try {
       // Append dummy domain for Supabase email requirement
-      const emailToUse = email.includes('@') ? email : `${email}@mbtisaju.local`;
+      const emailToUse = email.includes('@') ? email : `${email}@example.com`;
 
       const { error } = await supabase.auth.signInWithPassword({
         email: emailToUse,
@@ -452,7 +452,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setAuthError('');
     try {
       // Append dummy domain
-      const emailToUse = email.includes('@') ? email : `${email}@mbtisaju.local`;
+      const emailToUse = email.includes('@') ? email : `${email}@example.com`;
 
       const { data, error } = await supabase.auth.signUp({
         email: emailToUse,
