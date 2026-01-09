@@ -74,7 +74,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라집니다.")) return;
+    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라집니다.")) return;
 
     setIsRegenerating(true);
     try {
