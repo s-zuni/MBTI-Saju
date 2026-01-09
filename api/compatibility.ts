@@ -23,7 +23,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     try {
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAC-npwHohgvs1YKoMcc1gHWWy5Hd6qmSA";
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
         if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) {
             throw new Error('Missing environment variables');

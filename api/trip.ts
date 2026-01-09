@@ -9,7 +9,7 @@ export default async (req: any, res: any) => {
         const { birthDate, birthTime, mbti, gender, name } = req.body;
         const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAC-npwHohgvs1YKoMcc1gHWWy5Hd6qmSA";
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
         if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
 

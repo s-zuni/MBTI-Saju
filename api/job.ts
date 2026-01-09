@@ -7,7 +7,7 @@ export default async (req: any, res: any) => {
 
     try {
         const { birthDate, birthTime, mbti } = req.body;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAC-npwHohgvs1YKoMcc1gHWWy5Hd6qmSA";
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
 
         const saju = calculateSaju(birthDate, birthTime);
