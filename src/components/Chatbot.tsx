@@ -11,8 +11,26 @@ interface Message {
     timestamp: Date;
 }
 
-const Chatbot: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
+interface ChatbotProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+const Chatbot: React.FC<ChatbotProps> = ({ isOpen: controlledIsOpen, onClose }) => {
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+
+    // Determine if we are controlled or uncontrolled
+    const isControlled = controlledIsOpen !== undefined;
+    const isOpen = isControlled ? controlledIsOpen : localIsOpen;
+
+    const handleToggle = () => {
+        if (isControlled) {
+            onClose?.();
+        } else {
+            setLocalIsOpen(!localIsOpen);
+        }
+    };
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 0,
@@ -31,14 +49,19 @@ const Chatbot: React.FC = () => {
         const loadContext = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user?.user_metadata) {
-                setUserContext(session.user.user_metadata);
+                setUserContext({
+                    ...session.user.user_metadata,
+                    birth_time: session.user.user_metadata.birth_time
+                });
             }
         };
         loadContext();
     }, [isOpen]);
 
     useEffect(() => {
-        scrollToBottom();
+        if (isOpen) {
+            scrollToBottom();
+        }
     }, [messages, isOpen]);
 
     const scrollToBottom = () => {
@@ -64,7 +87,9 @@ const Chatbot: React.FC = () => {
         setTimeout(() => {
             const responseText = generateChatbotResponse(userMsg.text, {
                 mbti: userContext?.mbti,
-                birthDate: userContext?.birth_date
+                birthDate: userContext?.birth_date,
+                birthTime: userContext?.birth_time,
+                name: userContext?.full_name
             });
 
             const botMsg: Message = {
@@ -81,15 +106,18 @@ const Chatbot: React.FC = () => {
 
     return (
         <>
-            {/* Floating Action Button */}
+            {/* Floating Action Button - Only show on Desktop if not controlled (or if we want a FAB on desktop even if controlled)
+                For now, we hide it on mobile since it's in the BottomNav
+            */}
             <button
-                onClick={() => setIsOpen(true)}
+                onClick={handleToggle}
                 className={`
-          fixed bottom-6 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-500
-          ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}
-          bg-gradient-to-r from-indigo-600 to-purple-600 text-white
-          hover:shadow-indigo-500/50 hover:-translate-y-1
-        `}
+                    fixed bottom-6 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-500
+                    hidden md:block 
+                    ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}
+                    bg-gradient-to-r from-indigo-600 to-purple-600 text-white
+                    hover:shadow-indigo-500/50 hover:-translate-y-1
+                `}
             >
                 <MessageCircle className="w-8 h-8 animate-pulse" />
             </button>
@@ -117,7 +145,7 @@ const Chatbot: React.FC = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => setIsOpen(false)}
+                        onClick={handleToggle}
                         className="p-2 hover:bg-white/10 rounded-full transition-colors"
                     >
                         <X className="w-6 h-6" />

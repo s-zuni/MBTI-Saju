@@ -1,15 +1,16 @@
 import React from 'react';
-import { Home, Sparkles, Heart, Users, User, Compass } from 'lucide-react';
+import { Home, Sparkles, Users, User, Compass, MessageCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface BottomNavProps {
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
     onLoginClick: () => void;
+    onChatbotClick: () => void;
     isAuthenticated: boolean;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, isAuthenticated }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, onChatbotClick, isAuthenticated }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -24,16 +25,38 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
     const navItems = [
         { icon: Home, label: '홈', path: '/', onClick: () => navigate('/') },
         { icon: Sparkles, label: '운세', onClick: onFortuneClick },
-        { icon: Compass, label: '분석', onClick: onMbtiSajuClick },
+        // Chatbot Button in Center
+        {
+            icon: MessageCircle,
+            label: '챗봇',
+            onClick: onChatbotClick,
+            isCenter: true
+        },
         { icon: Users, label: '커뮤니티', path: '/community', onClick: () => navigate('/community') },
         { icon: User, label: '마이', path: '/mypage', onClick: () => handleProtectedNavigation('/mypage') },
     ];
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2 z-50 pb-safe">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-end relative">
                 {navItems.map((item, index) => {
                     const isActive = item.path ? location.pathname === item.path : false;
+
+                    if (item.isCenter) {
+                        return (
+                            <button
+                                key={index}
+                                onClick={item.onClick}
+                                className="relative -top-6 flex flex-col items-center justify-center"
+                            >
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-green-500 shadow-lg shadow-indigo-300 flex items-center justify-center transform hover:scale-105 transition-all text-white">
+                                    <item.icon className="w-7 h-7 fill-current" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-700 mt-1">{item.label}</span>
+                            </button>
+                        );
+                    }
+
                     return (
                         <button
                             key={index}

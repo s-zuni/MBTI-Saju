@@ -16,7 +16,9 @@ export const MBTI_TYPES = [
 interface AnalysisContext {
     mbti: string;
     birthDate: string;
+    birthTime?: string;
     gender?: string;
+    name?: string;
 }
 
 // 2026년 운세 데이터 (시뮬레이션)
@@ -57,29 +59,66 @@ export const get2026Fortune = (context: AnalysisContext) => {
     };
 };
 
+// 종합 정밀 분석 생성 (2000자 내외 시뮬레이션)
+export const getDetailedFusedAnalysis = (context: AnalysisContext) => {
+    const { mbti, birthDate, birthTime, name } = context;
+    const yearDigit = birthDate ? parseInt(birthDate.split('-')[0].slice(-1) || '0') : 0;
+    const element = Object.values(SAJU_ELEMENTS)[yearDigit % 5] || '알 수 없음';
+    const fortune2026 = get2026Fortune(context);
+
+    return `
+[${name || '사용자'}님의 MBTI x 사주 초정밀 융합 분석 보고서]
+
+1. 근원적 성향 분석 (The Core)
+당신은 ${mbti} 유형의 논리적이고 체계적인 사고방식과 사주 명리학적으로 ${element}의 기운을 타고났습니다. ${mbti}가 가진 특성은 현대 사회에서의 행동 양식을 결정짓는다면, ${element}의 기운은 당신의 무의식 깊은 곳에 자리 잡은 본능적인 에너지를 의미합니다. 이 두 가지가 결합되어 당신은 겉으로는 차분하고 이성적으로 보일 수 있으나, 내면에는 ${element} 특유의 ${element.includes('화') ? '폭발적인 열정' : element.includes('수') ? '깊은 지혜' : '단단한 심지'}를 품고 있습니다. 
+
+특히 당신의 MBTI 유형은 문제 해결에 강점을 보이며, 이는 ${element}의 기운과 만나 더욱 시너지를 발휘합니다. 예를 들어, ${mbti}의 분석력은 ${element}의 직관력과 결합하여 남들이 보지 못하는 통찰력을 제공합니다. 때로는 ${mbti}의 특성으로 인해 타인에게 다소 냉철하게 비칠 수 있지만, 당신의 사주에 흐르는 기운은 사실 따뜻한 인간미를 갈구하고 있음을 보여줍니다.
+
+2. 2026년 운명의 흐름 (Destiny Flow 2026)
+다가오는 2026년은 당신에게 매우 중요한 전환점이 될 것입니다. MBTI 성향상 당신은 계획된 변화를 선호하겠지만, 운명의 흐름은 다소 역동적인 변화를 예고하고 있습니다. 
+
+- 재물운(Wealth): "${fortune2026.wealth}"
+올해 재물운의 흐름을 보았을 때, 당신의 ${mbti}적 판단력이 빛을 발할 시기입니다. 꼼꼼한 분석과 데이터를 기반으로 한 투자는 긍정적인 결과를 가져올 것입니다. 다만, ${element}의 기운이 약해지는 여름철에는 성급한 결정을 피하고 현금 유동성을 확보하는 것이 중요합니다.
+
+- 연애/대인운(Love & Relationship): "${fortune2026.love}"
+인간관계에서는 당신의 논리적인 면모보다는 감성적인 접근이 필요한 해입니다. ${birthTime ? `태어난 시간대인 ${birthTime}의 기운을 고려할 때, ` : ''}저녁 시간에 만남을 갖거나 활동을 하는 것이 당신의 매력을 더욱 돋보이게 할 것입니다. 솔로라면 의외의 장소에서 인연을 만날 수 있으며, 커플이라면 상대방의 감정을 먼저 읽으려는 노력이 관계를 한 단계 발전시킬 것입니다.
+
+3. 직업 및 진로 조언 (Career Path)
+당신의 ${mbti} 성향은 전문적이고 독립적인 업무 환경에서 최고의 효율을 발휘합니다. 여기에 ${element}의 기운을 더하면, 창의적이면서도 현실적인 결과물을 만들어내는 직업군이 적합합니다. 2026년에는 새로운 프로젝트나 이직 제안이 들어올 수 있으며, 이는 당신의 커리어에 있어 퀀텀 점프가 될 수 있는 기회입니다. 두려워하지 말고 도전하세요. 당신의 분석적 사고와 타고난 운이 당신을 성공으로 이끌 것입니다.
+
+4. 융합 솔루션 (Final Solution)
+결론적으로, 당신은 이성과 감성, 계획과 직관의 균형을 맞추는 것이 인생의 숙제이자 가장 큰 무기입니다. ${mbti}의 틀에만 갇히지 말고, ${element}가 주는 자연스러운 흐름에 몸을 맡겨보세요. 2026년은 당신이 준비한 만큼, 아니 그 이상으로 보상받는 한 해가 될 것입니다.
+
+* 본 분석은 ${name || '사용자'}님의 MBTI와 생년월일시 데이터를 기반으로 정밀 분석한 결과입니다.
+    `.trim();
+};
+
 // 챗봇 답변 생성 (규칙 기반)
 export const generateChatbotResponse = (question: string, context: AnalysisContext) => {
     const q = question.toLowerCase();
     const mbti = context.mbti || '알 수 없음';
+    const element = Object.values(SAJU_ELEMENTS)[(context.birthDate ? parseInt(context.birthDate.split('-')[0].slice(-1) || '0') : 0) % 5] || '알 수 없음';
 
     // 간단한 키워드 매칭
     if (q.includes('안녕')) {
-        return `안녕하세요! 당신의 MBTI는 ${mbti}이시군요. 사주와 MBTI를 기반으로 무엇이든 물어보세요.`;
+        return `안녕하세요! ${context.name ? context.name + '님, ' : ''}당신의 MBTI는 ${mbti}이고, 사주 오행은 ${element}입니다. 이 두 가지 정보를 바탕으로 당신의 운명을 읽어드릴게요. 무엇이 궁금하신가요?`;
     }
 
-    if (q.includes('연애') || q.includes('사랑') || q.includes('남자친구') || q.includes('여자친구')) {
-        return `${mbti} 성향의 분들은 사랑에 빠지면 ${getMbtiLoveStyle(mbti)}하는 경향이 있죠. 2026년의 연애운을 보면, "${get2026Fortune(context).love}" 라고 나오네요. 적극적으로 행동해보세요!`;
+    if (q.includes('연애') || q.includes('사랑') || q.includes('결혼')) {
+        const fortune = get2026Fortune(context).love;
+        return `[${mbti} x ${element} 연애 분석]\n\n${mbti} 유형은 사랑에 있어 신중하지만, ${element}의 기운을 가진 당신은 한번 불타오르면 걷잡을 수 없는 열정을 가지고 계시네요.\n\n2026년의 흐름을 보면: "${fortune}"\n\n${context.birthTime ? `참고로 태어난 시간(${context.birthTime})의 영향으로 늦은 밤에 감성적인 대화를 나누는 것이 도움이 됩니다.` : '태어난 시간을 알려주시면 더 정확한 데이트 시간을 추천해 드릴 수 있어요.'}`;
     }
 
-    if (q.includes('돈') || q.includes('재물') || q.includes('부자') || q.includes('로또')) {
-        return `${mbti} 분들은 재테크에 있어서도 ${getMbtiWealthStyle(mbti)}한 스타일이시네요. 사주상 2026년 재물운은 "${get2026Fortune(context).wealth}" 흐름입니다.`;
+    if (q.includes('돈') || q.includes('재물') || q.includes('사업')) {
+        const fortune = get2026Fortune(context).wealth;
+        return `[${mbti} x ${element} 재물 분석]\n\n분석적인 ${mbti} 성향과 ${element}의 기운이 만나 ${element === '토(Earth)' ? '부동산이나 안정적인 자산' : '주식이나 변동성 있는 투자'}에 강점을 보입니다.\n\n2026년 재물운: "${fortune}"\n\n조급해하지 말고 본인의 판단을 믿으세요.`;
     }
 
     if (q.includes('직업') || q.includes('진로') || q.includes('취업')) {
         return `${mbti} 유형은 창의적이고 독립적인 환경에서 능력을 발휘합니다. 사주를 볼 때 올해는 새로운 도전을 하기에 적합한 시기이니, 평소 관심 있던 분야에 도전해보세요.`;
     }
 
-    return `흥미로운 질문이네요! ${mbti}적인 관점과 사주 명리학적으로 볼 때, 그 문제는 마음의 흐름을 따르는 것이 중요합니다. 더 구체적인 운세가 궁금하다면 '2026년 연애운'이나 '재물운'이라고 물어봐주세요.`;
+    return `흥미로운 질문이네요! ${mbti}의 논리성과 ${element}의 직관을 모두 고려했을 때, 지금은 마음의 소리를 듣는 것이 중요해 보입니다. 더 구체적인 운세(2026년 연애운, 재물운 등)를 물어보시면 자세히 알려드릴게요.`;
 };
 
 // 헬퍼 함수들

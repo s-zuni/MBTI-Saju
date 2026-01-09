@@ -91,19 +91,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
           <span className="text-xl font-bold tracking-tight text-slate-900">MBTIJU</span>
         </div>
 
-        {/* Search Bar Placeholder (Reference Image Style) */}
-        <div className="hidden md:flex flex-1 max-w-xl mx-4">
-          <div className="w-full relative group">
-            <input
-              type="text"
-              placeholder="당신의 운명을 검색해보세요"
-              className="w-full bg-slate-100/80 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 px-12 py-3 rounded-full outline-none transition-all placeholder:text-slate-400 text-sm"
-              readOnly
-              onClick={onSignupClick} // Opens analysis modal
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500" />
-          </div>
-        </div>
+        {/* Spacer to push actions to right if search is removed */}
+        <div className="flex-1"></div>
 
         {/* Actions */}
         <div className="flex items-center gap-6">
@@ -173,20 +162,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white/80 backdrop-blur-md border-t border-slate-100">
           <div className="max-w-7xl mx-auto px-6 py-4">
-            {/* Search Bar Placeholder for Mobile */}
-            <div className="w-full relative group mb-4">
-              <input
-                type="text"
-                placeholder="당신의 운명을 검색해보세요"
-                className="w-full bg-slate-100/80 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 px-12 py-3 rounded-full outline-none transition-all placeholder:text-slate-400 text-sm"
-                readOnly
-                onClick={() => {
-                  onSignupClick();
-                  setIsMobileMenuOpen(false);
-                }}
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500" />
-            </div>
+
 
             {/* Mobile Navigation Links */}
             <div className="flex flex-col gap-2 text-sm font-semibold text-slate-600 mb-4">

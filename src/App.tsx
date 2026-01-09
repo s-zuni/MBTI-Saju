@@ -36,6 +36,9 @@ function App() {
   const [showTripModal, setShowTripModal] = useState(false);
   const [showHealingModal, setShowHealingModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
+  const [showRecommendModal, setShowRecommendModal] = useState(false); // 추천직업 상세
+  const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Chatbot State
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
@@ -144,17 +147,29 @@ function App() {
           onLoginClick={() => openAnalysisModal('login')}
           onSignupClick={() => openAnalysisModal('signup')}
           onFortuneClick={handleFetchFortune}
-          onMbtiSajuClick={openMbtiSajuModal}
+          onMbtiSajuClick={() => {
+            if (session) setShowMbtiSajuModal(true);
+            else {
+              setAnalysisModalMode('login');
+              setShowAnalysisModal(true);
+            }
+          }}
         />
 
         <Routes>
           <Route path="/" element={
             <>
-              <HeroSection onStart={handleStart} />
+              <HeroSection onStart={handleStart} user={session?.user} />
               <FeatureGrids
                 onStart={handleStart}
                 onFortuneClick={handleFetchFortune}
-                onMbtiSajuClick={openMbtiSajuModal}
+                onMbtiSajuClick={() => {
+                  if (session) setShowMbtiSajuModal(true);
+                  else {
+                    setAnalysisModalMode('login');
+                    setShowAnalysisModal(true);
+                  }
+                }}
                 onTripClick={openTripModal}
                 onHealingClick={openHealingModal}
                 onJobClick={openJobModal}
@@ -214,8 +229,15 @@ function App() {
 
         <BottomNav
           onFortuneClick={handleFetchFortune}
-          onMbtiSajuClick={openMbtiSajuModal}
+          onMbtiSajuClick={() => {
+            if (session) setShowMbtiSajuModal(true);
+            else {
+              setAnalysisModalMode('login');
+              setShowAnalysisModal(true);
+            }
+          }}
           onLoginClick={() => openAnalysisModal('login')}
+          onChatbotClick={() => setIsChatbotOpen(!isChatbotOpen)}
           isAuthenticated={!!session}
         />
 
@@ -231,8 +253,8 @@ function App() {
         <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
 
-        {/* Chatbot Widget */}
-        {session && <Chatbot />}
+        {/* Chatbot Component */}
+        <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
       </div>
     </BrowserRouter>
   );

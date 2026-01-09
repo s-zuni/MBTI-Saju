@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart } from 'lucide-react';
-import { get2026Fortune, SAJU_ELEMENTS } from '../utils/sajuLogic';
+import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis } from '../utils/sajuLogic';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -12,7 +12,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
-  const [sajuFortune, setSajuFortune] = useState<{ love: string; wealth: string } | null>(null);
+  const [fusedReport, setFusedReport] = useState<string>("");
+
+  // Note: We don't use the simple sajuFortune state anymore, as it's embedded in the report.
 
   useEffect(() => {
     if (isOpen) {
@@ -27,19 +29,17 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       const metadata = session.user.user_metadata;
 
       if (metadata.analysis) {
-        setAnalysis(metadata.analysis);
+        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date }); // Merge birthdate
       }
 
-      // Generate 2026 Fortune based on metadata
-      const fortune = get2026Fortune({
+      // Generate Detailed Fused Report
+      const report = getDetailedFusedAnalysis({
         mbti: metadata.mbti,
-        birthDate: metadata.birth_date
+        birthDate: metadata.birth_date,
+        birthTime: metadata.birth_time, // Assuming this exists or is undefined
+        name: metadata.full_name
       });
-      setSajuFortune({
-        love: fortune.love || "운세 정보가 없습니다.",
-        wealth: fortune.wealth || "운세 정보가 없습니다."
-      });
-
+      setFusedReport(report);
     }
     setLoading(false);
   };
@@ -116,57 +116,49 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                 {activeTab === 'fused' && (
                   <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
                     <h4 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                      ✨ MBTI x 사주 시너지
+                      ✨ MBTI x 사주 초정밀 융합 분석
                     </h4>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line font-medium text-lg">
-                      {analysis.fusedAnalysis || analysis.detailedAnalysis || "종합 분석 정보가 없습니다."}
-                    </p>
+                    <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                      {fusedReport || "종합 분석을 생성하는 중입니다..."}
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'mbti' && (
-                  <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                    <h4 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-                      🧠 MBTI 성향 분석
+                  <div className="bg-blue-50/50 p-8 rounded-2xl border border-blue-100 text-center animate-fade-in">
+                    <div className="inline-block p-4 rounded-full bg-blue-100 text-blue-600 mb-4">
+                      <Brain className="w-12 h-12" />
+                    </div>
+                    <h4 className="text-2xl font-black text-blue-900 mb-2">
+                      {analysis.mbti || "MBTI"}
                     </h4>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                      {analysis.mbtiAnalysis || "MBTI 심층 분석 정보가 업데이트되지 않았습니다. 마이페이지에서 다시 분석을 진행해주세요."}
+                    <p className="text-blue-700 font-medium">
+                      당신의 핵심 성격 유형입니다.
                     </p>
+                    <div className="mt-6 flex flex-wrap justify-center gap-2">
+                      {analysis.keywords?.split(',').slice(0, 3).map((k: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-white rounded-full text-xs font-bold text-blue-600 shadow-sm border border-blue-100">
+                          #{k.trim()}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'saju' && (
-                  <div className="space-y-4">
-                    <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100">
-                      <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
-                        📜 사주 운명 분석
-                      </h4>
-                      <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                        {analysis.sajuAnalysis || "사주 심층 분석 정보가 업데이트되지 않았습니다. 마이페이지에서 다시 분석을 진행해주세요."}
-                      </p>
+                  <div className="bg-amber-50/50 p-8 rounded-2xl border border-amber-100 text-center animate-fade-in">
+                    <div className="inline-block p-4 rounded-full bg-amber-100 text-amber-600 mb-4">
+                      <ScrollText className="w-12 h-12" />
                     </div>
-
-                    {/* 2026 Fortune Section */}
-                    {sajuFortune && (
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="bg-pink-50/50 p-5 rounded-2xl border border-pink-100">
-                          <h4 className="text-md font-bold text-pink-900 mb-2 flex items-center gap-2">
-                            <Heart className="w-4 h-4" /> 2026 연애운
-                          </h4>
-                          <p className="text-sm text-slate-700 leading-relaxed">
-                            {sajuFortune.love}
-                          </p>
-                        </div>
-                        <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
-                          <h4 className="text-md font-bold text-emerald-900 mb-2 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" /> 2026 재물운
-                          </h4>
-                          <p className="text-sm text-slate-700 leading-relaxed">
-                            {sajuFortune.wealth}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    <h4 className="text-2xl font-black text-amber-900 mb-2">
+                      {Object.values(SAJU_ELEMENTS)[(analysis.birth_date ? parseInt(analysis.birth_date.split('-')[0].slice(-1) || '0') : 0) % 5]} 형
+                    </h4>
+                    <p className="text-amber-700 font-medium">
+                      당신의 타고난 사주 오행입니다.
+                    </p>
+                    <div className="mt-4 text-sm text-slate-500">
+                      * 더 자세한 사주 풀이와 운세는 [융합 분석] 탭에서 확인하세요.
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,11 +1,13 @@
 import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
 interface HeroSectionProps {
   onStart: () => void;
+  user?: User | null | undefined; // Allow undefined explicitly
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
   return (
     <div className="relative pt-32 pb-20 overflow-hidden">
       {/* Background Ornaments */}
@@ -19,8 +21,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 mb-8 leading-[1.1] animate-fade-up">
-          나를 알아가는<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">가장 명쾌한 시간</span>
+          {user ? (
+            <>
+              <span className="text-indigo-600">{user.user_metadata?.full_name || '회원'}</span>님,<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">운명의 해답을 만나보세요</span>
+            </>
+          ) : (
+            <>
+              나를 알아가는<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">가장 명쾌한 시간</span>
+            </>
+          )}
         </h1>
 
         <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-fade-up [animation-delay:200ms]">
