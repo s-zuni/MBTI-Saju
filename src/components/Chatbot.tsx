@@ -86,25 +86,52 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen: controlledIsOpen, onClose, on
         setInputText('');
         setIsTyping(true);
 
-        // Simulate AI Delay
-        setTimeout(() => {
-            const responseText = generateChatbotResponse(userMsg.text, {
-                mbti: userContext?.mbti,
-                birthDate: userContext?.birth_date,
-                birthTime: userContext?.birth_time,
-                name: userContext?.full_name
+        // Send to API
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    message: inputText,
+                    messages: messages, // Send history context
+                    mbti: userContext?.mbti,
+                    birthDate: userContext?.birth_date,
+                    birthTime: userContext?.birth_time,
+                    name: userContext?.full_name,
+                    gender: userContext?.gender
+                })
             });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
 
             const botMsg: Message = {
                 id: Date.now() + 1,
-                text: responseText,
+                text: data.reply,
                 sender: 'bot',
                 timestamp: new Date()
             };
 
             setMessages(prev => [...prev, botMsg]);
+
+        } catch (error) {
+            console.error('Chat Error:', error);
+            const errorMsg: Message = {
+                id: Date.now() + 1,
+                text: "죄송합니다. 잠시 연결이 원활하지 않습니다. 다시 시도해 주세요.",
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
             setIsTyping(false);
-        }, 1000 + Math.random() * 1000);
+        }
     };
 
     return (

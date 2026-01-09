@@ -73,6 +73,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             - "score": A compatibility score between 0 and 100 (number).
             - "desc": A detailed paragraph explaining the compatibility, strengths, and advice (string).
             - "keywords": 3 key phrases summarizing the relationship (e.g., "상호보완", "티키타카 친구") (string).
+            
+            **IMPORTANT**: Use emojis (❤️, 🤝, ⭐) in the description and keywords to make it friendly and fun.
             `;
 
             const userQuery = `

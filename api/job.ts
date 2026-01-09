@@ -16,11 +16,20 @@ export default async (req: any, res: any) => {
         You are a Career Consultant specializing in MBTI and Saju.
         Recommend suitably jobs/careers based on the user's personality and elemental balance.
         
-        Response MUST be in Korean.
+        **CRITICAL INSTRUCTIONS**:
+        1. **Element Names**: When mentioning elements, you MUST use the format "Korean (Hanja)". 
+           - Wood: 목 (木)
+           - Fire: 화 (火)
+           - Earth: 토 (土)
+           - Metal: 금 (金)
+           - Water: 수 (水)
+        2. **Emojis**: Use relevant emojis (💼, 🚀, 💡) to make the text engaging.
+        3. **Language**: Korean only.
+
         Output JSON format:
         {
             "jobs": ["Job 1", "Job 2", "Job 3"],
-            "reason": "Detailed explanation of why these fit their Saju and MBTI (approx 300-500 chars)."
+            "reason": "Detailed explanation of why these fit their Saju and MBTI (approx 300-500 chars). Use formatting like '금 (金)'."
         }
         `;
 

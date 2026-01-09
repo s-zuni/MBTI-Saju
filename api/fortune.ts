@@ -74,6 +74,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 The value should be a string of about 200-400 Korean characters.
                 Start by mentioning their Zodiac sign (e.g., "오늘의 물병자리 운세는...").
                 Maintain a warm and hopeful tone.
+                **IMPORTANT**: Add relevant emojis (✨, 🍀, 🌈) throughout the text to make it visually engaging.
             `;
 
             const userQuery = `
