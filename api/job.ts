@@ -34,7 +34,7 @@ export default async (req: any, res: any) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3.0-flash",
+            model: "gemini-3-flash-preview",
             systemInstruction: systemPrompt
         });
 
