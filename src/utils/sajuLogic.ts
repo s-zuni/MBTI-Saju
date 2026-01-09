@@ -98,3 +98,44 @@ export const generateChatbotResponse = (question: string, context: AnalysisConte
     // Default fallback
     return `${intro} \n\n${mbti}의 논리성과 사주가 가진 ${traits.trait}의 에너지가 조화를 이루고 있습니다. 지금 갖고 계신 고민(${q})에 대해 조금 더 구체적으로 물어봐 주신다면(예: "내년 이직운은?", "지금 짝사랑 잘 될까?"), 사주 명리학적으로 더 자세히 풀어드릴게요!`;
 };
+
+export const SAJU_ELEMENTS = {
+    wood: '목(Wood)',
+    fire: '화(Fire)',
+    earth: '토(Earth)',
+    metal: '금(Metal)',
+    water: '수(Water)'
+};
+
+export const getDetailedFusedAnalysis = (data: { mbti: string; birthDate: string; birthTime?: string; name?: string }) => {
+    try {
+        const saju = calculateSaju(data.birthDate, data.birthTime || null);
+        const { dayMaster, elements } = saju;
+
+        // Basic element traits (reusing internal logic if possible, but for now duplicating simple map or using exposed function if any. 
+        // getElementTraits is not exported. I'll just use a simple switch here or rely on the fact that I'm inside the module so I can use getElementTraits!)
+        const traits = getElementTraits(dayMaster.element);
+
+        return `[MBTI x 사주 정밀 분석]
+
+${data.name ? data.name + '님의 ' : ''}핵심 성향은 MBTI [${data.mbti}]와 사주 [${dayMaster.korean}(${dayMaster.element})]의 만남으로 설명됩니다.
+
+1. 타고난 기운 (사주)
+당신은 "${traits.trait}"을(를) 상징하는 ${dayMaster.korean} 일주를 타고났습니다. ${traits.desc}
+
+2. 후천적 성격 (MBTI)
+${data.mbti} 유형으로서 논리적이고 체계적인 사고를 선호하며, 이는 사주의 기운과 만나 독특한 시너지를 냅니다.
+
+3. 2026년 융합 운세,
+2026년 병오년(붉은 말의 해)은 화(Fire)의 기운이 강한 해입니다. 당신의 사주 오행 구성(목:${elements.wood}, 화:${elements.fire}, 토:${elements.earth}, 금:${elements.metal}, 수:${elements.water})을 볼 때, 올해는 새로운 도전을 하기에 적합한 시기입니다.
+
+4. 행운의 조언
+주변의 흐름에 너무 휩쓸리지 말고, 본인만의 중심을 잡는 것이 중요합니다.`;
+    } catch (e) {
+        return "분석 중 오류가 발생했습니다. 생년월일을 확인해주세요.";
+    }
+};
+
+export const get2026Fortune = (element: string) => {
+    return "2026년 병오년은 변화와 열정의 시기입니다. 당신의 오행 기운과 조화를 이루어 좋은 성과를 거두시길 바랍니다.";
+};
