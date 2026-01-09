@@ -29,6 +29,8 @@ interface MyPageProps {
   onOpenMbtiSaju: () => void;
   onOpenHealing: () => void;
   onOpenCompatibility: () => void;
+  isMbtiSajuOpen?: boolean;
+  onCloseMbtiSaju?: () => void;
 }
 
 const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCompatibility }) => {
@@ -254,11 +256,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                       <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">오행 분포 (Five Elements)</h4>
                       <div className="grid grid-cols-5 gap-2 text-center">
                         {[
-                          { label: '목(Wood)', count: analysis.saju.elements.wood, color: 'bg-green-100 text-green-700 border-green-200' },
-                          { label: '화(Fire)', count: analysis.saju.elements.fire, color: 'bg-red-100 text-red-700 border-red-200' },
-                          { label: '토(Earth)', count: analysis.saju.elements.earth, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-                          { label: '금(Metal)', count: analysis.saju.elements.metal, color: 'bg-slate-100 text-slate-700 border-slate-200' },
-                          { label: '수(Water)', count: analysis.saju.elements.water, color: 'bg-blue-100 text-blue-700 border-blue-200' }
+                          { label: '목(木)', count: analysis.saju.elements.wood, color: 'bg-green-100 text-green-700 border-green-200' },
+                          { label: '화(火)', count: analysis.saju.elements.fire, color: 'bg-red-100 text-red-700 border-red-200' },
+                          { label: '토(土)', count: analysis.saju.elements.earth, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                          { label: '금(金)', count: analysis.saju.elements.metal, color: 'bg-slate-100 text-slate-700 border-slate-200' },
+                          { label: '수(水)', count: analysis.saju.elements.water, color: 'bg-blue-100 text-blue-700 border-blue-200' }
                         ].map((el) => (
                           <div key={el.label} className={`rounded-xl p-2 border ${el.color} flex flex-col items-center justify-center`}>
                             <span className="text-2xl font-black mb-1">{el.count}</span>

@@ -78,11 +78,18 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         });
 
         // Convert previous messages to Gemini format (Limit to last 10 for context window)
-        // Note: history structure for Gemini is { role: "user" | "model", parts: [{ text: string }] }
-        const history = (messages || []).slice(-10).map((msg: any) => ({
-            role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.text }]
-        }));
+        let history: { role: string; parts: { text: string }[] }[] = [];
+        try {
+            if (Array.isArray(messages)) {
+                history = messages.slice(-10).map((msg: any) => ({
+                    role: msg.sender === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.text }]
+                }));
+            }
+        } catch (e) {
+            console.error("Failed to parse message history", e);
+            history = [];
+        }
 
         const chat = model.startChat({
             history: history,

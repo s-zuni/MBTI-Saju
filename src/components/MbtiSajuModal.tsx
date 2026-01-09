@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download, X } from 'lucide-react';
 import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import html2canvas from 'html2canvas';
@@ -17,6 +17,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [fusedReport, setFusedReport] = useState<string>("");
   const shareCardRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Note: We don't use the simple sajuFortune state anymore, as it's embedded in the report.
 
@@ -60,7 +61,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
         setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date, full_name: metadata.full_name }); // Merge full_name
       }
 
-      // Generate Detailed Fused Report
+      // Generate Local Detailed Fused Report (Fallback)
       const report = getDetailedFusedAnalysis({
         mbti: metadata.mbti,
         birthDate: metadata.birth_date,
@@ -70,6 +71,53 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       setFusedReport(report);
     }
     setLoading(false);
+  };
+
+  const handleRegenerate = async () => {
+    if (!confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라집니다.")) return;
+
+    setIsRegenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("로그인이 필요합니다.");
+
+      const metadata = session.user.user_metadata;
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          name: metadata.full_name,
+          gender: metadata.gender,
+          birthDate: metadata.birth_date,
+          birthTime: metadata.birth_time,
+          mbti: metadata.mbti,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("분석 생성에 실패했습니다.");
+      }
+
+      const newAnalysis = await response.json();
+
+      // Update Supabase
+      await supabase.auth.updateUser({
+        data: { ...metadata, analysis: newAnalysis }
+      });
+
+      // Update Local State
+      setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
+
+    } catch (error) {
+      console.error("Regenerate Error:", error);
+      alert("분석을 다시 생성하는 중 문제가 발생했습니다.");
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   useEffect(() => {
@@ -115,7 +163,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                 </button>
               )}
               <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -170,7 +218,19 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                       ✨ MBTI x 사주 초정밀 융합 분석
                     </h4>
                     <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                      {fusedReport || "종합 분석을 생성하는 중입니다..."}
+                      {analysis.fusedAnalysis || fusedReport || "종합 분석을 생성하는 중입니다..."}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-indigo-200/50 flex flex-col items-center">
+                      <p className="text-sm text-indigo-400 mb-3">결과가 마음에 들지 않으신가요?</p>
+                      <button
+                        onClick={handleRegenerate}
+                        disabled={isRegenerating}
+                        className="flex items-center gap-2 px-6 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-full text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                      >
+                        {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 분석하기"}
+                      </button>
                     </div>
                   </div>
                 )}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -14,31 +15,31 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0 scale-105 pointer-events-none'
-        }`}
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0 scale-105 pointer-events-none'}`}
     >
-      {/* Ambient Background Glow - Subtle & Unified */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse animation-delay-2000"></div>
+      {/* Background Image - Unified & Mysterious */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={require('../assets/splash_bg.png')}
+          alt="Background"
+          className="w-full h-full object-cover opacity-90"
+        />
+        <div className="absolute inset-0 bg-black/30 mix-blend-overlay"></div>
       </div>
 
       {/* Central Content */}
-      <div className="relative z-10 flex flex-col items-center animate-fade-up">
-        <div className="relative w-40 h-40 mb-8">
-          {/* Simple Glow behind logo */}
-          <div className="absolute inset-0 bg-indigo-500/30 blur-2xl rounded-full"></div>
-          <img
-            src={require('../assets/splash.png')}
-            alt="MBTIJU Logo"
-            className="w-full h-full object-contain relative z-10 drop-shadow-2xl animate-float"
-          />
+      <div className="relative z-10 flex flex-col items-center justify-center animate-fade-up">
+        {/* Logo Icon - Minimalist & Clean */}
+        <div className="mb-6 relative">
+          <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse"></div>
+          <Sparkles className="w-16 h-16 text-indigo-100 relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" strokeWidth={1} />
         </div>
 
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-purple-200 mb-3 tracking-widest drop-shadow-lg">
+        <h1 className="text-3xl font-light text-white mb-3 tracking-[0.3em] font-sans drop-shadow-md">
           MBTIJU
         </h1>
-        <p className="text-indigo-200/70 text-sm tracking-[0.3em] uppercase font-light">
+        <div className="h-[1px] w-12 bg-indigo-300/50 mb-3"></div>
+        <p className="text-indigo-200/80 text-[10px] tracking-[0.4em] uppercase font-light">
           Discover Your Destiny
         </p>
       </div>
