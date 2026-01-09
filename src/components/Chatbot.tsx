@@ -14,9 +14,10 @@ interface Message {
 interface ChatbotProps {
     isOpen?: boolean;
     onClose?: () => void;
+    onToggle?: () => void;
 }
 
-const Chatbot: React.FC<ChatbotProps> = ({ isOpen: controlledIsOpen, onClose }) => {
+const Chatbot: React.FC<ChatbotProps> = ({ isOpen: controlledIsOpen, onClose, onToggle }) => {
     const [localIsOpen, setLocalIsOpen] = useState(false);
 
     // Determine if we are controlled or uncontrolled
@@ -24,7 +25,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen: controlledIsOpen, onClose }) 
     const isOpen = isControlled ? controlledIsOpen : localIsOpen;
 
     const handleToggle = () => {
-        if (isControlled) {
+        if (onToggle) {
+            onToggle();
+        } else if (isControlled) {
             onClose?.();
         } else {
             setLocalIsOpen(!localIsOpen);

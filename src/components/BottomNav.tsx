@@ -47,12 +47,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
                             <button
                                 key={index}
                                 onClick={item.onClick}
-                                className="relative -top-6 flex flex-col items-center justify-center"
+                                className="flex flex-col items-center justify-center p-1"
                             >
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-green-500 shadow-lg shadow-indigo-300 flex items-center justify-center transform hover:scale-105 transition-all text-white">
-                                    <item.icon className="w-7 h-7 fill-current" />
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-green-500 shadow-md flex items-center justify-center transform hover:scale-105 transition-all text-white mb-0.5">
+                                    <item.icon className="w-5 h-5 fill-current" />
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-700 mt-1">{item.label}</span>
+                                <span className="text-[10px] font-bold text-slate-700">{item.label}</span>
                             </button>
                         );
                     }

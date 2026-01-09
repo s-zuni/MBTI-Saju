@@ -19,6 +19,7 @@ import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
 import SplashScreen from './components/SplashScreen';
 import Chatbot from './components/Chatbot';
+import FortunePage from './pages/FortunePage';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -224,6 +225,22 @@ function App() {
             />
           } />
           <Route path="/community" element={<CommunityPage />} />
+          <Route path="/fortune" element={
+            <FortunePage
+              onFortuneClick={handleFetchFortune}
+              onMbtiSajuClick={() => {
+                if (session) setShowMbtiSajuModal(true);
+                else {
+                  setAnalysisModalMode('login');
+                  setShowAnalysisModal(true);
+                }
+              }}
+              onTripClick={openTripModal}
+              onHealingClick={openHealingModal}
+              onJobClick={openJobModal}
+              onCompatibilityClick={openCompModal}
+            />
+          } />
           <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
 
@@ -254,7 +271,11 @@ function App() {
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
 
         {/* Chatbot Component */}
-        <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+        <Chatbot
+          isOpen={isChatbotOpen}
+          onClose={() => setIsChatbotOpen(false)}
+          onToggle={() => setIsChatbotOpen(!isChatbotOpen)}
+        />
       </div>
     </BrowserRouter>
   );

@@ -32,9 +32,6 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
     onCompatibilityClick
 }) => {
     const navigate = useNavigate();
-    const [showFortuneMenu, setShowFortuneMenu] = useState(false);
-
-    // 3 Main Cards
     const mainCategories = [
         {
             icon: Sparkles,
@@ -44,7 +41,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             bg: 'bg-indigo-50',
             hover: 'hover:bg-indigo-100',
             border: 'border-indigo-100',
-            action: () => setShowFortuneMenu(!showFortuneMenu)
+            action: () => navigate('/fortune')
         },
         {
             icon: ShoppingBag,
@@ -67,15 +64,6 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             action: () => navigate('/community')
         },
     ];
-
-    const handleSubCategoryClick = (index: number) => {
-        if (index === 0) onFortuneClick();
-        else if (index === 1) onMbtiSajuClick();
-        else if (index === 2) onTripClick();
-        else if (index === 3) onHealingClick();
-        else if (index === 4) onJobClick();
-        else if (index === 5) onCompatibilityClick();
-    };
 
     return (
         <div className="section-container !py-8">
@@ -120,35 +108,6 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
                     </button>
                 ))}
             </div>
-
-            {/* Expanded Fortune Menu */}
-            {showFortuneMenu && (
-                <div className="animate-fade-in space-y-4">
-                    <h3 className="text-xl font-bold text-slate-800 px-2 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-indigo-500" />
-                        운세 모음
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {subCategories.map((cat, i) => (
-                            <button
-                                key={i}
-                                onClick={() => handleSubCategoryClick(i)}
-                                className={`
-                                    relative p-4 rounded-2xl text-left transition-all duration-300 group
-                                    bg-white border border-slate-100 hover:border-indigo-100
-                                    hover:shadow-lg hover:-translate-y-1
-                                `}
-                            >
-                                <div className={`w-10 h-10 rounded-full ${cat.bg} flex items-center justify-center mb-3`}>
-                                    <cat.icon className={`w-5 h-5 ${cat.color}`} />
-                                </div>
-                                <h4 className="font-bold text-slate-900 text-sm">{cat.label}</h4>
-                                <p className="text-xs text-slate-500 mt-1">{cat.sub}</p>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
