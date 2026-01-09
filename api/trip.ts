@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import fetch from 'node-fetch';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 
 export default async (req: any, res: any) => {
@@ -9,9 +9,9 @@ export default async (req: any, res: any) => {
         const { birthDate, birthTime, mbti, gender, name } = req.body;
         const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-        const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAC-npwHohgvs1YKoMcc1gHWWy5Hd6qmSA";
 
-        if (!OPENAI_API_KEY) throw new Error('Missing OpenAI API Key');
+        if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
 
         // Calculate Saju
         const saju = calculateSaju(birthDate, birthTime);
@@ -45,26 +45,24 @@ export default async (req: any, res: any) => {
         Recommend 2 Korean places and 1 Overseas place that fit this person's energy.
         `;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo-1106',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userQuery }
-                ],
-                temperature: 0.7,
-                response_format: { type: "json_object" }
-            })
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3.0-flash",
+            systemInstruction: systemPrompt
         });
 
-        if (!response.ok) throw new Error('OpenAI API Error');
-        const data: any = await response.json();
-        res.status(200).json(JSON.parse(data.choices[0].message.content));
+        const result = await model.generateContent({
+            contents: [
+                { role: 'user', parts: [{ text: userQuery }] }
+            ],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        });
+
+        const responseText = result.response.text();
+        const content = JSON.parse(responseText);
+        res.status(200).json(content);
 
     } catch (error: any) {
         console.error(error);

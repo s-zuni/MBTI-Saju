@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import fetch from 'node-fetch';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 // Fallback types if @vercel/node is not available
 type VercelRequest = any;
@@ -25,9 +25,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         // It's crucial to use environment variables for Supabase credentials inside the handler
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-        const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAC-npwHohgvs1YKoMcc1gHWWy5Hd6qmSA";
 
-        if (!supabaseUrl || !supabaseAnonKey || !OPENAI_API_KEY) {
+        if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) {
             throw new Error('Missing environment variables');
         }
 
@@ -98,31 +98,30 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             Provide the JSON response based on this. Ensure "Metal" is displayed as "금" or "금(Metal)" and never just "Metal".
             `;
 
-            const apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo-1106',
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userQuery }
-                    ],
-                    temperature: 0.7,
-                    response_format: { type: "json_object" }
-                })
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({
+                model: "gemini-3.0-flash",
+                systemInstruction: systemPrompt
             });
 
-            if (!apiResponse.ok) {
-                const errorBody = await apiResponse.text();
-                console.error('OpenAI API Error:', errorBody);
-                throw new Error(`OpenAI API request failed with status ${apiResponse.status}`);
-            }
+            const result = await model.generateContent({
+                contents: [
+                    { role: 'user', parts: [{ text: userQuery }] }
+                ],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            });
 
-            const responseData: any = await apiResponse.json();
-            const content = JSON.parse(responseData.choices[0].message.content);
+            const responseText = result.response.text();
+            let content;
+            try {
+                content = JSON.parse(responseText);
+            } catch (e) {
+                console.error("JSON Parse Error:", e);
+                console.error("Raw Text:", responseText);
+                return res.status(500).json({ error: "Failed to parse AI response" });
+            }
 
             // Merge calculated Saju data with AI response
             const finalResponse = {
