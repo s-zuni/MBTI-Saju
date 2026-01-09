@@ -24,7 +24,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
 
     const navItems = [
         { icon: Home, label: '홈', path: '/', onClick: () => navigate('/') },
-        { icon: Sparkles, label: '운세', onClick: onFortuneClick },
+        { icon: Sparkles, label: '운세', onClick: () => navigate('/fortune') },
         // Chatbot Button in Center
         {
             icon: MessageCircle,

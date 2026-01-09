@@ -40,36 +40,42 @@ const FortunePage: React.FC<FortunePageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
-            {/* Header */}
-            <div className="bg-white sticky top-0 z-10 px-6 py-4 flex items-center gap-4 shadow-sm">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors"
-                >
-                    <ArrowLeft className="w-6 h-6 text-slate-700" />
-                </button>
-                <h1 className="text-xl font-bold text-slate-800">운세 보기</h1>
-            </div>
+        <div className="min-h-screen bg-slate-50 pb-24 pt-20">
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-6">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-slate-900">운세 보기</h1>
+                    <p className="text-slate-500 text-sm mt-1">다양한 운세와 분석을 확인해보세요</p>
+                </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {subCategories.map((cat, i) => (
                         <button
                             key={i}
                             onClick={() => handleSubCategoryClick(i)}
                             className={`
-                                relative p-6 rounded-2xl text-left transition-all duration-300 group
-                                bg-white border border-slate-100 hover:border-indigo-100
-                                hover:shadow-lg hover:-translate-y-1
-                                flex flex-col items-center text-center
+                                relative p-6 rounded-3xl text-left transition-all duration-300 group
+                                bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1
+                                flex items-start gap-5
                             `}
                         >
-                            <div className={`w-14 h-14 rounded-2xl ${cat.bg} flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
-                                <cat.icon className={`w-7 h-7 ${cat.color}`} />
+                            <div className={`
+                                w-16 h-16 rounded-2xl ${cat.bg} flex items-center justify-center 
+                                flex-shrink-0 transition-transform group-hover:scale-110
+                            `}>
+                                <cat.icon className={`w-8 h-8 ${cat.color}`} />
                             </div>
-                            <h4 className="font-bold text-slate-900 text-lg mb-1">{cat.label}</h4>
-                            <p className="text-xs text-slate-500">{cat.sub}</p>
+                            <div className="flex-1 min-w-0 pt-1">
+                                <h4 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
+                                    {cat.label}
+                                </h4>
+                                <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                    {cat.sub}
+                                </p>
+                            </div>
+                            <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity -ml-2 translate-x-2 group-hover:translate-x-0">
+                                <ArrowLeft className="w-5 h-5 text-slate-300 rotate-180" />
+                            </div>
                         </button>
                     ))}
                 </div>
