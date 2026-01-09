@@ -100,11 +100,44 @@ export const generateChatbotResponse = (question: string, context: AnalysisConte
 };
 
 export const SAJU_ELEMENTS = {
-    wood: '목(Wood)',
-    fire: '화(Fire)',
-    earth: '토(Earth)',
-    metal: '금(Metal)',
-    water: '수(Water)'
+    wood: '木(목)',
+    fire: '火(화)',
+    earth: '土(토)',
+    metal: '金(금)',
+    water: '水(수)'
+};
+
+export const getMbtiDescription = (mbti: string) => {
+    const descriptions: { [key: string]: string } = {
+        'ISTJ': '신중하고 책임감이 강하며, 한번 시작한 일은 끝까지 해내는 성격입니다. 보수적인 경향이 있지만 그만큼 위기 관리 능력이 뛰어납니다.',
+        'ISFJ': '차분하고 인내심이 강하며 타인의 감정을 잘 살핍니다. 안정적인 환경을 선호하며, 주변 사람들에게 헌신적인 태도를 보입니다.',
+        'INFJ': '통찰력이 뛰어나고 사람들의 본심을 꿰뚫어 보는 능력이 있습니다. 이상주의적인 면모가 있지만, 확고한 신념을 가지고 행동합니다.',
+        'INTJ': '독창적이고 분석적인 사고를 하며, 목표를 달성하기 위해 체계적인 계획을 세웁니다. 지적 호기심이 강하고 비판적인 시각을 가집니다.',
+        'ISTP': '논리적이고 뛰어난 상황 적응력을 가지고 있습니다. 효율성을 중시하며, 필요할 때는 과감하게 행동하는 결단력이 있습니다.',
+        'ISFP': '온화하고 예술적인 감각이 뛰어나며, 현재의 순간을 즐길 줄 압니다. 타인에게 강요하지 않으며 자유로운 영혼을 가지고 있습니다.',
+        'INFP': '진정성을 중요하게 생각하며, 높은 도덕적 기준을 가지고 있습니다. 몽상가 기질이 있지만, 자신이 믿는 가치에는 열정적입니다.',
+        'INTP': '지적 호기심이 많고 추상적인 개념을 즐깁니다. 조용하지만 분석적이며, 기존의 틀을 깨는 창의적인 아이디어를 냅니다.',
+        'ESTP': '에너지 넘치고 직설적이며, 문제를 즉각적으로 해결하는 능력이 뛰어납니다. 새로운 경험을 즐기고 모험을 두려워하지 않습니다.',
+        'ESFP': '사교적이고 활동적이며, 주위 사람들을 즐겁게 만듭니다. 현실 감각이 뛰어나고 구체적인 경험을 통해 배우는 것을 좋아합니다.',
+        'ENFP': '열정적이고 창의적이며, 사람들과 어울리는 것을 좋아합니다. 긍정적인 에너지를 전파하며, 새로운 가능성을 항상 탐구합니다.',
+        'ENTP': '변화와 도전을 즐기며, 논쟁을 통해 진리를 탐구하는 것을 좋아합니다. 다방면에 재능이 있고 아이디어가 끊이지 않습니다.',
+        'ESTJ': '구체적이고 현실적이며, 조직을 이끄는 리더십이 탁월합니다. 규칙과 질서를 중요시하며, 목표를 향해 효율적으로 나아갑니다.',
+        'ESFJ': '친절하고 사교적이며, 타인을 돕는 일에 보람을 느낍니다. 조화와 협력을 중요하게 생각하며, 책임감이 강한 협력자입니다.',
+        'ENFJ': '카리스마가 있고 타인에게 영감을 주는 리더형입니다. 사람에 대한 관심이 많고, 공동체의 성장을 위해 헌신합니다.',
+        'ENTJ': '단호하고 결정력이 있으며, 장기적인 비전을 가지고 목표를 달성합니다. 통솔력이 뛰어나고 논리적인 판단을 내립니다.'
+    };
+    return descriptions[mbti] || '당신의 MBTI 성향에 대한 심층 분석입니다.';
+};
+
+export const getSajuDescription = (element: string) => {
+    switch (element) {
+        case 'wood': return '당신은 봄의 새싹처럼 뻗어나가는 성장 의지를 가졌습니다. 굽히지 않는 올곧음과 자비로운 마음씨(仁)를 동시에 지니고 있어, 리더로서의 자질이 충분합니다. 때로는 고집이 세다는 평을 들을 수 있으나, 이는 곧 추진력을 의미합니다.';
+        case 'fire': return '당신은 한여름의 태양처럼 뜨거운 열정과 예의(禮)를 중시합니다. 매사에 적극적이고 화려함을 즐기며, 사람들의 이목을 끄는 매력이 있습니다. 가끔 감정이 앞서 실수를 할 수 있으니 차분함을 기르는 것이 좋습니다.';
+        case 'earth': return '당신은 만물을 포용하는 대지처럼 흔들리지 않는 믿음(信)을 줍니다. 중용을 지키며 어느 한쪽으로 치우치지 않는 안정감이 가장 큰 장점입니다. 다만 너무 신중하여 기회를 놓칠 수 있으니 때로는 과감함이 필요합니다.';
+        case 'metal': return '당신은 단단한 바위나 보석처럼 결단력과 의리(義)를 목숨처럼 여깁니다. 냉철한 판단력 맺고 끊음이 확실하여 공사 구분이 명확합니다. 너무 날카로운 지적은 타인에게 상처가 될 수 있으니 유연함이 필요합니다.';
+        case 'water': return '당신은 유유히 흐르는 물처럼 지혜(智)와 유연함을 갖췄습니다. 환경에 따라 자신을 바꿀 줄 아는 처세술이 뛰어나고, 생각이 깊어 총명합니다. 속내를 잘 드러내지 않아 음흉하다는 오해를 살 수 있으니 표현을 늘려보세요.';
+        default: return '당신의 타고난 사주 기운에 대한 심층 분석입니다.';
+    }
 };
 
 export const getDetailedFusedAnalysis = (data: { mbti: string; birthDate: string; birthTime?: string; name?: string }) => {
@@ -112,13 +145,11 @@ export const getDetailedFusedAnalysis = (data: { mbti: string; birthDate: string
         const saju = calculateSaju(data.birthDate, data.birthTime || null);
         const { dayMaster, elements } = saju;
 
-        // Basic element traits (reusing internal logic if possible, but for now duplicating simple map or using exposed function if any. 
-        // getElementTraits is not exported. I'll just use a simple switch here or rely on the fact that I'm inside the module so I can use getElementTraits!)
         const traits = getElementTraits(dayMaster.element);
 
         return `[MBTI x 사주 정밀 분석]
 
-${data.name ? data.name + '님의 ' : ''}핵심 성향은 MBTI [${data.mbti}]와 사주 [${dayMaster.korean}(${dayMaster.element})]의 만남으로 설명됩니다.
+${data.name ? data.name + '님의 ' : ''}핵심 성향은 MBTI [${data.mbti}]와 사주 [${dayMaster.korean}(${SAJU_ELEMENTS[dayMaster.element as keyof typeof SAJU_ELEMENTS]})]의 만남으로 설명됩니다.
 
 1. 타고난 기운 (사주)
 당신은 "${traits.trait}"을(를) 상징하는 ${dayMaster.korean} 일주를 타고났습니다. ${traits.desc}
@@ -127,7 +158,7 @@ ${data.name ? data.name + '님의 ' : ''}핵심 성향은 MBTI [${data.mbti}]와
 ${data.mbti} 유형으로서 논리적이고 체계적인 사고를 선호하며, 이는 사주의 기운과 만나 독특한 시너지를 냅니다.
 
 3. 2026년 융합 운세,
-2026년 병오년(붉은 말의 해)은 화(Fire)의 기운이 강한 해입니다. 당신의 사주 오행 구성(목:${elements.wood}, 화:${elements.fire}, 토:${elements.earth}, 금:${elements.metal}, 수:${elements.water})을 볼 때, 올해는 새로운 도전을 하기에 적합한 시기입니다.
+2026년 병오년(붉은 말의 해)은 火(화)의 기운이 강한 해입니다. 당신의 사주 오행 구성(木:${elements.wood}, 火:${elements.fire}, 土:${elements.earth}, 金:${elements.metal}, 水:${elements.water})을 볼 때, 올해는 새로운 도전을 하기에 적합한 시기입니다.
 
 4. 행운의 조언
 주변의 흐름에 너무 휩쓸리지 말고, 본인만의 중심을 잡는 것이 중요합니다.`;

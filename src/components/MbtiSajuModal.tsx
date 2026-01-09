@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download } from 'lucide-react';
-import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis } from '../utils/sajuLogic';
+import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import html2canvas from 'html2canvas';
 
@@ -81,6 +81,17 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  // Helper to determine element key safely
+  const getSajuKey = (birthDate?: string) => {
+    if (!birthDate) return 'wood'; // Default
+    const yearString = birthDate.split('-')[0];
+    const yearLastDigit = parseInt((yearString || '0').slice(-1));
+    const keys = Object.keys(SAJU_ELEMENTS);
+    return keys[yearLastDigit % 5] as keyof typeof SAJU_ELEMENTS;
+  };
+
+  const currentSajuKey = analysis ? getSajuKey(analysis.birth_date) : 'wood';
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in">
@@ -172,8 +183,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                     <h4 className="text-2xl font-black text-blue-900 mb-2">
                       {analysis.mbti || "MBTI"}
                     </h4>
-                    <p className="text-blue-700 font-medium">
-                      당신의 핵심 성격 유형입니다.
+                    <p className="text-blue-700 font-medium leading-relaxed">
+                      {analysis.mbti ? getMbtiDescription(analysis.mbti) : "당신의 핵심 성격 유형입니다."}
                     </p>
                     <div className="mt-6 flex flex-wrap justify-center gap-2">
                       {analysis.keywords?.split(',').slice(0, 3).map((k: string, i: number) => (
@@ -191,10 +202,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                       <ScrollText className="w-12 h-12" />
                     </div>
                     <h4 className="text-2xl font-black text-amber-900 mb-2">
-                      {Object.values(SAJU_ELEMENTS)[(analysis.birth_date ? parseInt(analysis.birth_date.split('-')[0].slice(-1) || '0') : 0) % 5]} 형
+                      {SAJU_ELEMENTS[currentSajuKey]} 형
                     </h4>
-                    <p className="text-amber-700 font-medium">
-                      당신의 타고난 사주 오행입니다.
+                    <p className="text-amber-700 font-medium leading-relaxed">
+                      {getSajuDescription(currentSajuKey)}
                     </p>
                     <div className="mt-4 text-sm text-slate-500">
                       * 더 자세한 사주 풀이와 운세는 [융합 분석] 탭에서 확인하세요.
