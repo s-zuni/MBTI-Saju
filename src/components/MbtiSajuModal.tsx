@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart } from 'lucide-react';
+import { get2026Fortune, SAJU_ELEMENTS } from '../utils/sajuLogic';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
+  const [sajuFortune, setSajuFortune] = useState<{ love: string; wealth: string } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -21,8 +23,23 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const loadAnalysis = async () => {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.user_metadata?.analysis) {
-      setAnalysis(session.user.user_metadata.analysis);
+    if (session?.user?.user_metadata) {
+      const metadata = session.user.user_metadata;
+
+      if (metadata.analysis) {
+        setAnalysis(metadata.analysis);
+      }
+
+      // Generate 2026 Fortune based on metadata
+      const fortune = get2026Fortune({
+        mbti: metadata.mbti,
+        birthDate: metadata.birth_date
+      });
+      setSajuFortune({
+        love: fortune.love || "운세 정보가 없습니다.",
+        wealth: fortune.wealth || "운세 정보가 없습니다."
+      });
+
     }
     setLoading(false);
   };
@@ -119,13 +136,37 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                 )}
 
                 {activeTab === 'saju' && (
-                  <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100">
-                    <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
-                      📜 사주 운명 분석
-                    </h4>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                      {analysis.sajuAnalysis || "사주 심층 분석 정보가 업데이트되지 않았습니다. 마이페이지에서 다시 분석을 진행해주세요."}
-                    </p>
+                  <div className="space-y-4">
+                    <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100">
+                      <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
+                        📜 사주 운명 분석
+                      </h4>
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                        {analysis.sajuAnalysis || "사주 심층 분석 정보가 업데이트되지 않았습니다. 마이페이지에서 다시 분석을 진행해주세요."}
+                      </p>
+                    </div>
+
+                    {/* 2026 Fortune Section */}
+                    {sajuFortune && (
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-pink-50/50 p-5 rounded-2xl border border-pink-100">
+                          <h4 className="text-md font-bold text-pink-900 mb-2 flex items-center gap-2">
+                            <Heart className="w-4 h-4" /> 2026 연애운
+                          </h4>
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            {sajuFortune.love}
+                          </p>
+                        </div>
+                        <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                          <h4 className="text-md font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" /> 2026 재물운
+                          </h4>
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            {sajuFortune.wealth}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

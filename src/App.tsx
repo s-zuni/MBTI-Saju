@@ -18,6 +18,7 @@ import TripModal from './components/TripModal';
 import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
 import SplashScreen from './components/SplashScreen';
+import Chatbot from './components/Chatbot';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -229,6 +230,9 @@ function App() {
         <TripModal isOpen={showTripModal} onClose={closeTripModal} />
         <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
+
+        {/* Chatbot Widget */}
+        {session && <Chatbot />}
       </div>
     </BrowserRouter>
   );
