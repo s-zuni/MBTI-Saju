@@ -24,7 +24,7 @@ interface AnalysisContext {
 // 2026년 운세 데이터 (시뮬레이션)
 export const get2026Fortune = (context: AnalysisContext) => {
     // 간단한 로직: 생년월일 끝자리에 따라 운세 결정 (실제 사주 로직 대체)
-    const yearPart = context.birthDate ? context.birthDate.split('-')[0] : '';
+    const yearPart = context.birthDate ? (context.birthDate.split('-')[0] || '') : '';
     const yearDigit = yearPart ? parseInt(yearPart.slice(-1) || '0') : 0;
 
     const loveLuck = [
@@ -62,7 +62,7 @@ export const get2026Fortune = (context: AnalysisContext) => {
 // 종합 정밀 분석 생성 (2000자 내외 시뮬레이션)
 export const getDetailedFusedAnalysis = (context: AnalysisContext) => {
     const { mbti, birthDate, birthTime, name } = context;
-    const yearDigit = birthDate ? parseInt(birthDate.split('-')[0].slice(-1) || '0') : 0;
+    const yearDigit = birthDate ? parseInt((birthDate.split('-')[0] || '').slice(-1) || '0') : 0;
     const element = Object.values(SAJU_ELEMENTS)[yearDigit % 5] || '알 수 없음';
     const fortune2026 = get2026Fortune(context);
 
@@ -97,7 +97,7 @@ export const getDetailedFusedAnalysis = (context: AnalysisContext) => {
 export const generateChatbotResponse = (question: string, context: AnalysisContext) => {
     const q = question.toLowerCase();
     const mbti = context.mbti || '알 수 없음';
-    const element = Object.values(SAJU_ELEMENTS)[(context.birthDate ? parseInt(context.birthDate.split('-')[0].slice(-1) || '0') : 0) % 5] || '알 수 없음';
+    const element = Object.values(SAJU_ELEMENTS)[(context.birthDate ? parseInt((context.birthDate.split('-')[0] || '').slice(-1) || '0') : 0) % 5] || '알 수 없음';
 
     // 간단한 키워드 매칭
     if (q.includes('안녕')) {
