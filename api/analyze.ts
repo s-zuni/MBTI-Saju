@@ -55,27 +55,28 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             // Calculate Saju
             const sajuResult = calculateSaju(birthDate, birthTime);
 
-            // Translate elements to Korean for the prompt to avoid English leakage
-            const elementKoreanMap: { [key: string]: string } = {
-                wood: '목(Wood)', fire: '화(Fire)', earth: '토(Earth)', metal: '금(Metal)', water: '수(Water)'
-            };
-
             const systemPrompt = `
             You are an expert consultant specializing in the fusion of MBTI and traditional Korean Saju (Four Pillars of Destiny).
             Your role is to analyze a user's information and provide a COMPREHENSIVE and DETAILED analysis.
-            **STYLE GUIDELINE**:
-            - Use relevant Emojis (✨, 🔮, 🌊, etc.) throughout the text to make it visually engaging and friendly.
-            - Tone: Warm, professional, and insightful.
-            - Language: Korean (Hangul).
+            
+            **CRITICAL INSTRUCTION**: 
+            1. **LANGUAGE**: Output MUST be in **Korean (Hangul)** only. Do not use English headers or terms unless absolutely necessary for specific terminology (e.g. MBTI).
+            2. **ELEMENT NAMES**: Always translate element names to Korean with Chinese character in brackets on first mention, then just Korean.
+               - Wood -> 목(Wood) or 목
+               - Fire -> 화(Fire) or 화
+               - Earth -> 토(Earth) or 토
+               - Metal -> 금(Metal) or 금  <-- **NEVER leave this as 'Metal'**
+               - Water -> 수(Water) or 수
+            3. **STYLE**: Use relevant Emojis (✨, 🔮, 🌊, etc.) to make it engaging. Tone should be warm, professional, and insightful.
 
             The response MUST be a JSON object with the following keys:
             - "keywords": 3-4 key personality keywords (string).
             - "commonalities": Explanation of common points between Saju and MBTI (string).
-            - "typeDescription": A description of their Saju Day Master type (e.g., "섬세한 보석 신금") (string).
+            - "typeDescription": A description of their Saju Day Master type (e.g., "섬세한 보석 신금", "우직한 바위 경금") (string).
             - "elementAnalysis": A brief analysis of their element distribution (string).
             - "mbtiAnalysis": Deep analysis focusing on their MBTI traits (string, approx 300 chars).
             - "sajuAnalysis": Deep analysis focusing on their Saju characteristics (string, approx 300 chars).
-            - "fusedAnalysis": A unique insight combining BOTH systems (e.g., "As an ENTP with strong Fire, you are...") (string, approx 400 chars).
+            - "fusedAnalysis": A unique insight combining BOTH systems (string, approx 400 chars).
             `;
 
             const userQuery = `
@@ -87,9 +88,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             
             [Saju Data]
             - Day Master (Il-Gan): ${sajuResult.dayMaster.korean} (${sajuResult.dayMaster.description})
-            - Pillars (Gan-Zhi): Year(${sajuResult.ganZhi.year}), Month(${sajuResult.ganZhi.month}), Day(${sajuResult.ganZhi.day}), Hour(${sajuResult.ganZhi.hour})
-            - Element Connection:
-              Wood: ${sajuResult.elements.wood}, Fire: ${sajuResult.elements.fire}, Earth: ${sajuResult.elements.earth}, Metal: ${sajuResult.elements.metal}, Water: ${sajuResult.elements.water}
+            - Five Elements Count:
+              Wood: ${sajuResult.elements.wood}
+              Fire: ${sajuResult.elements.fire}
+              Earth: ${sajuResult.elements.earth}
+              Metal: ${sajuResult.elements.metal}
+              Water: ${sajuResult.elements.water}
 
             Provide the JSON response based on this. Ensure "Metal" is displayed as "금" or "금(Metal)" and never just "Metal".
             `;

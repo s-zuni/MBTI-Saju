@@ -219,12 +219,56 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             {/* Saju Type Section */}
             {analysis.typeDescription && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/50 p-8">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-6">
                   <Sparkles className="w-6 h-6 text-indigo-600" />
-                  <h2 className="text-2xl font-bold text-indigo-900">나의 사주 유형</h2>
+                  <h2 className="text-2xl font-bold text-indigo-900">운명 분석 리포트</h2>
                 </div>
-                <p className="text-indigo-800 leading-relaxed font-bold text-lg">{analysis.typeDescription}</p>
-                {analysis.elementAnalysis && <p className="text-indigo-700 mt-2">{analysis.elementAnalysis}</p>}
+
+                <div className="space-y-6">
+                  {/* Day Master */}
+                  <div className='bg-white bg-opacity-60 rounded-xl p-5'>
+                    <h3 className="font-bold text-indigo-800 mb-2">💎 나의 천간 (Day Master)</h3>
+                    <p className="text-indigo-900 text-lg font-black mb-1">{analysis.typeDescription}</p>
+                    {/* Show calculation details if available */}
+                    {analysis.saju && (
+                      <div className="text-sm text-indigo-600 mt-2">
+                        <span className="inline-block bg-indigo-100 px-2 py-1 rounded text-xs font-bold mr-2">
+                          {analysis.saju.dayMaster.korean}({analysis.saju.dayMaster.chinese})
+                        </span>
+                        <span className="text-slate-600">{analysis.saju.dayMaster.description}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Element Analysis Text */}
+                  {analysis.elementAnalysis && (
+                    <div>
+                      <h3 className="font-bold text-indigo-800 mb-2">🌊 오행 분석</h3>
+                      <p className="text-indigo-700 leading-relaxed">{analysis.elementAnalysis}</p>
+                    </div>
+                  )}
+
+                  {/* Five Elements Visualizer */}
+                  {analysis.saju && analysis.saju.elements && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">오행 분포 (Five Elements)</h4>
+                      <div className="grid grid-cols-5 gap-2 text-center">
+                        {[
+                          { label: '목(Wood)', count: analysis.saju.elements.wood, color: 'bg-green-100 text-green-700 border-green-200' },
+                          { label: '화(Fire)', count: analysis.saju.elements.fire, color: 'bg-red-100 text-red-700 border-red-200' },
+                          { label: '토(Earth)', count: analysis.saju.elements.earth, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                          { label: '금(Metal)', count: analysis.saju.elements.metal, color: 'bg-slate-100 text-slate-700 border-slate-200' },
+                          { label: '수(Water)', count: analysis.saju.elements.water, color: 'bg-blue-100 text-blue-700 border-blue-200' }
+                        ].map((el) => (
+                          <div key={el.label} className={`rounded-xl p-2 border ${el.color} flex flex-col items-center justify-center`}>
+                            <span className="text-2xl font-black mb-1">{el.count}</span>
+                            <span className="text-xs font-bold">{el.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
