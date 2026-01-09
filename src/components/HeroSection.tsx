@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -8,6 +9,8 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative pt-32 pb-20 overflow-hidden">
       {/* Background Ornaments */}
@@ -17,7 +20,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
       <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full text-xs font-bold text-slate-600 mb-8 animate-fade-in">
           <Sparkles className="w-4 h-4 text-indigo-500" />
-          AI 기반 차세대 운명 분석 플랫폼
+          차세대 운명 분석 플랫폼
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 mb-8 leading-[1.1] animate-fade-up">
@@ -36,22 +39,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
 
         <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-fade-up [animation-delay:200ms]">
           MBTI의 심리학과 사주의 지혜를 결합하여 당신의 가능성을 발견하세요.<br className="hidden md:block" />
-          정교한 명리학 데이터와 MBTI 심리 통계를 분석하여, AI가 깊이 있고 신뢰할 수 있는 해답을 제시합니다.
+          정교한 명리학 데이터와 MBTI 심리 통계를 분석하여, 깊이 있고 신뢰할 수 있는 해답을 제시합니다.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up [animation-delay:400ms]">
           <button
-            onClick={onStart}
+            onClick={() => {
+              if (user) {
+                navigate('/mypage');
+              } else {
+                onStart();
+              }
+            }}
             className="w-full sm:w-auto px-10 py-5 bg-indigo-600 text-white rounded-full font-bold text-lg shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
           >
             내 운명 지금 확인하기
             <ArrowRight className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => alert('준비 중인 기능입니다.')}
-            className="w-full sm:w-auto px-10 py-5 bg-white text-slate-900 border border-slate-200 rounded-full font-bold text-lg hover:bg-slate-50 transition-all"
-          >
-            서비스 원리 알아보기
           </button>
         </div>
       </div>

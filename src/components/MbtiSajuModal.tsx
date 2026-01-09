@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download } from 'lucide-react';
 import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis } from '../utils/sajuLogic';
+import ShareCard from './ShareCard';
+import html2canvas from 'html2canvas';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -13,6 +15,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
   const [fusedReport, setFusedReport] = useState<string>("");
+  const shareCardRef = React.useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   // Note: We don't use the simple sajuFortune state anymore, as it's embedded in the report.
 
@@ -22,6 +26,30 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  const handleShare = async () => {
+    if (!shareCardRef.current) return;
+    setIsSharing(true);
+    try {
+      // Small delay to ensure render
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2, // High resolution
+        backgroundColor: null,
+      });
+
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `MBTI-Saju-Analysis-${analysis.mbti}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Sharing failed:", error);
+      alert("이미지 저장 중 오류가 발생했습니다.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const loadAnalysis = async () => {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
@@ -29,7 +57,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       const metadata = session.user.user_metadata;
 
       if (metadata.analysis) {
-        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date }); // Merge birthdate
+        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date, full_name: metadata.full_name }); // Merge full_name
       }
 
       // Generate Detailed Fused Report
@@ -64,9 +92,21 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
               <Sparkles className="w-6 h-6 text-yellow-300" />
               MBTI & 사주 심층 분석
             </h3>
-            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {analysis && (
+                <button
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors flex items-center gap-1 text-sm font-bold"
+                >
+                  {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                  <span className="hidden sm:inline">공유</span>
+                </button>
+              )}
+              <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
           </div>
           <p className="opacity-90 mt-2 text-sm font-medium">나의 선천적 운명과 후천적 성격의 완벽한 조화 🔮</p>
         </div>
@@ -171,6 +211,19 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+      {/* Hidden Share Card for generating image */}
+      {analysis && (
+        <div className="fixed -top-[9999px] left-0">
+          <ShareCard
+            ref={shareCardRef}
+            userName={analysis.full_name || '회원'}
+            mbti={analysis.mbti}
+            sajuElement={SAJU_ELEMENTS[Object.keys(SAJU_ELEMENTS)[(analysis.birth_date ? parseInt(analysis.birth_date.split('-')[0].slice(-1) || '0') : 0) % 5] as keyof typeof SAJU_ELEMENTS]}
+            sajuTrait="타고난 운명과 후천적 성격의 조화"
+            keywords={analysis.keywords?.split(',') || []}
+          />
+        </div>
+      )}
     </div>
   );
 };
