@@ -73,7 +73,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-1.5-flash",
             systemInstruction: systemPrompt
         });
 
@@ -101,7 +101,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         res.status(200).json({ reply: responseText });
 
     } catch (error: any) {
-        console.error('Server Error:', error);
-        res.status(500).json({ error: error.message || 'An internal server error occurred.' });
+        console.error('ChatServer Error:', error);
+        res.status(500).json({
+            error: 'Failed to generate chat response',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 };

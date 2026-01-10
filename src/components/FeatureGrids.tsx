@@ -20,6 +20,7 @@ interface FeatureGridsProps {
     onHealingClick: () => void;
     onJobClick: () => void;
     onCompatibilityClick: () => void;
+    onTarotClick?: () => void;
 }
 
 const FeatureGrids: React.FC<FeatureGridsProps> = ({
@@ -29,7 +30,8 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
     onTripClick,
     onHealingClick,
     onJobClick,
-    onCompatibilityClick
+    onCompatibilityClick,
+    onTarotClick
 }) => {
     const navigate = useNavigate();
     const mainCategories = [
@@ -54,6 +56,16 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             action: () => alert('준비 중인 기능입니다.')
         },
         {
+            icon: Sparkles,
+            label: '타로 상담',
+            sub: '고민 해결',
+            color: 'text-purple-600',
+            bg: 'bg-purple-50',
+            hover: 'hover:bg-purple-100',
+            border: 'border-purple-100',
+            action: () => onTarotClick ? onTarotClick() : alert('준비 중입니다.')
+        },
+        {
             icon: Users,
             label: '커뮤니티',
             sub: '함께 나누는 이야기',
@@ -67,8 +79,8 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
 
     return (
         <div className="section-container !py-8">
-            {/* Main 3 Menu Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Main Categories Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {mainCategories.map((cat, i) => (
                     <button
                         key={i}

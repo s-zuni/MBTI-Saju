@@ -17,6 +17,7 @@ import CompatibilityModal from './components/CompatibilityModal';
 import TripModal from './components/TripModal';
 import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
+import TarotModal from './components/TarotModal';
 import SplashScreen from './components/SplashScreen';
 import Chatbot from './components/Chatbot';
 import FortunePage from './pages/FortunePage';
@@ -37,6 +38,7 @@ function App() {
   const [showTripModal, setShowTripModal] = useState(false);
   const [showHealingModal, setShowHealingModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
+  const [showTarotModal, setShowTarotModal] = useState(false);
   const [showRecommendModal, setShowRecommendModal] = useState(false); // 추천직업 상세
   const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지
   const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Chatbot State
@@ -128,6 +130,9 @@ function App() {
   const openJobModal = () => setShowJobModal(true);
   const closeJobModal = () => setShowJobModal(false);
 
+  const openTarotModal = () => setShowTarotModal(true);
+  const closeTarotModal = () => setShowTarotModal(false);
+
 
   const handleStart = async () => {
     if (session) {
@@ -175,6 +180,7 @@ function App() {
                 onHealingClick={openHealingModal}
                 onJobClick={openJobModal}
                 onCompatibilityClick={openCompModal}
+                onTarotClick={openTarotModal}
               />
 
               {/* Featured Analysis Section */}
@@ -269,6 +275,7 @@ function App() {
         <TripModal isOpen={showTripModal} onClose={closeTripModal} />
         <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
+        <TarotModal isOpen={showTarotModal} onClose={closeTarotModal} />
 
         {/* Chatbot Component */}
         <Chatbot
