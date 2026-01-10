@@ -18,16 +18,17 @@ export default async (req: any, res: any) => {
         Base the recommendation on their MBTI and Saju elements (e.g., if they lack Water, recommend a river view cafe).
         
         **CRITICAL INSTRUCTIONS**:
-        1. **Region**: The place MUST be located in ${region}. Do not recommend places outside this region.
-        2. **JSON Format**: Return ONLY a valid JSON object. Do not wrap in markdown code blocks.
-        3. **Emojis**: Add relevant emojis (🌿, ☕, ⛰️) to the text fields.
+        1. **Language**: **ALL OUTPUT MUST BE IN KOREAN.** (Do NOT use English).
+        2. **Region**: The place MUST be located in ${region}. Do not recommend places outside this region.
+        3. **JSON Format**: Return ONLY a valid JSON object. Do not wrap in markdown code blocks.
+        4. **Emojis**: Add relevant emojis (🌿, ☕, ⛰️) to the text fields.
         
         Output JSON format:
         {
-            "place": "Specific Name of the Place (e.g. Starfield Library)",
-            "placeType": "Category (e.g. Cafe, Park, Temple)",
-            "activity": "Suggested activity (e.g. reading, meditation)",
-            "reason": "Why this fits their energy (approx 200 chars)."
+            "place": "Place Name in Korean (e.g. 별마당 도서관)",
+            "placeType": "Place Category in Korean (e.g. 카페, 공원, 사찰)",
+            "activity": "Suggested activity in Korean (e.g. 독서, 명상)",
+            "reason": "Reason in Korean (approx 200 chars). Explain why this fits their energy."
         }
         `;
 
