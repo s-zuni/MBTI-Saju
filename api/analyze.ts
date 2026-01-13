@@ -70,12 +70,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             1. **LANGUAGE**: Korean (Hangul) ONLY.
             2. **TONE**: Professional, empathetic, insightful, and slightly mystical ("~합니다", "~입니다" polite style).
             3. **FORMAT**: Output MUST be a valid JSON object.
-            4. **LENGTH**: Each section must be detailed (minimum 300 characters each). Use Markdown formatting (bullet points, bold text) within the strings for readability.
+            4. **NO MARKDOWN BOLDING**: Do NOT use '**' characters. Use plain text only. The frontend does not support markdown bolding.
+            5. **ELEMENT NAMES**: You MUST use the format "Korean(Hanja)" for elements. 
+               - CORRECT: 목(木), 화(火), 토(土), 금(金), 수(水)
+               - WRONG: 목(Wood), 화(Fire), 금(Metal) -> NEVER use English translations for elements.
             
             **REQUIRED JSON STRUCTURE (5 Core Sections)**:
             {
                 "keywords": "3-4 Keywords representing their core essence (e.g., '열정적인 불꽃', '논리적인 바위')",
-                "sajuReading": "1. 사주 풀이\n- Describe their Day Master and Five Elements balance.\n- Explain their core temperament and destiny.",
+                "sajuReading": "1. 사주 풀이\n- Describe their Day Master and Five Elements balance.\n- Explain their core temperament and destiny.\n- Use 'Element(Hanja)' format strictly.",
                 "mbtiCompatibility": "2. MBTI와 궁합\n- Explain how their MBTI interacts with their Saju.\n- Mention compatible types/energies.",
                 "fortune2026": "3. 2026 대운세\n- A detailed forecast for the year 2026 based on their Saju cycle.",
                 "otherLuck": "4. 기타 운수 (재물, 사랑)\n- Specifically cover Wealth (재물운) and Love (연애운) in detail using bullet points.",
