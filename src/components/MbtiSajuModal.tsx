@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download, X } from 'lucide-react';
 import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
+import { DetailedReportCard } from './DetailedReportCard';
 import html2canvas from 'html2canvas';
 
 interface MbtiSajuModalProps {
@@ -16,7 +17,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
   const [fusedReport, setFusedReport] = useState<string>("");
   const shareCardRef = React.useRef<HTMLDivElement>(null);
+  const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Note: We don't use the simple sajuFortune state anymore, as it's embedded in the report.
@@ -48,6 +51,28 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       alert("이미지 저장 중 오류가 발생했습니다.");
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!reportRef.current) return;
+    setIsDownloading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100)); // Wait for render
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff"
+      });
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `MBTI-Saju-Full-Report-${analysis.full_name}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Download failed", error);
+      alert("리포트 저장 중 오류가 발생했습니다.");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -337,6 +362,17 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
             sajuElement={SAJU_ELEMENTS[Object.keys(SAJU_ELEMENTS)[(analysis.birth_date ? parseInt(analysis.birth_date.split('-')[0].slice(-1) || '0') : 0) % 5] as keyof typeof SAJU_ELEMENTS]}
             sajuTrait="타고난 운명과 후천적 성격의 조화"
             keywords={analysis.keywords?.split(',') || []}
+          />
+        </div>
+      )}
+      {analysis && (
+        <div className="fixed -top-[9999px] left-0">
+          <DetailedReportCard
+            ref={reportRef}
+            userName={analysis.full_name || '회원'}
+            mbti={analysis.mbti}
+            sajuElement={SAJU_ELEMENTS[Object.keys(SAJU_ELEMENTS)[(analysis.birth_date ? parseInt(analysis.birth_date.split('-')[0].slice(-1) || '0') : 0) % 5] as keyof typeof SAJU_ELEMENTS]}
+            analysis={analysis}
           />
         </div>
       )}
