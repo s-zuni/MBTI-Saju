@@ -99,7 +99,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       });
 
       if (!response.ok) {
-        throw new Error("분석 생성에 실패했습니다.");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || errorData?.details || "분석 생성에 실패했습니다.");
       }
 
       const newAnalysis = await response.json();
@@ -112,9 +113,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       // Update Local State
       setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Regenerate Error:", error);
-      alert("분석을 다시 생성하는 중 문제가 발생했습니다.");
+      alert(`오류가 발생했습니다: ${error.message}`);
     } finally {
       setIsRegenerating(false);
     }

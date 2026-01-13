@@ -140,6 +140,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
     } catch (error: any) {
         console.error('Server Error:', error);
-        res.status(500).json({ error: error.message || 'An internal server error occurred.' });
+        // Identify specific errors to return friendly messages
+        if (error.message?.includes('Missing environment variables')) {
+            return res.status(500).json({ error: 'Server Configuration Error: Missing API Keys' });
+        }
+        res.status(500).json({ error: error.message || 'An internal server error occurred.', details: error.toString() });
     }
 };
