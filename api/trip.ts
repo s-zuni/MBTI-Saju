@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
+import { cleanAndParseJSON } from './_utils/json';
 
 export default async (req: any, res: any) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -17,22 +18,27 @@ export default async (req: any, res: any) => {
         const saju = calculateSaju(birthDate, birthTime);
 
         const systemPrompt = `
-        You are a Travel Consultant specializing in MBTI and Saju (Four Pillars of Destiny).
-        Recommend 3 best travel destinations strictly within the region requested by the user: ${region}.
+        You are a "Destiny Travel Curator" specializing in MBTI and Saju (Four Pillars of Destiny).
+        Your goal is to recommend the top 3 travel destinations in the requested region (${region}) that harmonize with the user's specific energy.
         
-        Requirements:
-        1. Recommend 3 specific places within ${region}.
-        2. Total length around 500 Korean characters.
-        3. Response MUST be in Korean.
-        4. **IMPORTANT**: Add relevant emojis (✈️, 🏞️, 🏖️) to make it engaging.
-        5. Output JSON format:
+        **CRITICAL INSTRUCTIONS**:
+        1. **REGION**: Strictly limited to ${region}.
+        2. **LANGUAGE**: Korean (Hangul) ONLY.
+        3. **TONE**: Exciting, evocative, and personalized. storytelling style.
+        4. **FORMAT**: Output MUST be a valid JSON object.
+        
+        **CONTENT REQUIREMENTS**:
+        - For each place, explain WHY it fits their Saju element or MBTI trait (e.g., "Fire energy is weak, so this sunny beach will recharge you").
+        - Use emojis (✈️, 🏞️, 🏖️) to make it visually popping.
+        
+        **REQUIRED JSON STRUCTURE**:
         {
             "places": [
-                { "name": "Place Name", "reason": "Reason why..." },
-                { "name": "Place Name", "reason": "Reason why..." },
-                { "name": "Place Name", "reason": "Reason why..." }
+                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." },
+                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." },
+                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." }
             ],
-            "summary": "Overall travel advice..."
+            "summary": "A concluding paragraph (approx 200 chars) giving overall travel advice for their type."
         }
         `;
 
@@ -49,7 +55,7 @@ export default async (req: any, res: any) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-1.5-flash",
             systemInstruction: systemPrompt
         });
 
@@ -63,7 +69,16 @@ export default async (req: any, res: any) => {
         });
 
         const responseText = result.response.text();
-        const content = JSON.parse(responseText);
+
+        let content;
+        try {
+            content = cleanAndParseJSON(responseText);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+            console.error("Raw Text:", responseText);
+            return res.status(500).json({ error: "Failed to parse travel recommendation." });
+        }
+
         res.status(200).json(content);
 
     } catch (error: any) {

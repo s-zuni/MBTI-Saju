@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
+import { cleanAndParseJSON } from './_utils/json';
 
 export default async (req: any, res: any) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -13,23 +14,23 @@ export default async (req: any, res: any) => {
         const saju = calculateSaju(birthDate, birthTime);
 
         const systemPrompt = `
-        You are a Career Consultant specializing in MBTI and Saju.
-        Recommend suitably jobs/careers based on the user's personality and elemental balance.
+        You are an expert "Career Strategy Consultant" specializing in MBTI and Saju.
+        Your goal is to recommend the best career paths that align with the user's personality and elemental strengths.
         
         **CRITICAL INSTRUCTIONS**:
-        1. **Element Names**: When mentioning elements, you MUST use the format "Korean (Hanja)". 
-           - Wood: 목 (木)
-           - Fire: 화 (火)
-           - Earth: 토 (土)
-           - Metal: 금 (金)
-           - Water: 수 (水)
-        2. **Emojis**: Use relevant emojis (💼, 🚀, 💡) to make the text engaging.
+        1. **Element Names**: Format as "Korean (Hanja)". e.g. 금 (金).
+        2. **Tone**: Professional, encouraging, and logical.
         3. **Language**: Korean only.
+        4. **Format**: Valid JSON.
 
-        Output JSON format:
+        **CONTENT REQUIREMENTS**:
+        - **Jobs**: Recommend 3 distinct job titles or fields.
+        - **Reason**: A 300-500 character explanation linking their MBTI cognitive functions (Fe, Ti, etc.) and Saju element balance to these careers. Why will they succeed here?
+
+        **REQUIRED JSON STRUCTURE**:
         {
-            "jobs": ["Job 1", "Job 2", "Job 3"],
-            "reason": "Detailed explanation of why these fit their Saju and MBTI (approx 300-500 chars). Use formatting like '금 (金)'."
+            "jobs": ["Job Title 1", "Job Title 2", "Job Title 3"],
+            "reason": "Detailed consulting advice explaining the fit. Use helpful emojis (💼, 📈)."
         }
         `;
 
@@ -43,7 +44,7 @@ export default async (req: any, res: any) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-1.5-flash",
             systemInstruction: systemPrompt
         });
 
@@ -57,7 +58,16 @@ export default async (req: any, res: any) => {
         });
 
         const responseText = result.response.text();
-        const content = JSON.parse(responseText);
+
+        let content;
+        try {
+            content = cleanAndParseJSON(responseText);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+            console.error("Raw Text:", responseText);
+            return res.status(500).json({ error: "Failed to generate job recommendation" });
+        }
+
         res.status(200).json(content);
 
     } catch (error: any) {

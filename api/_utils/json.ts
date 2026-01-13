@@ -1,0 +1,15 @@
+/**
+ * Cleans and parses a JSON string, handling Markdown code blocks.
+ * @param text The raw string response from AI
+ * @returns Parsed JSON object or throws error
+ */
+export const cleanAndParseJSON = (text: string): any => {
+    try {
+        // Remove markdown code blocks (```json ... ``` or just ``` ... ```)
+        const cleaned = text.replace(/```(json)?/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleaned);
+    } catch (error) {
+        console.error("JSON Parse Failed. Raw Text:", text);
+        throw new Error("Failed to parse AI response as JSON.");
+    }
+};

@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { cleanAndParseJSON } from './_utils/json';
+
 // Fallback types if @vercel/node is not available
 type VercelRequest = any;
 type VercelResponse = any;
@@ -14,7 +16,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 export default async (req: VercelRequest, res: VercelResponse) => {
     // CORS configuration
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Consider restricting this to your frontend's domain in production
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
     res.setHeader(
         'Access-Control-Allow-Headers',
@@ -40,7 +42,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     if (req.method === 'POST') {
         const { birthDate } = req.body;
-        console.log("Fortune Request Body:", req.body); // Check what we receive
+        console.log("Fortune Request Body:", req.body);
 
         // Simple Zodiac Calculation Function
         const getZodiacSign = (dateStr: string) => {
@@ -68,22 +70,30 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
         try {
             const systemPrompt = `
-                You are a wise and friendly fortune teller using Western Astrology (Zodiac Signs).
-                Your role is to provide a positive and encouraging "Today's Fortune" for a user with the Zodiac sign: ${zodiac}.
-                The response MUST be a JSON object with one key: "fortune".
-                The value should be a string of about 200-400 Korean characters.
-                Start by mentioning their Zodiac sign (e.g., "오늘의 물병자리 운세는...").
-                Maintain a warm and hopeful tone.
-                **IMPORTANT**: Add relevant emojis (✨, 🍀, 🌈) throughout the text to make it visually engaging.
+                You are a "Daily Fate Forecaster".
+                Your job is to provide a specific, actionable daily fortune for the user based on their Zodiac sign (${zodiac}).
+                
+                **CONTENT REQUIREMENTS**:
+                1. **Time Flow**: Briefly mention Morning, Afternoon, and Evening luck flow.
+                2. **Lucky Items**: Must recommend a Lucky Color, Lucky Number, and Lucky Direction.
+                3. **Tone**: Cheerful, encouraging, but realistic.
+                4. **Language**: Korean Only.
+                5. **Format**: Valid JSON.
+
+                **REQUIRED JSON STRUCTURE**:
+                {
+                    "fortune": "Detailed daily fortune text (approx 300 chars). Mention time of day flows here.",
+                    "lucky": "String containing: 'Lucky Color: [Color], Lucky Number: [Num], Direction: [Dir]' (in Korean)"
+                }
             `;
 
             const userQuery = `
-                Please provide today's fortune for me. My birthdate is ${birthDate} (${zodiac}).
+                Provide luck for ${birthDate} (${zodiac}).
             `;
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({
-                model: "gemini-3-flash-preview",
+                model: "gemini-1.5-flash",
                 systemInstruction: systemPrompt
             });
 
@@ -97,7 +107,20 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             });
 
             const responseText = result.response.text();
-            const content = JSON.parse(responseText);
+
+            let content;
+            try {
+                content = cleanAndParseJSON(responseText);
+            } catch (e) {
+                console.error("JSON Parse Error:", e);
+                console.error("Raw Text:", responseText);
+                return res.status(500).json({ error: "Fate calculation failed." });
+            }
+
+            // Merge lucky items into fortune text for display
+            if (content.lucky) {
+                content.fortune = `${content.fortune}\n\n[오늘의 행운]\n${content.lucky}`;
+            }
 
             res.status(200).json(content);
 
