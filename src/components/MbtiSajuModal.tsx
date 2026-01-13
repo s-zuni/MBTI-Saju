@@ -214,23 +214,67 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
               {/* Tab Content */}
               <div className="animate-fade-up">
                 {activeTab === 'fused' && (
-                  <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
-                    <h4 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                      ✨ MBTI x 사주 초정밀 융합 분석
-                    </h4>
-                    <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                      {analysis.fusedAnalysis || fusedReport || "종합 분석을 생성하는 중입니다..."}
+                  <div className="space-y-4 animate-fade-up">
+                    {/* 1. Saju Reading */}
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                      <h4 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        📜 1. 사주 풀이
+                      </h4>
+                      <div className="text-slate-600 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                        {analysis.sajuReading || analysis.sajuAnalysis || fusedReport || "분석을 불러오는 중입니다..."}
+                      </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-indigo-200/50 flex flex-col items-center">
-                      <p className="text-sm text-indigo-400 mb-3">결과가 마음에 들지 않으신가요?</p>
+                    {/* 2. MBTI Compatibility */}
+                    <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
+                      <h4 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                        💞 2. MBTI와 궁합
+                      </h4>
+                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                        {analysis.mbtiCompatibility || analysis.commonalities || "분석 결과가 없습니다."}
+                      </div>
+                    </div>
+
+                    {/* 3. 2026 Fortune */}
+                    <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 shadow-sm">
+                      <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
+                        📅 3. 2026 대운세
+                      </h4>
+                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                        {analysis.fortune2026 || "2026년 운세를 분석 중입니다..."}
+                      </div>
+                    </div>
+
+                    {/* 4. Other Luck (Wealth, Love) */}
+                    <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 shadow-sm">
+                      <h4 className="text-lg font-bold text-rose-900 mb-3 flex items-center gap-2">
+                        💰 4. 기타 운수 (재물/사랑)
+                      </h4>
+                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                        {analysis.otherLuck || "재물운과 연애운을 분석 중입니다..."}
+                      </div>
+                    </div>
+
+                    {/* 5. Advice (Do's & Don'ts) */}
+                    <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+                      <h4 className="text-lg font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                        ✅ 5. 같이해야 할 것 & 피해야 할 것
+                      </h4>
+                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                        {analysis.advice || "행운의 조언을 생성 중입니다..."}
+                      </div>
+                    </div>
+
+                    {/* Regenerate Button */}
+                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center">
+                      <p className="text-sm text-slate-400 mb-3">결과가 마음에 들지 않으신가요?</p>
                       <button
                         onClick={handleRegenerate}
                         disabled={isRegenerating}
                         className="flex items-center gap-2 px-6 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-full text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50"
                       >
                         {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 분석하기"}
+                        {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 분석하기 (재생성)"}
                       </button>
                     </div>
                   </div>

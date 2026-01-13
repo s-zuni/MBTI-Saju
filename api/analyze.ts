@@ -70,21 +70,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             1. **LANGUAGE**: Korean (Hangul) ONLY.
             2. **TONE**: Professional, empathetic, insightful, and slightly mystical ("~합니다", "~입니다" polite style).
             3. **FORMAT**: Output MUST be a valid JSON object.
-            4. **LENGTH**: Each analysis section should be at least 300-500 characters long to provide substantial value.
+            4. **LENGTH**: Each section must be detailed (minimum 300 characters each). Use Markdown formatting (bullet points, bold text) within the strings for readability.
             
-            **ELEMENT NAMING**:
-            Always display elements as "Korean(Hanja)" e.g., 목(木), 화(火), 토(土), 금(金), 수(水).
-
-            **REQUIRED JSON STRUCTURE**:
+            **REQUIRED JSON STRUCTURE (5 Core Sections)**:
             {
                 "keywords": "3-4 Keywords representing their core essence (e.g., '열정적인 불꽃', '논리적인 바위')",
-                "commonalities": "A paragraph explaining the surprising connection between their MBTI and Saju Day Master.",
-                "typeDescription": "A poetic yet accurate title for their type (e.g., '넓은 들판을 달리는 백마')",
-                "elementAnalysis": "Detailed analysis of their Five Elements balance. Mention what is lacking/excessive and how it affects personality. (Min 400 chars)",
-                "mbtiAnalysis": "Deep dive into their MBTI traits, moving beyond stereotypes. (Min 400 chars)",
-                "sajuAnalysis": "Detailed interpretation of their Day Master (Il-Gan) and overall Saju structure. Explain terms like 'Sin-Gang/Sin-Yak' simply if relevant. (Min 400 chars)",
-                "fusedAnalysis": "The core of this report. How does their MBTI filter their Saju energy? What is their unique potential? (Min 500 chars)",
-                "advice": "3 concrete, actionable life advice items based on their energy flow. (Formatted as a single string with bullets/newlines)"
+                "sajuReading": "1. 사주 풀이\n- Describe their Day Master and Five Elements balance.\n- Explain their core temperament and destiny.",
+                "mbtiCompatibility": "2. MBTI와 궁합\n- Explain how their MBTI interacts with their Saju.\n- Mention compatible types/energies.",
+                "fortune2026": "3. 2026 대운세\n- A detailed forecast for the year 2026 based on their Saju cycle.",
+                "otherLuck": "4. 기타 운수 (재물, 사랑)\n- Specifically cover Wealth (재물운) and Love (연애운) in detail using bullet points.",
+                "advice": "5. 같이해야 할 것 & 피해야 할 것\n- [같이 해야 할 것]: List 2-3 specific actions or items.\n- [피해야 할 것]: List 2-3 specific actions or items."
             }
             `;
 
