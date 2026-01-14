@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, ThumbsUp, PenSquare, X, Send } from 'lucide-react';
+import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, MoreVertical } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,17 +29,22 @@ const CommunityPage: React.FC = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
+    const [activeTag, setActiveTag] = useState('전체');
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Modal States
     const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
 
     const navigate = useNavigate();
+
+    const tags = ['전체', '잡담', '질문', '공유', '궁합'];
 
     useEffect(() => {
         fetchPosts();
         checkUser();
-    }, []);
+    }, [activeTag]); // Refetch when tag changes
 
     const checkUser = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -48,15 +53,51 @@ const CommunityPage: React.FC = () => {
 
     const fetchPosts = async () => {
         setLoading(true);
-        // Basic fetch, improvements: pagination, join for comment count
-        const { data, error } = await supabase
+        let query = supabase
             .from('posts')
             .select('*')
             .order('created_at', { ascending: false });
 
+        if (activeTag !== '전체') {
+            query = query.eq('tag', activeTag);
+        }
+
+        if (searchQuery) {
+            query = query.ilike('title', `%${searchQuery}%`);
+        }
+
+        const { data, error } = await query;
+
         if (error) console.error('Error fetching posts:', error);
         else setPosts(data || []);
         setLoading(false);
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        fetchPosts();
+    };
+
+    const handleLike = async (e: React.MouseEvent, postId: string, currentLikes: number) => {
+        e.stopPropagation(); // Prevent opening modal
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        // Optimistic update
+        setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
+
+        const { error } = await supabase
+            .from('posts')
+            .update({ likes: currentLikes + 1 })
+            .eq('id', postId);
+
+        if (error) {
+            console.error('Like error:', error);
+            // Revert on error
+            setPosts(posts.map(p => p.id === postId ? { ...p, likes: currentLikes } : p));
+        }
     };
 
     const handleWriteClick = () => {
@@ -64,20 +105,57 @@ const CommunityPage: React.FC = () => {
             alert('로그인이 필요한 서비스입니다.');
             return;
         }
+        setEditingPost(null);
+        setIsWriteModalOpen(true);
+    };
+
+    const handleEditClick = (post: Post) => {
+        setEditingPost(post);
+        setSelectedPost(null);
         setIsWriteModalOpen(true);
     };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 pt-20">
             <div className="max-w-2xl mx-auto px-4">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900">커뮤니티</h1>
-                    <button
-                        onClick={handleWriteClick}
-                        className="btn-primary px-4 py-2 text-sm flex items-center gap-2"
-                    >
-                        <PenSquare className="w-4 h-4" /> 글쓰기
-                    </button>
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-slate-900 mb-6">커뮤니티</h1>
+
+                    {/* Search & Write */}
+                    <div className="flex gap-3 mb-6">
+                        <form onSubmit={handleSearch} className="flex-1 relative">
+                            <input
+                                type="text"
+                                placeholder="관심있는 내용을 검색해보세요"
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        </form>
+                        <button
+                            onClick={handleWriteClick}
+                            className="btn-primary px-6 py-3 font-bold shadow-lg shadow-indigo-200 flex items-center gap-2 whitespace-nowrap"
+                        >
+                            <PenSquare className="w-5 h-5" /> 글쓰기
+                        </button>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {tags.map(tag => (
+                            <button
+                                key={tag}
+                                onClick={() => setActiveTag(tag)}
+                                className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeTag === tag
+                                    ? 'bg-slate-900 text-white shadow-md'
+                                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -91,25 +169,39 @@ const CommunityPage: React.FC = () => {
                             <div
                                 key={post.id}
                                 onClick={() => setSelectedPost(post)}
-                                className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer"
+                                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group"
                             >
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">{post.tag || '일반'}</span>
-                                    <span className="text-xs text-slate-400">
-                                        {new Date(post.created_at).toLocaleDateString()}
-                                    </span>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-xs font-bold">{post.tag || '일반'}</span>
+                                        <span className="text-xs text-slate-400 font-medium">
+                                            {new Date(post.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h3>
-                                <div className="flex justify-between items-center text-sm text-slate-500">
-                                    <span>{post.author_name || '익명'}</span>
-                                    <div className="flex items-center gap-4">
-                                        {/* Likes - Visual only for now unless implemented */}
-                                        <div className="flex items-center gap-1">
-                                            <ThumbsUp className="w-4 h-4" /> {post.likes}
+
+                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-1">{post.title}</h3>
+                                <p className="text-slate-500 text-sm line-clamp-2 mb-4 leading-relaxed">{post.content}</p>
+
+                                <div className="flex justify-between items-center pt-4 border-t border-slate-50">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs">
+                                            {post.author_name?.[0] || '익'}
                                         </div>
-                                        {/* Comments - Would need actual count */}
-                                        <div className="flex items-center gap-1">
-                                            <MessageSquare className="w-4 h-4" /> 댓글
+                                        {post.author_name || '익명'}
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={(e) => handleLike(e, post.id, post.likes)}
+                                            className="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-colors group/like"
+                                        >
+                                            <ThumbsUp className="w-4 h-4 group-hover/like:fill-rose-500 group-hover/like:text-rose-500 transition-colors" />
+                                            <span className="text-sm font-medium">{post.likes || 0}</span>
+                                        </button>
+                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                            <MessageSquare className="w-4 h-4" />
+                                            <span className="text-sm font-medium">댓글</span>
                                         </div>
                                     </div>
                                 </div>
@@ -128,6 +220,7 @@ const CommunityPage: React.FC = () => {
                         fetchPosts();
                     }}
                     user={user}
+                    postToEdit={editingPost}
                 />
             )}
 
@@ -137,6 +230,11 @@ const CommunityPage: React.FC = () => {
                     post={selectedPost}
                     onClose={() => setSelectedPost(null)}
                     user={user}
+                    onDelete={() => {
+                        setSelectedPost(null);
+                        fetchPosts();
+                    }}
+                    onEdit={() => handleEditClick(selectedPost)}
                 />
             )}
         </div>
@@ -145,10 +243,10 @@ const CommunityPage: React.FC = () => {
 
 // --- Sub Components ---
 
-const WriteModal = ({ onClose, onSuccess, user }: { onClose: () => void, onSuccess: () => void, user: any }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [tag, setTag] = useState('잡담');
+const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => void, onSuccess: () => void, user: any, postToEdit?: Post | null }) => {
+    const [title, setTitle] = useState(postToEdit?.title || '');
+    const [content, setContent] = useState(postToEdit?.content || '');
+    const [tag, setTag] = useState(postToEdit?.tag || '잡담');
     const [loading, setLoading] = useState(false);
 
     // Keyboard Navigation for Modal
@@ -165,13 +263,29 @@ const WriteModal = ({ onClose, onSuccess, user }: { onClose: () => void, onSucce
     const handleSubmit = async () => {
         if (!title.trim() || !content.trim()) return;
         setLoading(true);
-        const { error } = await supabase.from('posts').insert({
+
+        const postData = {
             title,
             content,
             tag,
             user_id: user.id,
-            author_name: user.user_metadata.full_name || '익명',
-        });
+            author_name: user?.user_metadata?.full_name || '익명',
+        };
+
+        let result;
+
+        if (postToEdit) {
+            result = await supabase
+                .from('posts')
+                .update(postData)
+                .eq('id', postToEdit.id);
+        } else {
+            result = await supabase
+                .from('posts')
+                .insert(postData);
+        }
+
+        const { error } = result;
 
         setLoading(false);
         if (error) {
@@ -185,7 +299,7 @@ const WriteModal = ({ onClose, onSuccess, user }: { onClose: () => void, onSucce
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-lg p-6 animate-fade-up">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold">글쓰기</h3>
+                    <h3 className="text-lg font-bold">{postToEdit ? '글 수정하기' : '글쓰기'}</h3>
                     <button onClick={onClose}><X className="w-6 h-6 text-slate-400" /></button>
                 </div>
                 <div className="space-y-4">
@@ -219,7 +333,7 @@ const WriteModal = ({ onClose, onSuccess, user }: { onClose: () => void, onSucce
                         disabled={loading}
                         className="btn-primary w-full py-3"
                     >
-                        {loading ? '등록 중...' : '등록하기'}
+                        {loading ? '처리 중...' : (postToEdit ? '수정하기' : '등록하기')}
                     </button>
                 </div>
             </div>
@@ -227,7 +341,7 @@ const WriteModal = ({ onClose, onSuccess, user }: { onClose: () => void, onSucce
     );
 };
 
-const PostDetailModal = ({ post, onClose, user }: { post: Post, onClose: () => void, user: any }) => {
+const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post, onClose: () => void, user: any, onDelete?: () => void, onEdit?: () => void }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [replyTo, setReplyTo] = useState<string | null>(null); // ID of comment being replied to
@@ -298,7 +412,34 @@ const PostDetailModal = ({ post, onClose, user }: { post: Post, onClose: () => v
                             <span className="text-xs text-slate-400">{new Date(post.created_at).toLocaleString()}</span>
                         </div>
                         <h2 className="text-xl font-bold text-slate-900">{post.title}</h2>
-                        <p className="text-sm text-slate-500 mt-1">작성자: {post.author_name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                            <p className="text-sm text-slate-500">작성자: {post.author_name}</p>
+                            {user && user.id === post.user_id && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm('정말 삭제하시겠습니까?')) return;
+                                            const { error } = await supabase.from('posts').delete().eq('id', post.id);
+                                            if (error) alert('삭제 실패: ' + error.message);
+                                            else {
+                                                alert('게시글이 삭제되었습니다.');
+                                                onClose();
+                                                onDelete?.();
+                                            }
+                                        }}
+                                        className="text-xs text-rose-500 hover:underline flex items-center gap-0.5"
+                                    >
+                                        <Trash2 className="w-3 h-3" /> 삭제
+                                    </button>
+                                    <button
+                                        onClick={onEdit}
+                                        className="text-xs text-slate-500 hover:underline flex items-center gap-0.5"
+                                    >
+                                        <Edit2 className="w-3 h-3" /> 수정
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <button onClick={onClose}><X className="w-6 h-6 text-slate-400 hover:text-slate-600" /></button>
                 </div>
