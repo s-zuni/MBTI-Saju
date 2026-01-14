@@ -78,9 +78,13 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
     }
   };
 
+  // Dynamic text color classes based on scroll state
+  const textColor = isScrolled ? "text-slate-900" : "text-white";
+  const iconColor = isScrolled ? "text-slate-600" : "text-indigo-100";
+  const buttonHover = isScrolled ? "hover:text-indigo-600" : "hover:text-white";
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3' : 'bg-transparent py-5'
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md border-b border-slate-100 py-3 shadow-sm' : 'bg-transparent py-5'
       }`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
         {/* Logo */}
@@ -88,7 +92,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:rotate-6 transition-transform">
             <Star className="w-6 h-6 text-white fill-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">MBTIJU</span>
+          <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors`}>MBTIJU</span>
         </div>
 
         {/* Spacer to push actions to right if search is removed */}
@@ -100,13 +104,13 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
             {/* Links removed as requested */}
           </div>
 
-          <div className="flex items-center gap-4 md:gap-5 border-l border-slate-200 pl-6">
+          <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors ${isScrolled ? 'border-slate-200' : 'border-white/20'}`}>
             <div className="hidden md:flex items-center gap-2">
               {session ? (
                 <>
                   <button
                     onClick={handleMyPageClick}
-                    className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors"
+                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
                     disabled={loading}
                   >
                     <User className="w-6 h-6" />
@@ -114,7 +118,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors"
+                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
                     disabled={loading}
                   >
                     <LogOut className="w-6 h-6" />
@@ -125,7 +129,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                 <div className="flex items-center gap-2">
                   <button
                     onClick={onLoginClick}
-                    className="px-4 py-2 text-slate-900 font-semibold rounded-full hover:bg-slate-100 transition-colors text-sm"
+                    className={`px-4 py-2 font-semibold rounded-full transition-colors text-sm ${isScrolled ? 'text-slate-900 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}
                     disabled={loading}
                   >
                     로그인
@@ -140,17 +144,17 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                 </div>
               )}
             </div>
-            <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
+            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}>
               <Heart className="w-6 h-6" />
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
             </button>
-            <button className="relative group p-1 text-slate-600 hover:text-indigo-600 transition-colors">
+            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}>
               <ShoppingCart className="w-6 h-6" />
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-1 text-slate-900"
+              className={`md:hidden p-1 ${textColor}`}
               disabled={loading}
             >
               <Menu className="w-6 h-6" />
@@ -160,7 +164,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
       </div>
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/80 backdrop-blur-md border-t border-slate-100">
+        <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
           <div className="max-w-7xl mx-auto px-6 py-4">
 
 

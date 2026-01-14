@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, TrendingUp, Heart, Share2, Download, X } from 'lucide-react';
-import { get2026Fortune, SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, X } from 'lucide-react';
+import { SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
 import html2canvas from 'html2canvas';
@@ -22,8 +22,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  // Note: We don't use the simple sajuFortune state anymore, as it's embedded in the report.
-
   useEffect(() => {
     if (isOpen) {
       loadAnalysis();
@@ -34,10 +32,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
     if (!shareCardRef.current) return;
     setIsSharing(true);
     try {
-      // Small delay to ensure render
       await new Promise(resolve => setTimeout(resolve, 100));
       const canvas = await html2canvas(shareCardRef.current, {
-        scale: 2, // High resolution
+        scale: 2,
         backgroundColor: null,
       });
 
@@ -83,14 +80,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
       const metadata = session.user.user_metadata;
 
       if (metadata.analysis) {
-        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date, full_name: metadata.full_name }); // Merge full_name
+        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
       }
 
-      // Generate Local Detailed Fused Report (Fallback)
       const report = getDetailedFusedAnalysis({
         mbti: metadata.mbti,
         birthDate: metadata.birth_date,
-        birthTime: metadata.birth_time, // Assuming this exists or is undefined
+        birthTime: metadata.birth_time,
         name: metadata.full_name
       });
       setFusedReport(report);
@@ -130,12 +126,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
 
       const newAnalysis = await response.json();
 
-      // Update Supabase
       await supabase.auth.updateUser({
         data: { ...metadata, analysis: newAnalysis }
       });
 
-      // Update Local State
       setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
 
     } catch (error: any) {
@@ -156,9 +150,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  // Helper to determine element key safely
   const getSajuKey = (birthDate?: string) => {
-    if (!birthDate) return 'wood'; // Default
+    if (!birthDate) return 'wood';
     const yearString = birthDate.split('-')[0];
     const yearLastDigit = parseInt((yearString || '0').slice(-1));
     const keys = Object.keys(SAJU_ELEMENTS);
@@ -266,7 +259,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                         📅 3. 2026 대운세
                       </h4>
                       <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.fortune2026 || "2026년 운세를 분석 중입니다..."}
+                        {analysis.fortune2026 || <span className="text-amber-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
                       </div>
                     </div>
 
@@ -276,7 +269,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                         💰 4. 기타 운수 (재물/사랑)
                       </h4>
                       <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.otherLuck || "재물운과 연애운을 분석 중입니다..."}
+                        {analysis.otherLuck || <span className="text-rose-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
                       </div>
                     </div>
 
@@ -286,21 +279,31 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                         ✅ 5. 같이해야 할 것 & 피해야 할 것
                       </h4>
                       <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.advice || "행운의 조언을 생성 중입니다..."}
+                        {analysis.advice || <span className="text-emerald-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
                       </div>
                     </div>
 
-                    {/* Regenerate Button */}
-                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center">
-                      <p className="text-sm text-slate-400 mb-3">결과가 마음에 들지 않으신가요?</p>
+                    {/* Action Buttons */}
+                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center gap-4">
                       <button
-                        onClick={handleRegenerate}
-                        disabled={isRegenerating}
-                        className="flex items-center gap-2 px-6 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-full text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                        onClick={handleDownloadReport}
+                        disabled={isDownloading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl text-md font-bold shadow-lg hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
                       >
-                        {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 분석하기 (재생성)"}
+                        {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                        전체 리포트 다운로드
                       </button>
+
+                      <div className="flex flex-col items-center">
+                        <p className="text-sm text-slate-400 mb-2">결과가 상세하지 않나요?</p>
+                        <button
+                          onClick={handleRegenerate}
+                          disabled={isRegenerating}
+                          className="text-indigo-500 underline text-sm hover:text-indigo-700 disabled:opacity-50"
+                        >
+                          {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 상세 분석하기 (재생성)"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
