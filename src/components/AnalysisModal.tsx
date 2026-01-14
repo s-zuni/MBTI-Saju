@@ -418,10 +418,23 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
   const handleNext = () => {
     // Basic validation for Step 1 before proceeding
-    if (!name || !gender || !mbti || !birthDate) {
-      setAuthError('이름, 성별, MBTI, 생년월일을 모두 입력해주세요.');
+    if (!name) {
+      setAuthError('이름을 입력해주세요.');
       return;
     }
+    if (!gender) {
+      setAuthError('성별을 선택해주세요.');
+      return;
+    }
+    if (!mbti) {
+      setAuthError('MBTI를 선택해주세요.');
+      return;
+    }
+    if (!birthDate) {
+      setAuthError('생년월일을 입력해주세요.');
+      return;
+    }
+
     setAuthError(''); // Clear any previous errors
     setStep(2);
   };
