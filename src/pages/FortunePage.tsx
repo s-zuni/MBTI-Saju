@@ -1,6 +1,7 @@
 import React from 'react';
-import { ArrowLeft, Sparkles, Compass, Plane, Hotel, Ticket, Heart } from 'lucide-react';
+import { ArrowLeft, Sparkles, Compass, Plane, Hotel, Ticket, Heart, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Tier, TIERS } from '../hooks/useSubscription';
 
 const subCategories = [
     { icon: Sparkles, label: '오늘의운세', sub: '매일 확인하는', color: 'text-purple-600', bg: 'bg-purple-50', hover: 'hover:bg-purple-100', border: 'border-purple-100' },
@@ -10,9 +11,6 @@ const subCategories = [
     { icon: Ticket, label: '추천직업', sub: '나의 천직', color: 'text-orange-600', bg: 'bg-orange-50', hover: 'hover:bg-orange-100', border: 'border-orange-100' },
     { icon: Heart, label: '친구 궁합', sub: '우리는 잘 맞을까?', color: 'text-pink-600', bg: 'bg-pink-50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
 ];
-
-import { Tier, TIERS } from '../hooks/useSubscription';
-import { Lock } from 'lucide-react';
 
 // ... (keep existing imports)
 
