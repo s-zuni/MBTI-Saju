@@ -103,7 +103,7 @@ export default async (req: any, res: any) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash", // Updated to stable model or use flash-preview if preferred
+            model: "gemini-3-flash-preview", // Updated to stable model or use flash-preview if preferred
             systemInstruction: systemPrompt
         });
 
