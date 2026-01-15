@@ -19,7 +19,7 @@ import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
 import TarotModal from './components/TarotModal';
 import SplashScreen from './components/SplashScreen';
-import Chatbot from './components/Chatbot';
+import ChatPage from './pages/ChatPage';
 import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
 
@@ -42,7 +42,7 @@ function App() {
   const [showTarotModal, setShowTarotModal] = useState(false);
   const [showRecommendModal, setShowRecommendModal] = useState(false); // 추천직업 상세
   const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Chatbot State
+
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
@@ -177,7 +177,7 @@ function App() {
                     setShowAnalysisModal(true);
                   }
                 }}
-                onChatbotClick={() => setIsChatbotOpen(true)}
+
                 onTripClick={openTripModal}
                 onHealingClick={openHealingModal}
                 onJobClick={openJobModal}
@@ -251,6 +251,7 @@ function App() {
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/store" element={<StorePage />} />
+          <Route path="/chat" element={<ChatPage />} />
         </Routes>
 
         <BottomNav
@@ -263,7 +264,6 @@ function App() {
             }
           }}
           onLoginClick={() => openAnalysisModal('login')}
-          onChatbotClick={() => setIsChatbotOpen(!isChatbotOpen)}
           isAuthenticated={!!session}
         />
 
@@ -280,12 +280,7 @@ function App() {
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
         <TarotModal isOpen={showTarotModal} onClose={closeTarotModal} />
 
-        {/* Chatbot Component */}
-        <Chatbot
-          isOpen={isChatbotOpen}
-          onClose={() => setIsChatbotOpen(false)}
-          onToggle={() => setIsChatbotOpen(!isChatbotOpen)}
-        />
+
       </div>
     </BrowserRouter>
   );

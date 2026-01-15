@@ -6,11 +6,10 @@ interface BottomNavProps {
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
     onLoginClick: () => void;
-    onChatbotClick: () => void;
     isAuthenticated: boolean;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, onChatbotClick, isAuthenticated }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, isAuthenticated }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -29,7 +28,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
         {
             icon: MessageCircle,
             label: '챗봇',
-            onClick: onChatbotClick,
+            onClick: () => navigate('/chat'),
             isCenter: true
         },
         { icon: ShoppingBag, label: '상점', path: '/store', onClick: () => navigate('/store') },

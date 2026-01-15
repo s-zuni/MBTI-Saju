@@ -33,7 +33,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             label: 'AI 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
             bg: 'from-amber-400 to-orange-500',
-            action: onChatbotClick || onStart
+            action: () => navigate('/chat')
         },
         {
             icon: Sparkles,
