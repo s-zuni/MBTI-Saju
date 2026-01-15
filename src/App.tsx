@@ -22,6 +22,8 @@ import SplashScreen from './components/SplashScreen';
 import ChatPage from './pages/ChatPage';
 import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
+import { useSubscription, FEATURES } from './hooks/useSubscription';
+import SubscriptionModal from './components/SubscriptionModal';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -47,6 +49,9 @@ function App() {
   const [fortune, setFortune] = useState<string | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+
+  const { tier, checkAccess } = useSubscription(session);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
@@ -180,9 +185,20 @@ function App() {
 
                 onTripClick={openTripModal}
                 onHealingClick={openHealingModal}
-                onJobClick={openJobModal}
-                onCompatibilityClick={openCompModal}
-                onTarotClick={openTarotModal}
+                onJobClick={() => {
+                  if (checkAccess(FEATURES.JOB)) openJobModal();
+                  else setShowSubscriptionModal(true);
+                }}
+                onCompatibilityClick={() => {
+                  if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
+                  else setShowSubscriptionModal(true);
+                }}
+                onTarotClick={() => {
+                  if (checkAccess(FEATURES.TAROT)) openTarotModal();
+                  else setShowSubscriptionModal(true);
+                }}
+                tier={tier}
+                onOpenSubscription={() => setShowSubscriptionModal(true)}
               />
 
               {/* Featured Analysis Section */}
@@ -227,9 +243,18 @@ function App() {
           } />
           <Route path="/mypage" element={
             <MyPage
-              onOpenMbtiSaju={openMbtiSajuModal}
-              onOpenHealing={openHealingModal}
-              onOpenCompatibility={openCompModal}
+              onOpenMbtiSaju={() => {
+                if (checkAccess(FEATURES.MBTI_SAJU_ANALYSIS)) openMbtiSajuModal();
+                else setShowSubscriptionModal(true);
+              }}
+              onOpenHealing={() => {
+                if (checkAccess(FEATURES.HEALING)) openHealingModal();
+                else setShowSubscriptionModal(true);
+              }}
+              onOpenCompatibility={() => {
+                if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
+                else setShowSubscriptionModal(true);
+              }}
             />
           } />
           <Route path="/community" element={<CommunityPage />} />
@@ -280,7 +305,13 @@ function App() {
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
         <TarotModal isOpen={showTarotModal} onClose={closeTarotModal} />
 
-
+        <SubscriptionModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          currentTier={tier}
+          userEmail={session?.user?.email || undefined}
+          onSuccess={() => window.location.reload()} // Simple reload to refresh state for now
+        />
       </div>
     </BrowserRouter>
   );

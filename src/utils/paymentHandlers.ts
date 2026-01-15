@@ -17,49 +17,41 @@ export interface Product {
 }
 
 export const requestPayment = (
-    product: Product,
-    user: any,
-    onSuccess: (paymentId: string) => void,
-    onError: (msg: string) => void
-) => {
-    if (!window.IMP) {
-        onError("Payment SDK not loaded");
-        return;
-    }
-
-    const { IMP } = window;
-    IMP.init('imp47648364'); // Replace with your PortOne Merchant ID if needed. This is a sample code.
-
-    const merchant_uid = `ord_${new Date().getTime()}`;
-
-    IMP.request_pay({
-        pg: 'html5_inicis', // Test PG
-        pay_method: 'card',
-        merchant_uid: merchant_uid,
-        name: product.name,
-        amount: product.price,
-        buyer_email: user.email,
-        buyer_name: user.user_metadata?.full_name || 'User',
-        buyer_tel: '010-1234-5678', // Optional
-    }, async (rsp: any) => {
-        if (rsp.success) {
-            // 1. Save Order to Supabase
-            const { error } = await supabase.from('orders').insert({
-                user_id: user.id,
-                product_id: product.id,
-                payment_id: rsp.imp_uid,
-                amount: rsp.paid_amount,
-                status: 'paid'
-            });
-
-            if (error) {
-                console.error("Order save failed", error);
-                onError(`결제는 성공했으나 주문 저장에 실패했습니다. 관리자에게 문의하세요. (${rsp.imp_uid})`);
-            } else {
-                onSuccess(rsp.imp_uid);
-            }
-        } else {
-            onError(`결제 실패: ${rsp.error_msg}`);
+    item: { name: string; amount: number; buyer_email: string; buyer_name: string; buyer_tel?: string },
+): Promise<{ success: boolean; error_msg?: string; imp_uid?: string; merchant_uid?: string }> => {
+    return new Promise((resolve) => {
+        if (!window.IMP) {
+            resolve({ success: false, error_msg: "Payment SDK not loaded" });
+            return;
         }
+
+        const { IMP } = window;
+        IMP.init('imp47648364'); // Replace with your PortOne Merchant ID
+
+        const merchant_uid = `ord_${new Date().getTime()}`;
+
+        IMP.request_pay({
+            pg: 'html5_inicis', // Test PG
+            pay_method: 'card',
+            merchant_uid: merchant_uid,
+            name: item.name,
+            amount: item.amount,
+            buyer_email: item.buyer_email,
+            buyer_name: item.buyer_name,
+            buyer_tel: item.buyer_tel || '010-0000-0000',
+        }, (rsp: any) => {
+            if (rsp.success) {
+                resolve({
+                    success: true,
+                    imp_uid: rsp.imp_uid,
+                    merchant_uid: rsp.merchant_uid
+                });
+            } else {
+                resolve({
+                    success: false,
+                    error_msg: rsp.error_msg
+                });
+            }
+        });
     });
 };

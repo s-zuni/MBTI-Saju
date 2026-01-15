@@ -71,23 +71,44 @@ const StorePage: React.FC = () => {
         }
     };
 
-    const handleBuy = (product: Product) => {
+    const handleBuy = async (product: Product) => {
         if (!user) {
             alert("로그인이 필요한 서비스입니다.");
             return;
         }
 
-        requestPayment(
-            product,
-            user,
-            (paymentId) => {
-                alert(`결제가 완료되었습니다! (주문번호: ${paymentId})\n곧 마이페이지에서 확인하실 수 있습니다.`);
-                // TODO: Refresh order history or redirect to MyPage
-            },
-            (errorMsg) => {
-                alert(errorMsg);
+        try {
+            const { success, error_msg, imp_uid, merchant_uid } = await requestPayment({
+                name: product.name,
+                amount: product.price,
+                buyer_email: user.email,
+                buyer_name: user.user_metadata?.full_name || 'User',
+            });
+
+            if (success && imp_uid) {
+                // Save Order to Supabase
+                const { error } = await supabase.from('orders').insert({
+                    user_id: user.id,
+                    product_id: product.id,
+                    payment_id: imp_uid,
+                    amount: product.price,
+                    status: 'paid'
+                });
+
+                if (error) {
+                    console.error("Order save failed", error);
+                    alert(`결제는 성공했으나 주문 저장에 실패했습니다. 관리자에게 문의하세요. (${imp_uid})`);
+                } else {
+                    alert(`결제가 완료되었습니다! (주문번호: ${imp_uid})\n곧 마이페이지에서 확인하실 수 있습니다.`);
+                    // TODO: Refresh order history or redirect to MyPage
+                }
+            } else {
+                alert(`결제 실패: ${error_msg}`);
             }
-        );
+        } catch (e) {
+            console.error(e);
+            alert("결제 처리 중 오류가 발생했습니다.");
+        }
     };
 
     return (
