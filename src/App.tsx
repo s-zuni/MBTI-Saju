@@ -309,7 +309,7 @@ function App() {
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           currentTier={tier}
-          userEmail={session?.user?.email || undefined}
+          userEmail={session?.user?.email ?? ''}
           onSuccess={() => window.location.reload()} // Simple reload to refresh state for now
         />
       </div>
