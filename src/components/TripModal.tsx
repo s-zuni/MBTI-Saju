@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, X, Loader2, MapPin, Globe, Calendar } from 'lucide-react';
+import { Plane, Loader2, MapPin, Globe, Calendar } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';

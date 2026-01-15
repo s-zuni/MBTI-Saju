@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, X } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download } from 'lucide-react';
 import { SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';

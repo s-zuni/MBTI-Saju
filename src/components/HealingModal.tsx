@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Hotel, X, Loader2, MapPin, Navigation } from 'lucide-react';
+import { Hotel, Loader2, MapPin, Navigation } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 

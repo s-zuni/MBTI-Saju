@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, X, Loader2, Briefcase } from 'lucide-react';
+import { Ticket, Loader2, Briefcase } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
