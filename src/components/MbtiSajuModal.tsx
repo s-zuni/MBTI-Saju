@@ -5,13 +5,15 @@ import { SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDes
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
 import html2canvas from 'html2canvas';
+import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onNavigate: (service: ServiceType) => void;
 }
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
@@ -163,6 +165,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in">
       <div className="relative p-0 border w-full max-w-2xl shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Navigation */}
+        <ServiceNavigation currentService="mbti" onNavigate={onNavigate} onClose={onClose} />
+
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white shrink-0">
           <div className="flex justify-between items-center">
@@ -181,9 +186,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose }) => {
                   <span className="hidden sm:inline">공유</span>
                 </button>
               )}
-              <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                <X className="w-6 h-6" />
-              </button>
             </div>
           </div>
           <p className="opacity-90 mt-2 text-sm font-medium">나의 선천적 운명과 후천적 성격의 완벽한 조화 🔮</p>

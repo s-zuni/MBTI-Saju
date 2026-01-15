@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Heart, X, Loader2, Calendar, Clock, User, Brain, Users } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
+import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface CompatibilityModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onNavigate?: (service: ServiceType) => void;
     initialData?: {
         name: string;
         mbti: string;
@@ -15,7 +17,7 @@ interface CompatibilityModalProps {
     } | null;
 }
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, initialData }) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -120,15 +122,27 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-up max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50 sticky top-0 z-10">
-                    <div className="flex items-center gap-2">
-                        <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
-                        <h2 className="text-xl font-bold text-slate-800">너와 나의 궁합 분석</h2>
+                {onNavigate ? (
+                    <>
+                        <ServiceNavigation currentService="compatibility" onNavigate={onNavigate} onClose={onClose} />
+                        <div className="p-6 pb-0">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
+                                <h2 className="text-xl font-bold text-slate-800">너와 나의 궁합 분석</h2>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50 sticky top-0 z-10">
+                        <div className="flex items-center gap-2">
+                            <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
+                            <h2 className="text-xl font-bold text-slate-800">너와 나의 궁합 분석</h2>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
+                            <X className="w-6 h-6 text-slate-500" />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-slate-500" />
-                    </button>
-                </div>
+                )}
 
                 <div className="p-8">
                     {error && (

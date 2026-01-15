@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Ticket, X, Loader2, Briefcase } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
+import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface JobModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onNavigate: (service: ServiceType) => void;
 }
 
-const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose }) => {
+const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ jobs: string[], reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -51,14 +53,13 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-up max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-orange-50 sticky top-0 z-10">
-                    <div className="flex items-center gap-2">
+                <ServiceNavigation currentService="job" onNavigate={onNavigate} onClose={onClose} />
+
+                <div className="p-6 pb-0">
+                    <div className="flex items-center gap-2 mb-2">
                         <Ticket className="w-6 h-6 text-orange-600 fill-orange-600" />
                         <h2 className="text-xl font-bold text-slate-800">나의 천직 추천직업</h2>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-slate-500" />
-                    </button>
                 </div>
 
                 <div className="p-8">

@@ -164,6 +164,28 @@ function App() {
   const closeTarotModal = () => setShowTarotModal(false);
 
 
+  // Service Navigation Handler
+  const handleSwitchService = (service: 'fortune' | 'mbti' | 'trip' | 'healing' | 'job' | 'compatibility') => {
+    // Close all first
+    setShowFortuneModal(false);
+    setShowMbtiSajuModal(false);
+    setShowTripModal(false);
+    setShowHealingModal(false);
+    setShowJobModal(false);
+    setShowCompModal(false);
+
+    // Open target
+    if (service === 'fortune') handleFetchFortune(); // This fetches and opens
+    else if (service === 'mbti') {
+      if (session) setShowMbtiSajuModal(true);
+      else openAnalysisModal('login');
+    }
+    else if (service === 'trip') openTripModal();
+    else if (service === 'healing') openHealingModal();
+    else if (service === 'job') openJobModal(); // Check access? Ideally yes, but modal might handle it or just open. Navbar checks access.
+    else if (service === 'compatibility') openCompModal();
+  };
+
   const handleStart = async () => {
     if (session) {
       handleFetchFortune();
@@ -362,15 +384,15 @@ function App() {
 
         {/* Conditionally render the new AnalysisModal */}
         <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />
-        <FortuneModal isOpen={showFortuneModal} onClose={closeFortuneModal} fortune={fortune} loading={isFortuneLoading} />
-        <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} />
+        <FortuneModal isOpen={showFortuneModal} onClose={closeFortuneModal} fortune={fortune} loading={isFortuneLoading} onNavigate={handleSwitchService} />
+        <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} onNavigate={handleSwitchService} />
 
         <RecommendationModal isOpen={showRecModal} onClose={closeRecModal} initialTab={recModalTab} />
-        <CompatibilityModal isOpen={showCompModal} onClose={closeCompModal} />
+        <CompatibilityModal isOpen={showCompModal} onClose={closeCompModal} onNavigate={handleSwitchService} />
 
-        <TripModal isOpen={showTripModal} onClose={closeTripModal} />
-        <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
-        <JobModal isOpen={showJobModal} onClose={closeJobModal} />
+        <TripModal isOpen={showTripModal} onClose={closeTripModal} onNavigate={handleSwitchService} />
+        <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} onNavigate={handleSwitchService} />
+        <JobModal isOpen={showJobModal} onClose={closeJobModal} onNavigate={handleSwitchService} />
         <TarotModal
           isOpen={showTarotModal}
           onClose={closeTarotModal}
