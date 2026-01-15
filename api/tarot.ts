@@ -103,16 +103,28 @@ export default async (req: any, res: any) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview", // Updated to stable model or use flash-preview if preferred
+            model: "gemini-3-flash-preview",
             systemInstruction: systemPrompt
         });
 
         const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: { responseMimeType: "application/json" },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any },
+                { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
+            ]
         });
 
-        const responseText = result.response.text();
+        let responseText = "";
+        if (result.response && typeof result.response.text === 'function') {
+            responseText = result.response.text();
+        } else {
+            console.error("No response text found. Result:", JSON.stringify(result, null, 2));
+            throw new Error("AI response was empty or blocked.");
+        }
 
         let content;
         try {

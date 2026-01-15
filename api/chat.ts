@@ -86,6 +86,11 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                     role: msg.sender === 'user' ? 'user' : 'model',
                     parts: [{ text: msg.text }]
                 }));
+
+                // Gemini API requires the first message in history to be from 'user'
+                if (history.length > 0 && history[0].role !== 'user') {
+                    history.shift(); // Remove the first message if it's not from user
+                }
             }
         } catch (e) {
             console.error("Failed to parse message history", e);

@@ -30,7 +30,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
             onClick: () => navigate('/fortune') // Using route instead of modal trigger for better navigation as per previous request
         },
         {
-            icon: Sparkles, // Center Button
+            icon: MessagesSquare, // Center Button
             label: 'AI상담',
             isCenter: true,
             onClick: onHealingClick
@@ -60,10 +60,10 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
                             <button
                                 key={index}
                                 onClick={item.onClick}
-                                className="relative -top-6 flex flex-col items-center justify-center"
+                                className="relative -top-5 flex flex-col items-center justify-center"
                             >
-                                <div className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center transform active:scale-95 transition-all text-white">
-                                    <Sparkles className="w-7 h-7" />
+                                <div className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center transform active:scale-95 transition-all text-white">
+                                    <MessagesSquare className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs font-bold text-indigo-900 mt-1">{item.label}</span>
                             </button>
