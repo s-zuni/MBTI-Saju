@@ -1,16 +1,16 @@
 import React from 'react';
-import { ArrowLeft, Sparkles, Compass, Plane, Hotel, Ticket, Heart, Lock } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tier, TIERS } from '../hooks/useSubscription';
 import MobileHeader from '../components/MobileHeader';
 
 const subCategories = [
-    { icon: Sparkles, label: '오늘의운세', sub: '매일 확인하는', color: 'text-purple-600', bg: 'bg-purple-50', hover: 'hover:bg-purple-100', border: 'border-purple-100' },
-    { icon: Compass, label: 'MBTI & 사주', sub: '나를 알아보는', color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:bg-indigo-100', border: 'border-indigo-100' },
-    { icon: Plane, label: '궁합여행', sub: '함께 떠나는', color: 'text-sky-600', bg: 'bg-sky-50', hover: 'hover:bg-sky-100', border: 'border-sky-100' },
-    { icon: Hotel, label: '힐링장소', sub: '마음의 안식', color: 'text-teal-600', bg: 'bg-teal-50', hover: 'hover:bg-teal-100', border: 'border-teal-100' },
-    { icon: Ticket, label: '추천직업', sub: '나의 천직', color: 'text-orange-600', bg: 'bg-orange-50', hover: 'hover:bg-orange-100', border: 'border-orange-100' },
-    { icon: Heart, label: '인연 도감', sub: '소중한 인연 관리', color: 'text-pink-600', bg: 'bg-pink-50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
+    { img: '/assets/icons/3d_fortune.png', label: '오늘의운세', sub: '매일 확인하는', color: 'text-purple-600', bg: 'bg-indigo-50/50', hover: 'hover:bg-indigo-100', border: 'border-purple-100' },
+    { img: '/assets/icons/3d_mbti.png', label: 'MBTI & 사주', sub: '나를 알아보는', color: 'text-indigo-600', bg: 'bg-indigo-50/50', hover: 'hover:bg-indigo-100', border: 'border-indigo-100' },
+    { img: '/assets/icons/3d_trip.png', label: '궁합여행', sub: '함께 떠나는', color: 'text-sky-600', bg: 'bg-sky-50/50', hover: 'hover:bg-sky-100', border: 'border-sky-100' },
+    { img: '/assets/icons/3d_healing.png', label: '힐링장소', sub: '마음의 안식', color: 'text-teal-600', bg: 'bg-teal-50/50', hover: 'hover:bg-teal-100', border: 'border-teal-100' },
+    { img: '/assets/icons/3d_job.png', label: '추천직업', sub: '나의 천직', color: 'text-orange-600', bg: 'bg-orange-50/50', hover: 'hover:bg-orange-100', border: 'border-orange-100' },
+    { img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', color: 'text-pink-600', bg: 'bg-pink-50/50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
 ];
 
 // ... (keep existing imports)
@@ -84,10 +84,14 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                 `}
                             >
                                 <div className={`
-                                    w-16 h-16 rounded-2xl ${cat.bg} flex items-center justify-center 
-                                    flex-shrink-0 transition-transform group-hover:scale-110
+                                    w-20 h-20 rounded-2xl flex items-center justify-center 
+                                    flex-shrink-0 transition-transform group-hover:scale-105
                                 `}>
-                                    <cat.icon className={`w-8 h-8 ${cat.color}`} />
+                                    <img
+                                        src={cat.img}
+                                        alt={cat.label}
+                                        className="w-full h-full object-cover mix-blend-multiply drop-shadow-sm"
+                                    />
                                 </div>
                                 <div className="flex-1 min-w-0 pt-1">
                                     <h4 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">

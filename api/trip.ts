@@ -7,7 +7,7 @@ export default async (req: any, res: any) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        const { birthDate, birthTime, mbti, gender, name, region } = req.body;
+        const { birthDate, birthTime, mbti, gender, name, region, startDate, endDate } = req.body;
         const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -17,28 +17,44 @@ export default async (req: any, res: any) => {
         // Calculate Saju
         const saju = calculateSaju(birthDate, birthTime);
 
+        // Calculate Duration
+        let durationText = "";
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+            durationText = `Schedule: ${startDate} ~ ${endDate} (${diffDays} days)`;
+        }
+
         const systemPrompt = `
         You are a "Destiny Travel Curator" specializing in MBTI and Saju (Four Pillars of Destiny).
-        Your goal is to recommend the top 3 travel destinations in the requested region (${region}) that harmonize with the user's specific energy.
+        Your goal is to recommend the top 3 travel destinations in the requested region (${region}) and, if dates are provided, create a detailed itinerary.
         
         **CRITICAL INSTRUCTIONS**:
-        1. **REGION**: Strictly limited to ${region}.
+        1. **REGION**: Recommend places broadly within ${region}. Use your best judgment to find the best spots.
         2. **LANGUAGE**: Korean (Hangul) ONLY.
-        3. **TONE**: Exciting, evocative, and personalized. storytelling style.
-        4. **FORMAT**: Output MUST be a valid JSON object.
+        3. **TERMINOLOGY**: When referring to Saju elements, MUST use Hanja (e.g., 금(金), 목(木), 수(水), 화(火), 토(土)). NEVER use English terms like 'Metal' or 'Water'.
+        4. **TONE**: Exciting, evocative, and personalized storytelling style.
+        5. **FORMAT**: Output MUST be a valid JSON object.
         
         **CONTENT REQUIREMENTS**:
-        - For each place, explain WHY it fits their Saju element or MBTI trait (e.g., "Fire energy is weak, so this sunny beach will recharge you").
+        - Explain WHY it fits their Saju element or MBTI trait.
         - Use emojis (✈️, 🏞️, 🏖️) to make it visually popping.
+        - If "Schedule" is provided, generate a day-by-day itinerary in the 'itinerary' field.
         
         **REQUIRED JSON STRUCTURE**:
         {
             "places": [
-                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." },
-                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." },
-                { "name": "Place Name", "reason": "Detailed reason (2-3 sentences) linking to their energy." }
+                { "name": "Place Name", "reason": "Detailed reason linking to their energy." },
+                ... (3 places)
             ],
-            "summary": "A concluding paragraph (approx 200 chars) giving overall travel advice for their type."
+            "itinerary": [
+                { "day": 1, "schedule": "Detailed morning/afternoon/evening plan..." },
+                { "day": 2, "schedule": "..." }
+                ... (Cover all days if duration is known, otherwise 3 days default)
+            ],
+            "summary": "A concluding paragraph giving overall travel advice."
         }
         `;
 
@@ -49,8 +65,9 @@ export default async (req: any, res: any) => {
         Elements: Wood ${saju.elementRatio.wood}%, Fire ${saju.elementRatio.fire}%, Earth ${saju.elementRatio.earth}%, Metal ${saju.elementRatio.metal}%, Water ${saju.elementRatio.water}%
         
         Region: ${region}
+        ${durationText}
         
-        Recommend 3 places in ${region} that fit this person's energy.
+        Recommend 3 places in ${region} and create a detailed itinerary.
         `;
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

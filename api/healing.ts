@@ -19,9 +19,10 @@ export default async (req: any, res: any) => {
         
         **CRITICAL INSTRUCTIONS**:
         1. **Language**: **ALL OUTPUT MUST BE IN KOREAN.** (Do NOT use English).
-        2. **Region**: The place MUST be located in ${region}. Do not recommend places outside this region.
-        3. **JSON Format**: Return ONLY a valid JSON object. Do not wrap in markdown code blocks.
-        4. **Emojis**: Add relevant emojis (🌿, ☕, ⛰️) to the text fields.
+        2. **Terminology**: When referring to Five Elements, MUST use Hanja (e.g., 금(金), 목(木), 수(水)). NEVER use English terms like 'Metal'.
+        3. **Region**: The place MUST be located in ${region}.
+        4. **JSON Format**: Return ONLY a valid JSON object.
+        5. **Emojis**: Add relevant emojis (🌿, ☕, ⛰️) to the text fields.
         
         Output JSON format:
         {

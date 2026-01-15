@@ -6,9 +6,16 @@ import { getDetailedAnalysis } from '../utils/chatService';
 interface CompatibilityModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialData?: {
+        name: string;
+        mbti: string;
+        birthDate: string;
+        birthTime?: string;
+        relation?: string;
+    } | null;
 }
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose }) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, initialData }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -77,10 +84,22 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         }
     };
 
-    // Reset fields when modal opens
+    // Reset fields or set initial data when modal opens
     useEffect(() => {
-        if (isOpen) resetFields();
-    }, [isOpen]);
+        if (isOpen) {
+            if (initialData) {
+                setPartnerName(initialData.name);
+                setPartnerMbti(initialData.mbti);
+                setPartnerBirthDate(initialData.birthDate);
+                setPartnerBirthTime(initialData.birthTime || '');
+                setRelationshipType(initialData.relation || 'lover');
+                setResult(null);
+                setError(null);
+            } else {
+                resetFields();
+            }
+        }
+    }, [isOpen, initialData]);
 
     // Handle Keyboard Events
     useEffect(() => {

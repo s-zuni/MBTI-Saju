@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Heart, Menu, Star, LogOut } from 'lucide-react'; // Added LogOut icon
+import { User, Heart, Menu, LogOut } from 'lucide-react'; // Added LogOut icon
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate } from 'react-router-dom'; // For navigation
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
@@ -75,10 +75,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:rotate-6 transition-transform">
-            <Star className="w-6 h-6 text-white fill-white" />
-          </div>
-          <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors`}>MBTIJU</span>
+          <img
+            src="/assets/logo/mbtiju_logo.png"
+            alt="MBTIJU"
+            className="h-10 w-auto rounded-lg shadow-lg group-hover:scale-105 transition-transform object-contain bg-white"
+          />
         </div>
 
         {/* Spacer to push actions to right if search is removed */}

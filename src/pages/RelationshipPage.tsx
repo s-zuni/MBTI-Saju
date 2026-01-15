@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
-import { Plus, Trash2, Sparkles, UserPlus, Calendar } from 'lucide-react';
+import { Plus, Trash2, Sparkles, UserPlus, Calendar, Heart } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import CompatibilityModal from '../components/CompatibilityModal';
 
 interface RelationshipProfile {
     id: string;
@@ -18,6 +19,10 @@ const RelationshipPage: React.FC = () => {
     const [profiles, setProfiles] = useState<RelationshipProfile[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
     // const [loading, setLoading] = useState(true);
+
+    // Compatibility Modal State
+    const [showCompModal, setShowCompModal] = useState(false);
+    const [selectedCompProfile, setSelectedCompProfile] = useState<RelationshipProfile | null>(null);
 
     // Form State
     const [newName, setNewName] = useState('');
@@ -209,12 +214,23 @@ const RelationshipPage: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleDelete(profile.id)}
-                                            className="text-slate-300 hover:text-red-500 p-2 transition-colors"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedCompProfile(profile);
+                                                    setShowCompModal(true);
+                                                }}
+                                                className="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors flex items-center gap-1 mr-1"
+                                            >
+                                                <Heart className="w-3 h-3 fill-rose-600" /> 상세 궁합
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(profile.id)}
+                                                className="text-slate-300 hover:text-red-500 p-2 transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Result Section */}
@@ -311,6 +327,12 @@ const RelationshipPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <CompatibilityModal
+                isOpen={showCompModal}
+                onClose={() => setShowCompModal(false)}
+                initialData={selectedCompProfile}
+            />
         </div>
     );
 };
