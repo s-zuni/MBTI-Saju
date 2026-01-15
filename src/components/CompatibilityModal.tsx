@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, X, Loader2, Calendar, Clock, User, Brain, Users } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { getDetailedAnalysis } from '../utils/chatService';
 
 interface CompatibilityModalProps {
     isOpen: boolean;
@@ -42,6 +43,8 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('로그인이 필요합니다.');
 
+            // ... (inside handleAnalyze)
+
             const user = session.user.user_metadata;
             const myProfile = {
                 name: user.full_name,
@@ -54,25 +57,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 name: partnerName,
                 mbti: partnerMbti,
                 birthDate: partnerBirthDate,
-                birthTime: partnerBirthTime || null
+                birthTime: partnerBirthTime || null,
+                relationshipType
             };
 
-            const response = await fetch('/api/compatibility', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ myProfile, partnerProfile, relationshipType })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || '분석에 실패했습니다.');
-            }
-
-            const data = await response.json();
+            // Use AI Service instead of API
+            const data = await getDetailedAnalysis('compatibility', myProfile, partnerProfile);
             setResult(data);
+
+            /* 
+            // Legacy API Call
+            const response = await fetch('/api/compatibility', { ... });
+            */
 
         } catch (e: any) {
             setError(e.message);

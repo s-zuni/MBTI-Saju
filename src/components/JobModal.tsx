@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, X, Loader2, Briefcase } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { getDetailedAnalysis } from '../utils/chatService';
 
 interface JobModalProps {
     isOpen: boolean;
@@ -26,22 +27,16 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose }) => {
             if (!session) throw new Error('로그인이 필요합니다.');
 
             const user = session.user.user_metadata;
-            const response = await fetch('/api/job', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    birthDate: user.birth_date,
-                    birthTime: user.birth_time,
-                    mbti: user.mbti
-                })
+
+            // Use AI Service instead of API
+            const resultData = await getDetailedAnalysis('job', {
+                name: user.full_name,
+                mbti: user.mbti,
+                birthDate: user.birth_date,
+                birthTime: user.birth_time
             });
 
-            if (!response.ok) throw new Error('추천을 받아오지 못했습니다.');
-            const data = await response.json();
-            setResult(data);
+            setResult(resultData);
 
         } catch (e: any) {
             setError(e.message);

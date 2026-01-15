@@ -55,11 +55,11 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
         },
         {
             icon: Sparkles,
-            label: '타로 조언',
-            sub: '신비로운 카드의 메시지',
+            label: '운세템 상점',
+            sub: '부적 & 굿즈 쇼핑',
             bg: 'from-purple-500 to-pink-600',
-            action: () => onTarotClick ? onTarotClick() : alert('준비 중입니다.'),
-            requiredTier: TIERS.DEEP // DEEP FEATURE
+            action: () => navigate('/store'),
+            requiredTier: TIERS.FREE
         },
         {
             icon: Users,

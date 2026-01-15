@@ -224,7 +224,7 @@ function App() {
                 onOpenSubscription={() => setShowSubscriptionModal(true)}
               />
 
-              {/* Featured Analysis Section */}
+              {/* Featured Analysis Section (Showcase) */}
               <section className="py-24 bg-slate-50/50 relative">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
                 <div className="section-container relative z-10">
@@ -234,30 +234,53 @@ function App() {
                   </div>
 
                   <div className="grid md:grid-cols-3 gap-8">
-                    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform">
-                      <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
-                        {/* Placeholder for Brain icon */}
+                    {/* Personality Matching -> MbtiSajuModal */}
+                    <button
+                      onClick={() => {
+                        if (session) setShowMbtiSajuModal(true);
+                        else {
+                          setAnalysisModalMode('login');
+                          setShowAnalysisModal(true);
+                        }
+                      }}
+                      className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
+                    >
+                      <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-100 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-brain w-7 h-7 text-indigo-600"><path d="M9 18a4 4 0 0 1-2-3.82 4 4 0 0 1-1-2.18V7l3-4 4 4" /><path d="M15 18a4 4 0 0 0 2-3.82 4 4 0 0 0 1-2.18V7l-3-4-4 4" /><path d="M12 2c-1.8 0-3.6.48-5.11 1.34A6 6 0 0 0 12 18V2z" /><path d="M12 2a6 6 0 0 0 5.11 1.34A6 6 0 0 1 12 18V2z" /><path d="M12 18h0" /></svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-3">심도 있는 성격 매칭</h3>
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-indigo-600 transition-colors">심도 있는 성격 매칭</h3>
                       <p className="text-sm text-slate-500 leading-relaxed font-medium">당신의 무의식과 타고난 운명이 어떻게 연결되어 있는지 과학적으로 분석합니다.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform">
-                      <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6">
-                        {/* Placeholder for Briefcase icon */}
+                    </button>
+
+                    {/* Career Consulting -> JobModal */}
+                    <button
+                      onClick={() => {
+                        if (checkAccess(FEATURES.JOB)) openJobModal();
+                        else setShowSubscriptionModal(true);
+                      }}
+                      className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
+                    >
+                      <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-100 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-briefcase w-7 h-7 text-teal-600"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2" /><path d="M12 15h0" /></svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-3">커리어 컨설팅</h3>
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-teal-600 transition-colors">커리어 컨설팅</h3>
                       <p className="text-sm text-slate-500 leading-relaxed font-medium">나의 선천적 기운과 후천적 성향이 가장 잘 발휘될 수 있는 직업군을 제안합니다.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform">
-                      <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6">
-                        {/* Placeholder for Users icon */}
+                    </button>
+
+                    {/* Relationship Solutions -> CompatibilityModal */}
+                    <button
+                      onClick={() => {
+                        if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
+                        else setShowSubscriptionModal(true);
+                      }}
+                      className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
+                    >
+                      <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-100 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users w-7 h-7 text-purple-600"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-3">인간관계 솔루션</h3>
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-purple-600 transition-colors">인간관계 솔루션</h3>
                       <p className="text-sm text-slate-500 leading-relaxed font-medium">당신이 조심해야 할 운명과 시너지를 낼 수 있는 인연의 색깔을 알려드립니다.</p>
-                    </div>
+                    </button>
                   </div>
                 </div>
               </section>

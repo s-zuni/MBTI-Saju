@@ -72,9 +72,13 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                     <div className="flex items-center gap-2 mb-4">
                         <Zap className="w-6 h-6 text-indigo-500" />
                         <h3 className="text-xl font-bold text-slate-800">Basic</h3>
+                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-full">33% OFF</span>
                     </div>
                     <div className="mb-6">
-                        <span className="text-3xl font-bold text-slate-900">₩5,900</span>
+                        <div className="flex items-end gap-2">
+                            <span className="text-slate-400 text-lg line-through font-medium">₩5,900</span>
+                            <span className="text-3xl font-bold text-slate-900">₩3,900</span>
+                        </div>
                         <span className="text-slate-500 text-sm">/월</span>
                     </div>
 
@@ -102,11 +106,11 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                     </ul>
 
                     <button
-                        onClick={() => handleUpgrade('basic', 5900, 'Basic Plan')}
+                        onClick={() => handleUpgrade('basic', 3900, 'Basic Plan (Discount)')}
                         disabled={currentTier === 'basic' || currentTier === 'deep'}
                         className={`w-full py-3 rounded-xl font-bold transition-all ${currentTier === 'basic'
-                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:scale-[1.02]'
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:scale-[1.02]'
                             }`}
                     >
                         {currentTier === 'basic' ? '현재 이용 중' : currentTier === 'deep' ? '상위 플랜 이용 중' : 'Basic 시작하기'}
@@ -122,9 +126,13 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                     <div className="flex items-center gap-2 mb-4">
                         <Crown className="w-6 h-6 text-amber-400" />
                         <h3 className="text-xl font-bold text-white">DEEP</h3>
+                        <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full animate-pulse">25% OFF</span>
                     </div>
                     <div className="mb-6">
-                        <span className="text-3xl font-bold text-white">₩7,900</span>
+                        <div className="flex items-end gap-2">
+                            <span className="text-slate-500 text-lg line-through font-medium">₩7,900</span>
+                            <span className="text-3xl font-bold text-white">₩5,900</span>
+                        </div>
                         <span className="text-slate-400 text-sm">/월</span>
                     </div>
 
@@ -148,11 +156,11 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                     </ul>
 
                     <button
-                        onClick={() => handleUpgrade('deep', 7900, 'DEEP Plan')}
+                        onClick={() => handleUpgrade('deep', 5900, 'DEEP Plan (Discount)')}
                         disabled={currentTier === 'deep'}
                         className={`w-full py-3 rounded-xl font-bold shadow-lg shadow-amber-500/20 transition-all ${currentTier === 'deep'
-                                ? 'bg-white/10 text-white/50 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:scale-[1.02] hover:shadow-amber-500/40'
+                            ? 'bg-white/10 text-white/50 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:scale-[1.02] hover:shadow-amber-500/40'
                             }`}
                     >
                         {currentTier === 'deep' ? '현재 이용 중' : 'DEEP 시작하기'}

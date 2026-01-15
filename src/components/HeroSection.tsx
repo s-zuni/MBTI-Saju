@@ -25,9 +25,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 text-center text-white">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-medium text-indigo-100 mb-8 animate-fade-in shadow-lg">
-          <Sparkles className="w-4 h-4 text-amber-300" />
-          <span>운명과 성격의 완벽한 조화</span>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-red-500/90 backdrop-blur-md border border-red-400/50 rounded-full text-base font-bold text-white mb-8 animate-bounce shadow-lg shadow-red-500/20">
+          <Sparkles className="w-4 h-4 text-yellow-300" />
+          <span>오픈 기념 전상품 할인 (~3,900원)</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight animate-fade-up drop-shadow-xl">

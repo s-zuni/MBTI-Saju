@@ -25,7 +25,8 @@ const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onChe
                             더 정확한 분석이 필요하신가요?
                         </p>
                         <p className="text-slate-400 text-xs md:text-sm">
-                            월 5,900원으로 AI 심층 분석을 잠금 해제하세요.
+                            <span className="line-through mr-1 opacity-70">₩5,900</span>
+                            <span className="text-amber-400 font-bold">월 3,900원</span>으로 AI 심층 분석을 잠금 해제하세요.
                         </p>
                     </div>
                 </div>
