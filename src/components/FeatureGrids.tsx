@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Compass, Users, MessageSquare, Lock } from 'lucide-react';
+import { ArrowRight, Sparkles, Compass, Users, MessageSquare, Lock, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tier, TIERS } from '../hooks/useSubscription';
 
@@ -68,6 +68,14 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             bg: 'from-slate-600 to-slate-800',
             action: () => navigate('/community'),
             requiredTier: TIERS.FREE
+        },
+        {
+            icon: Layers,
+            label: '신비 타로',
+            sub: '카드로 보는 미래',
+            bg: 'from-cyan-500 to-blue-600',
+            action: onTarotClick || (() => { }),
+            requiredTier: TIERS.DEEP
         },
     ];
 

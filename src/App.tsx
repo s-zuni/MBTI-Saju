@@ -17,7 +17,7 @@ import CompatibilityModal from './components/CompatibilityModal';
 import TripModal from './components/TripModal';
 import HealingModal from './components/HealingModal';
 import JobModal from './components/JobModal';
-import TarotModal from './components/TarotModal';
+import TarotModal from './components/Tarot/TarotModal';
 import SplashScreen from './components/SplashScreen';
 import ChatPage from './pages/ChatPage';
 import FortunePage from './pages/FortunePage';
@@ -365,7 +365,12 @@ function App() {
         <TripModal isOpen={showTripModal} onClose={closeTripModal} />
         <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} />
         <JobModal isOpen={showJobModal} onClose={closeJobModal} />
-        <TarotModal isOpen={showTarotModal} onClose={closeTarotModal} />
+        <TarotModal
+          isOpen={showTarotModal}
+          onClose={closeTarotModal}
+          tier={tier}
+          onUpgradeRequired={() => setShowSubscriptionModal(true)}
+        />
 
         <SubscriptionModal
           isOpen={showSubscriptionModal}
