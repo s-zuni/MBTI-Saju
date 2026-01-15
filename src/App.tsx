@@ -41,14 +41,12 @@ function App() {
 
   // New Modal States
   const [showRecModal, setShowRecModal] = useState(false);
-  const [recModalTab, setRecModalTab] = useState<'travel' | 'career'>('travel');
+  const [recModalTab] = useState<'travel' | 'career'>('travel'); // setRecModalTab unused
   const [showCompModal, setShowCompModal] = useState(false);
   const [showTripModal, setShowTripModal] = useState(false);
   const [showHealingModal, setShowHealingModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
   const [showTarotModal, setShowTarotModal] = useState(false);
-  const [showRecommendModal, setShowRecommendModal] = useState(false); // 추천직업 상세
-  const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지
 
 
   // Fortune State - now holding object data
@@ -147,10 +145,6 @@ function App() {
   const closeMbtiSajuModal = () => setShowMbtiSajuModal(false);
 
   // RecModal (Legacy or specific uses)
-  const openRecModal = (tab: 'travel' | 'career') => {
-    setRecModalTab(tab);
-    setShowRecModal(true);
-  };
   const closeRecModal = () => setShowRecModal(false);
 
   const openCompModal = () => setShowCompModal(true);

@@ -72,7 +72,7 @@ export const useSubscription = (session: Session | null) => {
 
         const fetchProfile = async () => {
             try {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('profiles')
                     .select('tier')
                     .eq('id', session.user.id)
@@ -81,8 +81,8 @@ export const useSubscription = (session: Session | null) => {
                 if (data) {
                     setTier(data.tier as Tier);
                 }
-            } catch (error) {
-                console.error('Error fetching subscription:', error);
+            } catch (err) {
+                console.error('Error fetching subscription:', err);
             } finally {
                 setLoading(false);
             }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, MoreVertical } from 'lucide-react';
+import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 interface Comment {
     id: string;
@@ -37,21 +37,16 @@ const CommunityPage: React.FC = () => {
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPost, setEditingPost] = useState<Post | null>(null);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     const tags = ['전체', '잡담', '질문', '공유', '궁합'];
-
-    useEffect(() => {
-        fetchPosts();
-        checkUser();
-    }, [activeTag]); // Refetch when tag changes
 
     const checkUser = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
     };
 
-    const fetchPosts = async () => {
+    const fetchPosts = React.useCallback(async () => {
         setLoading(true);
         let query = supabase
             .from('posts')
@@ -71,7 +66,12 @@ const CommunityPage: React.FC = () => {
         if (error) console.error('Error fetching posts:', error);
         else setPosts(data || []);
         setLoading(false);
-    };
+    }, [activeTag, searchQuery]);
+
+    useEffect(() => {
+        fetchPosts();
+        checkUser();
+    }, [fetchPosts]); // Refetch when fetchPosts changes (which depends on activeTag/searchQuery)
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -355,6 +355,7 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchComments = async () => {

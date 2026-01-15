@@ -17,6 +17,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose }) => {
         if (isOpen && !result) {
             fetchRecommendation();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     const fetchRecommendation = async () => {

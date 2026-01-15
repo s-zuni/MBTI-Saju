@@ -93,6 +93,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, onClose, partnerName, partnerMbti, partnerBirthDate, partnerBirthTime, relationshipType]);
 
     if (!isOpen) return null;

@@ -49,6 +49,7 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose }) => {
         } else {
             setCity('');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [province]);
 
     const reset = () => {

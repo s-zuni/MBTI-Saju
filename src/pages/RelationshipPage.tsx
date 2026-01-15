@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
-import { Plus, Trash2, Heart, Sparkles, UserPlus, Calendar } from 'lucide-react';
+import { Plus, Trash2, Sparkles, UserPlus, Calendar } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 interface RelationshipProfile {
@@ -14,10 +14,10 @@ interface RelationshipProfile {
 }
 
 const RelationshipPage: React.FC = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [profiles, setProfiles] = useState<RelationshipProfile[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true);
 
     // Form State
     const [newName, setNewName] = useState('');
@@ -49,7 +49,7 @@ const RelationshipPage: React.FC = () => {
             }
         };
         fetchUser();
-        setLoading(false);
+        // setLoading(false);
     }, []);
 
     const saveProfiles = (newProfiles: RelationshipProfile[]) => {

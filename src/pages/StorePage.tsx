@@ -3,8 +3,8 @@ import { supabase } from '../supabaseClient';
 import ProductCard from '../components/ProductCard';
 import { Product, requestPayment } from '../utils/paymentHandlers';
 import { ShoppingBag, AlertCircle, Loader2 } from 'lucide-react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+// import Navbar from '../components/Navbar';
+// import Footer from '../components/Footer';
 import MobileHeader from '../components/MobileHeader';
 
 const StorePage: React.FC = () => {
@@ -79,7 +79,7 @@ const StorePage: React.FC = () => {
         }
 
         try {
-            const { success, error_msg, imp_uid, merchant_uid } = await requestPayment({
+            const { success, error_msg, imp_uid } = await requestPayment({
                 name: product.name,
                 amount: product.price,
                 buyer_email: user.email,
