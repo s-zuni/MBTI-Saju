@@ -1,10 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../supabaseClient';
 import { calculateSaju } from './saju';
-
-const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export interface ChatMessage {
     id: string; // UUID from DB or temp ID
@@ -73,49 +68,42 @@ export const sendMessage = async (
     history: ChatMessage[],
     userContext: any
 ): Promise<string> => {
-    // 1. Save User Message
+    // 1. Save User Message locally for optimism (optional, but we save to DB here)
     await supabase.from('chat_messages').insert({
         session_id: sessionId,
         role: 'user',
         content: userMessage
     });
 
-    // 2. Prepare Context & Prompt
-    let sajuText = "";
-    if (userContext.birthDate) {
-        try {
-            const saju = calculateSaju(userContext.birthDate, userContext.birthTime);
-            sajuText = `사용자 사주: 일주(${saju.dayMaster.korean}), 오행분포(목${saju.elementRatio.wood}%, 화${saju.elementRatio.fire}%, 토${saju.elementRatio.earth}%, 금${saju.elementRatio.metal}%, 수${saju.elementRatio.water}%)`;
-        } catch (e) { }
-    }
-
-    const systemPrompt = `
-    당신은 신비롭고 지혜로운 'AI 운명 상담사'입니다.
-    사용자의 MBTI(${userContext.mbti || '알수없음'})와 사주 정보(${sajuText})를 바탕으로 고민을 들어주고 조언해줍니다.
-    
-    1. 공감하기: 먼저 사용자의 감정에 깊이 공감해주세요.
-    2. 융합 분석: MBTI(심리)와 사주(운명)를 엮어서 설명해주세요. (예: "INFJ의 직관과 화(Fire)의 열정이 만나...")
-    3. 말투: 따뜻하고 정중한 존댓말(~해요체). 신비로운 느낌을 주되 위로가 되어야 합니다.
-    4. 길이: 너무 길지 않게, 모바일에서 읽기 편하게 답변해주세요.
-    `;
-
-    // 3. Call Gemini
     try {
-        const chat = model.startChat({
-            history: history.map(h => ({
-                role: h.role === 'user' ? 'user' : 'model',
-                parts: [{ text: h.content }]
-            })),
-            systemInstruction: systemPrompt
+        // 2. Call Backend API
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: userMessage,
+                mbti: userContext.mbti,
+                birthDate: userContext.birthDate,
+                birthTime: userContext.birthTime,
+                name: userContext.name,
+                gender: userContext.gender,
+                messages: history // Pass history for context
+            })
         });
 
-        const result = await chat.sendMessage(userMessage);
-        const responseText = result.response.text();
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+        }
 
-        // 4. Save Bot Response
+        const data = await response.json();
+        const responseText = data.reply;
+
+        // 3. Save Bot Response to DB
         await supabase.from('chat_messages').insert({
             session_id: sessionId,
-            role: 'assistant', // Supabase enum uses 'assistant', Gemini uses 'model'
+            role: 'assistant',
             content: responseText
         });
 
@@ -125,8 +113,8 @@ export const sendMessage = async (
         return responseText;
 
     } catch (error) {
-        console.error("Gemini API Error", error);
-        return "죄송합니다. 신령님과의 연결이 잠시 약해졌습니다. 잠시 후 다시 말씀해 주세요.";
+        console.error("Chat Service Error", error);
+        return "죄송합니다. 신령님과의 연결이 잠시 약해졌습니다. (서버 연결 실패)";
     }
 };
 
@@ -199,18 +187,23 @@ export const getDetailedAnalysis = async (
         `;
     }
 
-    // 2. Call Gemini
+    // 2. Call Backend API for Analysis
     try {
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: { role: 'system', parts: [{ text: systemInstruction }] },
-            generationConfig: { responseMimeType: "application/json" } // Force JSON output
+        const response = await fetch('/api/analysis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ type, userProfile, partnerProfile })
         });
 
-        const responseText = result.response.text();
-        return JSON.parse(responseText);
+        if (!response.ok) {
+            throw new Error(`Analysis API Error: ${response.statusText}`);
+        }
+
+        return await response.json();
     } catch (error) {
-        console.error("Gemini Analysis Error", error);
+        console.error("Analysis Service Error", error);
         throw new Error("AI 분석 중 오류가 발생했습니다.");
     }
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, Sparkles, Compass, Plane, Hotel, Ticket, Heart, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tier, TIERS } from '../hooks/useSubscription';
+import MobileHeader from '../components/MobileHeader';
 
 const subCategories = [
     { icon: Sparkles, label: '오늘의운세', sub: '매일 확인하는', color: 'text-purple-600', bg: 'bg-purple-50', hover: 'hover:bg-purple-100', border: 'border-purple-100' },
@@ -58,10 +59,11 @@ const FortunePage: React.FC<FortunePageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 pt-20">
+        <div className="min-h-screen bg-slate-50 pb-24 pt-14 md:pt-20 animate-fade-in">
+            <MobileHeader title="운세 보기" />
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6">
-                <div className="mb-8">
+            <div className="max-w-7xl mx-auto px-6 py-6 md:py-0">
+                <div className="mb-8 hidden md:block">
                     <h1 className="text-2xl font-bold text-slate-900">운세 보기</h1>
                     <p className="text-slate-500 text-sm mt-1">다양한 운세와 분석을 확인해보세요</p>
                 </div>

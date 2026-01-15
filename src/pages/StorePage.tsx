@@ -5,6 +5,7 @@ import { Product, requestPayment } from '../utils/paymentHandlers';
 import { ShoppingBag, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import MobileHeader from '../components/MobileHeader';
 
 const StorePage: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
@@ -112,9 +113,11 @@ const StorePage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 md:pb-0">
-            {/* Header Area */}
-            <div className="bg-white border-b border-slate-200">
+        <div className="min-h-screen bg-slate-50 pb-24 md:pb-0 pt-14 md:pt-20 animate-fade-in">
+            <MobileHeader title="운세템 상점" />
+
+            {/* Header Area - Hidden on Mobile to avoid dupes with MobileHeader, or keep specific desktop style */}
+            <div className="hidden md:block bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-indigo-100 rounded-lg">
@@ -127,7 +130,7 @@ const StorePage: React.FC = () => {
             </div>
 
             {/* Content Area */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />

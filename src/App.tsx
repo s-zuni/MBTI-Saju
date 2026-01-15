@@ -22,6 +22,8 @@ import SplashScreen from './components/SplashScreen';
 import ChatPage from './pages/ChatPage';
 import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import { useSubscription, FEATURES } from './hooks/useSubscription';
 import SubscriptionModal from './components/SubscriptionModal';
 import OnboardingModal from './components/OnboardingModal';
@@ -343,6 +345,8 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/store" element={<StorePage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
 
         <BottomNav
@@ -355,6 +359,7 @@ function App() {
             }
           }}
           onLoginClick={() => openAnalysisModal('login')}
+          onHealingClick={() => setShowHealingModal(true)}
           isAuthenticated={!!session}
         />
 

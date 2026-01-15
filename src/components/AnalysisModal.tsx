@@ -35,7 +35,9 @@ const SignupForm: React.FC<any> = ({
   handleNext,
   handleEmailSignup,
   handleSocialLogin,
-  setStep
+  setStep,
+  agreedToTerms,
+  setAgreedToTerms
 }) => (
   <>
     {step === 1 && (
@@ -237,6 +239,19 @@ const SignupForm: React.FC<any> = ({
               required
             />
           </div>
+
+          <div className="flex items-start gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="terms-agreement"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-1 w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+            />
+            <label htmlFor="terms-agreement" className="text-sm text-slate-600 leading-snug">
+              <a href="/terms" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">이용약관</a> 및 <a href="/privacy" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">개인정보처리방침</a>에 동의합니다.
+            </label>
+          </div>
         </form>
         <div className="mt-8 flex flex-col space-y-4">
           <button
@@ -267,7 +282,7 @@ const SignupForm: React.FC<any> = ({
             뒤로
           </button>
         </div>
-      </div>
+      </div >
     )}
   </>
 );
@@ -394,6 +409,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   // Common fields for login/signup
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -442,6 +458,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       setUnknownBirthTime(false);
       setEmail('');
       setPassword('');
+      setAgreedToTerms(false);
     }
     setAuthError('');
     setStep(1);
@@ -506,6 +523,10 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   };
 
   const handleEmailSignup = async () => {
+    if (!agreedToTerms) {
+      setAuthError('이용약관 및 개인정보처리방침에 동의해주세요.');
+      return;
+    }
     setLoading(true);
     setAuthError('');
     try {
@@ -691,6 +712,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           handleEmailSignup={handleEmailSignup}
           handleSocialLogin={(provider: any) => handleSocialLogin(provider || 'google')}
           setStep={setStep}
+          agreedToTerms={agreedToTerms}
+          setAgreedToTerms={setAgreedToTerms}
         />
         }
 

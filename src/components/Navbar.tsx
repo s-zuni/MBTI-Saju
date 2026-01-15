@@ -105,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
           </div>
 
           <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors ${isScrolled ? 'border-slate-200' : 'border-white/20'}`}>
-            <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center gap-2"> {/* Changed from hidden md:flex to flex to show on mobile */}
               {session ? (
                 <>
                   <button
@@ -116,9 +116,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                     <User className="w-6 h-6" />
                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">마이페이지</span>
                   </button>
+                  {/* Logout button moved to menu or kept here? User asked for MyPage on top right. Let's keep Logout hidden on mobile to save space if needed, or keep both if space allows. Mobile screen is small. Let's keep MyPage here and Logout in valid menu or next to it. Let's start with MyPage. */}
                   <button
                     onClick={handleLogout}
-                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
+                    className={`hidden md:block relative group p-1 ${iconColor} ${buttonHover} transition-all`}
                     disabled={loading}
                   >
                     <LogOut className="w-6 h-6" />
@@ -129,14 +130,14 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                 <div className="flex items-center gap-2">
                   <button
                     onClick={onLoginClick}
-                    className={`px-4 py-2 font-semibold rounded-full transition-colors text-sm ${isScrolled ? 'text-slate-900 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}
+                    className={`px-4 py-2 font-semibold rounded-full transition-all text-sm active:scale-95 ${isScrolled ? 'text-slate-900 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}
                     disabled={loading}
                   >
                     로그인
                   </button>
                   <button
                     onClick={onSignupClick}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
+                    className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-all text-sm active:scale-95"
                     disabled={loading}
                   >
                     회원가입
@@ -144,17 +145,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                 </div>
               )}
             </div>
-            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}>
+            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all hidden md:block`}>
               <Heart className="w-6 h-6" />
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
             </button>
-            <button
-              onClick={() => navigate('/store')}
-              className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
-            >
-              <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">상점</span>
-            </button>
+            {/* Shopping Cart Removed */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`md:hidden p-1 ${textColor}`}
@@ -169,28 +164,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
           <div className="max-w-7xl mx-auto px-6 py-4">
-
-
-            {/* Mobile Navigation Links */}
-            <div className="flex flex-col gap-2 text-sm font-semibold text-slate-600 mb-4">
-              {/* Links removed as requested */}
-            </div>
-
-            {/* Mobile User Actions */}
+            {/* Mobile User Actions - Logout only since MyPage is on top */}
             <div className="border-t border-slate-200 pt-4">
               {session ? (
                 <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      handleMyPageClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-slate-900 font-semibold rounded-full hover:bg-slate-100 transition-colors text-sm"
-                    disabled={loading}
-                  >
-                    <User className="w-5 h-5" />
-                    마이페이지
-                  </button>
                   <button
                     onClick={() => {
                       handleLogout();
@@ -204,17 +181,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                   </button>
                 </div>
               ) : (
+                // Already shown in top bar somewhat, but good fallback
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      onLoginClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-slate-900 font-semibold rounded-full hover:bg-slate-100 transition-colors text-sm"
-                    disabled={loading}
-                  >
-                    로그인
-                  </button>
                   <button
                     onClick={() => {
                       onSignupClick();
