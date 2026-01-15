@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, Users, User, Compass, MessageCircle } from 'lucide-react';
+import { Home, Sparkles, Users, User, Compass, MessageCircle, ShoppingBag } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface BottomNavProps {
@@ -32,6 +32,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
             onClick: onChatbotClick,
             isCenter: true
         },
+        { icon: ShoppingBag, label: '상점', path: '/store', onClick: () => navigate('/store') },
         { icon: Users, label: '커뮤니티', path: '/community', onClick: () => navigate('/community') },
         { icon: User, label: '마이', path: '/mypage', onClick: () => handleProtectedNavigation('/mypage') },
     ];

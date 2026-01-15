@@ -148,9 +148,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
               <Heart className="w-6 h-6" />
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
             </button>
-            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}>
+            <button
+              onClick={() => navigate('/store')}
+              className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
+            >
               <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">상점</span>
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

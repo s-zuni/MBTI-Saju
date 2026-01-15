@@ -11,11 +11,13 @@ interface FeatureGridsProps {
     onJobClick: () => void;
     onCompatibilityClick: () => void;
     onTarotClick?: () => void;
+    onChatbotClick?: () => void;
 }
 
 const FeatureGrids: React.FC<FeatureGridsProps> = ({
     onStart,
-    onTarotClick
+    onTarotClick,
+    onChatbotClick
 }) => {
     const navigate = useNavigate();
     const mainCategories = [
@@ -31,7 +33,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             label: 'AI 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
             bg: 'from-amber-400 to-orange-500',
-            action: onStart
+            action: onChatbotClick || onStart
         },
         {
             icon: Sparkles,

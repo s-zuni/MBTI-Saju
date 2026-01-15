@@ -21,6 +21,7 @@ import TarotModal from './components/TarotModal';
 import SplashScreen from './components/SplashScreen';
 import Chatbot from './components/Chatbot';
 import FortunePage from './pages/FortunePage';
+import StorePage from './pages/StorePage';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -176,6 +177,7 @@ function App() {
                     setShowAnalysisModal(true);
                   }
                 }}
+                onChatbotClick={() => setIsChatbotOpen(true)}
                 onTripClick={openTripModal}
                 onHealingClick={openHealingModal}
                 onJobClick={openJobModal}
@@ -248,6 +250,7 @@ function App() {
             />
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/store" element={<StorePage />} />
         </Routes>
 
         <BottomNav
