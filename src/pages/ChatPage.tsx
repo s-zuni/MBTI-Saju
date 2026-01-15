@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { createSession, loadMessages, sendMessage, ChatMessage } from '../utils/chatService';
-import Navbar from '../components/Navbar'; // reuse Navbar if wanted, or stand-alone
+// import Navbar from '../components/Navbar'; // reuse Navbar if wanted, or stand-alone
 import { useNavigate } from 'react-router-dom';
 
 const ChatPage: React.FC = () => {

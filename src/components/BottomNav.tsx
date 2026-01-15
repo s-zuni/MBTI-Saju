@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, Users, User, MessagesSquare, ShoppingBag } from 'lucide-react'; // MessagesSquare for Community? Or Users? 
+import { Home, Sparkles, MessagesSquare, ShoppingBag, Users } from 'lucide-react'; // MessagesSquare for Community? Or Users? 
 // Let's use: Home, Sparkles(Fortune), Brain(AI Center - using Sparkles or similar?), ShoppingBag(Store), Users(Community)
 // For AI Center let's use a special icon or button.
 import { useNavigate, useLocation } from 'react-router-dom';

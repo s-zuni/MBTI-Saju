@@ -644,7 +644,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, mode, step, onClose, handleLogin, handleNext, handleUpdate, handleEmailSignup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mode, step, onClose]); // Removed handlers from deps to avoid infinite loops or unnecessary re-binds
 
   if (!isOpen) return null;
 

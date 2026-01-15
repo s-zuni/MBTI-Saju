@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle, Sparkles, Key, Users, Calendar, CreditCard, ChevronRight, Settings } from 'lucide-react';
+import { Users, Sparkles, CreditCard, Loader2, AlertCircle, Key } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
 import SubscriptionModal from './SubscriptionModal';
 import { Tier } from '../hooks/useSubscription';
@@ -47,7 +47,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [isSubModalOpen, setIsSubModalOpen] = useState(false); // Subscription Modal State
   const navigate = useNavigate();
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -87,11 +87,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
     }
 
     setLoading(false);
-  };
+  }, [navigate]);
 
   useEffect(() => {
     fetchProfileData();
-  }, [navigate]);
+  }, [fetchProfileData]);
 
   // Handle re-analysis manually
   const handleReAnalyze = () => {

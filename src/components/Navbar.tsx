@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Heart, ShoppingCart, Clock, Menu, Star, LogOut } from 'lucide-react'; // Added LogOut icon
+import { User, Heart, Menu, Star, LogOut } from 'lucide-react'; // Added LogOut icon
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate } from 'react-router-dom'; // For navigation
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
@@ -62,21 +62,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
     }
   };
 
-  const handleFortuneClick = () => {
-    if (session) {
-      onFortuneClick();
-    } else {
-      onLoginClick();
-    }
-  };
-
-  const handleMbtiSajuClick = () => {
-    if (session) {
-      onMbtiSajuClick();
-    } else {
-      onLoginClick();
-    }
-  };
+  // Removed unused handlers
 
   // Dynamic text color classes based on scroll state
   const textColor = isScrolled ? "text-slate-900" : "text-white";

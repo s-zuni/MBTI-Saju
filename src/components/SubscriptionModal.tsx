@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Check, Star, Zap, Crown } from 'lucide-react';
+import { X, Check, Zap, Crown } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
 import { supabase } from '../supabaseClient';
 import { Tier } from '../hooks/useSubscription';
@@ -22,7 +22,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
         }
 
         try {
-            const { success, error_msg, imp_uid, merchant_uid } = await requestPayment({
+            const { success, error_msg } = await requestPayment({
                 name: `구독: ${planName}`,
                 amount: price,
                 buyer_email: userEmail,
