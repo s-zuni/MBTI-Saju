@@ -24,6 +24,7 @@ import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
+import RelationshipPage from './pages/RelationshipPage'; // NEW
 import { useSubscription, FEATURES } from './hooks/useSubscription';
 import SubscriptionModal from './components/SubscriptionModal';
 import OnboardingModal from './components/OnboardingModal';
@@ -344,7 +345,9 @@ function App() {
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/store" element={<StorePage />} />
+          <Route path="/room" element={<ChatPage />} /> {/* Legacy support if needed, or remove */}
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/relationship" element={<RelationshipPage />} /> {/* NEW */}
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>

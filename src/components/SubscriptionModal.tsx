@@ -8,8 +8,8 @@ interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
     currentTier: Tier;
-    userEmail?: string;
-    onSuccess: () => void; // Refresh subscription state
+    userEmail: string | undefined; // Allow undefined explicitly
+    onSuccess: () => void;
 }
 
 const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, currentTier, userEmail, onSuccess }) => {

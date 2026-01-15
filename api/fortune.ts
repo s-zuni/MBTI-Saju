@@ -93,7 +93,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                             "color": "Color Name (e.g., Deep Blue)",
                             "number": "Number (e.g., 7)",
                             "direction": "Direction (e.g., East)"
-                        }
+                        },
+                        "mission": "A specific, simple actionable daily mission (e.g., 'Look at the sky for 5 mins', 'Eat something red'). Highlighting a small ritual."
                     },
                     "tomorrow": {
                         "fortune": "Detailed tomorrow's fortune text (approx 200 chars). Focus on preparation and outlook.",
@@ -101,7 +102,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                             "color": "Color Name",
                             "number": "Number",
                             "direction": "Direction"
-                        }
+                        },
+                        "mission": "A specific mission for tomorrow."
                     }
                 }
             `;

@@ -17,6 +17,7 @@ interface AnalysisModalProps {
   onClose: () => void;
   mode?: 'signup' | 'login' | 'edit';
   initialData?: any;
+  onUpdate?: () => void; // Optional callback after update
 }
 
 const SignupForm: React.FC<any> = ({
@@ -393,7 +394,7 @@ const LoginForm: React.FC<any> = ({
   </div>
 );
 
-const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup', initialData }) => {
+const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup', initialData, onUpdate }) => {
   const [mode, setMode] = useState(initialMode); // 'signup', 'login', or 'edit'
   const [step, setStep] = useState(1);
 
@@ -611,9 +612,12 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
         }
       });
 
+      // Fixed: error (not updateError) is returned from updateUser
       if (error) throw error;
 
-      alert('프로필이 수정되었습니다.');
+      alert('정보가 수정되었습니다.');
+      // Fixed: call onUpdate if it exists
+      if (onUpdate) onUpdate();
       onClose();
 
     } catch (error: any) {

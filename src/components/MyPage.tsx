@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle, Sparkles, Key, Users, Calendar } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, Key, Users, Calendar, CreditCard, ChevronRight, Settings } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
+import SubscriptionModal from './SubscriptionModal';
+import { Tier } from '../hooks/useSubscription';
 
 interface Profile {
+  id: string; // Added ID for updates
   name: string;
   email: string | undefined;
   gender: string;
   mbti: string;
   birth_date: string;
   birth_time: string | null;
+  tier?: Tier; // Added tier
 }
 
 interface Analysis {
@@ -18,7 +22,7 @@ interface Analysis {
   commonalities: string;
   typeDescription?: string;
   elementAnalysis?: string;
-  detailedAnalysis?: string; // Kept for legacy compatibility, but not displayed
+  detailedAnalysis?: string;
   mbtiAnalysis?: string;
   sajuAnalysis?: string;
   fusedAnalysis?: string;
@@ -40,39 +44,52 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSubModalOpen, setIsSubModalOpen] = useState(false); // Subscription Modal State
   const navigate = useNavigate();
 
+  const fetchProfileData = async () => {
+    setLoading(true);
+    setError(null);
+
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      navigate('/');
+      return;
+    }
+
+    const user = session.user;
+
+    // Fetch Tier from profiles table to be accurate
+    const { data: profileTableData } = await supabase
+      .from('profiles')
+      .select('tier')
+      .eq('id', user.id)
+      .single();
+
+    const currentTier = (profileTableData?.tier as Tier) || 'free';
+
+    const { full_name, gender, mbti, birth_date, birth_time, analysis } = user.user_metadata;
+
+    if (full_name && mbti && birth_date) {
+      setProfile({
+        id: user.id,
+        name: full_name,
+        email: user.email,
+        gender, mbti, birth_date, birth_time,
+        tier: currentTier
+      });
+      if (analysis) {
+        setAnalysis(analysis);
+      }
+    } else {
+      setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
+    }
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchProfileData = async () => {
-      setLoading(true);
-      setError(null);
-
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        navigate('/'); // Redirect if no session
-        return;
-      }
-
-      const user = session.user;
-      const { full_name, gender, mbti, birth_date, birth_time, analysis } = user.user_metadata;
-
-      if (full_name && mbti && birth_date) {
-        setProfile({
-          name: full_name,
-          email: user.email,
-          gender, mbti, birth_date, birth_time
-        });
-        if (analysis) {
-          setAnalysis(analysis);
-        }
-      } else {
-        setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
-      }
-
-      setLoading(false);
-    };
-
     fetchProfileData();
   }, [navigate]);
 
@@ -152,6 +169,29 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
     navigate('/');
   };
 
+  const handleCancelSubscription = async () => {
+    if (!profile || profile.tier === 'free') return;
+
+    if (window.confirm('정말 구독을 해지하시겠습니까? 해지 시 무료 등급으로 전환됩니다.')) {
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ tier: 'free' })
+          .eq('id', profile.id);
+
+        if (error) throw error;
+        alert('구독이 해지되었습니다.');
+        fetchProfileData(); // Refresh
+      } catch (e) {
+        console.error(e);
+        alert('해지 처리 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-lg shadow-slate-200/40 p-8">
       <div className="flex items-center gap-3 mb-4">
@@ -195,24 +235,77 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   }
 
   const formattedGender = profile.gender === 'male' ? '남성' : '여성';
+  const isPremium = profile.tier === 'basic' || profile.tier === 'deep';
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-xl rounded-2xl p-8 mb-10 border border-slate-100 relative">
           <div className='flex justify-between items-start mb-3'>
-            <h1 className="text-4xl font-black text-slate-900">마이페이지</h1>
-            <div className='flex gap-2'>
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-black text-slate-900">마이페이지</h1>
+              {isPremium && (
+                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-sm">
+                  {profile.tier?.toUpperCase()} MEMBER
+                </span>
+              )}
+            </div>
+            <div className='flex gap-2 invisible md:visible'> {/* Hide on mobile, use bottom nav or profile section */}
               <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-600">정보 수정</button>
               <button onClick={handleLogout} className="btn-secondary px-4 py-2 text-sm">로그아웃</button>
             </div>
           </div>
-          <p className="text-lg font-semibold text-slate-700 mb-6">{profile.name}님의 분석 리포트</p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 font-medium mb-6">
-            <span>MBTI: <span className="font-bold text-indigo-600">{profile.mbti}</span></span>
-            <span>성별: <span className="font-bold text-indigo-600">{formattedGender}</span></span>
-            <span>생년월일: <span className="font-bold text-indigo-600">{profile.birth_date}</span></span>
-            <span>생시: <span className="font-bold text-indigo-600">{profile.birth_time || '알 수 없음'}</span></span>
+
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-1">
+              <p className="text-lg font-semibold text-slate-700 mb-4">{profile.name}님의 분석 리포트</p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 font-medium mb-6">
+                <span>MBTI: <span className="font-bold text-indigo-600">{profile.mbti}</span></span>
+                <span>성별: <span className="font-bold text-indigo-600">{formattedGender}</span></span>
+                <span>생년월일: <span className="font-bold text-indigo-600">{profile.birth_date}</span></span>
+                <span>태어난 시간: <span className="font-bold text-indigo-600">{profile.birth_time || '모름'}</span></span>
+              </div>
+            </div>
+
+            {/* Subscription Management Card */}
+            <div className="flex-1 bg-slate-50 rounded-xl p-5 border border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-slate-400" />
+                  <h3 className="font-bold text-slate-800">구독 멤버십</h3>
+                </div>
+                <button
+                  onClick={() => setIsSubModalOpen(true)}
+                  className="text-indigo-600 text-xs font-bold hover:underline"
+                >
+                  {isPremium ? '변경' : '업그레이드'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-slate-500">현재 이용 중인 플랜</span>
+                <span className={`font-bold ${isPremium ? 'text-indigo-600' : 'text-slate-600'}`}>
+                  {profile.tier === 'free' ? 'Free (무료)' :
+                    profile.tier === 'basic' ? 'Basic (베이직)' : 'Deep (딥)'}
+                </span>
+              </div>
+
+              {isPremium ? (
+                <button
+                  onClick={handleCancelSubscription}
+                  className="w-full mt-4 py-2 text-xs text-red-400 hover:text-red-500 border border-slate-200 hover:border-red-200 rounded-lg transition-colors"
+                >
+                  구독 해지하기
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsSubModalOpen(true)}
+                  className="w-full mt-4 py-2 text-xs bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                  프리미엄 기능 잠금해제
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -346,6 +439,17 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             </button>
           </div>
         )}
+
+        {/* Footer Support Links (Requested Enhancement) */}
+        <div className="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-sm">
+          <div className="flex justify-center gap-6 mb-4">
+            <button onClick={() => navigate('/terms')} className="hover:text-slate-600">이용약관</button>
+            <button onClick={() => navigate('/privacy')} className="hover:text-slate-600">개인정보처리방침</button>
+            <a href="mailto:support@mbtisaju.com" className="hover:text-slate-600">고객센터 문의</a>
+          </div>
+          <p>© 2026 MBTI Saju. All rights reserved.</p>
+        </div>
+
       </div>
 
       <AnalysisModal
@@ -353,6 +457,18 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         onClose={() => setIsEditModalOpen(false)}
         mode="edit"
         initialData={profile}
+        onUpdate={() => fetchProfileData()} // Refresh after edit
+      />
+
+      <SubscriptionModal
+        isOpen={isSubModalOpen}
+        onClose={() => setIsSubModalOpen(false)}
+        currentTier={profile?.tier || 'free'}
+        userEmail={profile?.email}
+        onSuccess={() => {
+          fetchProfileData();
+          setIsSubModalOpen(false);
+        }}
       />
     </div>
   );

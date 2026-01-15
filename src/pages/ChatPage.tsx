@@ -27,7 +27,11 @@ const ChatPage: React.FC = () => {
             }
 
             setUserContext({
-                ...session.user.user_metadata,
+                name: session.user.user_metadata.full_name || session.user.user_metadata.name,
+                mbti: session.user.user_metadata.mbti,
+                birthDate: session.user.user_metadata.birth_date,
+                birthTime: session.user.user_metadata.birth_time,
+                gender: session.user.user_metadata.gender,
                 email: session.user.email
             });
 
@@ -150,7 +154,7 @@ const ChatPage: React.FC = () => {
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-8 text-white font-bold text-xl px-2">
                         <Bot className="w-8 h-8 text-indigo-400" />
-                        <span>AI 점술가</span>
+                        <span>심층 상담</span>
                     </div>
 
                     <button
@@ -194,7 +198,7 @@ const ChatPage: React.FC = () => {
                         <button onClick={() => navigate('/')} className="p-2 -ml-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6" /></svg>
                         </button>
-                        <span className="font-bold ml-1 text-slate-800 text-lg">AI 심층 상담</span>
+                        <span className="font-bold ml-1 text-slate-800 text-lg">심층 상담</span>
                     </div>
                     <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                         <Menu className="w-6 h-6" />

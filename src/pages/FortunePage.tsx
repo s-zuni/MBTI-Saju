@@ -10,7 +10,7 @@ const subCategories = [
     { icon: Plane, label: '궁합여행', sub: '함께 떠나는', color: 'text-sky-600', bg: 'bg-sky-50', hover: 'hover:bg-sky-100', border: 'border-sky-100' },
     { icon: Hotel, label: '힐링장소', sub: '마음의 안식', color: 'text-teal-600', bg: 'bg-teal-50', hover: 'hover:bg-teal-100', border: 'border-teal-100' },
     { icon: Ticket, label: '추천직업', sub: '나의 천직', color: 'text-orange-600', bg: 'bg-orange-50', hover: 'hover:bg-orange-100', border: 'border-orange-100' },
-    { icon: Heart, label: '친구 궁합', sub: '우리는 잘 맞을까?', color: 'text-pink-600', bg: 'bg-pink-50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
+    { icon: Heart, label: '인연 도감', sub: '소중한 인연 관리', color: 'text-pink-600', bg: 'bg-pink-50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
 ];
 
 // ... (keep existing imports)
@@ -55,7 +55,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
         else if (index === 2) onTripClick();
         else if (index === 3) onHealingClick();
         else if (index === 4) onJobClick();
-        else if (index === 5) onCompatibilityClick();
+        else if (index === 5) navigate('/relationship'); // Changed to new page
     };
 
     return (

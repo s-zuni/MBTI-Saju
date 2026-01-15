@@ -31,9 +31,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, 
         },
         {
             icon: MessagesSquare, // Center Button
-            label: 'AI상담',
+            label: '심층상담',
             isCenter: true,
-            onClick: onHealingClick
+            onClick: () => navigate('/chat')
         },
         {
             icon: ShoppingBag,
