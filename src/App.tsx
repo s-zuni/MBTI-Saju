@@ -24,6 +24,8 @@ import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
 import { useSubscription, FEATURES } from './hooks/useSubscription';
 import SubscriptionModal from './components/SubscriptionModal';
+import OnboardingModal from './components/OnboardingModal';
+import PremiumBanner from './components/PremiumBanner';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -53,6 +55,10 @@ function App() {
   const { tier, checkAccess } = useSubscription(session);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
+  // Onboarding & Banner State
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showPremiumBanner, setShowPremiumBanner] = useState(true);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       setSession(data.session);
@@ -66,6 +72,23 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check Onboarding
+  useEffect(() => {
+    if (session?.user) {
+      const hasSeenOnboarding = localStorage.getItem(`hasSeenOnboarding_${session.user.id}`);
+      if (!hasSeenOnboarding) {
+        setShowOnboardingModal(true);
+      }
+    }
+  }, [session]);
+
+  const handleCloseOnboarding = () => {
+    if (session?.user) {
+      localStorage.setItem(`hasSeenOnboarding_${session.user.id}`, 'true');
+    }
+    setShowOnboardingModal(false);
+  };
 
   const openAnalysisModal = (mode: 'signup' | 'login') => {
     setAnalysisModalMode(mode);
@@ -262,16 +285,32 @@ function App() {
             <FortunePage
               onFortuneClick={handleFetchFortune}
               onMbtiSajuClick={() => {
-                if (session) setShowMbtiSajuModal(true);
-                else {
-                  setAnalysisModalMode('login');
-                  setShowAnalysisModal(true);
-                }
+                if (checkAccess(FEATURES.MBTI_SAJU_ANALYSIS)) {
+                  if (session) setShowMbtiSajuModal(true);
+                  else {
+                    setAnalysisModalMode('login');
+                    setShowAnalysisModal(true);
+                  }
+                } else setShowSubscriptionModal(true);
               }}
-              onTripClick={openTripModal}
-              onHealingClick={openHealingModal}
-              onJobClick={openJobModal}
-              onCompatibilityClick={openCompModal}
+              onTripClick={() => {
+                if (checkAccess(FEATURES.TRIP)) openTripModal();
+                else setShowSubscriptionModal(true);
+              }}
+              onHealingClick={() => {
+                if (checkAccess(FEATURES.HEALING)) openHealingModal();
+                else setShowSubscriptionModal(true);
+              }}
+              onJobClick={() => {
+                if (checkAccess(FEATURES.JOB)) openJobModal();
+                else setShowSubscriptionModal(true);
+              }}
+              onCompatibilityClick={() => {
+                if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
+                else setShowSubscriptionModal(true);
+              }}
+              tier={tier}
+              onOpenSubscription={() => setShowSubscriptionModal(true)}
             />
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
@@ -311,6 +350,22 @@ function App() {
           currentTier={tier}
           userEmail={session?.user?.email ?? ''}
           onSuccess={() => window.location.reload()} // Simple reload to refresh state for now
+        />
+
+        {/* Onboarding & Conversion Elements */}
+        {/* NEW ONBOARDING COMPONENTS */}
+        <OnboardingModal
+          isOpen={showOnboardingModal}
+          onClose={handleCloseOnboarding}
+          onCheckPlans={() => setShowSubscriptionModal(true)}
+          userName={session?.user?.user_metadata?.full_name}
+        />
+
+        <PremiumBanner
+          isVisible={showPremiumBanner}
+          onClose={() => setShowPremiumBanner(false)}
+          onCheckPlans={() => setShowSubscriptionModal(true)}
+          tier={tier}
         />
       </div>
     </BrowserRouter>

@@ -11,6 +11,11 @@ const subCategories = [
     { icon: Heart, label: '친구 궁합', sub: '우리는 잘 맞을까?', color: 'text-pink-600', bg: 'bg-pink-50', hover: 'hover:bg-pink-100', border: 'border-pink-100' },
 ];
 
+import { Tier, TIERS } from '../hooks/useSubscription';
+import { Lock } from 'lucide-react';
+
+// ... (keep existing imports)
+
 interface FortunePageProps {
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
@@ -18,6 +23,8 @@ interface FortunePageProps {
     onHealingClick: () => void;
     onJobClick: () => void;
     onCompatibilityClick: () => void;
+    tier: Tier;
+    onOpenSubscription: () => void;
 }
 
 const FortunePage: React.FC<FortunePageProps> = ({
@@ -26,13 +33,26 @@ const FortunePage: React.FC<FortunePageProps> = ({
     onTripClick,
     onHealingClick,
     onJobClick,
-    onCompatibilityClick
+    onCompatibilityClick,
+    tier,
+    onOpenSubscription
 }) => {
     const navigate = useNavigate();
 
     const handleSubCategoryClick = (index: number) => {
-        if (index === 0) onFortuneClick();
-        else if (index === 1) onMbtiSajuClick();
+        // Today's Fortune (index 0) is always accessible
+        if (index === 0) {
+            onFortuneClick();
+            return;
+        }
+
+        // All other features (index 1-5) require at least BASIC tier
+        if (tier === TIERS.FREE) {
+            onOpenSubscription();
+            return;
+        }
+
+        if (index === 1) onMbtiSajuClick();
         else if (index === 2) onTripClick();
         else if (index === 3) onHealingClick();
         else if (index === 4) onJobClick();
@@ -49,35 +69,50 @@ const FortunePage: React.FC<FortunePageProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {subCategories.map((cat, i) => (
-                        <button
-                            key={i}
-                            onClick={() => handleSubCategoryClick(i)}
-                            className={`
-                                relative p-6 rounded-3xl text-left transition-all duration-300 group
-                                bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1
-                                flex items-start gap-5
-                            `}
-                        >
-                            <div className={`
-                                w-16 h-16 rounded-2xl ${cat.bg} flex items-center justify-center 
-                                flex-shrink-0 transition-transform group-hover:scale-110
-                            `}>
-                                <cat.icon className={`w-8 h-8 ${cat.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0 pt-1">
-                                <h4 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
-                                    {cat.label}
-                                </h4>
-                                <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                    {cat.sub}
-                                </p>
-                            </div>
-                            <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity -ml-2 translate-x-2 group-hover:translate-x-0">
-                                <ArrowLeft className="w-5 h-5 text-slate-300 rotate-180" />
-                            </div>
-                        </button>
-                    ))}
+                    {subCategories.map((cat, i) => {
+                        // Check if locked: ALL except index 0 (Today's Fortune) are locked for FREE tier users
+                        const isLocked = i !== 0 && tier === TIERS.FREE;
+
+                        return (
+                            <button
+                                key={i}
+                                onClick={() => handleSubCategoryClick(i)}
+                                className={`
+                                    relative p-6 rounded-3xl text-left transition-all duration-300 group
+                                    bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1
+                                    flex items-start gap-5 overflow-hidden
+                                `}
+                            >
+                                <div className={`
+                                    w-16 h-16 rounded-2xl ${cat.bg} flex items-center justify-center 
+                                    flex-shrink-0 transition-transform group-hover:scale-110
+                                `}>
+                                    <cat.icon className={`w-8 h-8 ${cat.color}`} />
+                                </div>
+                                <div className="flex-1 min-w-0 pt-1">
+                                    <h4 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
+                                        {cat.label}
+                                    </h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                        {cat.sub}
+                                    </p>
+                                </div>
+                                <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity -ml-2 translate-x-2 group-hover:translate-x-0">
+                                    <ArrowLeft className="w-5 h-5 text-slate-300 rotate-180" />
+                                </div>
+
+                                {/* Lock Overlay */}
+                                {isLocked && (
+                                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity hover:bg-white/40">
+                                        <div className="bg-slate-900/90 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-lg transform hover:scale-110 transition-transform">
+                                            <Lock className="w-3 h-3" />
+                                            <span>Basic</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>
