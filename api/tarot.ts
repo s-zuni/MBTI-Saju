@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { cleanAndParseJSON } from './_utils/json';
 
 export default async (req: any, res: any) => {
     // CORS configuration
@@ -111,7 +112,15 @@ export default async (req: any, res: any) => {
         });
 
         const responseText = result.response.text();
-        const content = JSON.parse(responseText);
+
+        let content;
+        try {
+            content = cleanAndParseJSON(responseText);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+            console.error("Raw Text:", responseText); // Log raw text for debugging
+            throw new Error("Failed to parse AI response");
+        }
 
         res.status(200).json(content);
 

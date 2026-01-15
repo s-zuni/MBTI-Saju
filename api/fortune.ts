@@ -42,7 +42,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     if (req.method === 'POST') {
         const { birthDate } = req.body;
-        console.log("Fortune Request Body:", req.body);
 
         // Simple Zodiac Calculation Function
         const getZodiacSign = (dateStr: string) => {
@@ -67,14 +66,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         };
 
         const zodiac = getZodiacSign(birthDate);
+        const today = new Date().toLocaleDateString('ko-KR');
 
         try {
             const systemPrompt = `
                 You are a "Daily Fate Forecaster".
-                Your job is to provide a specific, actionable daily fortune for the user based on their Zodiac sign (${zodiac}).
+                Your job is to provide specific, actionable daily fortunes for "Today" and "Tomorrow" based on the user's Zodiac sign (${zodiac}).
                 
                 **CONTENT REQUIREMENTS**:
-                1. **Time Flow**: Briefly mention Morning, Afternoon, and Evening luck flow.
+                1. **Time Flow**: Briefly mention Morning, Afternoon, and Evening luck flow in the fortune text.
                 2. **Lucky Items**: Must recommend a Lucky Color, Lucky Number, and Lucky Direction.
                 3. **Tone**: Cheerful, encouraging, but realistic.
                 4. **Language**: Korean Only.
@@ -82,13 +82,27 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
                 **REQUIRED JSON STRUCTURE**:
                 {
-                    "fortune": "Detailed daily fortune text (approx 300 chars). Mention time of day flows here.",
-                    "lucky": "String containing: 'Lucky Color: [Color], Lucky Number: [Num], Direction: [Dir]' (in Korean)"
+                    "today": {
+                        "fortune": "Detailed today's fortune text (approx 200 chars).",
+                        "lucky": {
+                            "color": "Color Name",
+                            "number": "Number",
+                            "direction": "Direction"
+                        }
+                    },
+                    "tomorrow": {
+                        "fortune": "Detailed tomorrow's fortune text (approx 200 chars).",
+                        "lucky": {
+                            "color": "Color Name",
+                            "number": "Number",
+                            "direction": "Direction"
+                        }
+                    }
                 }
             `;
 
             const userQuery = `
-                Provide luck for ${birthDate} (${zodiac}).
+                Provide luck for Today (${today}) and Tomorrow for ${zodiac}.
             `;
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -107,19 +121,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             });
 
             const responseText = result.response.text();
-
             let content;
             try {
                 content = cleanAndParseJSON(responseText);
             } catch (e) {
                 console.error("JSON Parse Error:", e);
-                console.error("Raw Text:", responseText);
-                return res.status(500).json({ error: "Fate calculation failed." });
-            }
-
-            // Merge lucky items into fortune text for display
-            if (content.lucky) {
-                content.fortune = `${content.fortune}\n\n[오늘의 행운]\n${content.lucky}`;
+                throw new Error("Failed to parse AI response");
             }
 
             res.status(200).json(content);

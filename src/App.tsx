@@ -48,7 +48,11 @@ function App() {
   const [showMyPageModal, setShowMyPageModal] = useState(false); // 마이페이지
 
 
-  const [fortune, setFortune] = useState<string | null>(null);
+  // Fortune State - now holding object data
+  const [fortune, setFortune] = useState<{
+    today: { fortune: string; lucky: { color: string; number: string; direction: string } };
+    tomorrow: { fortune: string; lucky: { color: string; number: string; direction: string } };
+  } | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
 
@@ -124,11 +128,11 @@ function App() {
       }
 
       const data = await response.json();
-      setFortune(data.fortune);
+      setFortune(data); // Expecting { today: ..., tomorrow: ... } now
 
     } catch (error: any) {
       console.error(error);
-      setFortune("운세를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+      // setFortune will remain null or could set an error state if handled
     } finally {
       setIsFortuneLoading(false);
     }
