@@ -10,6 +10,7 @@ const TermsPage: React.FC = () => {
                 onSignupClick={() => window.location.href = '/'}
                 onFortuneClick={async () => { }}
                 onMbtiSajuClick={() => { }}
+                onTarotClick={() => { }}
             />
             <div className="max-w-4xl mx-auto px-6 py-24">
                 <h1 className="text-3xl font-bold mb-8">이용약관</h1>
