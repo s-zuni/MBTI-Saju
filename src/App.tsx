@@ -212,6 +212,10 @@ function App() {
               setShowAnalysisModal(true);
             }
           }}
+          onTarotClick={() => {
+            if (checkAccess(FEATURES.TAROT)) openTarotModal();
+            else setShowSubscriptionModal(true);
+          }}
         />
 
         <Routes>
