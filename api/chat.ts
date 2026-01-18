@@ -89,7 +89,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
                 // Gemini API requires the first message in history to be from 'user'
                 // Loop to remove messages from the front until we find a user message or empty the list
-                while (history.length > 0 && history[0].role !== 'user') {
+                while (history.length > 0 && history[0]?.role !== 'user') {
                     history.shift();
                 }
             }
