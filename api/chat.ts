@@ -83,13 +83,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         try {
             if (Array.isArray(messages)) {
                 history = messages.slice(-10).map((msg: any) => ({
-                    role: msg.sender === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.text }]
+                    role: (msg.role === 'user' || msg.sender === 'user') ? 'user' : 'model',
+                    parts: [{ text: msg.content || msg.text || '' }]
                 }));
 
                 // Gemini API requires the first message in history to be from 'user'
-                if (history.length > 0 && history[0]?.role !== 'user') {
-                    history.shift(); // Remove the first message if it's not from user
+                // Loop to remove messages from the front until we find a user message or empty the list
+                while (history.length > 0 && history[0].role !== 'user') {
+                    history.shift();
                 }
             }
         } catch (e) {
