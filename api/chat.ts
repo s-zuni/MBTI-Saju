@@ -108,6 +108,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     } catch (error: any) {
         console.error('ChatServer Error:', error);
+
+        // Detailed error logging
+        if (error instanceof Error) {
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+        }
+
         res.status(500).json({
             error: 'Failed to generate chat response',
             details: error instanceof Error ? error.message : String(error)

@@ -94,7 +94,13 @@ export const sendMessage = async (
         });
 
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("API Error Details:", {
+                status: response.status,
+                statusText: response.statusText,
+                data: errorData
+            });
+            throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.details || 'Unknown error'}`);
         }
 
         const data = await response.json();
@@ -113,8 +119,8 @@ export const sendMessage = async (
         return responseText;
 
     } catch (error) {
-        console.error("Chat Service Error", error);
-        return "죄송합니다. 신령님과의 연결이 잠시 약해졌습니다. (서버 연결 실패)";
+        console.error("Chat Service Error:", error);
+        return `죄송합니다. 신령님과의 연결이 잠시 약해졌습니다. (오류: ${error instanceof Error ? error.message : '알 수 없는 오류'})`;
     }
 };
 
