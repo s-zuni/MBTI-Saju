@@ -34,13 +34,13 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(({
             {/* Main Content - Solid Background instead of glassmorphism */}
             <div className="relative z-10 bg-white/10 rounded-2xl p-6 border border-white/20">
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="text-center p-4 bg-slate-800/50 rounded-xl">
-                        <div className="text-xs text-indigo-300 mb-1">MBTI</div>
-                        <div className="text-2xl font-black text-white">{mbti}</div>
+                    <div className="flex flex-col justify-center items-center h-[100px] p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div className="text-xs text-indigo-300 mb-2 font-bold uppercase tracking-wider">MBTI</div>
+                        <div className="text-3xl font-black text-white tracking-tight">{mbti}</div>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/50 rounded-xl">
-                        <div className="text-xs text-amber-300 mb-1">타고난 기운</div>
-                        <div className="text-2xl font-black text-white">{sajuElement}</div>
+                    <div className="flex flex-col justify-center items-center h-[100px] p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div className="text-xs text-amber-300 mb-2 font-bold uppercase tracking-wider">타고난 기운</div>
+                        <div className="text-3xl font-black text-white tracking-tight">{sajuElement}</div>
                     </div>
                 </div>
 

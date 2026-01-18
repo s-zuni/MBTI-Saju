@@ -82,7 +82,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       const metadata = session.user.user_metadata;
 
       if (metadata.analysis) {
-        setAnalysis({ ...metadata.analysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
+        setAnalysis({
+          ...metadata.analysis,
+          birth_date: metadata.birth_date,
+          full_name: metadata.full_name,
+          mbti: metadata.mbti, // Fix: Ensure MBTI is passed
+          gender: metadata.gender
+        });
       }
 
       const report = getDetailedFusedAnalysis({
