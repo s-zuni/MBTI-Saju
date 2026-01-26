@@ -60,7 +60,7 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   const { tier, checkAccess } = useSubscription(session);
-  const { coins, loading: coinsLoading, addCoins, refreshCoins } = useCoins(session);
+  const { coins, addCoins, refreshCoins } = useCoins(session);
   const [showCoinPurchaseModal, setShowCoinPurchaseModal] = useState(false);
   const [requiredCoinsForPurchase, setRequiredCoinsForPurchase] = useState<number | undefined>(undefined);
 
@@ -399,7 +399,6 @@ function App() {
           onNavigate={handleSwitchService}
           coins={coins}
           onUseCoin={async (serviceType) => {
-            const { useCoins: spendCoins } = await import('./hooks/useCoins').then(m => ({ useCoins: m.useCoins }));
             // 간단히 직접 Supabase 호출
             if (!session?.user?.id) return false;
             const cost = SERVICE_COSTS[serviceType];
