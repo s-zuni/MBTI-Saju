@@ -45,27 +45,33 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
                         환영합니다{userName ? `, ${userName}님` : ''}!
                     </h2>
-                    <p className="text-slate-500 mb-8 leading-relaxed">
-                        AI 점술가가 당신의 운명을 분석할 준비를 마쳤습니다.<br />
-                        더 깊은 분석을 원하신다면 프리미엄 플랜을 확인해보세요.
+                    <p className="text-slate-500 mb-4 leading-relaxed">
+                        AI 점술가가 당신의 운명을 분석할 준비를 마쳤습니다.
                     </p>
 
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
+                        <p className="text-amber-700 font-bold text-sm flex items-center gap-2">
+                            🎁 신규 가입 축하! <span className="text-orange-600">100코인</span>이 지급되었습니다!
+                        </p>
+                        <p className="text-amber-600 text-xs mt-1">코인으로 다양한 AI 분석 서비스를 이용해보세요.</p>
+                    </div>
+
                     <div className="w-full space-y-3">
+                        <button
+                            onClick={onClose}
+                            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold font-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                        >
+                            <span>지금 바로 시작하기</span>
+                            <ArrowRight className="w-5 h-5" />
+                        </button>
                         <button
                             onClick={() => {
                                 onClose();
                                 onCheckPlans();
                             }}
-                            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold font-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-                        >
-                            <span>나에게 맞는 플랜 보기</span>
-                            <ArrowRight className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={onClose}
                             className="w-full py-3 text-slate-400 font-medium hover:text-slate-600 transition-colors text-sm"
                         >
-                            괜찮아요, 무료 기능만 이용할게요
+                            코인 더 충전하기
                         </button>
                     </div>
                 </div>

@@ -471,7 +471,7 @@ function App() {
           isVisible={showPremiumBanner}
           onClose={() => setShowPremiumBanner(false)}
           onCheckPlans={() => setShowCoinPurchaseModal(true)}
-          tier={tier}
+          currentCoins={coins}
         />
       </div>
     </BrowserRouter>
