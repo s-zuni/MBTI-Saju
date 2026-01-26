@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Coins, Lock } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { SERVICE_COSTS } from '../config/coinConfig';
 
 interface FortuneModalProps {
   isOpen: boolean;
@@ -10,10 +12,25 @@ interface FortuneModalProps {
     tomorrow: { fortune: string; lucky: { color: string; number: string; direction: string }; mission?: string };
   } | null;
   loading: boolean;
+  // 코인 관련 props
+  coins: number;
+  onUseCoin: (serviceType: 'FORTUNE_TOMORROW') => Promise<boolean>;
+  onOpenCoinPurchase: (requiredCoins: number) => void;
 }
 
-const FortuneModal: React.FC<FortuneModalProps> = ({ isOpen, onClose, onNavigate, fortune, loading }) => {
+const FortuneModal: React.FC<FortuneModalProps> = ({
+  isOpen,
+  onClose,
+  onNavigate,
+  fortune,
+  loading,
+  coins,
+  onUseCoin,
+  onOpenCoinPurchase
+}) => {
   const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
+  const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,12 +41,40 @@ const FortuneModal: React.FC<FortuneModalProps> = ({ isOpen, onClose, onNavigate
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen) setTab('today');
+    if (isOpen) {
+      setTab('today');
+      setTomorrowUnlocked(false);
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const activeData = fortune ? fortune[tab] : null;
+  const tomorrowCost = SERVICE_COSTS.FORTUNE_TOMORROW;
+
+  const handleTomorrowClick = async () => {
+    if (tomorrowUnlocked) {
+      setTab('tomorrow');
+      return;
+    }
+
+    // 이미 내일 운세 탭인데 잠금 해제 안됨 -> 코인 차감 시도
+    if (coins < tomorrowCost) {
+      onOpenCoinPurchase(tomorrowCost);
+      return;
+    }
+
+    setIsUnlocking(true);
+    const success = await onUseCoin('FORTUNE_TOMORROW');
+    setIsUnlocking(false);
+
+    if (success) {
+      setTomorrowUnlocked(true);
+      setTab('tomorrow');
+    } else {
+      alert('코인 차감에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4">
@@ -46,6 +91,11 @@ const FortuneModal: React.FC<FortuneModalProps> = ({ isOpen, onClose, onNavigate
                 {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
               </p>
             </div>
+            {/* 코인 표시 */}
+            <div className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-600 rounded-full text-sm font-bold">
+              <Coins className="w-4 h-4" />
+              {coins}
+            </div>
           </div>
 
           {/* Tabs */}
@@ -60,13 +110,26 @@ const FortuneModal: React.FC<FortuneModalProps> = ({ isOpen, onClose, onNavigate
               오늘의 운세
             </button>
             <button
-              onClick={() => setTab('tomorrow')}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tab === 'tomorrow'
-                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                : 'text-slate-500 hover:text-slate-700'
-                }`}
+              onClick={handleTomorrowClick}
+              disabled={isUnlocking}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${tab === 'tomorrow'
+                  ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                  : 'text-slate-500 hover:text-slate-700'
+                } ${isUnlocking ? 'opacity-50' : ''}`}
             >
-              내일의 운세
+              {isUnlocking ? (
+                <span className="animate-pulse">잠금 해제 중...</span>
+              ) : tomorrowUnlocked ? (
+                '내일의 운세'
+              ) : (
+                <>
+                  내일의 운세
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[10px]">
+                    <Coins className="w-3 h-3" />
+                    {tomorrowCost}
+                  </span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -77,6 +140,25 @@ const FortuneModal: React.FC<FortuneModalProps> = ({ isOpen, onClose, onNavigate
             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
               <p>운세를 불러오는 중입니다...</p>
+            </div>
+          ) : tab === 'tomorrow' && !tomorrowUnlocked ? (
+            // 내일 운세 잠금 상태
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-10 h-10 text-slate-400" />
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 mb-2">내일 운세 미리보기</h4>
+              <p className="text-sm text-slate-500 mb-4">
+                {tomorrowCost}코인으로 내일의 운세를 확인하세요
+              </p>
+              <button
+                onClick={handleTomorrowClick}
+                disabled={isUnlocking}
+                className="px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+              >
+                <Coins className="w-5 h-5" />
+                {coins >= tomorrowCost ? `${tomorrowCost}코인으로 잠금 해제` : '코인 충전하기'}
+              </button>
             </div>
           ) : activeData ? (
             <div className="animate-fade-up">

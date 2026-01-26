@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare, Coins, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { createSession, loadMessages, sendMessage, ChatMessage } from '../utils/chatService';
-// import Navbar from '../components/Navbar'; // reuse Navbar if wanted, or stand-alone
 import { useNavigate } from 'react-router-dom';
+import { useCoins } from '../hooks/useCoins';
+import { SERVICE_COSTS } from '../config/coinConfig';
+import CoinPurchaseModal from '../components/CoinPurchaseModal';
+
+const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 코인 차감
 
 const ChatPage: React.FC = () => {
     const navigate = useNavigate();
@@ -13,29 +17,37 @@ const ChatPage: React.FC = () => {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [userContext, setUserContext] = useState<any>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar toggle
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [session, setSession] = useState<any>(null);
+
+    // 코인 시스템
+    const { coins, useCoins: spendCoins, addCoins, refreshCoins } = useCoins(session);
+    const [messageCount, setMessageCount] = useState(0); // 현재 세션 메시지 카운트
+    const [showCoinModal, setShowCoinModal] = useState(false);
+    const [showCoinWarning, setShowCoinWarning] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // 1. Initial Load
     useEffect(() => {
         const init = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                navigate('/'); // Redirect if not logged in
+            const { data: { session: authSession } } = await supabase.auth.getSession();
+            if (!authSession) {
+                navigate('/');
                 return;
             }
 
+            setSession(authSession);
             setUserContext({
-                name: session.user.user_metadata.full_name || session.user.user_metadata.name,
-                mbti: session.user.user_metadata.mbti,
-                birthDate: session.user.user_metadata.birth_date,
-                birthTime: session.user.user_metadata.birth_time,
-                gender: session.user.user_metadata.gender,
-                email: session.user.email
+                name: authSession.user.user_metadata.full_name || authSession.user.user_metadata.name,
+                mbti: authSession.user.user_metadata.mbti,
+                birthDate: authSession.user.user_metadata.birth_date,
+                birthTime: authSession.user.user_metadata.birth_time,
+                gender: authSession.user.user_metadata.gender,
+                email: authSession.user.email
             });
 
-            await loadLatestSession(session.user.id);
+            await loadLatestSession(authSession.user.id);
         };
         init();
     }, [navigate]);
@@ -43,7 +55,6 @@ const ChatPage: React.FC = () => {
     const loadLatestSession = async (userId: string) => {
         setIsLoadingHistory(true);
         try {
-            // Check for existing latest session
             const { data: sessions } = await supabase
                 .from('chat_sessions')
                 .select('id')
@@ -67,8 +78,12 @@ const ChatPage: React.FC = () => {
                         content: "안녕하세요! 저는 당신의 운명을 읽어주는 AI 점술가입니다. 사주와 MBTI를 기반으로 어떤 고민이든 들어드릴게요.",
                         createdAt: new Date()
                     }]);
+                    setMessageCount(0);
                 } else {
                     setMessages(history);
+                    // 사용자 메시지 수 계산 (10회마다 코인 차감을 위해)
+                    const userMsgCount = history.filter(m => m.role === 'user').length;
+                    setMessageCount(userMsgCount % MESSAGES_PER_COIN_CHARGE);
                 }
             }
         } catch (error) {
@@ -79,10 +94,7 @@ const ChatPage: React.FC = () => {
     };
 
     const handleNewSession = async () => {
-        // Start fresh
-        if (!userContext) return;
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!userContext || !session) return;
 
         setIsLoadingHistory(true);
         const newSid = await createSession(session.user.id, "새로운 상담");
@@ -94,9 +106,10 @@ const ChatPage: React.FC = () => {
                 content: "새로운 상담을 시작합니다. 무엇이 궁금하신가요?",
                 createdAt: new Date()
             }]);
+            setMessageCount(0);
         }
         setIsLoadingHistory(false);
-        setIsSidebarOpen(false); // Close sidebar on mobile
+        setIsSidebarOpen(false);
     };
 
     // Auto-scroll
@@ -107,6 +120,21 @@ const ChatPage: React.FC = () => {
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!inputText.trim() || !sessionId || isTyping) return;
+
+        // 10회마다 코인 체크 (다음 메시지가 10의 배수일 때)
+        const nextCount = messageCount + 1;
+        if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
+            if (coins < SERVICE_COSTS.AI_CHAT_10) {
+                setShowCoinModal(true);
+                return;
+            }
+        }
+
+        // 코인 경고 표시 (9회째 메시지일 때)
+        if ((messageCount + 1) % MESSAGES_PER_COIN_CHARGE === MESSAGES_PER_COIN_CHARGE - 1) {
+            setShowCoinWarning(true);
+            setTimeout(() => setShowCoinWarning(false), 5000);
+        }
 
         const text = inputText;
         setInputText('');
@@ -119,6 +147,7 @@ const ChatPage: React.FC = () => {
             createdAt: new Date()
         };
         setMessages(prev => [...prev, tempMsg]);
+        setMessageCount(prev => prev + 1);
 
         try {
             const response = await sendMessage(sessionId, text, messages, userContext);
@@ -129,6 +158,14 @@ const ChatPage: React.FC = () => {
                 createdAt: new Date()
             };
             setMessages(prev => [...prev, botMsg]);
+
+            // 10회 도달 시 코인 차감
+            if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
+                const success = await spendCoins('AI_CHAT_10');
+                if (!success) {
+                    console.error('Failed to spend coins for AI chat');
+                }
+            }
         } catch (err) {
             const errorMsg: ChatMessage = {
                 id: (Date.now() + 2).toString(),
@@ -142,9 +179,11 @@ const ChatPage: React.FC = () => {
         }
     };
 
+    const remainingFreeMessages = MESSAGES_PER_COIN_CHARGE - (messageCount % MESSAGES_PER_COIN_CHARGE);
+
     return (
         <div className="flex h-screen bg-white">
-            {/* Sidebar (Desktop: always visible, Mobile: toggle) */}
+            {/* Sidebar */}
             <aside
                 className={`
                     fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
@@ -165,9 +204,22 @@ const ChatPage: React.FC = () => {
                         새로운 상담 시작
                     </button>
 
+                    {/* 코인 표시 */}
+                    <div className="mb-4 p-3 bg-slate-800 rounded-xl">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-400">보유 코인</span>
+                            <div className="flex items-center gap-1 text-amber-400 font-bold">
+                                <Coins className="w-4 h-4" />
+                                {coins}
+                            </div>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                            10회 대화 = 25코인
+                        </div>
+                    </div>
+
                     <div className="flex-1 overflow-y-auto">
                         <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">Recent Chats</div>
-                        {/* Placeholder for session list */}
                         <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-sm truncate flex items-center gap-2">
                             <MessageSquare className="w-4 h-4 opacity-50" />
                             현재 상담 세션
@@ -200,8 +252,41 @@ const ChatPage: React.FC = () => {
                         </button>
                         <span className="font-bold ml-1 text-slate-800 text-lg">심층 상담</span>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
-                        <Menu className="w-6 h-6" />
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
+                            <Coins className="w-3 h-3" />
+                            {coins}
+                        </div>
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Coin Warning Banner */}
+                {showCoinWarning && (
+                    <div className="absolute top-14 md:top-0 left-0 right-0 bg-amber-500 text-white p-3 flex items-center justify-center gap-2 z-10 animate-fade-in">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">다음 메시지 후 25코인이 차감됩니다 (현재: {coins}코인)</span>
+                    </div>
+                )}
+
+                {/* Messages Counter Bar */}
+                <div className="hidden md:flex items-center justify-between px-6 py-2 bg-slate-50 border-b border-slate-100">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                            <Coins className="w-4 h-4 text-amber-500" />
+                            <span>보유: <strong className="text-slate-900">{coins}</strong> 코인</span>
+                        </div>
+                        <div className="text-sm text-slate-500">
+                            남은 무료 메시지: <strong className="text-indigo-600">{remainingFreeMessages}회</strong>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setShowCoinModal(true)}
+                        className="text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full font-medium hover:bg-amber-200 transition-colors"
+                    >
+                        + 코인 충전
                     </button>
                 </div>
 
@@ -265,11 +350,25 @@ const ChatPage: React.FC = () => {
                             </button>
                         </form>
                         <p className="text-center text-xs text-slate-400 mt-2">
-                            AI는 실수할 수 있습니다.
+                            AI는 실수할 수 있습니다. · 10회 대화마다 25코인이 차감됩니다.
                         </p>
                     </div>
                 </div>
             </main>
+
+            {/* Coin Purchase Modal */}
+            <CoinPurchaseModal
+                isOpen={showCoinModal}
+                onClose={() => setShowCoinModal(false)}
+                userEmail={session?.user?.email}
+                currentCoins={coins}
+                requiredCoins={SERVICE_COSTS.AI_CHAT_10}
+                onSuccess={async (coinAmount, paymentId, packageId) => {
+                    await addCoins(coinAmount, paymentId, packageId);
+                    await refreshCoins();
+                    setShowCoinModal(false);
+                }}
+            />
         </div>
     );
 };

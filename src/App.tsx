@@ -24,9 +24,11 @@ import FortunePage from './pages/FortunePage';
 import StorePage from './pages/StorePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
-import RelationshipPage from './pages/RelationshipPage'; // NEW
+import RelationshipPage from './pages/RelationshipPage';
 import { useSubscription, FEATURES } from './hooks/useSubscription';
-import SubscriptionModal from './components/SubscriptionModal';
+import { useCoins } from './hooks/useCoins';
+import { SERVICE_COSTS, ServiceType } from './config/coinConfig';
+import CoinPurchaseModal from './components/CoinPurchaseModal';
 import OnboardingModal from './components/OnboardingModal';
 import PremiumBanner from './components/PremiumBanner';
 
@@ -58,7 +60,9 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   const { tier, checkAccess } = useSubscription(session);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const { coins, loading: coinsLoading, addCoins, refreshCoins } = useCoins(session);
+  const [showCoinPurchaseModal, setShowCoinPurchaseModal] = useState(false);
+  const [requiredCoinsForPurchase, setRequiredCoinsForPurchase] = useState<number | undefined>(undefined);
 
   // Onboarding & Banner State
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
@@ -141,27 +145,42 @@ function App() {
 
   const closeFortuneModal = () => setShowFortuneModal(false);
 
-  const openMbtiSajuModal = () => setShowMbtiSajuModal(true);
   const closeMbtiSajuModal = () => setShowMbtiSajuModal(false);
 
   // RecModal (Legacy or specific uses)
   const closeRecModal = () => setShowRecModal(false);
 
-  const openCompModal = () => setShowCompModal(true);
   const closeCompModal = () => setShowCompModal(false);
 
-  // New Handlers
-  const openTripModal = () => setShowTripModal(true);
   const closeTripModal = () => setShowTripModal(false);
 
-  const openHealingModal = () => setShowHealingModal(true);
   const closeHealingModal = () => setShowHealingModal(false);
 
-  const openJobModal = () => setShowJobModal(true);
   const closeJobModal = () => setShowJobModal(false);
 
-  const openTarotModal = () => setShowTarotModal(true);
   const closeTarotModal = () => setShowTarotModal(false);
+
+  // 코인 체크 후 모달 열기 헬퍼 함수
+  const checkCoinsAndOpen = (cost: number, serviceType: ServiceType, openFn: () => void) => {
+    if (!session) {
+      openAnalysisModal('login');
+      return;
+    }
+    if (coins >= cost) {
+      openFn();
+    } else {
+      setRequiredCoinsForPurchase(cost);
+      setShowCoinPurchaseModal(true);
+    }
+  };
+
+  // 코인 체크 포함 모달 오픈 함수들
+  const openMbtiSajuModal = () => checkCoinsAndOpen(SERVICE_COSTS.MBTI_SAJU, 'MBTI_SAJU', () => setShowMbtiSajuModal(true));
+  const openCompModal = () => checkCoinsAndOpen(SERVICE_COSTS.COMPATIBILITY_TRIP, 'COMPATIBILITY_TRIP', () => setShowCompModal(true));
+  const openTripModal = () => checkCoinsAndOpen(SERVICE_COSTS.COMPATIBILITY_TRIP, 'COMPATIBILITY_TRIP', () => setShowTripModal(true));
+  const openHealingModal = () => checkCoinsAndOpen(SERVICE_COSTS.HEALING, 'HEALING', () => setShowHealingModal(true));
+  const openJobModal = () => checkCoinsAndOpen(SERVICE_COSTS.JOB, 'JOB', () => setShowJobModal(true));
+  const openTarotModal = () => checkCoinsAndOpen(SERVICE_COSTS.TAROT, 'TAROT', () => setShowTarotModal(true));
 
 
   // Service Navigation Handler
@@ -214,7 +233,7 @@ function App() {
           }}
           onTarotClick={() => {
             if (checkAccess(FEATURES.TAROT)) openTarotModal();
-            else setShowSubscriptionModal(true);
+            else setShowCoinPurchaseModal(true);
           }}
         />
 
@@ -237,18 +256,18 @@ function App() {
                 onHealingClick={openHealingModal}
                 onJobClick={() => {
                   if (checkAccess(FEATURES.JOB)) openJobModal();
-                  else setShowSubscriptionModal(true);
+                  else setShowCoinPurchaseModal(true);
                 }}
                 onCompatibilityClick={() => {
                   if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
-                  else setShowSubscriptionModal(true);
+                  else setShowCoinPurchaseModal(true);
                 }}
                 onTarotClick={() => {
                   if (checkAccess(FEATURES.TAROT)) openTarotModal();
-                  else setShowSubscriptionModal(true);
+                  else setShowCoinPurchaseModal(true);
                 }}
                 tier={tier}
-                onOpenSubscription={() => setShowSubscriptionModal(true)}
+                onOpenSubscription={() => setShowCoinPurchaseModal(true)}
               />
 
               {/* Featured Analysis Section (Showcase) */}
@@ -283,7 +302,7 @@ function App() {
                     <button
                       onClick={() => {
                         if (checkAccess(FEATURES.JOB)) openJobModal();
-                        else setShowSubscriptionModal(true);
+                        else setShowCoinPurchaseModal(true);
                       }}
                       className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                     >
@@ -298,7 +317,7 @@ function App() {
                     <button
                       onClick={() => {
                         if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
-                        else setShowSubscriptionModal(true);
+                        else setShowCoinPurchaseModal(true);
                       }}
                       className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                     >
@@ -318,15 +337,15 @@ function App() {
             <MyPage
               onOpenMbtiSaju={() => {
                 if (checkAccess(FEATURES.MBTI_SAJU_ANALYSIS)) openMbtiSajuModal();
-                else setShowSubscriptionModal(true);
+                else setShowCoinPurchaseModal(true);
               }}
               onOpenHealing={() => {
                 if (checkAccess(FEATURES.HEALING)) openHealingModal();
-                else setShowSubscriptionModal(true);
+                else setShowCoinPurchaseModal(true);
               }}
               onOpenCompatibility={() => {
                 if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
-                else setShowSubscriptionModal(true);
+                else setShowCoinPurchaseModal(true);
               }}
             />
           } />
@@ -335,32 +354,16 @@ function App() {
             <FortunePage
               onFortuneClick={handleFetchFortune}
               onMbtiSajuClick={() => {
-                if (checkAccess(FEATURES.MBTI_SAJU_ANALYSIS)) {
-                  if (session) setShowMbtiSajuModal(true);
-                  else {
-                    setAnalysisModalMode('login');
-                    setShowAnalysisModal(true);
-                  }
-                } else setShowSubscriptionModal(true);
+                if (session) setShowMbtiSajuModal(true);
+                else {
+                  setAnalysisModalMode('login');
+                  setShowAnalysisModal(true);
+                }
               }}
-              onTripClick={() => {
-                if (checkAccess(FEATURES.TRIP)) openTripModal();
-                else setShowSubscriptionModal(true);
-              }}
-              onHealingClick={() => {
-                if (checkAccess(FEATURES.HEALING)) openHealingModal();
-                else setShowSubscriptionModal(true);
-              }}
-              onJobClick={() => {
-                if (checkAccess(FEATURES.JOB)) openJobModal();
-                else setShowSubscriptionModal(true);
-              }}
-              onCompatibilityClick={() => {
-                if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
-                else setShowSubscriptionModal(true);
-              }}
-              tier={tier}
-              onOpenSubscription={() => setShowSubscriptionModal(true)}
+              onTripClick={openTripModal}
+              onHealingClick={openHealingModal}
+              onJobClick={openJobModal}
+              onCompatibilityClick={openCompModal}
             />
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
@@ -388,7 +391,46 @@ function App() {
 
         {/* Conditionally render the new AnalysisModal */}
         <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />
-        <FortuneModal isOpen={showFortuneModal} onClose={closeFortuneModal} fortune={fortune} loading={isFortuneLoading} onNavigate={handleSwitchService} />
+        <FortuneModal
+          isOpen={showFortuneModal}
+          onClose={closeFortuneModal}
+          fortune={fortune}
+          loading={isFortuneLoading}
+          onNavigate={handleSwitchService}
+          coins={coins}
+          onUseCoin={async (serviceType) => {
+            const { useCoins: spendCoins } = await import('./hooks/useCoins').then(m => ({ useCoins: m.useCoins }));
+            // 간단히 직접 Supabase 호출
+            if (!session?.user?.id) return false;
+            const cost = SERVICE_COSTS[serviceType];
+            if (coins < cost) return false;
+
+            try {
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ coins: coins - cost })
+                .eq('id', session.user.id);
+              if (updateError) throw updateError;
+
+              await supabase.from('coin_transactions').insert({
+                user_id: session.user.id,
+                amount: -cost,
+                type: 'usage',
+                service_type: serviceType.toLowerCase()
+              });
+
+              refreshCoins();
+              return true;
+            } catch (err) {
+              console.error(err);
+              return false;
+            }
+          }}
+          onOpenCoinPurchase={(requiredCoins) => {
+            setRequiredCoinsForPurchase(requiredCoins);
+            setShowCoinPurchaseModal(true);
+          }}
+        />
         <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} onNavigate={handleSwitchService} />
 
         <RecommendationModal isOpen={showRecModal} onClose={closeRecModal} initialTab={recModalTab} />
@@ -401,15 +443,20 @@ function App() {
           isOpen={showTarotModal}
           onClose={closeTarotModal}
           tier={tier}
-          onUpgradeRequired={() => setShowSubscriptionModal(true)}
+          onUpgradeRequired={() => setShowCoinPurchaseModal(true)}
         />
 
-        <SubscriptionModal
-          isOpen={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
-          currentTier={tier}
-          userEmail={session?.user?.email ?? ''}
-          onSuccess={() => window.location.reload()} // Simple reload to refresh state for now
+        <CoinPurchaseModal
+          isOpen={showCoinPurchaseModal}
+          onClose={() => setShowCoinPurchaseModal(false)}
+          userEmail={session?.user?.email}
+          currentCoins={coins}
+          {...(requiredCoinsForPurchase !== undefined && { requiredCoins: requiredCoinsForPurchase })}
+          onSuccess={async (coinAmount, paymentId, packageId) => {
+            await addCoins(coinAmount, paymentId, packageId);
+            await refreshCoins();
+            setRequiredCoinsForPurchase(undefined);
+          }}
         />
 
         {/* Onboarding & Conversion Elements */}
@@ -417,14 +464,14 @@ function App() {
         <OnboardingModal
           isOpen={showOnboardingModal}
           onClose={handleCloseOnboarding}
-          onCheckPlans={() => setShowSubscriptionModal(true)}
+          onCheckPlans={() => setShowCoinPurchaseModal(true)}
           userName={session?.user?.user_metadata?.full_name}
         />
 
         <PremiumBanner
           isVisible={showPremiumBanner}
           onClose={() => setShowPremiumBanner(false)}
-          onCheckPlans={() => setShowSubscriptionModal(true)}
+          onCheckPlans={() => setShowCoinPurchaseModal(true)}
           tier={tier}
         />
       </div>
