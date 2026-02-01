@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, AlertTriangle, Ban, Briefcase, Heart, Lightbulb, Layers } from 'lucide-react';
 import { SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
@@ -16,7 +16,7 @@ interface MbtiSajuModalProps {
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'fused' | 'mbti' | 'saju'>('fused');
+  const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
   const [fusedReport, setFusedReport] = useState<string>("");
   const shareCardRef = React.useRef<HTMLDivElement>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     if (!reportRef.current) return;
     setIsDownloading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 100));
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         backgroundColor: "#ffffff"
@@ -86,7 +86,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           ...metadata.analysis,
           birth_date: metadata.birth_date,
           full_name: metadata.full_name,
-          mbti: metadata.mbti, // Fix: Ensure MBTI is passed
+          mbti: metadata.mbti,
           gender: metadata.gender
         });
       }
@@ -138,7 +138,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         data: { ...metadata, analysis: newAnalysis }
       });
 
-      setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name });
+      setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name, mbti: metadata.mbti });
 
     } catch (error: any) {
       console.error("Regenerate Error:", error);
@@ -168,6 +168,350 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   const currentSajuKey = analysis ? getSajuKey(analysis.birth_date) : 'wood';
 
+  // Render Soul Report Section
+  const renderSoulReport = () => {
+    if (!analysis) return null;
+
+    return (
+      <div className="space-y-5 animate-fade-up">
+        {/* Report Title */}
+        {analysis.reportTitle && (
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+              "{analysis.reportTitle}"
+            </h3>
+          </div>
+        )}
+
+        {/* 1. 본성 (Nature) - 사주 분석 */}
+        {analysis.nature && (
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-5 rounded-2xl border border-amber-200 shadow-sm">
+            <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
+              <ScrollText className="w-5 h-5" /> {analysis.nature.title || "1. 본성(Nature): 사주 분석"}
+            </h4>
+            {analysis.nature.dayPillarSummary && (
+              <p className="text-amber-800 font-semibold italic mb-3">"{analysis.nature.dayPillarSummary}"</p>
+            )}
+            <div className="space-y-3 text-slate-700 text-sm leading-relaxed">
+              {analysis.nature.dayMasterAnalysis && (
+                <p><span className="font-bold text-amber-700">• 일간(日干):</span> {analysis.nature.dayMasterAnalysis}</p>
+              )}
+              {analysis.nature.dayBranchAnalysis && (
+                <p><span className="font-bold text-amber-700">• 일지(日支):</span> {analysis.nature.dayBranchAnalysis}</p>
+              )}
+              {analysis.nature.monthBranchAnalysis && (
+                <p><span className="font-bold text-amber-700">• 월지(月支):</span> {analysis.nature.monthBranchAnalysis}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 2. 오행 구성 분석 */}
+        {analysis.fiveElements && (
+          <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h4 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <Layers className="w-5 h-5" /> {analysis.fiveElements.title || "2. 오행의 구성 분석"}
+            </h4>
+            {analysis.fiveElements.elements && (
+              <div className="overflow-x-auto mb-3">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-200/50">
+                      <th className="px-3 py-2 text-left font-bold">오행</th>
+                      <th className="px-3 py-2 text-center font-bold">개수</th>
+                      <th className="px-3 py-2 text-left font-bold">심리적 기능</th>
+                      <th className="px-3 py-2 text-left font-bold">해석</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.fiveElements.elements.map((el: any, idx: number) => (
+                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-3 py-2 font-semibold">{el.element}</td>
+                        <td className="px-3 py-2 text-center font-bold text-indigo-600">{el.count}</td>
+                        <td className="px-3 py-2 text-slate-600">{el.function}</td>
+                        <td className="px-3 py-2 text-slate-600">{el.interpretation}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {analysis.fiveElements.summary && (
+              <p className="text-slate-700 text-sm bg-white/50 p-3 rounded-lg">{analysis.fiveElements.summary}</p>
+            )}
+          </div>
+        )}
+
+        {/* 3. 페르소나 (MBTI) */}
+        {analysis.persona && (
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-200 shadow-sm">
+            <h4 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+              <Brain className="w-5 h-5" /> {analysis.persona.title || "3. 페르소나(Persona): MBTI 분석"}
+            </h4>
+            {analysis.persona.mbtiNickname && (
+              <p className="text-blue-800 font-bold text-lg mb-3">"{analysis.persona.mbtiNickname}"</p>
+            )}
+            <div className="space-y-2 text-slate-700 text-sm leading-relaxed">
+              {analysis.persona.dominantFunction && (
+                <p><span className="font-bold text-blue-700">• 주기능:</span> {analysis.persona.dominantFunction}</p>
+              )}
+              {analysis.persona.auxiliaryFunction && (
+                <p><span className="font-bold text-blue-700">• 부기능:</span> {analysis.persona.auxiliaryFunction}</p>
+              )}
+              {analysis.persona.tertiaryFunction && (
+                <p><span className="font-bold text-blue-700">• 3차 기능:</span> {analysis.persona.tertiaryFunction}</p>
+              )}
+              {analysis.persona.inferiorFunction && (
+                <p><span className="font-bold text-blue-700">• 열등기능:</span> {analysis.persona.inferiorFunction}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 4. 융합 분석 */}
+        {analysis.deepIntegration && (
+          <div className="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-5 rounded-2xl border border-purple-200 shadow-sm">
+            <h4 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
+              <Zap className="w-5 h-5" /> {analysis.deepIntegration.title || "4. 융합 분석"}
+            </h4>
+            <div className="space-y-4">
+              {analysis.deepIntegration.integrationPoints?.map((point: any, idx: number) => (
+                <div key={idx} className="bg-white/60 p-3 rounded-xl">
+                  <p className="font-bold text-purple-700 mb-1">① {point.subtitle}</p>
+                  <p className="text-slate-700 text-sm leading-relaxed">{point.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. 2026년 운세 흐름 */}
+        {analysis.yearlyFortune && (
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 p-5 rounded-2xl border border-red-200 shadow-sm">
+            <h4 className="text-lg font-bold text-red-900 mb-3 flex items-center gap-2">
+              <Calendar className="w-5 h-5" /> {analysis.yearlyFortune.title || "5. 2026년 운세 흐름"}
+            </h4>
+            {analysis.yearlyFortune.theme && (
+              <p className="text-red-800 font-bold italic mb-3">"{analysis.yearlyFortune.theme}"</p>
+            )}
+            {analysis.yearlyFortune.yearlyElementAnalysis && (
+              <p className="text-slate-700 text-sm mb-3">{analysis.yearlyFortune.yearlyElementAnalysis}</p>
+            )}
+            {analysis.yearlyFortune.overview && (
+              <p className="text-slate-700 text-sm mb-3">{analysis.yearlyFortune.overview}</p>
+            )}
+            {analysis.yearlyFortune.keywords && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {analysis.yearlyFortune.keywords.map((kw: string, idx: number) => (
+                  <span key={idx} className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">{kw}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 6. 월별 흐름 */}
+        {analysis.monthlyFortune && (
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-5 rounded-2xl border border-teal-200 shadow-sm">
+            <h4 className="text-lg font-bold text-teal-900 mb-3 flex items-center gap-2">
+              <Calendar className="w-5 h-5" /> {analysis.monthlyFortune.title || "6. 월별 상세 흐름"}
+            </h4>
+            {analysis.monthlyFortune.months && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-teal-100/50">
+                      <th className="px-3 py-2 text-left font-bold">월</th>
+                      <th className="px-3 py-2 text-left font-bold">에너지 흐름</th>
+                      <th className="px-3 py-2 text-left font-bold">가이드</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.monthlyFortune.months.map((m: any, idx: number) => (
+                      <tr key={idx} className="border-b border-teal-100 hover:bg-teal-50/50">
+                        <td className="px-3 py-2 font-semibold text-teal-700">{m.period}</td>
+                        <td className="px-3 py-2 text-slate-600">{m.energy}</td>
+                        <td className="px-3 py-2 text-slate-600">{m.guide}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 7. 주의사항 및 금기사항 */}
+        {analysis.warnings && (
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-5 rounded-2xl border border-yellow-300 shadow-sm">
+            <h4 className="text-lg font-bold text-yellow-900 mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" /> {analysis.warnings.title || "7. 주의사항 및 금기사항"}
+            </h4>
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Watch Out */}
+              <div className="bg-yellow-100/50 p-3 rounded-xl">
+                <p className="font-bold text-yellow-800 mb-2 flex items-center gap-1">⚠️ 주의해야 할 점</p>
+                <ul className="space-y-2">
+                  {analysis.warnings.watchOut?.map((w: any, idx: number) => (
+                    <li key={idx} className="text-sm text-slate-700">
+                      <span className="font-semibold">{w.title}:</span> {w.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Avoid */}
+              <div className="bg-red-100/50 p-3 rounded-xl">
+                <p className="font-bold text-red-800 mb-2 flex items-center gap-1">🚫 절대 피해야 할 것</p>
+                <ul className="space-y-2">
+                  {analysis.warnings.avoid?.map((a: any, idx: number) => (
+                    <li key={idx} className="text-sm text-slate-700">
+                      <span className="font-semibold">{a.title}:</span> {a.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 8. 분야별 전략 */}
+        {analysis.fieldStrategies && (
+          <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-5 rounded-2xl border border-emerald-200 shadow-sm">
+            <h4 className="text-lg font-bold text-emerald-900 mb-3 flex items-center gap-2">
+              <Briefcase className="w-5 h-5" /> {analysis.fieldStrategies.title || "8. 분야별 전략"}
+            </h4>
+            <div className="space-y-4">
+              {/* Career */}
+              {analysis.fieldStrategies.career && (
+                <div className="bg-white/60 p-4 rounded-xl">
+                  <p className="font-bold text-emerald-700 mb-2 flex items-center gap-1">
+                    <Briefcase className="w-4 h-4" /> {analysis.fieldStrategies.career.subtitle || "직업운"}
+                  </p>
+                  <p className="text-slate-700 text-sm mb-2">{analysis.fieldStrategies.career.analysis}</p>
+                  <p className="text-emerald-600 text-sm font-medium">{analysis.fieldStrategies.career.advice}</p>
+                </div>
+              )}
+              {/* Love */}
+              {analysis.fieldStrategies.love && (
+                <div className="bg-white/60 p-4 rounded-xl">
+                  <p className="font-bold text-rose-700 mb-2 flex items-center gap-1">
+                    <Heart className="w-4 h-4" /> {analysis.fieldStrategies.love.subtitle || "연애운"}
+                  </p>
+                  <p className="text-slate-700 text-sm mb-2">{analysis.fieldStrategies.love.analysis}</p>
+                  <p className="text-rose-600 text-sm font-medium">{analysis.fieldStrategies.love.advice}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 9. 최종 심리 솔루션 */}
+        {analysis.finalSolution && (
+          <div className="bg-gradient-to-br from-violet-50 to-purple-100 p-5 rounded-2xl border border-violet-300 shadow-sm">
+            <h4 className="text-lg font-bold text-violet-900 mb-3 flex items-center gap-2">
+              <Lightbulb className="w-5 h-5" /> {analysis.finalSolution.title || "9. 최종 심리 솔루션"}
+            </h4>
+            {analysis.finalSolution.theme && (
+              <p className="text-violet-800 font-bold italic mb-3">"{analysis.finalSolution.theme}"</p>
+            )}
+            {analysis.finalSolution.tips && (
+              <ul className="space-y-2 mb-4">
+                {analysis.finalSolution.tips.map((tip: any, idx: number) => (
+                  <li key={idx} className="bg-white/60 p-3 rounded-lg text-sm text-slate-700">
+                    <span className="font-bold text-violet-700">{idx + 1}. {tip.title}:</span> {tip.description}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {analysis.finalSolution.closingMessage && (
+              <p className="text-violet-700 text-sm leading-relaxed italic border-l-4 border-violet-400 pl-3">
+                {analysis.finalSolution.closingMessage}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Legacy fallback for old data structure */}
+        {!analysis.nature && !analysis.fiveElements && (
+          <>
+            {/* 1. Saju Reading */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <h4 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                📜 1. 사주 풀이
+              </h4>
+              <div className="text-slate-600 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                {analysis.sajuReading || analysis.sajuAnalysis || fusedReport || "분석을 불러오는 중입니다..."}
+              </div>
+            </div>
+
+            {/* 2. MBTI Compatibility */}
+            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
+              <h4 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                💞 2. MBTI와 궁합
+              </h4>
+              <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                {analysis.mbtiCompatibility || analysis.commonalities || "분석 결과가 없습니다."}
+              </div>
+            </div>
+
+            {/* 3. 2026 Fortune */}
+            <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 shadow-sm">
+              <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
+                📅 3. 2026 대운세
+              </h4>
+              <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                {analysis.fortune2026 || <span className="text-amber-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
+              </div>
+            </div>
+
+            {/* 4. Other Luck */}
+            <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 shadow-sm">
+              <h4 className="text-lg font-bold text-rose-900 mb-3 flex items-center gap-2">
+                💰 4. 기타 운수 (재물/사랑)
+              </h4>
+              <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                {analysis.otherLuck || <span className="text-rose-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
+              </div>
+            </div>
+
+            {/* 5. Advice */}
+            <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+              <h4 className="text-lg font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                ✅ 5. 같이해야 할 것 & 피해야 할 것
+              </h4>
+              <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
+                {analysis.advice || <span className="text-emerald-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center gap-4">
+          <button
+            onClick={handleDownloadReport}
+            disabled={isDownloading}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl text-md font-bold shadow-lg hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+            전체 리포트 다운로드
+          </button>
+
+          <div className="flex flex-col items-center">
+            <p className="text-sm text-slate-400 mb-2">결과가 상세하지 않나요?</p>
+            <button
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className="text-indigo-500 underline text-sm hover:text-indigo-700 disabled:opacity-50"
+            >
+              {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 상세 분석하기 (재생성)"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in">
       <div className="relative p-0 border w-full max-w-2xl shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
@@ -179,7 +523,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-black flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-yellow-300" />
-              MBTI & 사주 심층 분석
+              MBTIJU 소울 리포트
             </h3>
             <div className="flex items-center gap-2">
               {analysis && (
@@ -194,7 +538,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               )}
             </div>
           </div>
-          <p className="opacity-90 mt-2 text-sm font-medium">나의 선천적 운명과 후천적 성격의 완벽한 조화 🔮</p>
+          <p className="opacity-90 mt-2 text-sm font-medium">명리학적 본성과 심리학적 자아의 융합 분석 🔮</p>
         </div>
 
         {/* Content */}
@@ -218,10 +562,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               {/* Tabs */}
               <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
                 <button
-                  onClick={() => setActiveTab('fused')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'fused' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  onClick={() => setActiveTab('soul')}
+                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'soul' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                  <Zap className="w-4 h-4" /> 융합 분석
+                  <Sparkles className="w-4 h-4" /> 소울 리포트
                 </button>
                 <button
                   onClick={() => setActiveTab('mbti')}
@@ -239,82 +583,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
               {/* Tab Content */}
               <div className="animate-fade-up">
-                {activeTab === 'fused' && (
-                  <div className="space-y-4 animate-fade-up">
-                    {/* 1. Saju Reading */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                      <h4 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                        📜 1. 사주 풀이
-                      </h4>
-                      <div className="text-slate-600 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.sajuReading || analysis.sajuAnalysis || fusedReport || "분석을 불러오는 중입니다..."}
-                      </div>
-                    </div>
-
-                    {/* 2. MBTI Compatibility */}
-                    <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
-                      <h4 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                        💞 2. MBTI와 궁합
-                      </h4>
-                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.mbtiCompatibility || analysis.commonalities || "분석 결과가 없습니다."}
-                      </div>
-                    </div>
-
-                    {/* 3. 2026 Fortune */}
-                    <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 shadow-sm">
-                      <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
-                        📅 3. 2026 대운세
-                      </h4>
-                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.fortune2026 || <span className="text-amber-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
-                      </div>
-                    </div>
-
-                    {/* 4. Other Luck (Wealth, Love) */}
-                    <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 shadow-sm">
-                      <h4 className="text-lg font-bold text-rose-900 mb-3 flex items-center gap-2">
-                        💰 4. 기타 운수 (재물/사랑)
-                      </h4>
-                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.otherLuck || <span className="text-rose-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
-                      </div>
-                    </div>
-
-                    {/* 5. Advice (Do's & Don'ts) */}
-                    <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
-                      <h4 className="text-lg font-bold text-emerald-900 mb-3 flex items-center gap-2">
-                        ✅ 5. 같이해야 할 것 & 피해야 할 것
-                      </h4>
-                      <div className="text-slate-700 leading-relaxed font-medium text-md whitespace-pre-wrap">
-                        {analysis.advice || <span className="text-emerald-600/70">데이터가 없습니다. 아래 [AI로 다시 상세 분석하기] 버튼을 눌러주세요.</span>}
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center gap-4">
-                      <button
-                        onClick={handleDownloadReport}
-                        disabled={isDownloading}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl text-md font-bold shadow-lg hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                        전체 리포트 다운로드
-                      </button>
-
-                      <div className="flex flex-col items-center">
-                        <p className="text-sm text-slate-400 mb-2">결과가 상세하지 않나요?</p>
-                        <button
-                          onClick={handleRegenerate}
-                          disabled={isRegenerating}
-                          className="text-indigo-500 underline text-sm hover:text-indigo-700 disabled:opacity-50"
-                        >
-                          {isRegenerating ? "AI가 다시 분석 중..." : "AI로 다시 상세 분석하기 (재생성)"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {activeTab === 'soul' && renderSoulReport()}
 
                 {activeTab === 'mbti' && (
                   <div className="bg-blue-50/50 p-8 rounded-2xl border border-blue-100 text-center animate-fade-in">
@@ -349,7 +618,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                       {getSajuDescription(currentSajuKey)}
                     </p>
                     <div className="mt-4 text-sm text-slate-500">
-                      * 더 자세한 사주 풀이와 운세는 [융합 분석] 탭에서 확인하세요.
+                      * 더 자세한 사주 풀이와 운세는 [소울 리포트] 탭에서 확인하세요.
                     </div>
                   </div>
                 )}
