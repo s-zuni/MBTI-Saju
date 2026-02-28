@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Heart, Menu, LogOut } from 'lucide-react'; // Added LogOut icon
 import { supabase } from '../supabaseClient'; // Import supabase client
 import { useNavigate, useLocation } from 'react-router-dom'; // For navigation
@@ -17,9 +17,31 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
+
+  // 라우트 변경 시 모바일 메뉴 자동 닫기
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // 외부 클릭 시 모바일 메뉴 닫기
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside as any);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside as any);
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -78,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
     : 'bg-transparent py-5';
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
+    <nav ref={navRef} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>

@@ -47,7 +47,7 @@ const SignupForm: React.FC<any> = ({
         <p className="text-slate-500 font-medium mb-6">
           {mode === 'edit' ? '정보를 수정해주세요.' : '맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.'}
         </p>
-        <form className="space-y-5">
+        <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
           {/* ... Form fields for name, gender, mbti etc. ... */}
           <div>
             <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
@@ -210,7 +210,7 @@ const SignupForm: React.FC<any> = ({
         <p className="text-slate-500 font-medium mb-6">
           분석 결과를 저장하고 보려면 계정을 생성하세요.
         </p>
-        <form className="space-y-5">
+        <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleEmailSignup(); }}>
           <div>
             <label htmlFor="email-signup" className="block text-sm font-bold text-slate-700 mb-2">
               아이디
@@ -353,7 +353,7 @@ const LoginForm: React.FC<any> = ({
         <p className="text-slate-500 font-medium mb-6">
           계정에 로그인하여 분석 결과를 확인하세요.
         </p>
-        <form className="space-y-5">
+        <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div>
             <label htmlFor="email-login" className="block text-sm font-bold text-slate-700 mb-2">
               아이디
@@ -697,25 +697,15 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     }
   };
 
-  // Keyboard Navigation
+  // Keyboard Navigation — Escape only (Enter is handled by form onSubmit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       if (e.key === 'Escape') onClose();
-      if (e.key === 'Enter') {
-        // Logic to trigger primary action based on mode/step
-        if (mode === 'login') handleLogin();
-        else if (mode === 'signup' || mode === 'edit') {
-          if (step === 1 && mode !== 'edit') handleNext();
-          else if (mode === 'edit') handleUpdate();
-          else if (step === 2) handleEmailSignup();
-        }
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, mode, step, onClose]); // Removed handlers from deps to avoid infinite loops or unnecessary re-binds
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
