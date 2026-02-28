@@ -254,20 +254,21 @@ function App() {
 
                 onTripClick={openTripModal}
                 onHealingClick={openHealingModal}
-                onJobClick={() => {
-                  if (checkAccess(FEATURES.JOB)) openJobModal();
-                  else setShowCoinPurchaseModal(true);
+                onJobClick={openJobModal}
+                onCompatibilityClick={openCompModal}
+                onTarotClick={openTarotModal}
+                onChatbotClick={() => {
+                  if (!session) {
+                    openAnalysisModal('login');
+                    return;
+                  }
+                  if (coins >= SERVICE_COSTS.AI_CHAT_10) {
+                    window.location.href = '/chat';
+                  } else {
+                    setRequiredCoinsForPurchase(SERVICE_COSTS.AI_CHAT_10);
+                    setShowCoinPurchaseModal(true);
+                  }
                 }}
-                onCompatibilityClick={() => {
-                  if (checkAccess(FEATURES.COMPATIBILITY)) openCompModal();
-                  else setShowCoinPurchaseModal(true);
-                }}
-                onTarotClick={() => {
-                  if (checkAccess(FEATURES.TAROT)) openTarotModal();
-                  else setShowCoinPurchaseModal(true);
-                }}
-                tier={tier}
-                onOpenSubscription={() => setShowCoinPurchaseModal(true)}
               />
 
               {/* Featured Analysis Section (Showcase) */}

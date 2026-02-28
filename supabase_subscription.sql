@@ -38,8 +38,9 @@ create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   -- Standard pattern: id matches new.id
-  insert into public.profiles (id, tier)
-  values (new.id, 'free')
+  -- coins는 0으로 시작 (회원가입 시 무료 코인 미지급)
+  insert into public.profiles (id, tier, coins)
+  values (new.id, 'free', 0)
   on conflict (id) do nothing; -- Handle case where profile might already exist
   return new;
 end;

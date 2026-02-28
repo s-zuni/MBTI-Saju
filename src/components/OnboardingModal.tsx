@@ -49,11 +49,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                         AI 점술가가 당신의 운명을 분석할 준비를 마쳤습니다.
                     </p>
 
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
-                        <p className="text-amber-700 font-bold text-sm flex items-center gap-2">
-                            🎁 신규 가입 축하! <span className="text-orange-600">100코인</span>이 지급되었습니다!
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 mb-6">
+                        <p className="text-indigo-700 font-bold text-sm flex items-center gap-2">
+                            ✨ 코인을 충전하고 다양한 AI 분석을 경험해보세요!
                         </p>
-                        <p className="text-amber-600 text-xs mt-1">코인으로 다양한 AI 분석 서비스를 이용해보세요.</p>
+                        <p className="text-indigo-600 text-xs mt-1">운세, 사주, 타로, AI 심층 상담 등 다양한 서비스가 준비되어 있습니다.</p>
                     </div>
 
                     <div className="w-full space-y-3">
