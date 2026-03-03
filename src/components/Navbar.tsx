@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom'; // For navigation
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 interface NavbarProps {
+  session: Session | null;
   onLoginClick: () => void;
   onSignupClick: () => void;
   onFortuneClick: () => void;
@@ -12,9 +13,8 @@ interface NavbarProps {
   onTarotClick: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneClick, onMbtiSajuClick, onTarotClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onSignupClick, onFortuneClick, onMbtiSajuClick, onTarotClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
@@ -45,19 +45,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        setSession(session);
+      (event: AuthChangeEvent, currentSession: Session | null) => {
         if (event === 'SIGNED_OUT') {
           navigate('/'); // Redirect to home on logout
         }
       }
     );
-
-    // Initial session check
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-      setSession(data.session);
-    });
-
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);

@@ -233,6 +233,7 @@ function App() {
     <BrowserRouter>
       <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0"> {/* Added padding for BottomNav */}
         <Navbar
+          session={session}
           onLoginClick={() => openAnalysisModal('login')}
           onSignupClick={() => openAnalysisModal('signup')}
           onFortuneClick={handleFetchFortune}
