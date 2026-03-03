@@ -111,34 +111,73 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       if (!session) throw new Error("로그인이 필요합니다.");
 
       const metadata = session.user.user_metadata;
+      const requestPayload = {
+        name: metadata.full_name,
+        gender: metadata.gender,
+        birthDate: metadata.birth_date,
+        birthTime: metadata.birth_time,
+        mbti: metadata.mbti,
+      };
 
-      const response = await fetch('/api/analyze', {
+      const authHeader = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      };
+
+      // 1. Start core analysis (Nature, Persona, Integration)
+      const corePromise = fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          name: metadata.full_name,
-          gender: metadata.gender,
-          birthDate: metadata.birth_date,
-          birthTime: metadata.birth_time,
-          mbti: metadata.mbti,
-        })
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => {
+        if (!res.ok) throw new Error("핵심 분석 생성 실패");
+        return res.json();
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || errorData?.details || "분석 생성에 실패했습니다.");
-      }
+      // 2. Start fortune analysis (Yearly, Monthly)
+      const fortunePromise = fetch('/api/analyze_fortune', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => {
+        if (!res.ok) throw new Error("운세 분석 생성 실패");
+        return res.json();
+      });
 
-      const newAnalysis = await response.json();
+      // 3. Start strategy analysis (Warnings, Career/Love, Solution)
+      const strategyPromise = fetch('/api/analyze_strategy', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => {
+        if (!res.ok) throw new Error("전략 분석 생성 실패");
+        return res.json();
+      });
 
+      // Update UI incrementally
+      const coreData = await corePromise;
+      setAnalysis({
+        ...coreData,
+        birth_date: metadata.birth_date,
+        full_name: metadata.full_name,
+        mbti: metadata.mbti
+      });
+
+      // Wait for others and update
+      const [fortuneData, strategyData] = await Promise.all([fortunePromise, strategyPromise]);
+      const mergedAnalysis = { ...coreData, ...fortuneData, ...strategyData };
+
+      setAnalysis({
+        ...mergedAnalysis,
+        birth_date: metadata.birth_date,
+        full_name: metadata.full_name,
+        mbti: metadata.mbti
+      });
+
+      // Final Save to Supabase
       await supabase.auth.updateUser({
-        data: { ...metadata, analysis: newAnalysis }
+        data: { ...metadata, analysis: mergedAnalysis }
       });
-
-      setAnalysis({ ...newAnalysis, birth_date: metadata.birth_date, full_name: metadata.full_name, mbti: metadata.mbti });
 
     } catch (error: any) {
       console.error("Regenerate Error:", error);

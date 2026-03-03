@@ -18,14 +18,41 @@ interface Profile {
 
 interface Analysis {
   keywords: string;
-  commonalities: string;
+  reportTitle?: string;
+  nature?: {
+    title: string;
+    dayPillarSummary: string;
+    dayMasterAnalysis: string;
+    dayBranchAnalysis: string;
+    monthBranchAnalysis: string;
+  };
+  fiveElements?: {
+    title: string;
+    elements: Array<{ element: string; count: number; function: string; interpretation: string }>;
+    summary: string;
+  };
+  persona?: {
+    title: string;
+    mbtiNickname: string;
+    dominantFunction: string;
+    auxiliaryFunction: string;
+    tertiaryFunction: string;
+    inferiorFunction: string;
+  };
+  deepIntegration?: {
+    title: string;
+    integrationPoints: Array<{ subtitle: string; content: string }>;
+  };
+  yearlyFortune?: any;
+  monthlyFortune?: any;
+  warnings?: any;
+  fieldStrategies?: any;
+  finalSolution?: any;
+  saju?: any;
+  // Legacy fields
   typeDescription?: string;
   elementAnalysis?: string;
-  detailedAnalysis?: string;
-  mbtiAnalysis?: string;
-  sajuAnalysis?: string;
-  fusedAnalysis?: string;
-  saju?: any;
+  commonalities?: string;
 }
 
 interface MyPageProps {
@@ -105,49 +132,54 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
       if (!profile) throw new Error('프로필 정보가 없습니다.');
 
-      const response = await fetch('/api/analyze', {
+      const requestPayload = {
+        name: profile.name,
+        gender: profile.gender,
+        birthDate: profile.birth_date,
+        birthTime: profile.birth_time,
+        mbti: profile.mbti,
+      };
+
+      const authHeader = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      };
+
+      // 1. Core analysis
+      const corePromise = fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          name: profile.name,
-          gender: profile.gender,
-          birthDate: profile.birth_date,
-          birthTime: profile.birth_time,
-          mbti: profile.mbti,
-        })
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => {
+        if (!res.ok) throw new Error("핵심 분석 실패");
+        return res.json();
       });
 
-      const responseText = await response.text();
-      let responseData;
+      // 2. Fortune analysis
+      const fortunePromise = fetch('/api/analyze_fortune', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => res.ok ? res.json() : {});
 
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        // Response is not JSON
-      }
+      // 3. Strategy analysis
+      const strategyPromise = fetch('/api/analyze_strategy', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify(requestPayload)
+      }).then(res => res.ok ? res.json() : {});
 
-      if (!response.ok) {
-        throw new Error(
-          (responseData && responseData.error) ||
-          responseText ||
-          '분석 중 오류가 발생했습니다.'
-        );
-      }
+      const coreData = await corePromise;
+      setAnalysis(prev => ({ ...prev, ...coreData }));
 
-      const analysisData = responseData;
-      setAnalysis(analysisData);
+      const [fortuneData, strategyData] = await Promise.all([fortunePromise, strategyPromise]);
+      const mergedAnalysis = { ...coreData, ...fortuneData, ...strategyData };
+      setAnalysis(mergedAnalysis);
 
-      // Save the analysis to user metadata
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { ...profile, analysis: analysisData }
+      // Save to Supabase
+      await supabase.auth.updateUser({
+        data: { ...profile, analysis: mergedAnalysis }
       });
-
-      if (updateError) {
-        console.error('Failed to save analysis to user profile:', updateError);
-      }
 
     } catch (e: any) {
       setError(e.message);
@@ -267,7 +299,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         {analysis ? (
           <div className="space-y-6 animate-fade-up">
             {/* Saju Type Section */}
-            {analysis.typeDescription && (
+            {(analysis.nature || (analysis as any).typeDescription) && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/50 p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <Sparkles className="w-6 h-6 text-indigo-600" />
@@ -275,10 +307,12 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                 </div>
 
                 <div className="space-y-6">
-                  {/* Day Master */}
+                  {/* Day Master Analysis */}
                   <div className='bg-white bg-opacity-60 rounded-xl p-5'>
-                    <h3 className="font-bold text-indigo-800 mb-2">💎 나의 천간 (Day Master)</h3>
-                    <p className="text-indigo-900 text-lg font-black mb-1">{analysis.typeDescription}</p>
+                    <h3 className="font-bold text-indigo-800 mb-2">💎 나의 천간 및 본성</h3>
+                    <p className="text-indigo-900 text-lg font-black mb-1">
+                      {analysis.nature?.dayMasterAnalysis || (analysis as any).typeDescription}
+                    </p>
                     {/* Show calculation details if available */}
                     {analysis.saju && (
                       <div className="text-sm text-indigo-600 mt-2">
@@ -290,11 +324,13 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                     )}
                   </div>
 
-                  {/* Element Analysis Text */}
-                  {analysis.elementAnalysis && (
+                  {/* Five Elements Analysis */}
+                  {(analysis.fiveElements || (analysis as any).elementAnalysis) && (
                     <div>
                       <h3 className="font-bold text-indigo-800 mb-2">🌊 오행 분석</h3>
-                      <p className="text-indigo-700 leading-relaxed">{analysis.elementAnalysis}</p>
+                      <p className="text-indigo-700 leading-relaxed">
+                        {analysis.fiveElements?.summary || (analysis as any).elementAnalysis}
+                      </p>
                     </div>
                   )}
 
@@ -323,7 +359,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             )}
 
             {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
-            {renderAnalysisSection(Users, "두 결과의 공통점 및 특이사항", analysis.commonalities)}
+            {(analysis.deepIntegration || (analysis as any).commonalities) &&
+              renderAnalysisSection(Users, "두 결과의 공통점 및 융합 분석",
+                analysis.deepIntegration?.integrationPoints?.map(p => p.content).join('\n\n') || (analysis as any).commonalities, true)
+            }
+
 
             {/* Navigation Buttons for Deep Analysis */}
             <div className="grid md:grid-cols-2 gap-4 mt-8">
