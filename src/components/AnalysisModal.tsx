@@ -310,15 +310,17 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
         provider: provider as Provider,
         options: {
           redirectTo: window.location.origin,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
 
       if (error) throw error;
-
+      // Do not setLoading(false) here, let the page redirect.
     } catch (error: any) {
       setAuthError(error.message || `${provider} 로그인/회원가입 중 에러가 발생했습니다.`);
       console.error(`${provider} Auth Error:`, error);
-    } finally {
       setLoading(false);
     }
   };

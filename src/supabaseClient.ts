@@ -12,5 +12,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = (supabaseUrl && supabaseAnonKey)
     ? createClient(supabaseUrl, supabaseAnonKey)
-    : createClient('https://placeholder.supabase.co', 'placeholder'); // Prevent null pointer exception but calls will fail appropriately
+    : createClient('https://placeholder.supabase.co', 'placeholder');
 

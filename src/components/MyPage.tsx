@@ -191,7 +191,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const handleLogout = async () => {
     setLoading(true);
     await supabase.auth.signOut();
-    navigate('/');
+    window.location.href = '/';
   };
 
   const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (

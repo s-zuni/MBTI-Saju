@@ -484,9 +484,28 @@ function App() {
 
 // A simple component to handle OAuth redirects. Supabase client will handle session.
 const AuthCallback = () => {
+  const navigate = React.useMemo(() => (path: string) => window.location.href = path, []);
+
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.href = '/';
+      } else {
+        // Wait a bit more for the session to be established via detectSessionInUrl
+        const timer = setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    });
+  }, []);
+
   return (
-    <div className="flex justify-center items-center h-screen">
-      <p>Loading...</p>
+    <div className="flex justify-center items-center h-screen bg-slate-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-slate-600 font-medium">인증 정보를 확인 중입니다...</p>
+      </div>
     </div>
   );
 };
