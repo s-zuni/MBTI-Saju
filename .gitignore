@@ -26,3 +26,6 @@ yarn-error.log*
 .env*.local
 
 .env
+
+# VS Code settings (may contain sensitive tokens)
+.vscode/settings.json
