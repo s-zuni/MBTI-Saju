@@ -150,8 +150,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify(requestPayload)
-      }).then(res => {
-        if (!res.ok) throw new Error("핵심 분석 실패");
+      }).then(async res => {
+        if (!res.ok) {
+          try {
+            const errData = await res.json();
+            throw new Error(`핵심 분석 실패: ${errData.error || errData.message || res.statusText}`);
+          } catch (e: any) {
+            throw new Error(e.message || "핵심 분석 실패: 서버 응답을 확인할 수 없습니다.");
+          }
+        }
         return res.json();
       });
 
