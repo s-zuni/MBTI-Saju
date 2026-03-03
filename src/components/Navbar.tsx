@@ -98,20 +98,7 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onSignupClick, o
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>
           <div className="w-10 h-10 relative flex items-center justify-center transition-transform group-hover:scale-105">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
-              <defs>
-                <linearGradient id="logoGradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#6366f1" /> {/* Indigo-500 */}
-                  <stop offset="100%" stopColor="#a855f7" /> {/* Purple-500 */}
-                </linearGradient>
-              </defs>
-              {/* Compass Ring */}
-              <circle cx="20" cy="20" r="18" stroke="url(#logoGradient)" strokeWidth="2.5" className="opacity-90" />
-              {/* Star / Needle */}
-              <path d="M20 5L23 17L35 20L23 23L20 35L17 23L5 20L17 17L20 5Z" fill="url(#logoGradient)" />
-              {/* Center dot */}
-              <circle cx="20" cy="20" r="3" fill="white" />
-            </svg>
+            <img src="/logo.png" alt="MBTIJU Logo" className="w-full h-full object-contain drop-shadow-md rounded-full" />
           </div>
           <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors font-sans`}>MBTIJU</span>
         </div>

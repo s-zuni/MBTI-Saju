@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     <footer className="bg-white border-t border-slate-100 py-12 px-6 mt-20">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-slate-300" />
+          <img src="/logo.png" alt="MBTIJU logo" className="w-6 h-6 object-contain rounded-full" />
           <span className="font-bold text-slate-400 tracking-tight">MBTIJU</span>
         </div>
         <div className="flex items-center gap-6 text-sm text-slate-400">

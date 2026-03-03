@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Loader2 } from 'lucide-react'; // Added Loader2 for auth loading state
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
@@ -60,6 +61,7 @@ function App() {
   } | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // Added auth loading state
 
   const { tier, checkAccess } = useSubscription(session);
   const { credits: coins, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
@@ -73,12 +75,14 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       setSession(data.session);
+      setIsAuthLoading(false); // Auth loading finished
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setSession(session);
+      setIsAuthLoading(false); // Also set false here just in case it fires first or updates
     });
 
     return () => subscription.unsubscribe();
@@ -227,6 +231,17 @@ function App() {
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
+  // 로딩 화면 표시
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-indigo-50/50 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+        <h2 className="text-xl font-bold text-slate-800">MBTIJU</h2>
+        <p className="text-sm text-slate-500 mt-2">잠시만 기다려주세요...</p>
+      </div>
+    );
   }
 
   return (
