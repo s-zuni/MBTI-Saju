@@ -484,8 +484,6 @@ function App() {
 
 // A simple component to handle OAuth redirects. Supabase client will handle session.
 const AuthCallback = () => {
-  const navigate = React.useMemo(() => (path: string) => window.location.href = path, []);
-
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
