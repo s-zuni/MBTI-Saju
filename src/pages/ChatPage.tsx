@@ -3,8 +3,8 @@ import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare, Coins, AlertCircle
 import { supabase } from '../supabaseClient';
 import { createSession, loadMessages, sendMessage, ChatMessage } from '../utils/chatService';
 import { useNavigate } from 'react-router-dom';
-import { useCoins } from '../hooks/useCoins';
-import { SERVICE_COSTS } from '../config/coinConfig';
+import { useCredits } from '../hooks/useCredits';
+import { SERVICE_COSTS } from '../config/creditConfig';
 import CoinPurchaseModal from '../components/CoinPurchaseModal';
 
 const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 코인 차감
@@ -21,7 +21,7 @@ const ChatPage: React.FC = () => {
     const [session, setSession] = useState<any>(null);
 
     // 코인 시스템
-    const { coins, useCoins: spendCoins, addCoins, refreshCoins } = useCoins(session);
+    const { credits: coins, useCredits: consumeCredits, purchaseCredits } = useCredits(session);
     const [messageCount, setMessageCount] = useState(0); // 현재 세션 메시지 카운트
     const [showCoinModal, setShowCoinModal] = useState(false);
     const [showCoinWarning, setShowCoinWarning] = useState(false);
@@ -161,7 +161,7 @@ const ChatPage: React.FC = () => {
 
             // 10회 도달 시 코인 차감
             if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
-                const success = await spendCoins('AI_CHAT_10');
+                const success = await consumeCredits('AI_CHAT_10');
                 if (!success) {
                     console.error('Failed to spend coins for AI chat');
                 }
@@ -363,9 +363,8 @@ const ChatPage: React.FC = () => {
                 userEmail={session?.user?.email}
                 currentCoins={coins}
                 requiredCoins={SERVICE_COSTS.AI_CHAT_10}
-                onSuccess={async (coinAmount, paymentId, packageId) => {
-                    await addCoins(coinAmount, paymentId, packageId);
-                    await refreshCoins();
+                onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+                    await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                     setShowCoinModal(false);
                 }}
             />

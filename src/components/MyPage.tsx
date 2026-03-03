@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, Lock } from 'lucide-react';
+import { Users, Sparkles, Coins, Loader2, AlertCircle, Key } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
-import PasswordChangeModal from './PasswordChangeModal';
-import { useCoins } from '../hooks/useCoins';
+import { useCredits } from '../hooks/useCredits';
 import CoinPurchaseModal from './CoinPurchaseModal';
 
 interface Profile {
@@ -44,11 +43,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
   const [isCoinModalOpen, setIsCoinModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { coins, addCoins, refreshCoins } = useCoins(session);
+  const { credits: coins, purchaseCredits } = useCredits(session);
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -260,19 +259,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                 </button>
               </div>
 
-              {/* Password Change Card */}
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Lock className="w-5 h-5 text-slate-400" />
-                  <h3 className="font-bold text-slate-800">계정 관리</h3>
-                </div>
-                <button
-                  onClick={() => setIsPasswordModalOpen(true)}
-                  className="w-full py-2.5 border border-slate-300 text-slate-600 rounded-lg font-medium text-sm hover:bg-slate-100 transition-colors"
-                >
-                  비밀번호 변경
-                </button>
-              </div>
+
             </div>
           </div>
         </div>
@@ -428,19 +415,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         onUpdate={() => fetchProfileData()}
       />
 
-      <PasswordChangeModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-      />
+
 
       <CoinPurchaseModal
         isOpen={isCoinModalOpen}
         onClose={() => setIsCoinModalOpen(false)}
         userEmail={profile?.email}
         currentCoins={coins}
-        onSuccess={async (coinAmount, paymentId, packageId) => {
-          await addCoins(coinAmount, paymentId, packageId);
-          await refreshCoins();
+        onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+          await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
         }}
       />
     </div>

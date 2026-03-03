@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Coins, Lock } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
-import { SERVICE_COSTS } from '../config/coinConfig';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 interface FortuneModalProps {
   isOpen: boolean;
@@ -113,8 +113,8 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               onClick={handleTomorrowClick}
               disabled={isUnlocking}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${tab === 'tomorrow'
-                  ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                  : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                : 'text-slate-500 hover:text-slate-700'
                 } ${isUnlocking ? 'opacity-50' : ''}`}
             >
               {isUnlocking ? (

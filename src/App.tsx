@@ -26,11 +26,13 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
 import { useSubscription, FEATURES } from './hooks/useSubscription';
-import { useCoins } from './hooks/useCoins';
-import { SERVICE_COSTS, ServiceType } from './config/coinConfig';
+import { useCredits } from './hooks/useCredits';
+import { SERVICE_COSTS, ServiceType } from './config/creditConfig';
 import CoinPurchaseModal from './components/CoinPurchaseModal';
 import OnboardingModal from './components/OnboardingModal';
 import PremiumBanner from './components/PremiumBanner';
+import PricingPage from './pages/PricingPage';
+import UsageHistoryPage from './pages/UsageHistoryPage';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -60,7 +62,7 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   const { tier, checkAccess } = useSubscription(session);
-  const { coins, addCoins, refreshCoins } = useCoins(session);
+  const { credits: coins, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
   const [showCoinPurchaseModal, setShowCoinPurchaseModal] = useState(false);
   const [requiredCoinsForPurchase, setRequiredCoinsForPurchase] = useState<number | undefined>(undefined);
 
@@ -369,9 +371,23 @@ function App() {
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/store" element={<StorePage />} />
-          <Route path="/room" element={<ChatPage />} /> {/* Legacy support if needed, or remove */}
+          <Route path="/pricing" element={
+            <PricingPage
+              currentCredits={coins}
+              onPurchaseSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+                await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
+              }}
+            />
+          } />
+          <Route path="/usage-history" element={
+            <UsageHistoryPage
+              currentCredits={coins}
+              onRequestRefund={requestRefund}
+            />
+          } />
+          <Route path="/room" element={<ChatPage />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/relationship" element={<RelationshipPage />} /> {/* NEW */}
+          <Route path="/relationship" element={<RelationshipPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
@@ -400,31 +416,9 @@ function App() {
           onNavigate={handleSwitchService}
           coins={coins}
           onUseCoin={async (serviceType) => {
-            // 간단히 직접 Supabase 호출
             if (!session?.user?.id) return false;
-            const cost = SERVICE_COSTS[serviceType];
-            if (coins < cost) return false;
-
-            try {
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ coins: coins - cost })
-                .eq('id', session.user.id);
-              if (updateError) throw updateError;
-
-              await supabase.from('coin_transactions').insert({
-                user_id: session.user.id,
-                amount: -cost,
-                type: 'usage',
-                service_type: serviceType.toLowerCase()
-              });
-
-              refreshCoins();
-              return true;
-            } catch (err) {
-              console.error(err);
-              return false;
-            }
+            const result = await consumeCredits(serviceType);
+            return result;
           }}
           onOpenCoinPurchase={(requiredCoins) => {
             setRequiredCoinsForPurchase(requiredCoins);
@@ -452,9 +446,8 @@ function App() {
           userEmail={session?.user?.email}
           currentCoins={coins}
           {...(requiredCoinsForPurchase !== undefined && { requiredCoins: requiredCoinsForPurchase })}
-          onSuccess={async (coinAmount, paymentId, packageId) => {
-            await addCoins(coinAmount, paymentId, packageId);
-            await refreshCoins();
+          onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+            await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
             setRequiredCoinsForPurchase(undefined);
           }}
         />

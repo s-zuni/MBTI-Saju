@@ -133,8 +133,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
             <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
               AI 심층상담
             </button>
-            <button onClick={() => navigate('/store')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              운세템 상점
+            <button onClick={() => navigate('/pricing')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+              요금제
+            </button>
+            <button onClick={() => navigate('/usage-history')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+              사용 내역
             </button>
             <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
               커뮤니티
@@ -180,17 +183,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                 <div className="flex items-center gap-2">
                   <button
                     onClick={onLoginClick}
-                    className={`px-4 py-2 font-semibold rounded-full transition-all text-sm active:scale-95 ${useDarkStyle ? 'text-slate-900 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-all text-sm active:scale-95"
                     disabled={loading}
                   >
-                    로그인
-                  </button>
-                  <button
-                    onClick={onSignupClick}
-                    className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-all text-sm active:scale-95"
-                    disabled={loading}
-                  >
-                    회원가입
+                    시작하기
                   </button>
                 </div>
               )}
@@ -218,7 +214,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세 보기</button>
               <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">AI 심층상담</button>
-              <button onClick={() => { navigate('/store'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세템 상점</button>
+              <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
+              <button onClick={() => { navigate('/usage-history'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">사용 내역</button>
               <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
               <button onClick={() => { onTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">신비 타로</button>
             </div>
@@ -240,17 +237,16 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onSignupClick, onFortuneC
                   </button>
                 </div>
               ) : (
-                // Already shown in top bar somewhat, but good fallback
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      onSignupClick();
+                      onLoginClick();
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
                     disabled={loading}
                   >
-                    회원가입
+                    시작하기
                   </button>
                 </div>
               )}

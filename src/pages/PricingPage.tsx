@@ -1,0 +1,212 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
+import { Coins, Sparkles, Check, Loader2, Zap } from 'lucide-react';
+import { requestPayment } from '../utils/paymentHandlers';
+import MobileHeader from '../components/MobileHeader';
+import type { PricingPlan } from '../hooks/useCredits';
+
+interface PricingPageProps {
+    onPurchaseSuccess?: (planId: string, pricePaid: number, credits: number, paymentId: string) => void;
+    currentCredits?: number;
+}
+
+const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCredits = 0 }) => {
+    const [plans, setPlans] = useState<PricingPlan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        fetchPlans();
+        checkUser();
+    }, []);
+
+    const checkUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+    };
+
+    const fetchPlans = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('pricing_plans')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            setPlans(data || []);
+        } catch (err) {
+            console.error('Error fetching plans:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getDiscountPercent = (plan: PricingPlan): number => {
+        return Math.round((1 - plan.price / plan.original_price) * 100);
+    };
+
+    const handlePurchase = async (plan: PricingPlan) => {
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        setSelectedPlanId(plan.id);
+        setIsProcessing(true);
+
+        try {
+            const { success, error_msg, imp_uid } = await requestPayment({
+                name: `크레딧 ${plan.credits}개 충전`,
+                amount: plan.price,
+                buyer_email: user.email,
+                buyer_name: user.user_metadata?.full_name || '사용자',
+                buyer_tel: '010-0000-0000',
+            });
+
+            if (success && imp_uid) {
+                if (onPurchaseSuccess) {
+                    onPurchaseSuccess(plan.id, plan.price, plan.credits, imp_uid);
+                }
+                alert('크레딧 충전이 완료되었습니다!');
+            } else {
+                alert(`결제 실패: ${error_msg}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('결제 처리 중 오류가 발생했습니다.');
+        } finally {
+            setIsProcessing(false);
+            setSelectedPlanId(null);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center pt-14 md:pt-20">
+                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-50 pb-24 md:pb-0 pt-14 md:pt-20 animate-fade-in">
+            <MobileHeader title="요금제" />
+
+            {/* Header */}
+            <div className="hidden md:block bg-gradient-to-r from-amber-400 to-orange-500 text-white">
+                <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                        <Coins className="w-8 h-8" />
+                        <h1 className="text-3xl font-black">요금제</h1>
+                    </div>
+                    <p className="text-amber-100 text-lg">크레딧을 충전하고 다양한 운세 서비스를 이용하세요</p>
+
+                    {/* Current Balance */}
+                    <div className="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full">
+                        <Zap className="w-5 h-5 text-yellow-200" />
+                        <span className="font-bold">현재 보유: {currentCredits} 크레딧</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Balance */}
+            <div className="md:hidden mx-4 mt-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-200" />
+                    <span className="font-bold">보유 크레딧</span>
+                </div>
+                <span className="text-2xl font-black">{currentCredits}</span>
+            </div>
+
+            {/* Discount Banner */}
+            <div className="max-w-4xl mx-auto px-4 mt-6">
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl p-4 flex items-center gap-3">
+                    <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse flex-shrink-0" />
+                    <span className="font-bold text-sm">🎉 3개월 특별 할인 이벤트 진행중!</span>
+                </div>
+            </div>
+
+            {/* Plans Grid */}
+            <div className="max-w-4xl mx-auto px-4 py-8">
+                <div className="grid md:grid-cols-3 gap-4">
+                    {plans.map((plan) => {
+                        const discountPercent = getDiscountPercent(plan);
+                        const isSelected = selectedPlanId === plan.id;
+
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`relative bg-white rounded-2xl border-2 overflow-hidden transition-all duration-200 flex flex-col ${plan.is_popular
+                                        ? 'border-amber-400 shadow-xl shadow-amber-100'
+                                        : 'border-slate-200 shadow-lg shadow-slate-100'
+                                    }`}
+                            >
+                                {plan.is_popular && (
+                                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-center py-1.5 text-xs font-bold uppercase tracking-wider">
+                                        🔥 가장 인기있는
+                                    </div>
+                                )}
+
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-1">{plan.name}</h3>
+                                    <p className="text-sm text-slate-500 mb-4">{plan.description}</p>
+
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${plan.is_popular
+                                                ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+                                                : 'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            <Coins className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <span className="text-2xl font-black text-slate-900">{plan.credits}</span>
+                                            <span className="text-sm text-slate-500 ml-1">크레딧</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="text-slate-400 line-through text-sm">
+                                            ₩{plan.original_price.toLocaleString()}
+                                        </span>
+                                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded">
+                                            {discountPercent}% OFF
+                                        </span>
+                                    </div>
+
+                                    <div className="text-3xl font-black text-slate-900 mb-1">
+                                        ₩{plan.price.toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mb-6">
+                                        크레딧당 {Math.round(plan.price / plan.credits)}원
+                                    </div>
+
+                                    <div className="mt-auto">
+                                        <button
+                                            onClick={() => handlePurchase(plan)}
+                                            disabled={isProcessing}
+                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${plan.is_popular
+                                                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600 shadow-md'
+                                                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                                                } ${isProcessing && isSelected ? 'opacity-70' : ''}`}
+                                        >
+                                            {isProcessing && isSelected ? (
+                                                <><Loader2 className="w-4 h-4 animate-spin" /> 처리 중...</>
+                                            ) : (
+                                                <><Check className="w-4 h-4" /> 구매하기</>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default PricingPage;

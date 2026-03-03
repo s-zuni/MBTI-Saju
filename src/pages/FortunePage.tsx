@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
-import { SERVICE_COSTS } from '../config/coinConfig';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 // 각 카테고리별 코인 비용
 const subCategories = [
