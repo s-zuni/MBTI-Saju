@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles } from 'lucide-react';
 
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -29,10 +28,10 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 
       {/* Central Content */}
       <div className="relative z-10 flex flex-col items-center justify-center animate-fade-up">
-        {/* Logo Icon - Minimalist & Clean */}
+        {/* Logo Icon */}
         <div className="mb-6 relative">
           <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse"></div>
-          <Sparkles className="w-16 h-16 text-indigo-100 relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" strokeWidth={1} />
+          <img src="/logo.png" alt="MBTIJU Logo" className="w-20 h-20 relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] rounded-full object-contain" />
         </div>
 
         <h1 className="text-3xl font-light text-white mb-3 tracking-[0.3em] font-sans drop-shadow-md">
