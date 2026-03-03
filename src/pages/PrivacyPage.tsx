@@ -6,6 +6,7 @@ const PrivacyPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-white">
             <Navbar
+                session={null}
                 onLoginClick={() => window.location.href = '/'}
                 onSignupClick={() => window.location.href = '/'}
                 onFortuneClick={async () => { }}
