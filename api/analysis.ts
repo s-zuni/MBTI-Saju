@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 export default async (req: any, res: any) => {
     // CORS configuration
@@ -94,7 +95,7 @@ export default async (req: any, res: any) => {
             throw new Error("Invalid analysis type");
         }
 
-        const result = await model.generateContent({
+        const result = await generateContentWithRetry(model, {
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             systemInstruction: { role: 'system', parts: [{ text: systemInstruction }] },
             generationConfig: { responseMimeType: "application/json" }
@@ -105,6 +106,6 @@ export default async (req: any, res: any) => {
 
     } catch (error: any) {
         console.error("Analysis API Error:", error);
-        res.status(500).json({ error: 'Failed to perform analysis', details: error.message });
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
+import { getKoreanErrorMessage } from './_utils/retry';
 
 // Types
 type VercelRequest = any;
@@ -102,7 +103,27 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             history: history,
         });
 
-        const result = await chat.sendMessage(message);
+        // Retry logic for sendMessage (handles 503/429 transient errors)
+        let result;
+        let lastError;
+        for (let attempt = 0; attempt <= 3; attempt++) {
+            try {
+                result = await chat.sendMessage(message);
+                break;
+            } catch (err: any) {
+                lastError = err;
+                const msg = err?.message || '';
+                const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+                if (attempt < 3 && isRetryable) {
+                    const delay = 1000 * Math.pow(2, attempt);
+                    console.warn(`[Chat Retry] Attempt ${attempt + 1}/3 failed. Waiting ${delay}ms...`);
+                    await new Promise(r => setTimeout(r, delay));
+                } else {
+                    throw err;
+                }
+            }
+        }
+        if (!result) throw lastError;
         const responseText = result.response.text();
 
         res.status(200).json({ reply: responseText });
@@ -118,8 +139,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
 
         res.status(500).json({
-            error: 'Failed to generate chat response',
-            details: error instanceof Error ? error.message : String(error)
+            error: getKoreanErrorMessage(error)
         });
     }
 };

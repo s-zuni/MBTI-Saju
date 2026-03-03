@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 export default async (req: any, res: any) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -48,7 +49,7 @@ export default async (req: any, res: any) => {
             systemInstruction: systemPrompt
         });
 
-        const result = await model.generateContent({
+        const result = await generateContentWithRetry(model, {
             contents: [
                 { role: 'user', parts: [{ text: userQuery }] }
             ],
@@ -71,7 +72,7 @@ export default async (req: any, res: any) => {
         res.status(200).json(content);
 
     } catch (error: any) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to generate job recommendation' });
+        console.error('Job API Error:', error);
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };

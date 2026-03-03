@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 // Fallback types if @vercel/node is not available
 type VercelRequest = any;
@@ -118,7 +119,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 systemInstruction: systemPrompt
             });
 
-            const result = await model.generateContent({
+            const result = await generateContentWithRetry(model, {
                 contents: [
                     { role: 'user', parts: [{ text: userQuery }] }
                 ],
@@ -140,7 +141,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
         } catch (error: any) {
             console.error('Server Error:', error);
-            res.status(500).json({ error: 'An error occurred while generating the fortune.' });
+            res.status(500).json({ error: getKoreanErrorMessage(error) });
         }
     } else {
         res.status(405).json({ error: 'Method Not Allowed' });

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -82,7 +83,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview", systemInstruction: systemPrompt });
 
-        const result = await model.generateContent({
+        const result = await generateContentWithRetry(model, {
             contents: [{ role: 'user', parts: [{ text: "Analyze daily chemistry for all partners." }] }],
             generationConfig: { responseMimeType: "application/json" }
         });
@@ -94,6 +95,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     } catch (error: any) {
         console.error('Daily Relationship API Error:', error);
-        res.status(500).json({ error: error.message || 'Server Error' });
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };

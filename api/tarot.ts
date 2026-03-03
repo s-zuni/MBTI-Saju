@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 export default async (req: any, res: any) => {
     // CORS configuration
@@ -107,7 +108,7 @@ export default async (req: any, res: any) => {
             systemInstruction: systemPrompt
         });
 
-        const result = await model.generateContent({
+        const result = await generateContentWithRetry(model, {
             contents: [{ role: 'user', parts: [{ text: userQuery }] }],
             generationConfig: { responseMimeType: "application/json" },
             safetySettings: [
@@ -139,6 +140,6 @@ export default async (req: any, res: any) => {
 
     } catch (error: any) {
         console.error("Tarot API Error:", error);
-        res.status(500).json({ error: 'Failed to read tarot cards', details: error.message });
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };

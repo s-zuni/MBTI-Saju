@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -77,7 +78,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 systemInstruction: systemPrompt
             });
 
-            const result = await model.generateContent({
+            const result = await generateContentWithRetry(model, {
                 contents: [{ role: 'user', parts: [{ text: userQuery }] }],
                 generationConfig: { responseMimeType: "application/json" }
             });
@@ -86,6 +87,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             res.status(200).json(content);
         }
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        console.error('Fortune API Error:', error);
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };

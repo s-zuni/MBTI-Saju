@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 import { cleanAndParseJSON } from './_utils/json';
+import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 // Fallback types if @vercel/node is not available
 type VercelRequest = any;
@@ -133,7 +134,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 systemInstruction: systemPrompt
             });
 
-            const result = await model.generateContent({
+            const result = await generateContentWithRetry(model, {
                 contents: [
                     { role: 'user', parts: [{ text: userQuery }] }
                 ],
@@ -165,10 +166,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
     } catch (error: any) {
         console.error('Server Error:', error);
-        // Identify specific errors to return friendly messages
         if (error.message?.includes('Missing environment variables')) {
             return res.status(500).json({ error: 'Server Configuration Error: Missing API Keys' });
         }
-        res.status(500).json({ error: error.message || 'An internal server error occurred.', details: error.toString() });
+        res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
 };
