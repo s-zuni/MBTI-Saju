@@ -39,7 +39,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(window.innerWidth <= 768);
 
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login'>('signup');
+  const [analysisModalMode, setAnalysisModalMode] = useState<'signup' | 'login' | 'edit' | 'complete_profile'>('signup');
   const [showFortuneModal, setShowFortuneModal] = useState(false);
   const [showMbtiSajuModal, setShowMbtiSajuModal] = useState(false);
 
@@ -84,12 +84,22 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check Onboarding
+  // Check if profile needs completion (after social login redirect)
   useEffect(() => {
     if (session?.user) {
-      const hasSeenOnboarding = localStorage.getItem(`hasSeenOnboarding_${session.user.id}`);
-      if (!hasSeenOnboarding) {
-        setShowOnboardingModal(true);
+      const meta = session.user.user_metadata;
+      const needsProfile = !meta?.mbti || !meta?.birth_date || !meta?.gender;
+
+      if (needsProfile) {
+        // 신규 사용자 — 프로필 완성 모달 오픈
+        setAnalysisModalMode('complete_profile');
+        setShowAnalysisModal(true);
+      } else {
+        // 기존 사용자 — 온보딩 체크
+        const hasSeenOnboarding = localStorage.getItem(`hasSeenOnboarding_${session.user.id}`);
+        if (!hasSeenOnboarding) {
+          setShowOnboardingModal(true);
+        }
       }
     }
   }, [session]);
@@ -101,7 +111,7 @@ function App() {
     setShowOnboardingModal(false);
   };
 
-  const openAnalysisModal = (mode: 'signup' | 'login') => {
+  const openAnalysisModal = (mode: 'signup' | 'login' | 'edit' | 'complete_profile') => {
     setAnalysisModalMode(mode);
     setShowAnalysisModal(true);
   };
