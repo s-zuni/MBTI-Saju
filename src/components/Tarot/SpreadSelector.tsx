@@ -41,10 +41,10 @@ const SPREADS: SpreadOption[] = [
     {
         id: 'celtic',
         title: '켈트 십자 배열',
-        description: '심도 있는 운명의 흐름 분석 (10장)',
+        description: '과거, 현재, 미래 심층 분석 (10장)',
         icon: Target,
         cardCount: 10,
-        requiredTier: TIERS.DEEP
+        requiredTier: TIERS.FREE
     }
 ];
 

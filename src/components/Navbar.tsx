@@ -102,28 +102,24 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
 
         {/* Spacer to push actions to right if search is removed */}
         {/* Center Navigation Menu (Hidden on Home) */}
-        {!isHome && (
-          <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-            <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              운세 보기
-            </button>
-            <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              AI 심층상담
-            </button>
-            <button onClick={() => navigate('/pricing')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              요금제
-            </button>
-            <button onClick={() => navigate('/usage-history')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              사용 내역
-            </button>
-            <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              커뮤니티
-            </button>
-            <button onClick={onTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-              신비 타로
-            </button>
-          </div>
-        )}
+        <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+            운세 보기
+          </button>
+          <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+            AI 심층상담
+          </button>
+          <button onClick={onTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+            신비 타로
+          </button>
+          <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+            커뮤니티
+          </button>
+          <button onClick={() => navigate('/pricing')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+            요금제
+          </button>
+        </div>
+
 
         {/* Spacer to push actions to right if search is removed */}
         <div className="flex-1"></div>
@@ -191,10 +187,9 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세 보기</button>
               <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">AI 심층상담</button>
-              <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
-              <button onClick={() => { navigate('/usage-history'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">사용 내역</button>
-              <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
               <button onClick={() => { onTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">신비 타로</button>
+              <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
+              <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
             </div>
 
             {/* Mobile User Actions - Logout only since MyPage is on top */}

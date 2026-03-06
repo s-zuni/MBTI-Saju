@@ -269,7 +269,7 @@ const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => v
             content,
             tag,
             user_id: user.id,
-            author_name: user?.user_metadata?.full_name || '익명',
+            author_name: user?.user_metadata?.nickname || user?.user_metadata?.full_name || '익명',
         };
 
         let result;
@@ -383,7 +383,7 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
         const { error } = await supabase.from('comments').insert({
             post_id: post.id,
             user_id: user.id,
-            author_name: user.user_metadata.full_name || '익명',
+            author_name: user?.user_metadata?.nickname || user?.user_metadata?.full_name || '익명',
             content: newComment,
             parent_id: replyTo
         });

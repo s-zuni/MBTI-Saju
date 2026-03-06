@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Users, Sparkles, Coins, Loader2, AlertCircle, Key } from 'lucide-react';
+import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
 import { useCredits } from '../hooks/useCredits';
 import CoinPurchaseModal from './CoinPurchaseModal';
@@ -290,12 +290,20 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                   <span className="text-3xl font-black text-amber-600">{coins}</span>
                   <span className="text-sm text-slate-500">코인</span>
                 </div>
-                <button
-                  onClick={() => setIsCoinModalOpen(true)}
-                  className="w-full mt-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-bold text-sm hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm"
-                >
-                  코인 충전하기
-                </button>
+                <div className="flex gap-2 w-full mt-4">
+                  <button
+                    onClick={() => setIsCoinModalOpen(true)}
+                    className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-bold text-sm hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm"
+                  >
+                    코인 충전하기
+                  </button>
+                  <button
+                    onClick={() => navigate('/usage-history')}
+                    className="flex-1 py-2.5 bg-white border border-amber-200 text-amber-700 rounded-lg font-bold text-sm hover:bg-amber-50 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    <FileText className="w-4 h-4" /> 내역 보기
+                  </button>
+                </div>
               </div>
 
 

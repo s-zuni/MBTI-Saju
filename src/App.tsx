@@ -251,8 +251,14 @@ function App() {
           session={session}
           onLoginClick={() => openAnalysisModal('login')}
           onTarotClick={() => {
-            if (checkAccess(FEATURES.TAROT)) openTarotModal();
-            else setShowCoinPurchaseModal(true);
+            if (!session) {
+              openAnalysisModal('login');
+            } else if (coins >= SERVICE_COSTS.TAROT) {
+              openTarotModal();
+            } else {
+              setRequiredCoinsForPurchase(SERVICE_COSTS.TAROT);
+              setShowCoinPurchaseModal(true);
+            }
           }}
         />
 
@@ -275,7 +281,16 @@ function App() {
                 onHealingClick={openHealingModal}
                 onJobClick={openJobModal}
                 onCompatibilityClick={openCompModal}
-                onTarotClick={openTarotModal}
+                onTarotClick={() => {
+                  if (!session) {
+                    openAnalysisModal('login');
+                  } else if (coins >= SERVICE_COSTS.TAROT) {
+                    openTarotModal();
+                  } else {
+                    setRequiredCoinsForPurchase(SERVICE_COSTS.TAROT);
+                    setShowCoinPurchaseModal(true);
+                  }
+                }}
                 onChatbotClick={() => {
                   if (!session) {
                     openAnalysisModal('login');
@@ -442,7 +457,14 @@ function App() {
           isOpen={showTarotModal}
           onClose={closeTarotModal}
           tier={tier}
-          onUpgradeRequired={() => setShowCoinPurchaseModal(true)}
+          onUpgradeRequired={() => {
+            setRequiredCoinsForPurchase(SERVICE_COSTS.TAROT);
+            setShowCoinPurchaseModal(true);
+          }}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('TAROT');
+          }}
         />
 
         <CoinPurchaseModal

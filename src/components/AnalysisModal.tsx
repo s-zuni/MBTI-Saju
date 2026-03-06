@@ -75,6 +75,7 @@ const SocialLoginForm: React.FC<{
 const ProfileInputForm: React.FC<any> = ({
   mode,
   name, setName,
+  nickname, setNickname,
   gender, setGender,
   mbti, setMbti,
   birthDate, setBirthDate,
@@ -92,7 +93,7 @@ const ProfileInputForm: React.FC<any> = ({
     <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
       <div>
         <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
-          이름
+          이름 (실명)
         </label>
         <input
           type="text"
@@ -102,6 +103,21 @@ const ProfileInputForm: React.FC<any> = ({
           onChange={(e) => setName(e.target.value)}
           className="input-field"
           required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="nickname" className="block text-sm font-bold text-slate-700 mb-2">
+          닉네임 (커뮤니티 표시용)
+        </label>
+        <input
+          type="text"
+          name="nickname"
+          id="nickname"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          className="input-field"
+          placeholder="미입력 시 이름으로 표시됩니다."
         />
       </div>
 
@@ -252,6 +268,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
   // Signup/Edit fields
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [gender, setGender] = useState('');
   const [mbti, setMbti] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -265,6 +282,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   const resetFields = useCallback(() => {
     if (initialData && (initialMode === 'edit' || initialMode === 'complete_profile')) {
       setName(initialData.name || initialData.full_name || '');
+      setNickname(initialData.nickname || '');
       setGender(initialData.gender || '');
       setMbti(initialData.mbti || '');
       setBirthDate(initialData.birth_date || '');
@@ -281,6 +299,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       }
     } else {
       setName('');
+      setNickname('');
       setGender('');
       setMbti('');
       setBirthDate('');
@@ -338,6 +357,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: name,
+          nickname: nickname,
           gender: gender,
           mbti: mbti,
           birth_date: birthDate,
@@ -427,6 +447,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           <ProfileInputForm
             mode={mode}
             name={name} setName={setName}
+            nickname={nickname} setNickname={setNickname}
             gender={gender} setGender={setGender}
             mbti={mbti} setMbti={setMbti}
             birthDate={birthDate} setBirthDate={setBirthDate}
