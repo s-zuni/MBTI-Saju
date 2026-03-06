@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import ProductCard from '../components/ProductCard';
-import { Product, requestPayment } from '../utils/paymentHandlers';
-import { ShoppingBag, AlertCircle, Loader2 } from 'lucide-react';
-// import Navbar from '../components/Navbar';
-// import Footer from '../components/Footer';
+import { Product } from '../utils/paymentHandlers';
+import { ShoppingBag, AlertCircle, Loader2, X } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
+import { loadTossPayments, TossPaymentsWidgets } from '@tosspayments/tosspayments-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
 const StorePage: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
+
+    // Toss Payments Widget State
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [widgets, setWidgets] = useState<TossPaymentsWidgets | null>(null);
+    const [isWidgetLoading, setIsWidgetLoading] = useState(false);
 
     useEffect(() => {
         fetchProducts();
@@ -78,37 +84,86 @@ const StorePage: React.FC = () => {
             return;
         }
 
-        try {
-            const { success, error_msg, imp_uid } = await requestPayment({
-                name: product.name,
-                amount: product.price,
-                buyer_email: user.email,
-                buyer_name: user.user_metadata?.full_name || 'User',
-            });
+        setSelectedProduct(product);
+        setPaymentModalOpen(true);
+    };
 
-            if (success && imp_uid) {
-                // Save Order to Supabase
-                const { error } = await supabase.from('orders').insert({
-                    user_id: user.id,
-                    product_id: product.id,
-                    payment_id: imp_uid,
-                    amount: product.price,
-                    status: 'paid'
+    // Initialize Toss Payments Widget
+    useEffect(() => {
+        const initWidgets = async () => {
+            if (!paymentModalOpen || !selectedProduct || !user) return;
+
+            setIsWidgetLoading(true);
+            try {
+                // Client Key (Replace with your actual client key from Toss Payments)
+                const clientKey = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_mBZ1gQ4YVXbxv27PnmDqrLW2K0np';
+                const tossPayments = await loadTossPayments(clientKey);
+
+                // Construct customer key (unique per user)
+                const customerKey = user.id.replace(/[^a-zA-Z0-9_\-:]/g, '').substring(0, 50);
+
+                const widgets = tossPayments.widgets({
+                    customerKey,
                 });
 
-                if (error) {
-                    console.error("Order save failed", error);
-                    alert(`결제는 성공했으나 주문 저장에 실패했습니다. 관리자에게 문의하세요. (${imp_uid})`);
-                } else {
-                    alert(`결제가 완료되었습니다! (주문번호: ${imp_uid})\n곧 마이페이지에서 확인하실 수 있습니다.`);
-                    // TODO: Refresh order history or redirect to MyPage
-                }
-            } else {
-                alert(`결제 실패: ${error_msg}`);
+                await widgets.setAmount({
+                    currency: 'KRW',
+                    value: selectedProduct.price,
+                });
+
+                await Promise.all([
+                    widgets.renderPaymentMethods({
+                        selector: '#payment-method',
+                        variantKey: 'DEFAULT',
+                    }),
+                    widgets.renderAgreement({
+                        selector: '#agreement',
+                        variantKey: 'AGREEMENT',
+                    }),
+                ]);
+
+                setWidgets(widgets);
+            } catch (error) {
+                console.error('Error rendering payment widget:', error);
+                alert('결제 위젯을 불러오는 중 오류가 발생했습니다.');
+            } finally {
+                setIsWidgetLoading(false);
             }
-        } catch (e) {
-            console.error(e);
-            alert("결제 처리 중 오류가 발생했습니다.");
+        };
+
+        if (paymentModalOpen) {
+            initWidgets();
+        } else {
+            setWidgets(null); // Clear widgets on close
+        }
+    }, [paymentModalOpen, selectedProduct, user]);
+
+    const requestPayment = async () => {
+        if (!widgets || !selectedProduct) return;
+
+        try {
+            const orderId = `${uuidv4().replace(/-/g, '')}`.substring(0, 64);
+
+            await widgets.requestPayment({
+                orderId: orderId,
+                orderName: selectedProduct.name,
+                successUrl: `${window.location.origin}/payment/success`,
+                failUrl: `${window.location.origin}/payment/fail`,
+                customerEmail: user.email,
+                customerName: user.user_metadata?.full_name || 'MBTIJU User',
+                // Metadata to identify the user and product in the backend confirm endpoint
+                metadata: {
+                    userId: user.id,
+                    productId: selectedProduct.id,
+                }
+            });
+        } catch (error: any) {
+            console.error('Payment request error:', error);
+            if (error.code === 'USER_CANCEL') {
+                setPaymentModalOpen(false);
+            } else {
+                alert(`결제 요청 실패: ${error.message || '알 수 없는 오류'}`);
+            }
         }
     };
 
@@ -149,6 +204,68 @@ const StorePage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Payment Modal */}
+            {paymentModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                            <h3 className="text-xl font-bold text-slate-800">결제하기</h3>
+                            <button
+                                onClick={() => setPaymentModalOpen(false)}
+                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
+                            {/* Product Summary */}
+                            {selectedProduct && (
+                                <div className="mb-6 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center overflow-hidden">
+                                            {selectedProduct.image_url ? (
+                                                <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ShoppingBag className="w-6 h-6 text-indigo-500" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-800">{selectedProduct.name}</p>
+                                            <p className="text-sm text-slate-500">{selectedProduct.price.toLocaleString()}원</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Widget Containers */}
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
+                                <div id="payment-method" className="w-full" />
+                                <div id="agreement" className="w-full" />
+                            </div>
+
+                            {/* Payment Button */}
+                            <div className="mt-4">
+                                <button
+                                    onClick={requestPayment}
+                                    disabled={!widgets || isWidgetLoading}
+                                    className="w-full bg-indigo-600 text-white font-bold text-lg py-4 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 flex justify-center items-center"
+                                >
+                                    {isWidgetLoading ? (
+                                        <Loader2 className="w-6 h-6 animate-spin" />
+                                    ) : (
+                                        `${selectedProduct?.price.toLocaleString()}원 결제하기`
+                                    )}
+                                </button>
+                                <p className="text-center text-slate-400 text-xs mt-3">
+                                    결제 시 이용약관 및 개인정보 취급방침에 동의한 것으로 간주합니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -34,6 +34,8 @@ import OnboardingModal from './components/OnboardingModal';
 import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
+import SuccessPage from './pages/SuccessPage';
+import FailPage from './pages/FailPage';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -422,6 +424,8 @@ function App() {
           <Route path="/relationship" element={<RelationshipPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/payment/success" element={<SuccessPage />} />
+          <Route path="/payment/fail" element={<FailPage />} />
         </Routes>
 
         <BottomNav />

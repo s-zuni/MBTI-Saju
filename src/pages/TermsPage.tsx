@@ -11,12 +11,62 @@ const TermsPage: React.FC = () => {
                 onTarotClick={() => window.location.href = '/'}
             />
             <div className="max-w-4xl mx-auto px-6 py-24">
-                <h1 className="text-3xl font-bold mb-8">이용약관</h1>
-                <div className="prose prose-slate max-w-none text-slate-600 space-y-4">
-                    <p>제1조 (목적)<br />본 약관은 MBTIJU(이하 "회사")가 제공하는 서비스의 이용조건 및 절차, 이용자와 회사의 권리, 의무, 책임사항을 규정함을 목적으로 합니다.</p>
-                    <p>제2조 (용어의 정의)<br />(이곳에 용어 정의가 들어갑니다.)</p>
-                    <p>제3조 (약관의 게시와 개정)<br />회사는 본 약관의 내용을 회원이 쉽게 알 수 있도록 서비스 초기 화면에 게시합니다.</p>
-                    <p className="text-sm text-slate-400 mt-8">(본 내용은 예시이며, 실제 서비스 운영을 위해서는 법률 전문가의 검토를 받은 정식 약관으로 대체해야 합니다.)</p>
+                <h1 className="text-3xl font-bold mb-8 text-slate-900">MBTIJU 서비스 이용약관</h1>
+                <div className="prose prose-slate max-w-none text-slate-600 space-y-6 text-sm">
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제1조 (목적)</h2>
+                        <p>본 약관은 엠비티아이주(이하 "회사")가 제공하는 플랫폼 및 관련 제반 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무, 책임사항 및 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제2조 (용어의 정의)</h2>
+                        <ul className="list-disc pl-5">
+                            <li><strong>서비스</strong>: 회사가 제공하는 MBTI 및 사주 명리학 기반의 심층 데이터 분석 서비스('MBTIJU 소울 리포트' 등), 커뮤니티 기능 등을 의미합니다.</li>
+                            <li><strong>회원</strong>: 회사의 서비스에 접속하여 본 약관에 따라 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 고객(카카오, 구글 연동 로그인 사용자)을 말합니다.</li>
+                            <li><strong>코인</strong>: 서비스 내에서 유료 및 특정 콘텐츠를 이용하기 위해 사용되는 가상의 결제수단을 말합니다.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제3조 (서비스의 이용 및 회원가입)</h2>
+                        <p>① 회원가입은 카카오(Kakao) 및 구글(Google) 계정을 통한 소셜 로그인 방식을 통해 이루어집니다.</p>
+                        <p>② 회사는 회원의 서비스 이용 편의를 위해 소셜 로그인 제공자로부터 최소한의 식별 정보를 제공받아 계정을 생성합니다.</p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제4조 (코인의 구매 및 환불 정책)</h2>
+                        <p>① <strong>코인의 결제</strong>: 회원은 토스페이먼츠(Toss Payments) 등 회사가 제공하는 결제 대행사를 통해 코인을 충전할 수 있습니다.</p>
+                        <p>② <strong>환불 가능 조건</strong>: 결제일로부터 7일 이내에 충전한 코인을 전혀 사용하지 않은 경우에 한하여 전액 청약철회(환불)가 가능합니다.</p>
+                        <p>③ <strong>환불 불가 조건</strong>: 다음 각 호에 해당하는 경우 코인에 대한 청약철회 및 환불이 제한됩니다.</p>
+                        <ul className="list-disc pl-5">
+                            <li>결제일로부터 7일이 경과한 경우</li>
+                            <li>결제하여 충전된 코인 중 1코인이라도 서비스(분석, 융합 진단, 타로 등)에 사용한 경우 (디지털 재화의 특성상 사용 후 본래 상태로 되돌릴 수 없으므로 환불이 불가합니다.)</li>
+                            <li>이벤트, 프로모션 등을 통해 회사로부터 무상으로 지급받은 코인</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제5조 (게시물의 관리 및 커뮤니티 이용)</h2>
+                        <p>① 회원이 커뮤니티에 작성한 게시물이나 댓글에 대한 모든 권리와 책임은 이를 작성한 회원에게 있습니다.</p>
+                        <p>② 회사는 회원의 게시물이 타인의 명예를 훼손하거나, 저작권을 침해하거나, 불법적인 내용을 담고 있다고 판단되는 경우 사전 통지 없이 해당 게시물을 삭제할 수 있습니다.</p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제6조 (권리의 귀속)</h2>
+                        <p>① 서비스에 대한 저작권 및 지적재산권은 회사에 귀속됩니다.</p>
+                        <p>② 회원이 입력한 데이터를 기반으로 인공지능(Gemini 등)을 통해 생성된 '분석 리포트' 등 결과물의 소유권 및 사용권은 회사에게 있으며, 회원은 이를 개인적 용도로만 소장 및 활용할 수 있고 회사의 허락 없이 상업적으로 이용할 수 없습니다.</p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-lg font-bold text-slate-800">제7조 (면책 조항)</h2>
+                        <p>① 회사의 분석 서비스(사주, MBTI, 타로 등)는 데이터를 바탕으로 한 통계 및 해석을 제공하는 엔터테인먼트적 목적의 참고용 서비스이며, 의학적, 법률적, 재무적, 심리적 전문 상담을 대체할 수 없습니다. 회사는 이 분석 결과의 정확성, 신뢰도 및 결과가 회원의 구체적 목적에 부합하는지에 대해 어떠한 법적 보증도 하지 않으며, 회원이 이를 의존하여 내린 결정이나 발생한 손해에 대해 책임지지 않습니다.</p>
+                        <p>② 회사는 천재지변, 서버 장애, 통신망 오류, 결제 대행사(PG사) 및 외부 API(Google Gemini 등)의 서비스 중단 등 불가항력적 사유로 인해 서비스를 제공할 수 없는 경우 책임을 지지 않습니다.</p>
+                    </section>
+
+                    <p className="text-xs text-slate-400 mt-8 pt-4 border-t border-slate-100">
+                        공고일자: 2026년 3월 6일 <br />
+                        시행일자: 2026년 3월 6일
+                    </p>
                 </div>
             </div>
             <Footer />
