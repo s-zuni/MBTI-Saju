@@ -329,7 +329,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             prompt: 'select_account',
           },
@@ -373,6 +373,22 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       });
 
       if (error) throw error;
+
+      // Update public.profiles table simultaneously
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({
+            name: name,
+            gender: gender,
+            mbti: mbti,
+            birth_date: birthDate,
+            birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
+            email: user.email
+          })
+          .eq('id', user.id);
+      }
 
       if (mode === 'edit') {
         alert('정보가 수정되었습니다.');

@@ -431,7 +431,12 @@ function App() {
         <BottomNav />
 
         {/* Conditionally render the new AnalysisModal */}
-        <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />
+        <AnalysisModal
+          isOpen={showAnalysisModal}
+          onClose={closeAnalysisModal}
+          mode={analysisModalMode}
+          initialData={session?.user?.user_metadata}
+        />
         <FortuneModal
           isOpen={showFortuneModal}
           onClose={closeFortuneModal}
