@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, X, Loader2, Calendar, Clock, User, Brain, Users } from 'lucide-react';
+import { Heart, X, Loader2, Calendar, Clock, User, Brain, Users, Sparkles } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
@@ -7,7 +7,7 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 interface CompatibilityModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onNavigate?: (service: ServiceType) => void;
+    onNavigate: (service: ServiceType) => void;
     initialData?: {
         name: string;
         mbti: string;
@@ -22,12 +22,11 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Partner Inputs
     const [partnerName, setPartnerName] = useState('');
     const [partnerMbti, setPartnerMbti] = useState('');
     const [partnerBirthDate, setPartnerBirthDate] = useState('');
     const [partnerBirthTime, setPartnerBirthTime] = useState('');
-    const [relationshipType, setRelationshipType] = useState('lover'); // lover, friend, family, colleague, other
+    const [relationshipType, setRelationshipType] = useState('lover');
 
     const resetFields = () => {
         setPartnerName('');
@@ -41,7 +40,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
 
     const handleAnalyze = async () => {
         if (!partnerName || !partnerMbti || !partnerBirthDate) {
-            setError('상대방의 정보를 모두 입력해주세요.');
+            setError('상대방의 정보를 입력해주세요.');
             return;
         }
 
@@ -51,8 +50,6 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('로그인이 필요합니다.');
-
-            // ... (inside handleAnalyze)
 
             const user = session.user.user_metadata;
             const myProfile = {
@@ -70,14 +67,8 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 relationshipType
             };
 
-            // Use AI Service instead of API
             const data = await getDetailedAnalysis('compatibility', myProfile, partnerProfile);
             setResult(data);
-
-            /* 
-            // Legacy API Call
-            const response = await fetch('/api/compatibility', { ... });
-            */
 
         } catch (e: any) {
             setError(e.message);
@@ -86,7 +77,6 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         }
     };
 
-    // Reset fields or set initial data when modal opens
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
@@ -103,160 +93,160 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         }
     }, [isOpen, initialData]);
 
-    // Handle Keyboard Events
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-            if (e.key === 'Enter') handleAnalyze();
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, onClose, partnerName, partnerMbti, partnerBirthDate, partnerBirthTime, relationshipType]);
-
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-up max-h-[90vh] overflow-y-auto custom-scrollbar">
-                {onNavigate ? (
-                    <>
-                        <ServiceNavigation currentService="compatibility" onNavigate={onNavigate} onClose={onClose} />
-                        <div className="p-6 pb-0">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
-                                <h2 className="text-xl font-bold text-slate-800">너와 나의 궁합 분석</h2>
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
+            <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
+                <ServiceNavigation currentService="compatibility" onNavigate={onNavigate} onClose={onClose} />
+
+                {/* Professional Header */}
+                <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <div className="flex items-center gap-2 text-rose-500 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
+                                <Heart className="w-4 h-4" /> Relational Resonance
                             </div>
+                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
+                                Compatibility
+                            </h3>
                         </div>
-                    </>
-                ) : (
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50 sticky top-0 z-10">
-                        <div className="flex items-center gap-2">
-                            <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
-                            <h2 className="text-xl font-bold text-slate-800">너와 나의 궁합 분석</h2>
-                        </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                            <X className="w-6 h-6 text-slate-500" />
-                        </button>
                     </div>
-                )}
+                    <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
+                </div>
 
-                <div className="p-8">
-                    {error && (
-                        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-sm font-medium">
-                            {error}
-                        </div>
-                    )}
-
+                <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
                     {!result ? (
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-indigo-500" /> 관계 선택
-                                </label>
-                                <select
-                                    className="input-field appearance-none"
-                                    value={relationshipType}
-                                    onChange={e => setRelationshipType(e.target.value)}
-                                >
-                                    <option value="lover">연인</option>
-                                    <option value="friend">친구</option>
-                                    <option value="colleague">동료</option>
-                                    <option value="family">가족</option>
-                                    <option value="other">기타</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <User className="w-4 h-4 text-indigo-500" /> 상대방 이름
-                                </label>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    placeholder="예: 김철수"
-                                    value={partnerName}
-                                    onChange={e => setPartnerName(e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Brain className="w-4 h-4 text-indigo-500" /> 상대방 MBTI
-                                </label>
-                                <select
-                                    className="input-field appearance-none"
-                                    value={partnerMbti}
-                                    onChange={e => setPartnerMbti(e.target.value)}
-                                >
-                                    <option value="">선택해주세요</option>
-                                    {['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'].map(m => (
-                                        <option key={m} value={m}>{m}</option>
+                        <div className="space-y-10 animate-fade-up py-4">
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <Users className="w-5 h-5 text-rose-500" /> 관계 정보
+                                </h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['lover', 'friend', 'colleague', 'family', 'other'].map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setRelationshipType(type)}
+                                            className={`py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${relationshipType === type ? 'bg-slate-950 text-white border-slate-950 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            {type === 'lover' ? '연인' : type === 'friend' ? '친구' : type === 'colleague' ? '동료' : type === 'family' ? '가족' : '기타'}
+                                        </button>
                                     ))}
-                                </select>
-                            </div>
+                                </div>
+                            </section>
 
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-indigo-500" /> 상대방 생년월일
-                                </label>
-                                <input
-                                    type="date"
-                                    className="input-field"
-                                    value={partnerBirthDate}
-                                    onChange={e => setPartnerBirthDate(e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-indigo-500" /> 상대방 태어난 시간
-                                </label>
-                                <input
-                                    type="time"
-                                    className="input-field"
-                                    value={partnerBirthTime}
-                                    onChange={e => setPartnerBirthTime(e.target.value)}
-                                />
-                                <p className="text-xs text-slate-400 mt-1 pl-1">시간을 모르면 비워두세요 (정확도 하락)</p>
-                            </div>
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <User className="w-5 h-5 text-rose-500" /> 상대방 프로필
+                                </h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</p>
+                                        <input
+                                            type="text"
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
+                                            placeholder="상대방의 이름을 입력하세요"
+                                            value={partnerName}
+                                            onChange={e => setPartnerName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">MBTI Type</p>
+                                            <select
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
+                                                value={partnerMbti}
+                                                onChange={e => setPartnerMbti(e.target.value)}
+                                            >
+                                                <option value="">선택</option>
+                                                {['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'].map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Birth Date</p>
+                                            <input
+                                                type="date"
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
+                                                value={partnerBirthDate}
+                                                onChange={e => setPartnerBirthDate(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Birth Time (Optional)</p>
+                                        <input
+                                            type="time"
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
+                                            value={partnerBirthTime}
+                                            onChange={e => setPartnerBirthTime(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </section>
 
                             <button
                                 onClick={handleAnalyze}
                                 disabled={loading}
-                                className="w-full btn-primary py-4 text-lg font-bold flex justify-center items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 border-none mt-4"
+                                className="group relative w-full py-5 bg-slate-950 text-white rounded-full text-lg font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-4 overflow-hidden"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : '궁합 보기'}
+                                <div className="relative z-10 flex items-center justify-center gap-3">
+                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Heart className="w-6 h-6 fill-rose-500 text-rose-500 group-hover:scale-125 transition-transform" />}
+                                    {loading ? '인연의 끈 분석 중...' : '궁합 리포트 생성하기'}
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             </button>
                         </div>
                     ) : (
-                        <div className="text-center space-y-6 animate-fade-up">
-                            <div className="w-32 h-32 mx-auto bg-rose-100 rounded-full flex items-center justify-center relative">
-                                <span className="text-4xl font-black text-rose-600">{result.score}점</span>
-                                <Heart className="absolute -top-2 -right-2 w-10 h-10 text-rose-500 fill-rose-500 animate-bounce" />
-                            </div>
-
-                            {result.keywords && (
-                                <div className="flex justify-center gap-2 flex-wrap">
-                                    {result.keywords.split(',').map((k, i) => (
-                                        <span key={i} className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-sm font-bold border border-rose-100">
-                                            #{k.trim()}
-                                        </span>
-                                    ))}
+                        <div className="space-y-12 animate-fade-up">
+                            {/* Score & Keywords */}
+                            <div className="flex flex-col items-center py-10 bg-slate-50 rounded-[40px] border border-slate-100 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-500"></div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Synergy Index</div>
+                                <div className="relative">
+                                    <div className="text-8xl sm:text-9xl font-black text-slate-950 tracking-tighter leading-none">{result.score}</div>
+                                    <div className="absolute -top-4 -right-12 text-2xl font-black text-rose-500 animate-pulse">%</div>
                                 </div>
-                            )}
 
-                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-left">
-                                <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                    <Heart className="w-5 h-5 text-rose-500" /> 상세 분석
-                                </h3>
-                                <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">{result.desc}</p>
+                                {result.keywords && (
+                                    <div className="flex justify-center gap-3 flex-wrap mt-10 px-6">
+                                        {result.keywords.split(',').map((k, i) => (
+                                            <span key={i} className="px-4 py-2 bg-white text-slate-600 rounded-xl text-xs font-black border border-slate-100 uppercase tracking-widest shadow-sm">
+                                                #{k.trim()}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
-                            <button onClick={() => setResult(null)} className="btn-secondary w-full py-3">다른 사람과 다시 분석하기</button>
+                            {/* Detailed Analysis */}
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <Sparkles className="w-5 h-5 text-rose-500" /> 운명적 상성과 조언
+                                </h4>
+                                <div className="report-card p-10">
+                                    <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap italic">
+                                        "{result.desc}"
+                                    </p>
+                                </div>
+                            </section>
+
+                            <div className="flex flex-col items-center pt-10 border-t border-slate-100">
+                                <button
+                                    onClick={() => resetFields()}
+                                    className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
+                                >
+                                    다른 사람과 궁합 보기
+                                </button>
+                                <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by Soul Insight Engine</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100">
+                            {error}
                         </div>
                     )}
                 </div>

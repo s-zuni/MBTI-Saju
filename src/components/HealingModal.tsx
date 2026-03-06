@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Hotel, Loader2, MapPin, Navigation } from 'lucide-react';
+import { Hotel, Loader2, MapPin, Navigation, Sparkles, Wind } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
@@ -16,7 +16,6 @@ const REGION_MAP: { [key: string]: string[] } = {
     '강원': ['춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'],
     '부산': ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
     '제주': ['제주시', '서귀포시'],
-    // Full list truncated for brevity, can expand later
     '대구': ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군'],
     '대전': ['동구', '중구', '서구', '유성구', '대덕구'],
     '광주': ['동구', '서구', '남구', '북구', '광산구'],
@@ -37,21 +36,17 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
     const [result, setResult] = useState<{ place: string, placeType?: string, activity: string, reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Level 1: Province (Do/Si)
     const [province, setProvince] = useState('서울');
-    // Level 2: City (Si/Gu)
     const [city, setCity] = useState((REGION_MAP['서울'] && REGION_MAP['서울'][0]) || '');
 
     const currentCities = REGION_MAP[province];
 
     useEffect(() => {
-        // Reset city when province changes
         if (currentCities && currentCities.length > 0) {
             setCity(currentCities[0] || '');
         } else {
             setCity('');
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [province]);
 
     const reset = () => {
@@ -103,90 +98,116 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-up max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
+            <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
                 <ServiceNavigation currentService="healing" onNavigate={onNavigate} onClose={onClose} />
 
-                <div className="p-6 pb-0">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Hotel className="w-6 h-6 text-teal-600 fill-teal-600" />
-                        <h2 className="text-xl font-bold text-slate-800">마음의 안식 힐링장소</h2>
+                {/* Professional Header */}
+                <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <div className="flex items-center gap-2 text-teal-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
+                                <Wind className="w-4 h-4" /> Spiritual Sanctuary
+                            </div>
+                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
+                                Healing Map
+                            </h3>
+                        </div>
                     </div>
+                    <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
                 </div>
 
-                <div className="p-8">
+                <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
                     {!result ? (
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-teal-600" /> 여행지 선택
-                                </label>
+                        <div className="space-y-10 animate-fade-up py-4">
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <MapPin className="w-5 h-5 text-teal-600" /> 희망 지역 선택
+                                </h4>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <select
-                                        className="input-field appearance-none"
-                                        value={province}
-                                        onChange={(e) => setProvince(e.target.value)}
-                                    >
-                                        {PROVINCES.map(p => (
-                                            <option key={p} value={p}>{p}</option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        className="input-field appearance-none"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        disabled={!currentCities || currentCities.length === 0}
-                                    >
-                                        {currentCities?.map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                        {(!currentCities || currentCities.length === 0) && (
-                                            <option value="">전체</option>
-                                        )}
-                                    </select>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Province/City</p>
+                                        <select
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
+                                            value={province}
+                                            onChange={(e) => setProvince(e.target.value)}
+                                        >
+                                            {PROVINCES.map(p => (
+                                                <option key={p} value={p}>{p}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">District</p>
+                                        <select
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
+                                            disabled={!currentCities || currentCities.length === 0}
+                                        >
+                                            {currentCities?.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                            {(!currentCities || currentCities.length === 0) && (
+                                                <option value="">전체</option>
+                                            )}
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
+
                             <button
                                 onClick={handleAnalyze}
                                 disabled={loading}
-                                className="w-full btn-primary py-4 text-lg font-bold bg-gradient-to-r from-teal-500 to-emerald-500 border-none hover:from-teal-600 hover:to-emerald-600 shadow-xl shadow-teal-100"
+                                className="group relative w-full py-5 bg-slate-950 text-white rounded-full text-lg font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-4 overflow-hidden"
                             >
-                                {loading ? <Loader2 className="animate-spin mx-auto" /> : '✨ 나에게 맞는 힐링 여행지 찾기'}
+                                <div className="relative z-10 flex items-center justify-center gap-3">
+                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 text-teal-400 group-hover:rotate-12 transition-transform" />}
+                                    {loading ? 'AI 영적 탐색 중...' : '맞춤 힐링 스팟 찾기'}
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             </button>
                         </div>
                     ) : (
-                        <div className="space-y-6 animate-fade-up">
-                            <div className="bg-teal-50 p-6 rounded-2xl border border-teal-100 text-center relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-emerald-400"></div>
-                                <div className="mb-4">
-                                    <span className="inline-block px-3 py-1 bg-white text-teal-600 rounded-full text-xs font-bold shadow-sm mb-2 border border-teal-100">
-                                        {result.placeType || '추천 장소'}
-                                    </span>
-                                    <h3 className="text-2xl font-black text-teal-900 mb-2">{result.place}</h3>
+                        <div className="space-y-12 animate-fade-up">
+                            {/* Result Top Card */}
+                            <div className="report-card bg-teal-950 text-white border-none p-12 text-center relative overflow-hidden">
+                                <Wind className="absolute top-6 right-6 w-12 h-12 text-white/5" />
+                                <div className="inline-block px-4 py-1.5 bg-teal-500/20 text-teal-300 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] border border-teal-500/30 mb-6 font-mono">
+                                    {result.placeType || 'Destined Location'}
                                 </div>
-
-                                <div className="bg-white/80 rounded-xl p-4 mb-4 backdrop-blur-sm">
-                                    <h4 className="text-sm font-bold text-slate-500 mb-1 flex items-center justify-center gap-1">
-                                        <Navigation className="w-3 h-3" /> 추천 활동
-                                    </h4>
-                                    <div className="text-lg font-bold text-teal-700">
-                                        {result.activity}
-                                    </div>
-                                </div>
-
-                                <p className="text-slate-600 leading-relaxed text-left whitespace-pre-wrap bg-white/50 p-4 rounded-xl border border-teal-50/50">
-                                    {result.reason}
-                                </p>
+                                <h3 className="text-4xl font-black text-white mb-4 tracking-tighter leading-tight">{result.place}</h3>
+                                <div className="h-[1px] w-20 bg-teal-500/50 mx-auto mb-8"></div>
+                                <div className="text-white/60 text-xs font-bold uppercase tracking-[0.3em] mb-2 font-mono">Recommended Activity</div>
+                                <p className="text-xl font-bold text-teal-200 italic">"{result.activity}"</p>
                             </div>
 
-                            <button onClick={() => setResult(null)} className="btn-secondary w-full py-3">
-                                다른 지역으로 다시 찾기
-                            </button>
+                            {/* Reasoning */}
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <Sparkles className="w-5 h-5 text-teal-600" /> 명리학적 안식의 이유
+                                </h4>
+                                <div className="report-card p-10 bg-slate-50 border-slate-100">
+                                    <p className="text-slate-600 leading-relaxed text-md whitespace-pre-wrap">
+                                        {result.reason}
+                                    </p>
+                                </div>
+                            </section>
+
+                            <div className="flex flex-col items-center pt-10 border-t border-slate-100">
+                                <button
+                                    onClick={() => setResult(null)}
+                                    className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95"
+                                >
+                                    다른 명당 찾아보기
+                                </button>
+                                <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mind & Soul Harmony</p>
+                            </div>
                         </div>
                     )}
+
                     {error && (
-                        <div className="mt-4 p-4 bg-red-50 text-red-500 rounded-xl text-center text-sm border border-red-100">
+                        <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100 animate-shake">
                             {error}
                         </div>
                     )}

@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply font-['Inter',_sans-serif] bg-white text-slate-900 antialiased;
+    @apply font-['Inter', _sans-serif] bg-white text-slate-900 antialiased;
   }
 }
 
@@ -14,7 +14,7 @@
   .btn-primary {
     @apply px-6 py-3 bg-slate-900 text-white rounded-full font-semibold transition-all hover:bg-slate-800 active:scale-95 shadow-lg shadow-slate-200;
   }
-  
+
   .glass-card {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
   }
@@ -30,31 +30,92 @@
   .input-field {
     @apply w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all;
   }
+
+  /* Professional Report Styles */
+  .report-container {
+    @apply bg-white text-slate-950 font-['Inter', _sans-serif] shadow-none border-none;
+  }
+
+  .report-header {
+    @apply border-b-[3px] border-slate-950 pb-12 mb-12;
+  }
+
+  .report-section {
+    @apply mb-16 last:mb-0;
+  }
+
+  .report-section-title {
+    @apply text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ml-1;
+  }
+
+  .report-card {
+    @apply bg-white rounded-[32px] p-8 border border-slate-100 mb-6 transition-all duration-300;
+  }
+
+  .report-badge {
+    @apply px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[11px] font-black border border-slate-100 uppercase tracking-widest shadow-sm;
+  }
+}
+
+/* Custom Scrollbar for Luxury theme */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
 }
 
 /* Custom animations */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-up {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 0s 2;
 }
 
 /* Hide scrollbar but keep functionality */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
