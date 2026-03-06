@@ -53,7 +53,6 @@ interface UseCreditsReturn {
 
 export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [credits, setCredits] = useState<number>(0);
-    const [profileCoins, setProfileCoins] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
 
@@ -90,12 +89,10 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 .single();
 
             const coins = profile?.coins ?? 0;
-            setProfileCoins(coins);
             setCredits(totalCredits + coins);
         } catch (err) {
             console.error('Error fetching credits:', err);
             setCredits(0);
-            setProfileCoins(0);
             setPurchases([]);
         } finally {
             setLoading(false);
