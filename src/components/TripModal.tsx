@@ -7,6 +7,7 @@ interface TripModalProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
+    onUseCoin?: () => Promise<boolean>;
 }
 
 const DOMESTIC_REGIONS = [
@@ -18,7 +19,7 @@ const OVERSEAS_REGIONS = [
     '아시아', '유럽', '북아메리카', '남아메리카', '오세아니아', '아프리카'
 ];
 
-const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate }) => {
+const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCoin }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{
         places: { name: string, reason: string }[],
@@ -67,6 +68,16 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate }) =>
         if (!selectedRegion) return;
         setLoading(true);
         setError(null);
+
+        if (onUseCoin) {
+            const success = await onUseCoin();
+            if (!success) {
+                setLoading(false);
+                setError('코인 차감에 실패했습니다. 코인이 부족하거나 네트워크 오류가 발생했습니다.');
+                return;
+            }
+        }
+
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('로그인이 필요합니다.');

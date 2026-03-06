@@ -11,9 +11,10 @@ interface MbtiSajuModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
+  onUseCoin?: () => Promise<boolean>;
 }
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCoin }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
@@ -87,9 +88,19 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
   const handleRegenerate = async () => {
-    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라집니다.")) return;
+    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라지며, 코인이 1회 차감됩니다.")) return;
 
     setIsRegenerating(true);
+
+    if (onUseCoin) {
+      const success = await onUseCoin();
+      if (!success) {
+        setIsRegenerating(false);
+        alert("코인 차감에 실패했습니다. 코인이 부족하거나 네트워크 오류가 발생했습니다.");
+        return;
+      }
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("로그인이 필요합니다.");

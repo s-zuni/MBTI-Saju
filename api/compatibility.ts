@@ -72,8 +72,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             The response MUST be in Korean (Hangul).
             The response MUST be a JSON object with the following keys:
             - "score": A compatibility score between 0 and 100 (number).
-            - "desc": A detailed paragraph explaining the compatibility, strengths, and advice (string).
-            - "keywords": 3 key phrases summarizing the relationship (e.g., "상호보완", "티키타카 친구") (string).
+            - "desc": A detailed paragraph explaining the compatibility, strengths, and advice (string). "도화살", "홍염살", "역마살" 등 사주 원국에서 도출되는 흥미로운 신살(神殺)이 있다면 적극적으로 언급하여 매력을 어필해주세요 (단, 해당되는 살이 없을 경우 억지로 적지 말 것).
+            - "keywords": 3 key phrases summarizing the relationship (e.g., "상호보완", "티키타카 친구", "도화살 매력") (string).
             
             **IMPORTANT**: Use emojis (❤️, 🤝, ⭐) in the description and keywords to make it friendly and fun.
             `;
@@ -82,16 +82,18 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             Person A (User):
             - Name: ${myProfile.name}
             - MBTI: ${myProfile.mbti}
+            - Saju GanZhi (사주 원국): Year ${mySaju.ganZhi.year}, Month ${mySaju.ganZhi.month}, Day ${mySaju.ganZhi.day}, Hour ${mySaju.ganZhi.hour}
             - Saju Day Master: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})
             - Elements: Wood ${mySaju.elementRatio.wood}%, Fire ${mySaju.elementRatio.fire}%, Earth ${mySaju.elementRatio.earth}%, Metal ${mySaju.elementRatio.metal}%, Water ${mySaju.elementRatio.water}%
 
             Person B (Partner):
             - Name: ${partnerProfile.name}
             - MBTI: ${partnerProfile.mbti}
+            - Saju GanZhi (사주 원국): Year ${partnerSaju.ganZhi.year}, Month ${partnerSaju.ganZhi.month}, Day ${partnerSaju.ganZhi.day}, Hour ${partnerSaju.ganZhi.hour}
             - Saju Day Master: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})
             - Elements: Wood ${partnerSaju.elementRatio.wood}%, Fire ${partnerSaju.elementRatio.fire}%, Earth ${partnerSaju.elementRatio.earth}%, Metal ${partnerSaju.elementRatio.metal}%, Water ${partnerSaju.elementRatio.water}%
 
-            Analyze their compatibility as "${relationshipStr}" based on MBTI interaction and Saju elemental balance/harmony.
+            Analyze their compatibility as "${relationshipStr}" based on MBTI interaction and Saju elemental balance/harmony. Identify any notable Shensha (신살) like 도화살 or 홍염살 from their GanZhi to make the description more engaging.
             `;
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

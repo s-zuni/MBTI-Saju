@@ -79,7 +79,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 "reportTitle": "A poetic title summarizing their essence",
                 "nature": {
                     "title": "본성(Nature): 사주 분석",
-                    "dayPillarSummary": "Poetic description of their Day Pillar (일주)",
+                    "dayPillarSummary": "Poetic description of their Day Pillar (일주) and any notable Shensha (신살) like 도화살 or 홍염살 if present. (If no notable Shensha, do not force it)",
                     "dayMasterAnalysis": "Detailed analysis of their Day Master (일간)",
                     "dayBranchAnalysis": "Analysis of their Day Branch (일지)",
                     "monthBranchAnalysis": "Analysis of their Month Branch (월지)"
@@ -122,10 +122,11 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             - Birth: ${birthDate} ${birthTime || '(Time Unknown)'}
             
             [Saju Data]
+            - GanZhi (사주 원국): Year ${sajuResult.ganZhi.year}, Month ${sajuResult.ganZhi.month}, Day ${sajuResult.ganZhi.day}, Hour ${sajuResult.ganZhi.hour}
             - Day Master: ${sajuResult.dayMaster.korean}
             - Elements Count: Wood ${sajuResult.elements.wood}, Fire ${sajuResult.elements.fire}, Earth ${sajuResult.elements.earth}, Metal ${sajuResult.elements.metal}, Water ${sajuResult.elements.water}
             
-            Provide the Core Analysis JSON.
+            Provide the Core Analysis JSON. Identify any notable Shensha (신살) like 도화살, 홍염살, 역마살 from their GanZhi to make the 'dayPillarSummary' more engaging.
             `;
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

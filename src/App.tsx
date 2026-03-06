@@ -445,14 +445,54 @@ function App() {
             setShowCoinPurchaseModal(true);
           }}
         />
-        <MbtiSajuModal isOpen={showMbtiSajuModal} onClose={closeMbtiSajuModal} onNavigate={handleSwitchService} />
+        <MbtiSajuModal
+          isOpen={showMbtiSajuModal}
+          onClose={closeMbtiSajuModal}
+          onNavigate={handleSwitchService}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('MBTI_SAJU');
+          }}
+        />
 
         <RecommendationModal isOpen={showRecModal} onClose={closeRecModal} initialTab={recModalTab} />
-        <CompatibilityModal isOpen={showCompModal} onClose={closeCompModal} onNavigate={handleSwitchService} />
+        <CompatibilityModal
+          isOpen={showCompModal}
+          onClose={closeCompModal}
+          onNavigate={handleSwitchService}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('COMPATIBILITY_TRIP');
+          }}
+        />
 
-        <TripModal isOpen={showTripModal} onClose={closeTripModal} onNavigate={handleSwitchService} />
-        <HealingModal isOpen={showHealingModal} onClose={closeHealingModal} onNavigate={handleSwitchService} />
-        <JobModal isOpen={showJobModal} onClose={closeJobModal} onNavigate={handleSwitchService} />
+        <TripModal
+          isOpen={showTripModal}
+          onClose={closeTripModal}
+          onNavigate={handleSwitchService}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('COMPATIBILITY_TRIP');
+          }}
+        />
+        <HealingModal
+          isOpen={showHealingModal}
+          onClose={closeHealingModal}
+          onNavigate={handleSwitchService}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('HEALING');
+          }}
+        />
+        <JobModal
+          isOpen={showJobModal}
+          onClose={closeJobModal}
+          onNavigate={handleSwitchService}
+          onUseCoin={async () => {
+            if (!session?.user?.id) return false;
+            return await consumeCredits('JOB');
+          }}
+        />
         <TarotModal
           isOpen={showTarotModal}
           onClose={closeTarotModal}

@@ -7,6 +7,7 @@ interface HealingModalProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
+    onUseCoin?: () => Promise<boolean>;
 }
 
 const REGION_MAP: { [key: string]: string[] } = {
@@ -31,7 +32,7 @@ const REGION_MAP: { [key: string]: string[] } = {
 
 const PROVINCES = Object.keys(REGION_MAP);
 
-const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate }) => {
+const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate, onUseCoin }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ place: string, placeType?: string, activity: string, reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -64,6 +65,16 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
     const handleAnalyze = async () => {
         setLoading(true);
         setError(null);
+
+        if (onUseCoin) {
+            const success = await onUseCoin();
+            if (!success) {
+                setLoading(false);
+                setError('코인 차감에 실패했습니다. 코인이 부족하거나 네트워크 오류가 발생했습니다.');
+                return;
+            }
+        }
+
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('로그인이 필요합니다.');
