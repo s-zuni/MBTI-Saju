@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply font-['Inter', _sans-serif] bg-white text-slate-900 antialiased;
+    @apply font-sans bg-white text-slate-900 antialiased;
   }
 }
 
@@ -33,7 +33,7 @@
 
   /* Professional Report Styles */
   .report-container {
-    @apply bg-white text-slate-950 font-['Inter', _sans-serif] shadow-none border-none;
+    @apply bg-white text-slate-950 font-sans shadow-none border-none;
   }
 
   .report-header {
