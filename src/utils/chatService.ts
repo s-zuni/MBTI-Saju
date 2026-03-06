@@ -138,16 +138,25 @@ export const getDetailedAnalysis = async (
 
     // 2. Call Backend API for Analysis
     try {
-        const response = await fetch('/api/analysis', {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const url = type === 'job' ? '/api/job' : '/api/compatibility';
+        const bodyPayload = type === 'job'
+            ? { ...userProfile }
+            : { myProfile: userProfile, partnerProfile, relationshipType: partnerProfile?.relationshipType || 'lover' };
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({ type, userProfile, partnerProfile })
+            body: JSON.stringify(bodyPayload)
         });
 
         if (!response.ok) {
-            throw new Error(`Analysis API Error: ${response.statusText}`);
+            const errBase = await response.json().catch(() => ({}));
+            throw new Error(`Analysis API Error: ${errBase.error || response.statusText}`);
         }
 
         return await response.json();

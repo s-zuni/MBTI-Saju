@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { VercelRequest, VercelResponse } from '@vercel/node';
+
+type VercelRequest = any;
+type VercelResponse = any;
 
 const supabaseAdmin = createClient(
     process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
