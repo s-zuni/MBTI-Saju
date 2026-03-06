@@ -27,7 +27,7 @@ export default async (req: any, res: any) => {
         if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
 
         let prompt = "";
         let systemInstruction = "";

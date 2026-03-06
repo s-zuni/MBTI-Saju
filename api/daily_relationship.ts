@@ -81,7 +81,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         `;
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview", systemInstruction: systemPrompt });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview", systemInstruction: systemPrompt });
 
         const result = await generateContentWithRetry(model, {
             contents: [{ role: 'user', parts: [{ text: "Analyze daily chemistry for all partners." }] }],
