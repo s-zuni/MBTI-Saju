@@ -16,7 +16,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
     if (!analysis) return null;
 
     return (
-        <div ref={ref} className="w-[800px] bg-white p-16 text-slate-900 relative shadow-none font-['Inter',_sans-serif] report-container overflow-hidden">
+        <div ref={ref} className="w-[800px] bg-white p-16 text-slate-900 relative shadow-none font-sans report-container overflow-hidden">
             {/* Background Decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-50"></div>
@@ -221,7 +221,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                             </div>
                         </div>
                         <div className="report-card bg-slate-950 text-white !mb-0">
-                            <h4 className="font-bold text-indigo-400 mb-4 flex items-center gap-2 font-['Inter']"><AlertTriangle className="w-4 h-4" /> CORE GUIDELINE</h4>
+                            <h4 className="font-bold text-indigo-400 mb-4 flex items-center gap-2 font-sans"><AlertTriangle className="w-4 h-4" /> CORE GUIDELINE</h4>
                             <p className="text-sm font-medium leading-relaxed italic">
                                 {analysis.finalSolution?.closingMessage || analysis.advice || "분석을 바탕으로 삶의 균형을 찾아가는 과정에서 이 리포트가 소중한 지표가 되길 바랍니다."}
                             </p>

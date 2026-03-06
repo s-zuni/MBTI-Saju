@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
 import { Plus, Trash2, Sparkles, UserPlus, Calendar, Heart } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import CompatibilityModal from '../components/CompatibilityModal';
+import { ServiceType } from '../components/ServiceNavigation';
 
 interface RelationshipProfile {
     id: string;
@@ -15,7 +16,7 @@ interface RelationshipProfile {
 }
 
 const RelationshipPage: React.FC = () => {
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     const [profiles, setProfiles] = useState<RelationshipProfile[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
     // const [loading, setLoading] = useState(true);
@@ -111,6 +112,13 @@ const RelationshipPage: React.FC = () => {
         } finally {
             setChemistryLoading(false);
         }
+    };
+
+    const handleNavigate = (service: ServiceType) => {
+        setShowCompModal(false);
+        // Navigate to home and tell it to open the service if needed
+        // For now, just navigate to home where services are available
+        navigate('/', { state: { openService: service } });
     };
 
     const getPartnerResult = (id: string) => {
@@ -331,6 +339,7 @@ const RelationshipPage: React.FC = () => {
             <CompatibilityModal
                 isOpen={showCompModal}
                 onClose={() => setShowCompModal(false)}
+                onNavigate={handleNavigate}
                 initialData={selectedCompProfile}
             />
         </div>
