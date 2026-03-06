@@ -53,6 +53,7 @@ interface UseCreditsReturn {
 
 export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [credits, setCredits] = useState<number>(0);
+    const [profileCoins, setProfileCoins] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
 
@@ -66,6 +67,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         }
 
         try {
+            // credit_purchases에서 remaining_credits 합계 조회
             const { data, error } = await supabase
                 .from('credit_purchases')
                 .select('*')
@@ -79,10 +81,21 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             const activePurchases = (data || []) as CreditPurchase[];
             setPurchases(activePurchases);
             const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
-            setCredits(totalCredits);
+
+            // profiles.coins도 함께 조회하여 합산
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('coins')
+                .eq('id', session.user.id)
+                .single();
+
+            const coins = profile?.coins ?? 0;
+            setProfileCoins(coins);
+            setCredits(totalCredits + coins);
         } catch (err) {
             console.error('Error fetching credits:', err);
             setCredits(0);
+            setProfileCoins(0);
             setPurchases([]);
         } finally {
             setLoading(false);
@@ -111,66 +124,92 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         if (credits < cost) return false;
 
         try {
-            // 1. FIFO: 가장 오래된 active 구매건부터 차감
-            const { data: activePurchases, error: fetchError } = await supabase
-                .from('credit_purchases')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .eq('status', 'active')
-                .gt('remaining_credits', 0)
-                .order('purchased_at', { ascending: true });
-
-            if (fetchError) throw fetchError;
-            if (!activePurchases || activePurchases.length === 0) return false;
-
             let remainingCost = cost;
-            const usages: { purchase_id: string; credits_used: number }[] = [];
-            const updates: { id: string; remaining_credits: number }[] = [];
 
-            for (const purchase of activePurchases) {
-                if (remainingCost <= 0) break;
+            // 1. profiles.coins 우선 차감
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('coins')
+                .eq('id', session.user.id)
+                .single();
 
-                const deduct = Math.min(purchase.remaining_credits, remainingCost);
-                remainingCost -= deduct;
+            const currentProfileCoins = profile?.coins ?? 0;
 
-                usages.push({
-                    purchase_id: purchase.id,
-                    credits_used: deduct,
-                });
+            if (currentProfileCoins > 0) {
+                const deductFromProfile = Math.min(currentProfileCoins, remainingCost);
+                remainingCost -= deductFromProfile;
 
-                updates.push({
-                    id: purchase.id,
-                    remaining_credits: purchase.remaining_credits - deduct,
-                });
+                const { error: profileUpdateError } = await supabase
+                    .from('profiles')
+                    .update({ coins: currentProfileCoins - deductFromProfile })
+                    .eq('id', session.user.id);
+
+                if (profileUpdateError) throw profileUpdateError;
             }
 
-            if (remainingCost > 0) return false; // 크레딧 부족
-
-            // 2. 구매건 잔여 크레딧 업데이트
-            for (const update of updates) {
-                const { error: updateError } = await supabase
+            // 2. 남은 비용이 있으면 credit_purchases FIFO 차감
+            if (remainingCost > 0) {
+                const { data: activePurchases, error: fetchError } = await supabase
                     .from('credit_purchases')
-                    .update({ remaining_credits: update.remaining_credits })
-                    .eq('id', update.id);
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .eq('status', 'active')
+                    .gt('remaining_credits', 0)
+                    .order('purchased_at', { ascending: true });
 
-                if (updateError) throw updateError;
+                if (fetchError) throw fetchError;
+                if (!activePurchases || activePurchases.length === 0) return false;
+
+                const usages: { purchase_id: string; credits_used: number }[] = [];
+                const updates: { id: string; remaining_credits: number }[] = [];
+
+                for (const purchase of activePurchases) {
+                    if (remainingCost <= 0) break;
+
+                    const deduct = Math.min(purchase.remaining_credits, remainingCost);
+                    remainingCost -= deduct;
+
+                    usages.push({
+                        purchase_id: purchase.id,
+                        credits_used: deduct,
+                    });
+
+                    updates.push({
+                        id: purchase.id,
+                        remaining_credits: purchase.remaining_credits - deduct,
+                    });
+                }
+
+                if (remainingCost > 0) return false; // 크레딧 부족
+
+                // 구매건 잔여 크레딧 업데이트
+                for (const update of updates) {
+                    const { error: updateError } = await supabase
+                        .from('credit_purchases')
+                        .update({ remaining_credits: update.remaining_credits })
+                        .eq('id', update.id);
+
+                    if (updateError) throw updateError;
+                }
+
+                // 사용 기록 삽입
+                if (usages.length > 0) {
+                    const usageRecords = usages.map(u => ({
+                        user_id: session.user.id,
+                        purchase_id: u.purchase_id,
+                        credits_used: u.credits_used,
+                        service_type: serviceType.toLowerCase(),
+                    }));
+
+                    const { error: usageError } = await supabase
+                        .from('credit_usages')
+                        .insert(usageRecords);
+
+                    if (usageError) console.error('Usage log failed:', usageError);
+                }
             }
 
-            // 3. 사용 기록 삽입
-            const usageRecords = usages.map(u => ({
-                user_id: session.user.id,
-                purchase_id: u.purchase_id,
-                credits_used: u.credits_used,
-                service_type: serviceType.toLowerCase(),
-            }));
-
-            const { error: usageError } = await supabase
-                .from('credit_usages')
-                .insert(usageRecords);
-
-            if (usageError) console.error('Usage log failed:', usageError);
-
-            // 4. 로컬 상태 업데이트
+            // 3. 로컬 상태 업데이트
             setCredits(prev => prev - cost);
             await refreshCredits();
             return true;
