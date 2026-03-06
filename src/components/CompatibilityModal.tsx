@@ -45,6 +45,12 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
             return;
         }
 
+        const year = partnerBirthDate?.split('-')[0] || '';
+        if (year.length > 4) {
+            setError('연도는 4자리(예: 1990)까지만 입력 가능합니다.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -114,11 +120,11 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
                     <div className="flex justify-between items-end">
                         <div>
-                            <div className="flex items-center gap-2 text-rose-500 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <Heart className="w-4 h-4" /> Relational Resonance
+                            <div className="flex items-center gap-2 text-rose-500 font-black tracking-[0.2em] text-[10px] mb-1.5">
+                                <Heart className="w-4 h-4" /> 관계적 울림
                             </div>
-                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
-                                Compatibility
+                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
+                                심층 궁합 분석
                             </h3>
                         </div>
                     </div>
@@ -151,7 +157,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                 </h4>
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</p>
+                                        <p className="text-[10px] font-black text-slate-400 mb-2 ml-1">이름</p>
                                         <input
                                             type="text"
                                             className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
@@ -162,7 +168,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">MBTI Type</p>
+                                            <p className="text-[10px] font-black text-slate-400 mb-2 ml-1">MBTI 유형</p>
                                             <select
                                                 className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
                                                 value={partnerMbti}
@@ -175,17 +181,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                             </select>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Birth Date</p>
+                                            <p className="text-[10px] font-black text-slate-400 mb-2 ml-1">생년월일</p>
                                             <input
                                                 type="date"
                                                 className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
                                                 value={partnerBirthDate}
+                                                max="9999-12-31"
                                                 onChange={e => setPartnerBirthDate(e.target.value)}
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Birth Time (Optional)</p>
+                                        <p className="text-[10px] font-black text-slate-400 mb-2 ml-1">태어난 시간 (선택)</p>
                                         <input
                                             type="time"
                                             className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
@@ -213,7 +220,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                             {/* Score & Keywords */}
                             <div className="flex flex-col items-center py-10 bg-slate-50 rounded-[40px] border border-slate-100 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-500"></div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Synergy Index</div>
+                                <div className="text-[10px] font-black text-slate-400 tracking-[0.4em] mb-6">시너지 지수</div>
                                 <div className="relative">
                                     <div className="text-8xl sm:text-9xl font-black text-slate-950 tracking-tighter leading-none">{result.score}</div>
                                     <div className="absolute -top-4 -right-12 text-2xl font-black text-rose-500 animate-pulse">%</div>

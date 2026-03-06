@@ -187,6 +187,7 @@ const ProfileInputForm: React.FC<any> = ({
           name="birthDate"
           id="birthDate"
           value={birthDate}
+          max="9999-12-31"
           onChange={(e) => setBirthDate(e.target.value)}
           className="input-field"
           required
@@ -350,6 +351,12 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     if (!gender) { setAuthError('성별을 선택해주세요.'); return; }
     if (!mbti) { setAuthError('MBTI를 선택해주세요.'); return; }
     if (!birthDate) { setAuthError('생년월일을 입력해주세요.'); return; }
+
+    const year = birthDate?.split('-')[0] || '';
+    if (year.length > 4) {
+      setAuthError('연도는 4자리(예: 1990)까지만 입력 가능합니다.');
+      return;
+    }
 
     setLoading(true);
     setAuthError('');

@@ -15,24 +15,20 @@ export default async (req: any, res: any) => {
         const saju = calculateSaju(birthDate, birthTime);
 
         const systemPrompt = `
-        You are an expert "Career Strategy Consultant" specializing in MBTI and Saju.
-        Your goal is to recommend the best career paths that align with the user's personality and elemental strengths.
-        
-        **CRITICAL INSTRUCTIONS**:
-        1. **Element Names**: Format as "Korean (Hanja)". e.g. 금 (金).
-        2. **Tone**: Professional, encouraging, and logical.
-        3. **Language**: Korean only.
-        4. **Format**: Valid JSON.
+당신은 일과 사주명리학, MBTI 심리학을 결합하여 완벽한 진로를 찾아주는 '천직 전략 컨설턴트(Career Strategy Consultant)'입니다.
+사용자의 인지기능(MBTI)과 오행의 밸런스(사주)를 분석하여 가장 큰 성과를 낼 수 있는 3가지 직업군을 제안하세요.
 
-        **CONTENT REQUIREMENTS**:
-        - **Jobs**: Recommend 3 distinct job titles or fields.
-        - **Reason**: A 300-500 character explanation linking their MBTI cognitive functions (Fe, Ti, etc.) and Saju element balance to these careers. Why will they succeed here?
+[핵심 규칙 - 반드시 지킬 것]
+1. 언어: 무조건 **한국어(Korean)**로만 작성하세요. (영어 사용 금지)
+2. 분량 및 깊이: "reason" 항목은 반드시 최소 600자 이상의 매우 심층적이고 전문적인 컨설팅 리포트로 작성해야 합니다. 이 사람이 무언가에 끌리는 심리적 이유(MBTI)와, 성과를 낼 수밖에 없는 기질적 강점(사주의 오행, 예를 들어 화(火) 기운의 언변력 등)을 논리적이고 입체적으로 서술하세요. 가벼운 결과가 아닌 뼈 때리면서도 응원이 되는 분석을 하세요.
+3. 가독성: 마크다운 문법의 **볼드체**를 적극적으로 활용하여 중요한 직무 역량이나 키워드를 강조하세요.
+4. 이모지: 리포트가 딱딱하지 않도록 💼, 📈, 🔥, 💡 등의 이모지를 포함하세요.
 
-        **REQUIRED JSON STRUCTURE**:
-        {
-            "jobs": ["Job Title 1", "Job Title 2", "Job Title 3"],
-            "reason": "Detailed consulting advice explaining the fit. Use helpful emojis (💼, 📈)."
-        }
+응답 형식은 아래 JSON 구조를 반드시 지키세요:
+{
+    "jobs": ["구체적인 직무명 1", "구체적인 직무명 2", "구체적인 직무명 3"],
+    "reason": "왜 이 3가지 직무가 당신의 MBTI(인지기능)와 사주(오행 밸런스, 강점)에 완벽히 부합하는지를 서술한 **최소 600자 이상의 매우 상세한 컨설팅 리포트**. (단락 분리, 볼드체, 이모지 적극 사용)"
+}
         `;
 
         const userQuery = `

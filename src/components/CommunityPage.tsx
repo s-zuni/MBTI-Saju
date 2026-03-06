@@ -32,6 +32,12 @@ const CommunityPage: React.FC = () => {
     const [activeTag, setActiveTag] = useState('전체');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Pagination States
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPosts, setTotalPosts] = useState(0);
+    const postsPerPage = 15;
+    const maxPageButtons = 10;
+
     // Modal States
     const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -50,7 +56,7 @@ const CommunityPage: React.FC = () => {
         setLoading(true);
         let query = supabase
             .from('posts')
-            .select('*')
+            .select('*', { count: 'exact' })
             .order('created_at', { ascending: false });
 
         if (activeTag !== '전체') {
@@ -61,12 +67,20 @@ const CommunityPage: React.FC = () => {
             query = query.ilike('title', `%${searchQuery}%`);
         }
 
-        const { data, error } = await query;
+        // Pagination
+        const from = (currentPage - 1) * postsPerPage;
+        const to = from + postsPerPage - 1;
+        query = query.range(from, to);
+
+        const { data, count, error } = await query;
 
         if (error) console.error('Error fetching posts:', error);
-        else setPosts(data || []);
+        else {
+            setPosts(data || []);
+            setTotalPosts(count || 0);
+        }
         setLoading(false);
-    }, [activeTag, searchQuery]);
+    }, [activeTag, searchQuery, currentPage]);
 
     useEffect(() => {
         fetchPosts();
@@ -75,8 +89,18 @@ const CommunityPage: React.FC = () => {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        setCurrentPage(1); // Reset to page 1 on new search
         fetchPosts();
     };
+
+    const handleTagChange = (tag: string) => {
+        setActiveTag(tag);
+        setCurrentPage(1); // Reset to page 1 on new tag
+    };
+
+    const totalPages = Math.ceil(totalPosts / postsPerPage);
+    const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
+    const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
 
     const handleLike = async (e: React.MouseEvent, postId: string, currentLikes: number) => {
         e.stopPropagation(); // Prevent opening modal
@@ -146,7 +170,7 @@ const CommunityPage: React.FC = () => {
                         {tags.map(tag => (
                             <button
                                 key={tag}
-                                onClick={() => setActiveTag(tag)}
+                                onClick={() => handleTagChange(tag)}
                                 className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeTag === tag
                                     ? 'bg-slate-900 text-white shadow-md'
                                     : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
@@ -207,6 +231,40 @@ const CommunityPage: React.FC = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {/* Pagination UI */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-2 mt-8 pt-4">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(1, startPage - 1))}
+                                    disabled={startPage === 1}
+                                    className="px-3 py-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500"
+                                >
+                                    이전
+                                </button>
+
+                                {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(num => (
+                                    <button
+                                        key={num}
+                                        onClick={() => setCurrentPage(num)}
+                                        className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${currentPage === num
+                                                ? 'bg-indigo-600 text-white shadow-md'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                    >
+                                        {num}
+                                    </button>
+                                ))}
+
+                                <button
+                                    onClick={() => setCurrentPage(endPage + 1)}
+                                    disabled={endPage >= totalPages}
+                                    className="px-3 py-1 text-sm font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500"
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
