@@ -45,35 +45,31 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             const systemPrompt = `
             You are a master of Saju and MBTI. Create the STRATEGY and SOLUTION part of "MBTIJU 소울 리포트".
             
-            **CRITICAL**: Korean ONLY, Valid JSON, No Markdown bolding.
+            **CRITICAL**: Korean ONLY, Valid JSON.
+            Keep the total length of your analysis within 800~1000 characters to ensure it fits on a unified PDF page. Make the content highly actionable, deeply insightful and engaging. Use Markdown bolding (**text**) for emphasis.
             
             **REQUIRED JSON STRUCTURE**:
             {
                 "warnings": {
                     "title": "2026년 주의사항 및 금기사항",
                     "watchOut": [
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"}
+                        {"title": "Title (e.g. 인간관계 조심)", "description": "Detailed description of what to watch out for."}
                     ],
                     "avoid": [
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"}
+                        {"title": "Title (e.g. 피해야 할 장소나 사람)", "description": "Specific places, directions, or types of people to strictly avoid based on their Saju and MBTI."}
                     ]
                 },
                 "fieldStrategies": {
-                    "title": "분야별 전략: 직업운 & 연애운",
-                    "career": { "subtitle": "직업운", "analysis": "analysis", "advice": "advice" },
-                    "love": { "subtitle": "연애운", "analysis": "analysis", "advice": "advice" }
+                    "title": "분야별 전략: 연애 & 직업 & 재물",
+                    "love": { "subtitle": "연애운", "analysis": "Love analysis", "advice": "Actionable advice" },
+                    "career": { "subtitle": "직업운", "analysis": "Career analysis", "advice": "Actionable advice" },
+                    "wealth": { "subtitle": "재물운", "analysis": "Wealth and financial analysis for 2026", "advice": "Wealth management advice" }
                 },
                 "finalSolution": {
                     "title": "최종 심리 솔루션",
-                    "theme": "A poetic theme",
+                    "theme": "A poetic and empowering theme",
                     "tips": [
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"},
-                        {"title": "title", "description": "desc"}
+                        {"title": "Mindset Tip", "description": "Psychological tip combining MBTI and Saju."}
                     ],
                     "closingMessage": "Empowering message"
                 }

@@ -210,17 +210,43 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                         <h2 className="report-section-title">
                             <Lightbulb className="w-5 h-5 text-indigo-600" /> 06. 전문가 전략 가이드 (Advice)
                         </h2>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="report-card border-slate-200">
-                                <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Briefcase className="w-4 h-4 text-indigo-600" /> 비즈니스 & 성장</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed">{analysis.fieldStrategies?.career?.analysis || "현재 환경에서의 성장 가능성을 극대화하는 전략이 필요합니다."}</p>
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="report-card border-slate-200 !p-5">
+                                <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2"><Briefcase className="w-4 h-4 text-indigo-600" /> 커리어 (Career)</h4>
+                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{analysis.fieldStrategies?.career?.analysis || "현재 진로 환경에서의 성장 가능성"}</p>
                             </div>
-                            <div className="report-card border-slate-200">
-                                <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Heart className="w-4 h-4 text-rose-500" /> 관계 & 힐링</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed">{analysis.fieldStrategies?.love?.analysis || "자신을 돌보고 타인과 공명하는 깊은 유대감이 중요합니다."}</p>
+                            <div className="report-card border-slate-200 !p-5">
+                                <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2"><Heart className="w-4 h-4 text-rose-500" /> 연애/관계 (Love)</h4>
+                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{analysis.fieldStrategies?.love?.analysis || "타인과 공명하는 깊은 유대감"}</p>
+                            </div>
+                            <div className="report-card border-slate-200 !p-5">
+                                <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">💰 재물 (Wealth)</h4>
+                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{analysis.fieldStrategies?.wealth?.analysis || "재물 축적과 경제적 흐름 파악"}</p>
                             </div>
                         </div>
-                        <div className="report-card bg-slate-950 text-white !mb-0">
+
+                        {/* 주의사항 / 금기 */}
+                        {(analysis.warnings?.watchOut?.length > 0 || analysis.warnings?.avoid?.length > 0) && (
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="report-card border-slate-200 !p-5 bg-red-50/10">
+                                    <h4 className="font-bold text-red-600 mb-3 flex items-center gap-2 text-xs">🚨 2026년 주의사항 (Watch Out)</h4>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {analysis.warnings.watchOut?.map((w: any, idx: number) => (
+                                            <li key={idx} className="text-[11px] text-slate-600 font-medium"><strong>{w.title}:</strong> {w.description}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="report-card border-slate-200 !p-5 bg-slate-50/50">
+                                    <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2 text-xs">🛑 피해야 할 것 (Avoid)</h4>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {analysis.warnings.avoid?.map((a: any, idx: number) => (
+                                            <li key={idx} className="text-[11px] text-slate-600 font-medium"><strong>{a.title}:</strong> {a.description}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+                        <div className="report-card bg-slate-950 text-white !mb-0 mt-6">
                             <h4 className="font-bold text-indigo-400 mb-4 flex items-center gap-2 font-sans"><AlertTriangle className="w-4 h-4" /> CORE GUIDELINE</h4>
                             <p className="text-sm font-medium leading-relaxed italic">
                                 {analysis.finalSolution?.closingMessage || analysis.advice || "분석을 바탕으로 삶의 균형을 찾아가는 과정에서 이 리포트가 소중한 지표가 되길 바랍니다."}
@@ -247,7 +273,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 select-none pointer-events-none opacity-[0.03] text-9xl font-black whitespace-nowrap">
                 MBTIJU SOUL REPORT
             </div>
-        </div>
+        </div >
     );
 });
 

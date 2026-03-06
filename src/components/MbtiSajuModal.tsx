@@ -11,7 +11,7 @@ interface MbtiSajuModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
-  onUseCoin?: () => Promise<boolean>;
+  onUseCoin?: (isRegenerate?: boolean) => Promise<boolean>;
 }
 
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCoin }) => {
@@ -88,12 +88,12 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
   const handleRegenerate = async () => {
-    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 사라지며, 코인이 1회 차감됩니다.")) return;
+    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 보존되지 않으며, 코인이 10회 차감됩니다.")) return;
 
     setIsRegenerating(true);
 
     if (onUseCoin) {
-      const success = await onUseCoin();
+      const success = await onUseCoin(true); // Pass true to indicate regeneration
       if (!success) {
         setIsRegenerating(false);
         alert("코인 차감에 실패했습니다. 코인이 부족하거나 네트워크 오류가 발생했습니다.");
@@ -302,6 +302,81 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               </div>
             </section>
           )}
+          {/* 주의사항 및 피해야 할 것 (Warnings & Avoid) */}
+          {(analysis.warnings?.watchOut?.length > 0 || analysis.warnings?.avoid?.length > 0) && (
+            <section className="report-section">
+              <h4 className="report-section-title">
+                <Zap className="w-5 h-5 text-red-500" /> 2026년 주의사항 및 금기
+              </h4>
+              <div className="space-y-4">
+                {analysis.warnings.watchOut && analysis.warnings.watchOut.map((w: any, i: number) => (
+                  <div key={`watch-${i}`} className="report-card border-l-4 border-l-red-500">
+                    <h5 className="font-bold text-slate-900 mb-2">🚨 {w.title}</h5>
+                    <p className="text-slate-600 text-sm leading-relaxed">{w.description}</p>
+                  </div>
+                ))}
+                {analysis.warnings.avoid && analysis.warnings.avoid.map((a: any, i: number) => (
+                  <div key={`avoid-${i}`} className="report-card border-l-4 border-l-slate-800">
+                    <h5 className="font-bold text-slate-900 mb-2">🛑 {a.title}</h5>
+                    <p className="text-slate-600 text-sm leading-relaxed">{a.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 분야별 전략 (Career, Love, Wealth) */}
+          {analysis.fieldStrategies && (
+            <section className="report-section">
+              <h4 className="report-section-title">
+                <Brain className="w-5 h-5" /> 2026년 분야별 심층 전략
+              </h4>
+              <div className="space-y-4">
+                {/* 직업운 */}
+                {analysis.fieldStrategies.career && (
+                  <div className="report-card bg-teal-50/50 border-none">
+                    <h5 className="font-bold text-teal-900 mb-2 bg-teal-100/50 inline-block px-3 py-1 rounded-md text-xs">💼 {analysis.fieldStrategies.career.subtitle}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.career.analysis}</p>
+                    <p className="text-teal-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.career.advice}</p>
+                  </div>
+                )}
+                {/* 연애운 */}
+                {analysis.fieldStrategies.love && (
+                  <div className="report-card bg-pink-50/50 border-none">
+                    <h5 className="font-bold text-pink-900 mb-2 bg-pink-100/50 inline-block px-3 py-1 rounded-md text-xs">💖 {analysis.fieldStrategies.love.subtitle}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.love.analysis}</p>
+                    <p className="text-pink-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.love.advice}</p>
+                  </div>
+                )}
+                {/* 재물운 */}
+                {analysis.fieldStrategies.wealth && (
+                  <div className="report-card bg-amber-50/50 border-none">
+                    <h5 className="font-bold text-amber-900 mb-2 bg-amber-100/50 inline-block px-3 py-1 rounded-md text-xs">💰 {analysis.fieldStrategies.wealth.subtitle}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.wealth.analysis}</p>
+                    <p className="text-amber-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.wealth.advice}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* 월별 운세 (Monthly) */}
+          {analysis.monthlyFortune?.months?.length > 0 && (
+            <section className="report-section">
+              <h4 className="report-section-title">
+                <Calendar className="w-5 h-5" /> 2026년 월별 상세 흐름
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {analysis.monthlyFortune.months.map((m: any, i: number) => (
+                  <div key={i} className="report-card !p-4">
+                    <h5 className="font-bold text-indigo-600 mb-1">{m.period}</h5>
+                    <p className="text-xs font-bold text-slate-500 mb-2">{m.energy}</p>
+                    <p className="text-slate-700 text-sm leading-relaxed">{m.guide}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Action Buttons: Minimalist & Professional */}
@@ -316,13 +391,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="absolute inset-x-0 h-px bottom-3 mx-10 bg-indigo-500/30"></div>
           </button>
 
-          <p className="mt-8 text-xs text-slate-400 font-medium">실시간 AI 데이터 분석을 기반으로 생성되었습니다.</p>
+          <p className="mt-8 text-xs text-slate-400 font-medium">실시간 심층 데이터 분석을 기반으로 생성되었습니다.</p>
           <button
             onClick={handleRegenerate}
             disabled={isRegenerating}
             className="mt-4 text-slate-400 text-xs font-bold hover:text-indigo-600 transition-colors underline underline-offset-4"
           >
-            {isRegenerating ? "AI Re-Analyzing..." : "AI 정밀 데이터 재생성하기"}
+            {isRegenerating ? "재분석 진행 중..." : "정밀 데이터 재생성 (10코인)"}
           </button>
         </div>
       </div>
@@ -402,7 +477,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           {loading ? (
             <div className="flex flex-col justify-center items-center h-80">
               <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
-              <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">Refining Personal Data...</p>
+              <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">데이터를 분석 중입니다...</p>
             </div>
           ) : analysis ? (
             <div className="animate-fade-up">

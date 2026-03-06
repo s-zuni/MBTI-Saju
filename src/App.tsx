@@ -449,9 +449,9 @@ function App() {
           isOpen={showMbtiSajuModal}
           onClose={closeMbtiSajuModal}
           onNavigate={handleSwitchService}
-          onUseCoin={async () => {
+          onUseCoin={async (isRegenerate?: boolean) => {
             if (!session?.user?.id) return false;
-            return await consumeCredits('MBTI_SAJU');
+            return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
           }}
         />
 

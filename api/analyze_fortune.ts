@@ -45,26 +45,27 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             const systemPrompt = `
             You are a master of Saju and MBTI. Create the FORTUNE part of "MBTIJU 소울 리포트".
             
-            **CRITICAL**: Korean ONLY, Valid JSON, No Markdown bolding.
+            **CRITICAL**: Korean ONLY, Valid JSON. 
+            Keep the total length of your analysis within 800~1000 characters to ensure it fits on a unified PDF page when combined with other sections. Do not use overly verbose structures, but make the content deeply insightful and engaging. Use Markdown bolding (**text**) for emphasis. 
             
             **REQUIRED JSON STRUCTURE**:
             {
                 "yearlyFortune": {
-                    "title": "2026년(丙午年) 운세 흐름",
-                    "theme": "A poetic theme",
-                    "yearlyElementAnalysis": "Analysis of 2026's energy",
-                    "overview": "Fortune overview",
+                    "title": "2026년(丙午年) 종합운세 흐름",
+                    "theme": "A poetic theme for 2026",
+                    "yearlyElementAnalysis": "Analysis of how 2026's energy interacts with the user's Saju. Mention '2026년' explicitly.",
+                    "overview": "Detailed overview of the year's fortune (300+ characters). Focus on key opportunities and challenges.",
                     "keywords": ["3-4 key themes"]
                 },
                 "monthlyFortune": {
                     "title": "2026년 월별 상세 흐름 및 가이드",
                     "months": [
-                        {"period": "1~2월", "energy": "energy", "guide": "guide"},
-                        {"period": "3~4월", "energy": "energy", "guide": "guide"},
-                        {"period": "5~6월", "energy": "energy", "guide": "guide"},
-                        {"period": "7~8월", "energy": "energy", "guide": "guide"},
-                        {"period": "9~10월", "energy": "energy", "guide": "guide"},
-                        {"period": "11~12월", "energy": "energy", "guide": "guide"}
+                        {"period": "1~2월", "energy": "energy name", "guide": "Detailed guide for these months"},
+                        {"period": "3~4월", "energy": "energy name", "guide": "Detailed guide for these months"},
+                        {"period": "5~6월", "energy": "energy name", "guide": "Detailed guide for these months"},
+                        {"period": "7~8월", "energy": "energy name", "guide": "Detailed guide for these months"},
+                        {"period": "9~10월", "energy": "energy name", "guide": "Detailed guide for these months"},
+                        {"period": "11~12월", "energy": "energy name", "guide": "Detailed guide for these months"}
                     ]
                 }
             }

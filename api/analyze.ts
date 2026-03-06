@@ -69,48 +69,48 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
 **[핵심 지침 - 반드시 지킬 것]**
 1. 언어: 무조건 **한국어(Korean)**로만 작성하세요. (MBTI 이니셜 등 고유명사 제외)
-2. 분량 및 깊이: 각 항목의 내용(content, analysis 등)은 절대 짧게 요약하지 말고, 최소 300자 이상(전체 합산 시 수천 자 분량)의 매우 깊이 있고 상세한 통찰을 제공하세요. 
-3. 가독성: 마크다운 문법의 **볼드체**를 적극 활용하여 중요한 단어나 문장을 강조하고 읽기 쉽게 문단을 나누세요.
-4. 신살(Shensha) 반영: 제공된 간지(GanZhi) 데이터에서 도화살, 홍염살, 역마살, 화개살 등 매력적이고 흥미로운 신살이 발견된다면 'dayPillarSummary' 나 관련 분석에 반드시 포함시켜 흥미를 유발하세요.
-5. 어조: 통찰력 있고, 따뜻하며, 때로는 팩트폭력도 서슴지 않는 전문적인 톤을 유지하세요. 적절한 이모지(✨, 🔮, 💡 등)를 섞어 몰입감을 높이세요.
+2. 분량 및 뎁스: 각 항목의 내용(content, analysis 등)은 절대 짧게 요약하지 말고 지시된 분량을 채우되 구체성을 띠어야 합니다. 전체 응답의 합산 길이가 **1000~1500자 내외**가 되도록 맞추어, 다른 섹션 결과물들과 합쳐졌을 때 PDF 1장에 유려하게 들어가도록 조절하세요.
+3. 가독성: 마크다운 문법의 **볼드체**를 활용하여 중요한 단어나 문장을 강조하세요.
+4. 신살(Shensha) 반영: предостав된 간지(GanZhi) 데이터에서 도화살, 홍염살, 역마살 등 매력적이고 흥미로운 신살이 발견된다면 분석에 반드시 포함시켜 흥미를 유발하세요.
+5. 어조: 통찰력 있고, 때로는 팩트폭력도 서슴지 않는 전문적인 톤을 유지하세요. 적절한 이모지(✨, 🔮 등)를 섞어 몰입감을 높이세요.
 
 응답은 반드시 아래의 JSON 구조와 키 이름을 정확히 일치시켜야 합니다 (JSON 외의 텍스트는 출력하지 마세요):
 
 {
-    "keywords": "사용자의 본질을 꿰뚫는 힙하고 흥미로운 키워드 3~4개 (예: #도화살_매력, #INTJ_철벽, #은근한_관종)",
+    "keywords": "사용자의 본질을 꿰뚫는 힙하고 흥미로운 키워드 3~4개 (예: #도화살_매력, #INTJ_철벽)",
     "reportTitle": "이 사람의 영혼을 한 줄로 표현하는 시적이고 강렬한 타이틀",
     "nature": {
         "title": "본성(Nature): 사주 분석",
-        "dayPillarSummary": "일주(Day Pillar)에 대한 시적이고 강렬한 묘사. (도화살/홍염살 등 신살이 있다면 여기서 매력 포인트로 강하게 어필할 것. 최소 300자 이상)",
-        "dayMasterAnalysis": "일간(Day Master)이 상징하는 본질적 자아와 잠재력 분석 (최소 300자 이상)",
-        "dayBranchAnalysis": "일지(Day Branch)가 상징하는 내면의 욕구와 배우자/연애관 분석 (최소 300자 이상)",
-        "monthBranchAnalysis": "월지(Month Branch)가 지배하는 사회적 환경과 직업적 특성 분석 (최소 300자 이상)"
+        "dayPillarSummary": "일주에 대한 묘사. 신살이 있다면 여기서 매력 포인트로 강하게 어필 기재 (100~200자)",
+        "dayMasterAnalysis": "일간이 상징하는 본질적 자아와 잠재력 분석 (200자 내외)",
+        "dayBranchAnalysis": "일지가 상징하는 내면의 욕구와 연애관 분석 (150자 내외)",
+        "monthBranchAnalysis": "월지가 지배하는 사회적 환경과 특성 분석 (150자 내외)"
     },
     "fiveElements": {
         "title": "오행의 구성 분석 (The Five Elements)",
         "elements": [
-            {"element": "목(木)", "count": 0, "function": "식상(Express)", "interpretation": "해당 오행의 과다/부족이 삶에 미치는 구체적 영향 해석 (150자 이상)"},
+            {"element": "목(木)", "count": 0, "function": "식상(Express)", "interpretation": "과다/부족이 삶에 미치는 영향 해석 (50~100자)"},
             {"element": "화(火)", "count": 0, "function": "재성(Result)", "interpretation": "해석"},
             {"element": "토(土)", "count": 0, "function": "관성(Rule)", "interpretation": "해석"},
             {"element": "금(金)", "count": 0, "function": "인성(Resource)", "interpretation": "해석"},
             {"element": "수(水)", "count": 0, "function": "비겁(Self)", "interpretation": "해석"}
         ],
-        "summary": "오행의 밸런스가 이 사람의 성격과 운명에 미치는 종합적인 통찰 (최소 300자 이상)"
+        "summary": "오행의 밸런스가 이 사람의 성격에 미치는 종합 통찰 (200자 내외)"
     },
     "persona": {
         "title": "페르소나(Persona): MBTI 분석",
-        "mbtiNickname": "MBTI를 찰떡같이 표현하는 닉네임 (예: 계획이 틀어지면 화나는 인공지능)",
-        "dominantFunction": "주기능이 이 사람을 어떻게 지배하는가 (최소 200자)",
-        "auxiliaryFunction": "부기능이 어떻게 주기능을 돕는가 (최소 200자)",
-        "tertiaryFunction": "3차 기능이 위기 때 발현되는 양상 (최소 200자)",
-        "inferiorFunction": "열등기능으로 인한 치명적인 약점과 극복 조언 (최소 200자)"
+        "mbtiNickname": "MBTI를 찰떡같이 표현하는 닉네임",
+        "dominantFunction": "주기능이 이 사람을 как 지배하는가 (150자 내외)",
+        "auxiliaryFunction": "부기능 조력 양상 (100자 내외)",
+        "tertiaryFunction": "3차 기능 발현 양상 (100자 내외)",
+        "inferiorFunction": "열등기능으로 인한 치명적인 약점 (100자 내외)"
     },
     "deepIntegration": {
         "title": "융합 분석: 사주와 MBTI의 소름돋는 상호작용",
         "integrationPoints": [
-            {"subtitle": "일간과 MBTI 주기능의 폭발적 결합", "content": "사주의 자아(일간)와 MBTI의 세계관(주기능)이 만나 빚어내는 독특한 시너지 (최소 300자)"},
-            {"subtitle": "오행 밸런스와 방어기제", "content": "스트레스 상황에서 오행의 불균형과 MBTI 열등기능이 어떻게 최악의 형태로 나타나는지 (최소 300자)"},
-            {"subtitle": "운명을 개척하는 마스터키", "content": "이 사람만이 가진 궁극적인 무기와, 절대 피해야 할 함정 등 현실적 조언 (최소 300자)"}
+            {"subtitle": "일간과 MBTI 주기능의 폭발적 결합", "content": "해석 (150자 내외)"},
+            {"subtitle": "오행 밸런스와 방어기제", "content": "해석 (150자 내외)"},
+            {"subtitle": "운명을 개척하는 마스터키", "content": "조언 (150자 내외)"}
         ]
     }
 }
