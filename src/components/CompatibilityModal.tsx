@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, X, Loader2, Calendar, User, Users, Sparkles } from 'lucide-react';
+import { Heart, Loader2, User, Users, Sparkles } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';

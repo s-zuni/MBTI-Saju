@@ -250,15 +250,6 @@ function App() {
         <Navbar
           session={session}
           onLoginClick={() => openAnalysisModal('login')}
-          onSignupClick={() => openAnalysisModal('signup')}
-          onFortuneClick={handleFetchFortune}
-          onMbtiSajuClick={() => {
-            if (session) setShowMbtiSajuModal(true);
-            else {
-              setAnalysisModalMode('login');
-              setShowAnalysisModal(true);
-            }
-          }}
           onTarotClick={() => {
             if (checkAccess(FEATURES.TAROT)) openTarotModal();
             else setShowCoinPurchaseModal(true);
@@ -418,19 +409,7 @@ function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
 
-        <BottomNav
-          onFortuneClick={handleFetchFortune}
-          onMbtiSajuClick={() => {
-            if (session) setShowMbtiSajuModal(true);
-            else {
-              setAnalysisModalMode('login');
-              setShowAnalysisModal(true);
-            }
-          }}
-          onLoginClick={() => openAnalysisModal('login')}
-          onHealingClick={() => setShowHealingModal(true)}
-          isAuthenticated={!!session}
-        />
+        <BottomNav />
 
         {/* Conditionally render the new AnalysisModal */}
         <AnalysisModal isOpen={showAnalysisModal} onClose={closeAnalysisModal} mode={analysisModalMode} />

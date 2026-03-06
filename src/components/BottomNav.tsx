@@ -4,15 +4,9 @@ import { Home, Sparkles, MessagesSquare, ShoppingBag, Users } from 'lucide-react
 // For AI Center let's use a special icon or button.
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export interface BottomNavProps {
-    onFortuneClick: () => void;
-    onMbtiSajuClick: () => void;
-    onLoginClick: () => void;
-    onHealingClick: () => void;
-    isAuthenticated: boolean;
-}
+export interface BottomNavProps { }
 
-const BottomNav: React.FC<BottomNavProps> = ({ onFortuneClick, onMbtiSajuClick, onLoginClick, onHealingClick, isAuthenticated }) => {
+const BottomNav: React.FC<BottomNavProps> = () => {
     const navigate = useNavigate();
     const location = useLocation();
 

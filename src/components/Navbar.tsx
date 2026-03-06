@@ -7,13 +7,10 @@ import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 interface NavbarProps {
   session: Session | null;
   onLoginClick: () => void;
-  onSignupClick: () => void;
-  onFortuneClick: () => void;
-  onMbtiSajuClick: () => void;
   onTarotClick: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onSignupClick, onFortuneClick, onMbtiSajuClick, onTarotClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

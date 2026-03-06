@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, AlertTriangle, Briefcase, Heart, Lightbulb, Layers } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
 import { SAJU_ELEMENTS, getDetailedFusedAnalysis, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
@@ -17,7 +17,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
-  const [fusedReport, setFusedReport] = useState<string>("");
   const shareCardRef = React.useRef<HTMLDivElement>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -83,13 +82,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         });
       }
 
-      const report = getDetailedFusedAnalysis({
-        mbti: metadata.mbti,
-        birthDate: metadata.birth_date,
-        birthTime: metadata.birth_time,
-        name: metadata.full_name
-      });
-      setFusedReport(report);
     }
     setLoading(false);
   };
