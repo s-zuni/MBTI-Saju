@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Loader2, MapPin, Globe, Calendar, Sparkles, Download } from 'lucide-react';
+import { Plane, Loader2, MapPin, Calendar, Sparkles, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
@@ -26,7 +26,6 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate }) =>
         summary: string
     } | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [isDownloading, setIsDownloading] = useState(false);
 
     const [regionType, setRegionType] = useState<'domestic' | 'overseas'>('domestic');
     const [selectedRegion, setSelectedRegion] = useState('서울');
