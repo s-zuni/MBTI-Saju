@@ -25,7 +25,8 @@ const SocialLoginForm: React.FC<{
   loading: boolean;
   handleSocialLogin: (provider: 'google' | 'kakao') => void;
   title?: string;
-}> = ({ loading, handleSocialLogin, title }) => (
+  onShowTestLogin: () => void;
+}> = ({ loading, handleSocialLogin, title, onShowTestLogin }) => (
   <div>
     <p className="text-slate-500 font-medium mb-6 text-center">
       {title || '간편하게 소셜 계정으로 시작하세요.'}
@@ -61,6 +62,19 @@ const SocialLoginForm: React.FC<{
       </button>
     </div>
 
+    <div className="mt-8 pt-6 border-t border-slate-100">
+      <p className="text-xs text-slate-400 mb-3 text-center">
+        테스트 계정이 필요하신가요?
+      </p>
+      <button
+        type="button"
+        onClick={onShowTestLogin}
+        className="w-full py-2.5 px-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-all border border-dashed border-slate-200"
+      >
+        테스트 계정으로 로그인 (임시)
+      </button>
+    </div>
+
     <div className="mt-6 text-center">
       <p className="text-xs text-slate-400">
         계속 진행하시면{' '}
@@ -68,6 +82,65 @@ const SocialLoginForm: React.FC<{
         <a href="/privacy" target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.
       </p>
     </div>
+  </div>
+);
+
+// 테스트 계정 전용 폼
+const TestLoginForm: React.FC<{
+  loading: boolean;
+  handleEmailLogin: (e: React.FormEvent) => void;
+  email: string;
+  setEmail: (val: string) => void;
+  password: string;
+  setPassword: (val: string) => void;
+  onBack: () => void;
+}> = ({ loading, handleEmailLogin, email, setEmail, password, setPassword, onBack }) => (
+  <div className="animate-fade-in">
+    <button
+      onClick={onBack}
+      className="mb-4 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:underline"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      소셜 로그인으로 돌아가기
+    </button>
+
+    <p className="text-slate-500 font-medium mb-6">
+      테스트용 이메일과 비밀번호를 입력해주세요.
+    </p>
+
+    <form className="space-y-4" onSubmit={handleEmailLogin}>
+      <div>
+        <label className="block text-sm font-bold text-slate-700 mb-2">이메일</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+          placeholder="test@examle.com"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-bold text-slate-700 mb-2">비밀번호</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary w-full py-3.5 mt-2"
+      >
+        {loading ? '로그인 중...' : '테스트 계정 로그인'}
+      </button>
+    </form>
   </div>
 );
 
@@ -277,6 +350,9 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   const [birthMinute, setBirthMinute] = useState('00');
   const [unknownBirthTime, setUnknownBirthTime] = useState(false);
 
+  const [showTestLogin, setShowTestLogin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -341,6 +417,26 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     } catch (error: any) {
       setAuthError(error.message || `${provider} 로그인/회원가입 중 에러가 발생했습니다.`);
       console.error(`${provider} Auth Error:`, error);
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      onClose(); // On success, close modal
+    } catch (error: any) {
+      setAuthError(error.message || '로그인 중 오류가 발생했습니다.');
+      console.error(`Email Login Error:`, error);
+    } finally {
       setLoading(false);
     }
   };
@@ -459,12 +555,24 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
         )}
 
         {mode === 'login' || mode === 'signup' ? (
-          // 로그인 & 회원가입: 소셜 로그인 버튼 표시 (동일한 화면)
-          <SocialLoginForm
-            loading={loading}
-            handleSocialLogin={handleSocialLogin}
-            title={mode === 'signup' ? 'Google 또는 카카오 계정으로 가입하세요.' : '간편하게 소셜 계정으로 시작하세요.'}
-          />
+          showTestLogin ? (
+            <TestLoginForm
+              loading={loading}
+              handleEmailLogin={handleEmailLogin}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              onBack={() => setShowTestLogin(false)}
+            />
+          ) : (
+            <SocialLoginForm
+              loading={loading}
+              handleSocialLogin={handleSocialLogin}
+              title={mode === 'signup' ? 'Google 또는 카카오 계정으로 가입하세요.' : '간편하게 소셜 계정으로 시작하세요.'}
+              onShowTestLogin={() => setShowTestLogin(true)}
+            />
+          )
         ) : (
           // 프로필 수정 & 프로필 완성 (complete_profile): 정보 입력 폼
           <ProfileInputForm
