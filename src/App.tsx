@@ -553,13 +553,15 @@ function App() {
   );
 }
 
-// A simple component to handle OAuth redirects. Supabase client will handle session.
+// A component to handle OAuth redirects (PKCE flow).
 const AuthCallback = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const hasExchanged = React.useRef(false);
 
   React.useEffect(() => {
     // Check for error parameters in the URL first (common in OAuth failures)
     const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
     const paramsError = params.get('error');
     const paramsErrorDesc = params.get('error_description');
 
@@ -569,40 +571,45 @@ const AuthCallback = () => {
       return;
     }
 
-    // Also check hash fragments which Supabase sometimes uses for errors
+    // Check hash fragments as well
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const hashError = hashParams.get('error');
-    const hashErrorDesc = hashParams.get('error_description');
-
-    if (hashError || hashErrorDesc) {
-      console.error('OAuth Hash Error:', hashError, hashErrorDesc);
-      setErrorMsg(hashErrorDesc || hashError || '인증 중 오류가 발생했습니다.');
+    const hashError = hashParams.get('error') || hashParams.get('error_description');
+    if (hashError) {
+      setErrorMsg(hashError);
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('AuthCallback getSession error:', error);
-        setErrorMsg(error.message);
-        return;
-      }
+    const processAuth = async () => {
+      // Prevent double execution in React Strict Mode (code is single-use)
+      if (hasExchanged.current) return;
 
-      if (session) {
-        window.location.href = '/';
-      } else {
-        // Wait a bit more for the session to be established via detectSessionInUrl
-        const timer = setTimeout(() => {
-          // If still no session after 3 seconds, something might be wrong, but we'll redirect back to home anyway 
-          // to avoid being stuck forever, but log it.
-          console.warn('AuthCallback: No session found after 3 seconds, redirecting to home.');
+      try {
+        if (code) {
+          hasExchanged.current = true;
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
           window.location.href = '/';
-        }, 3000);
-        return () => clearTimeout(timer);
+        } else {
+          // If no code, check if session already exists
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          if (session) {
+            window.location.href = '/';
+          } else {
+            // Wait briefly for background recovery
+            const timer = setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+            return () => clearTimeout(timer);
+          }
+        }
+      } catch (err: any) {
+        console.error('Auth processing error:', err);
+        setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
       }
-    }).catch(err => {
-      console.error('AuthCallback unexpected error:', err);
-      setErrorMsg('인증 서비스 연결에 실패했습니다.');
-    });
+    };
+
+    processAuth();
   }, []);
 
   if (errorMsg) {
