@@ -3,14 +3,23 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL as string
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY as string
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase environment variables');
-    // We cannot create a valid client without keys, so we throw an error that will be caught by the error boundary or show up in the console clearly.
-    // However, to prevent a hard crash on module load, we can return a dummy proxy or throw on usage.
-    // For now, let's keep it null but log heavily, OR better yet, throw an error if accessed.
+// Explicit validation for environment variables
+if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
+    const errorMsg = 'CRITICAL: Supabase 환경 변수가 설정되지 않았습니다. .env 파일이나 Vercel 프로젝트 설정을 확인해주세요.';
+    console.error(errorMsg);
+
+    // In browser environment, show a clear alert once to the developer
+    if (typeof window !== 'undefined') {
+        const hasAlerted = (window as any)._supabaseAlertShown;
+        if (!hasAlerted) {
+            alert(errorMsg);
+            (window as any)._supabaseAlertShown = true;
+        }
+    }
 }
 
-export const supabase = (supabaseUrl && supabaseAnonKey)
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : createClient('https://placeholder.supabase.co', 'placeholder');
+export const supabase = createClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseAnonKey || 'placeholder'
+);
 
