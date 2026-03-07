@@ -119,6 +119,7 @@ function App() {
       subscription.unsubscribe();
       clearTimeout(failsafeTimeout);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check if profile needs completion (after social login redirect)
