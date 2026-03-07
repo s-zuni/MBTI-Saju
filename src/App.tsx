@@ -34,8 +34,8 @@ import OnboardingModal from './components/OnboardingModal';
 import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
-import SuccessPage from './pages/SuccessPage';
-import FailPage from './pages/FailPage';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFail from './pages/PaymentFail';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -448,6 +448,8 @@ function App() {
                     }}
                   />
                 } />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/fail" element={<PaymentFail />} />
                 <Route path="/usage-history" element={
                   <UsageHistoryPage
                     currentCredits={coins}
@@ -459,8 +461,7 @@ function App() {
                 <Route path="/relationship" element={<RelationshipPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
-                <Route path="/payment/success" element={<SuccessPage />} />
-                <Route path="/payment/fail" element={<FailPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
               </Routes>
 
               <BottomNav />

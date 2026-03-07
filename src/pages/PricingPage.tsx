@@ -58,22 +58,22 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
         setIsProcessing(true);
 
         try {
-            const { success, error_msg, imp_uid } = await requestPayment({
-                name: `크레딧 ${plan.credits}개 충전`,
-                amount: plan.price,
-                buyer_email: user.email,
-                buyer_name: user.user_metadata?.full_name || '사용자',
-                buyer_tel: '010-0000-0000',
+            // Toss Payments V2용 주문 ID 생성
+            const orderId = `ord_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
+
+            const response = await requestPayment({
+                name: `${plan.credits} 크레딧 충전`,
+                amount: plan.price, // plan.price가 올바른 프로퍼티명임
+                orderId: orderId,
+                customerEmail: user.email,
+                customerName: user.user_metadata?.full_name || user.user_metadata?.name || '사용자',
             });
 
-            if (success && imp_uid) {
-                if (onPurchaseSuccess) {
-                    onPurchaseSuccess(plan.id, plan.price, plan.credits, imp_uid);
-                }
-                alert('크레딧 충전이 완료되었습니다!');
-            } else {
-                alert(`결제 실패: ${error_msg}`);
+            if (!response.success && response.error_msg) {
+                alert(`결제 오류: ${response.error_msg}`);
             }
+            // Toss Payments v2는 리다이렉트 방식이 기본이므로, 
+            // 성공/실패 처리는 리다이렉트된 페이지(/payment/success 등)에서 수행됩니다.
         } catch (e) {
             console.error(e);
             alert('결제 처리 중 오류가 발생했습니다.');
@@ -140,8 +140,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                             <div
                                 key={plan.id}
                                 className={`relative bg-white rounded-2xl border-2 overflow-hidden transition-all duration-200 flex flex-col ${plan.is_popular
-                                        ? 'border-amber-400 shadow-xl shadow-amber-100'
-                                        : 'border-slate-200 shadow-lg shadow-slate-100'
+                                    ? 'border-amber-400 shadow-xl shadow-amber-100'
+                                    : 'border-slate-200 shadow-lg shadow-slate-100'
                                     }`}
                             >
                                 {plan.is_popular && (
@@ -156,8 +156,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${plan.is_popular
-                                                ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
-                                                : 'bg-slate-100 text-slate-600'
+                                            ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+                                            : 'bg-slate-100 text-slate-600'
                                             }`}>
                                             <Coins className="w-6 h-6" />
                                         </div>
@@ -188,8 +188,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                                             onClick={() => handlePurchase(plan)}
                                             disabled={isProcessing}
                                             className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${plan.is_popular
-                                                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600 shadow-md'
-                                                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                                                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600 shadow-md'
+                                                : 'bg-slate-900 text-white hover:bg-slate-800'
                                                 } ${isProcessing && isSelected ? 'opacity-70' : ''}`}
                                         >
                                             {isProcessing && isSelected ? (
