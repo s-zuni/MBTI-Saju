@@ -4,6 +4,16 @@ declare global {
     }
 }
 
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    image_url: string;
+    type: 'digital' | 'physical';
+    content_url?: string;
+}
+
 export interface TossPaymentConfig {
     name: string;
     amount: number;
