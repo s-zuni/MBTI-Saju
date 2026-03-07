@@ -22,32 +22,19 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
         }
 
         try {
-            const { success, error_msg } = await requestPayment({
+            const orderId = `sub_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
+
+            const response = await requestPayment({
                 name: `구독: ${planName}`,
                 amount: price,
-                buyer_email: userEmail,
-                buyer_name: '사용자', // Should be passed if available
-                buyer_tel: '010-0000-0000', // Optional
+                orderId: orderId,
+                customerEmail: userEmail,
             });
 
-            if (success) {
-                // Update DB
-                const { error } = await supabase
-                    .from('profiles')
-                    .update({
-                        tier: targetTier,
-                        expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 days
-                    })
-                    .eq('id', (await supabase.auth.getUser()).data.user?.id);
-
-                if (error) throw error;
-
-                alert('구독이 완료되었습니다! 모든 기능을 자유롭게 이용하세요.');
-                onSuccess();
-                onClose();
-            } else {
-                alert(`결제 실패: ${error_msg}`);
+            if (!response.success && response.error_msg) {
+                alert(`결제 오류: ${response.error_msg}`);
             }
+            // Toss Payments v2는 리다이렉트 방식이 기본입니다.
         } catch (e) {
             console.error(e);
             alert('결제 처리 중 오류가 발생했습니다.');

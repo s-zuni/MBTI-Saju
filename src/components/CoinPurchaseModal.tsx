@@ -66,20 +66,20 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
         setIsProcessing(true);
 
         try {
-            const { success, error_msg, imp_uid } = await requestPayment({
+            const orderId = `ord_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
+
+            const response = await requestPayment({
                 name: `크레딧 ${plan.credits}개 충전`,
                 amount: plan.price,
-                buyer_email: userEmail,
-                buyer_name: '사용자',
-                buyer_tel: '010-0000-0000',
+                orderId: orderId,
+                customerEmail: userEmail,
             });
 
-            if (success && imp_uid) {
-                onSuccess(plan.id, plan.price, plan.credits, imp_uid);
-                onClose();
-            } else {
-                alert(`결제 실패: ${error_msg}`);
+            if (!response.success && response.error_msg) {
+                alert(`결제 오류: ${response.error_msg}`);
             }
+            // Toss Payments v2는 리다이렉트 방식이 기본이므로, 
+            // 성공/실패 처리는 리다이렉트된 페이지에서 수행됩니다.
         } catch (e) {
             console.error(e);
             alert('결제 처리 중 오류가 발생했습니다.');
