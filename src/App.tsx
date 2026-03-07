@@ -75,10 +75,15 @@ function App() {
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-      setSession(data.session);
-      setIsAuthLoading(false); // Auth loading finished
-    });
+    supabase.auth.getSession()
+      .then(({ data }: { data: { session: Session | null } }) => {
+        setSession(data.session);
+        setIsAuthLoading(false); // Auth loading finished
+      })
+      .catch((error) => {
+        console.error('Initial getSession error:', error);
+        setIsAuthLoading(false); // Ensure loading finishes even on error
+      });
 
     const {
       data: { subscription },
@@ -550,19 +555,77 @@ function App() {
 
 // A simple component to handle OAuth redirects. Supabase client will handle session.
 const AuthCallback = () => {
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   React.useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check for error parameters in the URL first (common in OAuth failures)
+    const params = new URLSearchParams(window.location.search);
+    const paramsError = params.get('error');
+    const paramsErrorDesc = params.get('error_description');
+
+    if (paramsError || paramsErrorDesc) {
+      console.error('OAuth URL Error:', paramsError, paramsErrorDesc);
+      setErrorMsg(paramsErrorDesc || paramsError || '인증 중 오류가 발생했습니다.');
+      return;
+    }
+
+    // Also check hash fragments which Supabase sometimes uses for errors
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashError = hashParams.get('error');
+    const hashErrorDesc = hashParams.get('error_description');
+
+    if (hashError || hashErrorDesc) {
+      console.error('OAuth Hash Error:', hashError, hashErrorDesc);
+      setErrorMsg(hashErrorDesc || hashError || '인증 중 오류가 발생했습니다.');
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('AuthCallback getSession error:', error);
+        setErrorMsg(error.message);
+        return;
+      }
+
       if (session) {
         window.location.href = '/';
       } else {
         // Wait a bit more for the session to be established via detectSessionInUrl
         const timer = setTimeout(() => {
+          // If still no session after 3 seconds, something might be wrong, but we'll redirect back to home anyway 
+          // to avoid being stuck forever, but log it.
+          console.warn('AuthCallback: No session found after 3 seconds, redirecting to home.');
           window.location.href = '/';
         }, 3000);
         return () => clearTimeout(timer);
       }
+    }).catch(err => {
+      console.error('AuthCallback unexpected error:', err);
+      setErrorMsg('인증 서비스 연결에 실패했습니다.');
     });
   }, []);
+
+  if (errorMsg) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-slate-50 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">로그인 실패</h2>
+          <p className="text-slate-600 mb-6">{errorMsg}</p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            메인으로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center h-screen bg-slate-50">
