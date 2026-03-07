@@ -58,13 +58,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
         setIsProcessing(true);
 
         try {
-            // Toss Payments V2용 주문 ID 생성
+            // Toss Payments V2용 주문 ID 및 고객 키 생성
             const orderId = `ord_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
+            const customerKey = user.id.replace(/[^a-zA-Z0-9_\-:]/g, '').substring(0, 50);
 
             const response = await requestPayment({
                 name: `${plan.credits} 크레딧 충전`,
-                amount: plan.price, // plan.price가 올바른 프로퍼티명임
+                amount: plan.price,
                 orderId: orderId,
+                customerKey: customerKey,
                 customerEmail: user.email,
                 customerName: user.user_metadata?.full_name || user.user_metadata?.name || '사용자',
             });

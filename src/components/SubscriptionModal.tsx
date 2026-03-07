@@ -24,10 +24,15 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
         try {
             const orderId = `sub_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
 
+            // 유저 ID를 기반으로 customerKey 생성
+            const { data: { user } } = await supabase.auth.getUser();
+            const customerKey = user?.id.replace(/[^a-zA-Z0-9_\-:]/g, '').substring(0, 50) || 'ANONYMOUS';
+
             const response = await requestPayment({
                 name: `구독: ${planName}`,
                 amount: price,
                 orderId: orderId,
+                customerKey: customerKey,
                 customerEmail: userEmail,
             });
 

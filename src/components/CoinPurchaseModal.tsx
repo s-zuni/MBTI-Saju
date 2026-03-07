@@ -68,10 +68,15 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
         try {
             const orderId = `ord_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
 
+            // 유저 ID를 기반으로 customerKey 생성 (로그인 상태여야 함)
+            const { data: { user } } = await supabase.auth.getUser();
+            const customerKey = user?.id.replace(/[^a-zA-Z0-9_\-:]/g, '').substring(0, 50) || 'ANONYMOUS';
+
             const response = await requestPayment({
                 name: `크레딧 ${plan.credits}개 충전`,
                 amount: plan.price,
                 orderId: orderId,
+                customerKey: customerKey,
                 customerEmail: userEmail,
             });
 

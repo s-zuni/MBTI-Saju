@@ -1,8 +1,4 @@
-declare global {
-    interface Window {
-        TossPayments: any;
-    }
-}
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 
 export interface Product {
     id: string;
@@ -18,6 +14,7 @@ export interface TossPaymentConfig {
     name: string;
     amount: number;
     orderId: string;
+    customerKey: string; // V2 필수값 (Sanitized user id 또는 ANONYMOUS)
     customerName?: string;
     customerEmail?: string;
 }
@@ -37,38 +34,35 @@ const CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_mE9mYv0zM89
  * 토스페이먼츠 결제창 호출
  */
 export const requestPayment = async (config: TossPaymentConfig): Promise<PaymentResponse> => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!window.TossPayments) {
-                resolve({ success: false, error_msg: "Toss Payments SDK가 로드되지 않았습니다." });
-                return;
-            }
+    try {
+        const tossPayments = await loadTossPayments(CLIENT_KEY);
 
-            const tossPayments = window.TossPayments.load(CLIENT_KEY);
+        // V2에서는 customerKey를 포함하여 payment 인스턴스를 생성합니다.
+        const payment = tossPayments.payment({
+            customerKey: config.customerKey,
+        });
 
-            // 결제 요청 (v2 기준)
-            // 결제창 방식 (Payment Window) - 카드 결제 예시
-            await tossPayments.requestPayment('CARD', {
-                amount: {
-                    currency: 'KRW',
-                    value: config.amount,
-                },
-                orderId: config.orderId,
-                orderName: config.name,
-                customerName: config.customerName || '구매자',
-                customerEmail: config.customerEmail || '',
-                successUrl: `${window.location.origin}/payment/success`,
-                failUrl: `${window.location.origin}/payment/fail`,
-            });
+        // 결제 요청
+        await payment.requestPayment({
+            method: "CARD", // 카드 결제
+            amount: {
+                currency: "KRW",
+                value: config.amount,
+            },
+            orderId: config.orderId,
+            orderName: config.name,
+            successUrl: `${window.location.origin}/payment/success`,
+            failUrl: `${window.location.origin}/payment/fail`,
+            customerEmail: config.customerEmail || '',
+            customerName: config.customerName || '구매자',
+        });
 
-            // 결제창 호출 후에는 페이지가 리다이렉트되므로 resolve가 호출되지 않을 수 있음.
-            // 하지만 비정상적인 중단 등을 고려하여 구조 유지.
-        } catch (error: any) {
-            console.error('Toss Payments Error:', error);
-            resolve({
-                success: false,
-                error_msg: error.message || "결제 준비 중 오류가 발생했습니다."
-            });
-        }
-    });
+        return { success: true }; // 리다이렉트되므로 실제로는 사용되지 않음
+    } catch (error: any) {
+        console.error('Toss Payments Error:', error);
+        return {
+            success: false,
+            error_msg: error.message || "결제 준비 중 오류가 발생했습니다."
+        };
+    }
 };
