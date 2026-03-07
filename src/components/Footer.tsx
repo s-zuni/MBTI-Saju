@@ -10,7 +10,13 @@ const Footer: React.FC = () => {
             <span className="font-bold text-slate-500 tracking-tight text-lg">MBTIJU</span>
           </div>
           <div className="text-xs text-slate-500 leading-relaxed space-y-1 font-medium">
-            <p><span className="text-slate-400">상호명</span> 엠비티아이주 <span className="mx-2 text-slate-300">|</span> <span className="text-slate-400">대표명</span> 이승준</p>
+            <p>
+              <span className="text-slate-400">상호명</span> 엠비티아이주
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="text-slate-400">대표명</span> 이승준
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="text-slate-400">사업자등록번호</span> 364-45-01374
+            </p>
             <p><span className="text-slate-400">사업장주소</span> 서울특별시 동대문구 망우로109, 207호</p>
             <p><span className="text-slate-400">고객센터</span> <a href="tel:070-8095-3075" className="hover:text-slate-700 transition-colors">070-8095-3075</a></p>
           </div>
