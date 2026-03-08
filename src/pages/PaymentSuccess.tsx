@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { supabase } from '../supabaseClient';
 
 const PaymentSuccess: React.FC = () => {
     const [searchParams] = useSearchParams();

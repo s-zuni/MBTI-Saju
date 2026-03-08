@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, MessageSquare, Send, ChevronRight, User, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
 

@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
-    CreditCard,
     Search,
-    Filter,
     Download,
     Loader2,
     CheckCircle2,
