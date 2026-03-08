@@ -1,0 +1,65 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import {
+    LayoutDashboard,
+    Users,
+    CreditCard,
+    RotateCcw,
+    Settings,
+    LogOut
+} from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+
+const AdminSidebar: React.FC = () => {
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/admin/login';
+    };
+
+    const navItems = [
+        { name: '대시보드', icon: <LayoutDashboard size={20} />, path: '/admin' },
+        { name: '회원 관리', icon: <Users size={20} />, path: '/admin/users' },
+        { name: '결제 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
+        { name: '환불 관리', icon: <RotateCcw size={20} />, path: '/admin/refunds' },
+        { name: '요금제 관리', icon: <Settings size={20} />, path: '/admin/plans' },
+    ];
+
+    return (
+        <div className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-50">
+            <div className="p-6 border-b border-slate-800">
+                <h1 className="text-xl font-black text-white tracking-tight">MBTIJU <span className="text-indigo-500">ADMIN</span></h1>
+            </div>
+
+            <nav className="flex-1 p-4 space-y-2">
+                {navItems.map((item) => (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        end={item.path === '/admin'}
+                        className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${isActive
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
+                                : 'hover:bg-slate-800 hover:text-white'
+                            }`
+                        }
+                    >
+                        {item.icon}
+                        {item.name}
+                    </NavLink>
+                ))}
+            </nav>
+
+            <div className="p-4 border-t border-slate-800">
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all font-medium"
+                >
+                    <LogOut size={20} />
+                    로그아웃
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default AdminSidebar;

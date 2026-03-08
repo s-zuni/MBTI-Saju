@@ -22,20 +22,27 @@ const PaymentSuccess: React.FC = () => {
             }
 
             try {
-                // 실제 운영 환경에서는 서버사이드에서 토스페이먼츠 결제 승인 API를 호출해야 합니다.
-                // 클라이언트 사이드에서는 승인 결과를 확인하고 DB에 반영하는 로직을 수행합니다.
+                // 1. 서버리스 함수 호출하여 결제 승인 및 DB 반영
+                const response = await fetch('/api/confirm-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentKey,
+                        orderId,
+                        amount: Number(amount),
+                    }),
+                });
 
-                // 1. 주문 정보 확인 및 크레딧 지급 로직 (임시로 성공 처리)
-                // 여기서는 클라이언트 사이드에서 처리하므로, 실제 운영 시에는 Edge Function 등을 통해 검증해야 함.
+                const data = await response.json();
 
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session?.user) throw new Error('로그인 정보가 없습니다.');
+                if (!response.ok) {
+                    throw new Error(data.message || '결제 승인 중 오류가 발생했습니다.');
+                }
 
-                // 결제 로그 기록 (또는 Edge Function 호출 추천)
-                // 현재는 간단히 완료 처리
-                setTimeout(() => {
-                    setLoading(false);
-                }, 1500);
+                // 성공적으로 처리됨
+                setLoading(false);
 
             } catch (err: any) {
                 console.error('Payment Confirmation Error:', err);

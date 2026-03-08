@@ -24,6 +24,7 @@ const Footer: React.FC = () => {
 
         <div className="flex flex-col items-start md:items-end gap-4 text-sm text-slate-500">
           <div className="flex gap-6 font-medium">
+            <a href="/support" className="hover:text-indigo-600 transition-colors">고객센터</a>
             <a href="/terms" className="hover:text-indigo-600 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-indigo-600 transition-colors">개인정보처리방침</a>
           </div>

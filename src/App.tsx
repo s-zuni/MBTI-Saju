@@ -36,6 +36,14 @@ import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFail from './pages/PaymentFail';
+import SupportPage from './pages/SupportPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import PaymentManagement from './pages/admin/PaymentManagement';
+import RefundManagement from './pages/admin/RefundManagement';
+import PlanManagement from './pages/admin/PlanManagement';
 
 function App() {
   // Only show splash screen on mobile devices (width <= 768px)
@@ -274,6 +282,18 @@ function App() {
         {/* 인증 콜백 경로는 로딩 상태와 무관하게 즉시 렌더링하여 데드락 방지 */}
         <Route path="/auth/callback" element={<AuthCallback />} />
 
+        {/* Admin Login - No Sidebar/Header/Footer */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        {/* Admin System - With Sidebar, No Header/Footer */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="payments" element={<PaymentManagement />} />
+          <Route path="refunds" element={<RefundManagement />} />
+          <Route path="plans" element={<PlanManagement />} />
+        </Route>
+
         {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
         <Route path="*" element={
           isAuthLoading ? (
@@ -402,9 +422,9 @@ function App() {
                         </div>
                       </div>
                     </section>
-                    <Footer />
                   </>
                 } />
+                <Route path="/support" element={<SupportPage />} />
                 <Route path="/mypage" element={
                   <MyPage
                     onOpenMbtiSaju={() => {
@@ -461,9 +481,9 @@ function App() {
                 <Route path="/relationship" element={<RelationshipPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
               </Routes>
 
+              <Footer />
               <BottomNav />
 
               {/* Conditionally render the new AnalysisModal */}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Coins, Sparkles, Check, Loader2, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
 import MobileHeader from '../components/MobileHeader';
 import type { PricingPlan } from '../hooks/useCredits';
@@ -11,6 +12,7 @@ interface PricingPageProps {
 }
 
 const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCredits = 0 }) => {
+    const navigate = useNavigate();
     const [plans, setPlans] = useState<PricingPlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -207,6 +209,27 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                     })}
                 </div>
             </div>
+            {/* Policy Section */}
+            <div className="max-w-4xl mx-auto px-6 py-16">
+                <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-indigo-500" />
+                        결제 및 환불 규정
+                    </h3>
+                    <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
+                        <p>• 모든 결제 금액에는 부가세(VAT)가 포함되어 있습니다.</p>
+                        <p>• 구매하신 크레딧은 결제일로부터 7일 이내에 환불 신청이 가능합니다. 단, 구매한 크레딧 중 일부라도 사용한 경우 환불이 불가능합니다.</p>
+                        <p>• 환불은 마이페이지의 '사용 내역' 메뉴를 통해 신청하실 수 있습니다.</p>
+                        <p>• 서비스 장애 또는 상품 오류로 인해 정상적인 이용이 불가능한 경우 고객센터를 통해 보상 또는 환불을 요청하실 수 있습니다.</p>
+                        <p>• 탈퇴 시 보유하고 있는 잔여 크레딧은 모두 소멸되며 환불되지 않습니다.</p>
+                    </div>
+                    <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                        <p>이용 중 불편한 점이 있으시다면 언제든 고객센터로 문의해주세요.</p>
+                        <button onClick={() => navigate('/support')} className="text-indigo-500 font-bold hover:underline">고객센터 바로가기 &rarr;</button>
+                    </div>
+                </div>
+            </div>
+            {/* Global Footer will follow */}
         </div>
     );
 };
