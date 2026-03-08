@@ -3,9 +3,7 @@ import { supabase } from '../../supabaseClient';
 import {
     Search,
     Edit2,
-    Trash2,
     Coins,
-    Shield,
     User as UserIcon,
     Loader2,
     X,
@@ -216,8 +214,8 @@ const UserManagement: React.FC = () => {
                                             key={role}
                                             onClick={() => setNewRole(role)}
                                             className={`flex-1 py-3 rounded-2xl font-bold transition-all ${newRole === role
-                                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200/50'
-                                                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200/50'
+                                                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                                                 }`}
                                         >
                                             {role.toUpperCase()}

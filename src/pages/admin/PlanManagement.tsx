@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
-    Settings,
     Plus,
     Edit3,
-    Trash2,
     Check,
     X,
     Loader2,
     Coins,
-    TrendingUp,
     CreditCard
 } from 'lucide-react';
 
@@ -177,8 +174,8 @@ const PlanManagement: React.FC = () => {
                         <button
                             onClick={() => toggleActive(plan.id, plan.is_active)}
                             className={`w-full py-4 rounded-2xl font-black transition-all border-2 ${plan.is_active
-                                    ? 'border-indigo-600 text-indigo-600 hover:bg-indigo-50 shadow-sm'
-                                    : 'border-slate-200 text-slate-400 hover:bg-slate-50'
+                                ? 'border-indigo-600 text-indigo-600 hover:bg-indigo-50 shadow-sm'
+                                : 'border-slate-200 text-slate-400 hover:bg-slate-50'
                                 }`}
                         >
                             {plan.is_active ? '비활성화 하기' : '활성화 하기'}
