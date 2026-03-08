@@ -73,16 +73,31 @@ const DAY_MASTER_DESC: { [key: string]: string } = {
 
 export function calculateSaju(birthDate: string, birthTime: string | null): SajuResult {
     // birthDate format: YYYY-MM-DD
-    const [year, month, day] = birthDate.split('-').map(Number);
-    let hour = 0;
+    const partsDate = birthDate.split('-').map(Number);
+    let year = partsDate[0] || 1990;
+    let month = partsDate[1] || 1;
+    let day = partsDate[2] || 1;
+    let hour = 12; // 태어난 시간을 모를 경우 정오(12시) 기준으로 계산하여 일진 오차 최소화
     let minute = 0;
+    let isTimeUnknown = true;
 
     if (birthTime) {
         const parts = birthTime.split(':').map(Number);
         hour = parts[0] ?? 0;
         minute = parts[1] ?? 0;
-    } else {
-        hour = 12;
+        isTimeUnknown = false;
+
+        // 한국 표준시(KST) 자연시 보정
+        // 동경 135도 기준시에서 서울 127도 기준 진짜 태양시로 변환 (약 -30분 적용)
+        // 이를 통해 야자시/명자시 및 절기 교입 시각의 오차를 줄임
+        const dateObj = new Date(year, month - 1, day, hour, minute);
+        dateObj.setMinutes(dateObj.getMinutes() - 30);
+
+        year = dateObj.getFullYear();
+        month = dateObj.getMonth() + 1;
+        day = dateObj.getDate();
+        hour = dateObj.getHours();
+        minute = dateObj.getMinutes();
     }
 
     const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
@@ -96,8 +111,8 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
     const monthZhi = eightChar.getMonthZhi();
     const dayGan = eightChar.getDayGan();
     const dayZhi = eightChar.getDayZhi();
-    const timeGan = eightChar.getTimeGan();
-    const timeZhi = eightChar.getTimeZhi();
+    const timeGan = isTimeUnknown ? '모름' : eightChar.getTimeGan();
+    const timeZhi = isTimeUnknown ? '모름' : eightChar.getTimeZhi();
 
     const dayMasterKorean = GAN_MAP[dayGan]?.korean || dayGan;
 

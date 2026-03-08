@@ -63,12 +63,33 @@ export async function generateContentWithRetry(
                 );
                 await sleep(delay);
             } else {
-                throw error;
+                // If max retries reached or error is not retryable, format it nicely
+                throw formatApiError(error);
             }
         }
     }
 
-    throw lastError;
+    throw formatApiError(lastError);
+}
+
+function formatApiError(error: any): Error {
+    const errorString = error?.message || error?.toString() || '';
+    const customError = new Error(errorString);
+    (customError as any).originalError = error;
+
+    if (errorString.includes('503') || errorString.includes('Service Unavailable') || errorString.includes('high demand')) {
+        (customError as any).status = 503;
+    } else if (errorString.includes('429') || errorString.includes('Too Many Requests') || errorString.includes('RESOURCE_EXHAUSTED')) {
+        (customError as any).status = 429;
+    } else if (errorString.includes('400') || errorString.includes('Bad Request')) {
+        (customError as any).status = 400;
+    } else if (errorString.includes('401') || errorString.includes('Unauthorized') || errorString.includes('API key')) {
+        (customError as any).status = 401;
+    } else {
+        (customError as any).status = 500;
+    }
+
+    return customError;
 }
 
 /**

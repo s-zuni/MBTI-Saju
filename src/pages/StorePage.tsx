@@ -1,19 +1,99 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { CreditCard, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { requestPayment } from '../utils/paymentHandlers';
+import { supabase } from '../supabaseClient';
+
+const CREDIT_PACKAGES = [
+    { id: 'credit_100', name: '100 크레딧', price: 1000, amount: 100, popular: false },
+    { id: 'credit_500', name: '500 크레딧', price: 4500, amount: 500, popular: true },
+    { id: 'credit_1000', name: '1000 크레딧', price: 8000, amount: 1000, popular: false },
+];
 
 const StorePage: React.FC = () => {
     const navigate = useNavigate();
+    const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        alert("운세템 상점은 현재 준비 중입니다. 메인 페이지로 이동합니다.");
-        navigate('/');
-    }, [navigate]);
+    const handlePurchase = async (pkg: typeof CREDIT_PACKAGES[0]) => {
+        try {
+            setLoadingId(pkg.id);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert("로그인이 필요합니다.");
+                navigate('/login');
+                return;
+            }
+
+            const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+            const response = await requestPayment({
+                name: pkg.name,
+                amount: pkg.price,
+                orderId: orderId,
+                customerKey: user.id || 'ANONYMOUS',
+                ...(user.email && { customerEmail: user.email }),
+            });
+
+            if (!response.success) {
+                alert(response.error_msg || "결제에 실패했습니다.");
+            }
+        } catch (error: any) {
+            alert(error.message || "오류가 발생했습니다.");
+        } finally {
+            setLoadingId(null);
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-            <p className="mt-4 text-slate-600 font-medium">페이지 이동 중...</p>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            {/* Header */}
+            <header className="bg-white px-4 py-4 sticky top-0 z-50 shadow-sm flex items-center gap-3">
+                <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
+                    <ArrowLeft size={24} className="text-slate-700" />
+                </button>
+                <h1 className="text-xl font-bold text-slate-800">크레딧 충전</h1>
+            </header>
+
+            <main className="max-w-xl mx-auto px-4 py-8">
+                <div className="text-center mb-10">
+                    <div className="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <CreditCard size={32} />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-800 mb-2">프리미엄 운세 크레딧</h2>
+                    <p className="text-slate-500">필요한 만큼 충전하고 심층 운세를 확인해보세요!</p>
+                </div>
+
+                <div className="space-y-4">
+                    {CREDIT_PACKAGES.map((pkg) => (
+                        <div
+                            key={pkg.id}
+                            className={`relative bg-white rounded-3xl p-6 border-2 transition-all ${pkg.popular ? 'border-indigo-500 shadow-md transform -translate-y-1' : 'border-slate-100 hover:border-indigo-200'}`}
+                        >
+                            {pkg.popular && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
+                                    <Check size={12} /> BEST VALUE
+                                </div>
+                            )}
+
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-xl font-bold text-slate-800">{pkg.name}</h3>
+                                    </div>
+                                    <p className="text-slate-400 text-sm">{pkg.price.toLocaleString()}원</p>
+                                </div>
+                                <button
+                                    onClick={() => handlePurchase(pkg)}
+                                    disabled={loadingId === pkg.id}
+                                    className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                >
+                                    {loadingId === pkg.id ? <Loader2 className="animate-spin w-5 h-5" /> : '구매하기'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </main>
         </div>
     );
 };

@@ -68,7 +68,7 @@ export const sendMessage = async (
     history: ChatMessage[],
     userContext: any
 ): Promise<string> => {
-    // 1. Save User Message locally for optimism (optional, but we save to DB here)
+    // 1. Save User Message locally
     await supabase.from('chat_messages').insert({
         session_id: sessionId,
         role: 'user',
@@ -76,6 +76,24 @@ export const sendMessage = async (
     });
 
     try {
+        let pastContext = '';
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: sessions } = await supabase.from('chat_sessions')
+                .select('id').eq('user_id', user.id).neq('id', sessionId)
+                .order('created_at', { ascending: false }).limit(3);
+
+            if (sessions && sessions.length > 0) {
+                const sessionIds = sessions.map(s => s.id);
+                const { data: msgs } = await supabase.from('chat_messages')
+                    .select('*').in('session_id', sessionIds)
+                    .order('created_at', { ascending: false }).limit(5);
+                if (msgs && msgs.length > 0) {
+                    pastContext = msgs.reverse().map(m => `${m.role === 'user' ? '사용자' : '신령님'}: ${m.content}`).join('\n');
+                }
+            }
+        }
+
         // 2. Call Backend API
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -89,6 +107,7 @@ export const sendMessage = async (
                 birthTime: userContext.birthTime,
                 name: userContext.name,
                 gender: userContext.gender,
+                pastContext: pastContext,
                 messages: history // Pass history for context
             })
         });

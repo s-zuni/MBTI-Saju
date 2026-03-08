@@ -23,6 +23,16 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
 
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`${fileName}.pdf`);
+
+        // 메모리 누수 방지 로직 (Garbage Collection 유도)
+        canvas.width = 0;
+        canvas.height = 0;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, 0, 0);
+        }
+        canvas.remove();
+
         return true;
     } catch (error) {
         console.error('PDF Generation Error:', error);

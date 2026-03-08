@@ -25,7 +25,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        const { message, mbti, birthDate, birthTime, name, gender, messages } = req.body;
+        const { message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = req.body;
         const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -58,6 +58,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         
         **SAJU INFO**:
         ${sajuInfo}
+
+        ${pastContext ? `**PAST CONSULTATION MEMORY**:
+        The following is a brief history of past interactions with this user. Use this to provide personalized, continuous counseling that makes them feel remembered:
+        ${pastContext}\n` : ''}
 
         **PERSONA GUIDELINES**:
         1. **Identity**: You are distinct from a generic AI. You speak with the wisdom of an ancient scholar combined with modern psychological insight.
