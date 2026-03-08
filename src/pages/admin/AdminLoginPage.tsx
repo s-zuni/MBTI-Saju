@@ -47,9 +47,14 @@ const AdminLoginPage: React.FC = () => {
                     .eq('id', session.user.id)
                     .single();
 
-                if (dbError || profile?.role !== 'admin') {
+                if (dbError) {
                     await supabase.auth.signOut();
-                    throw new Error('관리자 권한이 없습니다.');
+                    throw new Error(`데이터베이스 오류: ${dbError.message}`);
+                }
+
+                if (profile?.role !== 'admin') {
+                    await supabase.auth.signOut();
+                    throw new Error(`관리자 권한이 없습니다. (현재 역할: ${profile?.role || '없음'})`);
                 }
 
                 navigate('/admin');
