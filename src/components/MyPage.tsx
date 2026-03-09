@@ -211,8 +211,14 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
   const handleLogout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    try {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
+      await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeoutPromise]);
+    } catch (error: any) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (

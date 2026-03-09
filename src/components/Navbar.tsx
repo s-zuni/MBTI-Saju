@@ -61,12 +61,15 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
 
   const handleLogout = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
+      await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeoutPromise]);
+    } catch (error: any) {
       console.error('Logout Error:', error.message);
+    } finally {
+      setLoading(false);
+      window.location.href = '/';
     }
-    setLoading(false); // Always reset loading state
-    // Auth state change listener will handle navigation
   };
 
   const handleMyPageClick = () => {

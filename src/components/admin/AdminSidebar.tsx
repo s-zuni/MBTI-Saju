@@ -12,8 +12,14 @@ import { supabase } from '../../supabaseClient';
 
 const AdminSidebar: React.FC = () => {
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        window.location.href = '/admin/login';
+        try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
+            await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeoutPromise]);
+        } catch (error: any) {
+            console.error('Logout error:', error);
+        } finally {
+            window.location.href = '/admin/login';
+        }
     };
 
     const navItems = [
