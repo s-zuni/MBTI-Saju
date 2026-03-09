@@ -209,19 +209,57 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                     })}
                 </div>
             </div>
+            {/* Usage Flow Section */}
+            <div className="max-w-4xl mx-auto px-6 py-8">
+                <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-amber-500" />
+                        크레딧 서비스 이용 안내
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-6 relative">
+                        {/* Flow Steps */}
+                        <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">1</div>
+                            <h4 className="font-bold text-slate-800 mb-1 text-sm">회원가입/로그인</h4>
+                            <p className="text-xs text-slate-500">소셜 계정으로 3초 만에 간편 가입</p>
+                        </div>
+                        <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">2</div>
+                            <h4 className="font-bold text-slate-800 mb-1 text-sm">크레딧 충전</h4>
+                            <p className="text-xs text-slate-500">원하는 패키지를 선택하여 결제</p>
+                        </div>
+                        <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">3</div>
+                            <h4 className="font-bold text-slate-800 mb-1 text-sm">서비스 이용</h4>
+                            <p className="text-xs text-slate-500">사주, MBTI, 타로 등 분석 확인</p>
+                        </div>
+                    </div>
+                    <div className="mt-8 p-4 bg-indigo-50/50 rounded-2xl text-xs text-slate-600 border border-indigo-100/50">
+                        <p className="font-bold text-indigo-700 mb-1">💡 충전한 크레딧으로 이용 가능한 대표 서비스</p>
+                        <ul className="list-disc pl-5 space-y-1">
+                            <li>MBTI & 사주 심층 데이터 분석 (Soul Report)</li>
+                            <li>신비한 셔플 타로 (운 흐름 및 연애운 등)</li>
+                            <li>맞춤형 커리어 컨설팅 및 힐링/여행지 추천</li>
+                            <li>AI 전문가 심층 상담 토큰 충전</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             {/* Policy Section */}
-            <div className="max-w-4xl mx-auto px-6 py-16">
+            <div className="max-w-4xl mx-auto px-6 py-8 pb-16">
                 <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-indigo-500" />
-                        결제 및 환불 규정
+                        결제 및 환불 상세 규정
                     </h3>
                     <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
-                        <p>• 모든 결제 금액에는 부가세(VAT)가 포함되어 있습니다.</p>
-                        <p>• 구매하신 크레딧은 결제일로부터 7일 이내에 환불 신청이 가능합니다. 단, 구매한 크레딧 중 일부라도 사용한 경우 환불이 불가능합니다.</p>
-                        <p>• 환불은 마이페이지의 '사용 내역' 메뉴를 통해 신청하실 수 있습니다.</p>
-                        <p>• 서비스 장애 또는 상품 오류로 인해 정상적인 이용이 불가능한 경우 고객센터를 통해 보상 또는 환불을 요청하실 수 있습니다.</p>
-                        <p>• 탈퇴 시 보유하고 있는 잔여 크레딧은 모두 소멸되며 환불되지 않습니다.</p>
+                        <p>• <strong>한도 안내</strong>: 1회 결제 시 최대 충전 가능 금액은 100,000원입니다.</p>
+                        <p>• <strong>환불 시점</strong>: 결제일로부터 7일 이내에 충전한 크레딧을 전혀 사용하지 않은 경우에 한하여 전액 환불 신청이 가능합니다.</p>
+                        <p>• <strong>환불 수단</strong>: 환불 시 “결제에 사용된 동일 결제수단”으로 환불 처리됩니다.</p>
+                        <p>• <strong>부분 환불</strong>: 일부 사용 후 잔액 환불 시, 사용한 크레딧을 당시 개별 판매가 기준으로 차감한 후 남은 금액을 환불해 드립니다. (단, 사용 직후 가치가 소멸되는 서비스는 제외)</p>
+                        <p>• <strong>유효기간</strong>: 충전된 크레딧의 유효기간 및 환불 가능 기간은 <strong>결제일로부터 1년</strong>입니다. 기간 만료 시 크레딧은 자동 소멸됩니다.</p>
+                        <p>• <strong>양도 제한</strong>: 충전한 크레딧은 회원 본인만 사용 가능하며, 타 계정이나 타인에게 양도 및 재판매가 불가합니다.</p>
                     </div>
                     <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                         <p>이용 중 불편한 점이 있으시다면 언제든 고객센터로 문의해주세요.</p>

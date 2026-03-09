@@ -29,5 +29,7 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
     TAROT: '신비타로'
 };
 
-// 환불 가능 기간 (일)
+// 환불 및 유효 기간 설정 (토스페이먼츠 권고 사항 반영)
 export const REFUND_PERIOD_DAYS = 7;
+export const CREDIT_VALIDITY_YEARS = 1;
+export const MAX_RECHARGE_AMOUNT = 100000; // 1회 충전 한도 10만원

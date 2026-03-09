@@ -93,6 +93,19 @@ const StorePage: React.FC = () => {
                         </div>
                     ))}
                 </div>
+
+                <div className="mt-12 p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                    <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                        결제 및 환불 안내
+                    </h4>
+                    <ul className="space-y-2 text-xs text-slate-500 leading-relaxed font-medium">
+                        <li>• 충전한 크레딧의 유효기간 및 환불 가능 기간은 결제일로부터 1년입니다.</li>
+                        <li>• 환불 시 결제 시 사용된 동일한 결제 수단으로 환불됩니다.</li>
+                        <li>• 크레딧은 회원 본인만 사용 가능하며 타인에게 양도할 수 없습니다.</li>
+                        <li>• 1회 최대 충전 가능 금액은 100,000원입니다.</li>
+                    </ul>
+                </div>
             </main>
         </div>
     );

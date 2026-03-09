@@ -1,25 +1,30 @@
 import React from 'react';
 import { ArrowRight, Sparkles, Compass, Users, MessageSquare, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useModalStore } from '../hooks/useModalStore';
+import { useCredits } from '../hooks/useCredits';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
-interface FeatureGridsProps {
-    onStart: () => void;
-    onFortuneClick: () => void;
-    onMbtiSajuClick: () => void;
-    onTripClick: () => void;
-    onHealingClick: () => void;
-    onJobClick: () => void;
-    onCompatibilityClick: () => void;
-    onTarotClick?: () => void;
-    onChatbotClick?: () => void;
-}
+interface FeatureGridsProps { }
 
-const FeatureGrids: React.FC<FeatureGridsProps> = ({
-    onStart,
-    onTarotClick,
-    onChatbotClick,
-}) => {
+const FeatureGrids: React.FC<FeatureGridsProps> = () => {
     const navigate = useNavigate();
+    const { session } = useAuth();
+    const { openModal } = useModalStore();
+    const { credits: coins } = useCredits(session);
+
+    const checkCoinsAndOpen = (cost: number, openFn: () => void) => {
+        if (!session) {
+            openModal('analysis', 'login');
+            return;
+        }
+        if (coins >= cost) {
+            openFn();
+        } else {
+            openModal('coinPurchase', undefined, { requiredCoins: cost });
+        }
+    };
 
     const mainCategories = [
         {
@@ -34,7 +39,17 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             label: 'AI 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
             bg: 'from-amber-400 to-orange-500',
-            action: onChatbotClick || (() => navigate('/chat')),
+            action: () => {
+                if (!session) {
+                    openModal('analysis', 'login');
+                    return;
+                }
+                if (coins >= SERVICE_COSTS.AI_CHAT_10) {
+                    navigate('/chat');
+                } else {
+                    openModal('coinPurchase', undefined, { requiredCoins: SERVICE_COSTS.AI_CHAT_10 });
+                }
+            },
         },
         {
             icon: Sparkles,
@@ -55,7 +70,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = ({
             label: '신비 타로',
             sub: '카드로 보는 미래',
             bg: 'from-cyan-500 to-blue-600',
-            action: onTarotClick || (() => { }),
+            action: () => checkCoinsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
     ];
 

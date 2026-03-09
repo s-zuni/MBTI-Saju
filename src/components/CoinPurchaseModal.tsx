@@ -216,14 +216,19 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                     )}
                 </div>
 
-                {/* Current Balance */}
-                <div className="px-6 pb-6">
+                {/* Current Balance & Policy */}
+                <div className="px-6 pb-6 space-y-3">
                     <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl">
                         <Zap className="w-4 h-4 text-amber-500" />
                         <span className="text-sm text-slate-600">
                             현재 보유: <span className="font-bold text-slate-900">{currentCoins} 크레딧</span>
                         </span>
                     </div>
+
+                    <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                        • 크레딧 유효기간/환불 기간: 결제일로부터 1년 <br />
+                        • 미사용분에 한해 7일 내 전액 환불 가능 (본인만 사용 가능)
+                    </p>
                 </div>
             </div>
         </div>

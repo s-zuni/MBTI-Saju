@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Heart, Menu, LogOut } from 'lucide-react'; // Added LogOut icon
-import { supabase } from '../supabaseClient'; // Import supabase client
-import { useNavigate, useLocation } from 'react-router-dom'; // For navigation
-import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { User, Heart, Menu, LogOut } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useModalStore } from '../hooks/useModalStore';
 
-interface NavbarProps {
-  session: Session | null;
-  onLoginClick: () => void;
-  onTarotClick: () => void;
-}
+interface NavbarProps { }
 
-const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) => {
+const Navbar: React.FC<NavbarProps> = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,6 +15,9 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
+
+  const { session } = useAuth();
+  const { openModal } = useModalStore();
 
   // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
@@ -41,23 +41,14 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, currentSession: Session | null) => {
-        if (event === 'SIGNED_OUT') {
-          navigate('/'); // Redirect to home on logout
-        }
-      }
-    );
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      subscription.unsubscribe(); // Correctly clean up the auth listener
     };
-  }, [navigate]);
+  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -74,13 +65,20 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
 
   const handleMyPageClick = () => {
     if (session) {
-      navigate('/mypage'); // Navigate to MyPage
+      navigate('/mypage');
     } else {
-      onLoginClick();
+      openModal('analysis', 'login');
     }
   };
 
-  // Removed unused handlers
+  const handleTarotClick = () => {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      navigate('/chat'); // Or wherever tarot is on mobile
+    } else {
+      openModal('tarot');
+    }
+  };
 
   // Dynamic styles: If scrolled OR not on home page, use dark text/white bg style
   const useDarkStyle = isScrolled || !isHome;
@@ -103,7 +101,6 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
           <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors font-sans`}>MBTIJU</span>
         </div>
 
-        {/* Spacer to push actions to right if search is removed */}
         {/* Center Navigation Menu (Hidden on Home) */}
         <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
@@ -112,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
           <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
             심층 데이터 상담
           </button>
-          <button onClick={onTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
             신비 타로
           </button>
           <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
@@ -123,18 +120,12 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
           </button>
         </div>
 
-
-        {/* Spacer to push actions to right if search is removed */}
         <div className="flex-1"></div>
 
         {/* Actions */}
         <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-600">
-            {/* Links removed as requested */}
-          </div>
-
           <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors ${useDarkStyle ? 'border-slate-200' : 'border-white/20'}`}>
-            <div className="flex items-center gap-2"> {/* Changed from hidden md:flex to flex to show on mobile */}
+            <div className="flex items-center gap-2">
               {session ? (
                 <>
                   <button
@@ -145,7 +136,6 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
                     <User className="w-6 h-6" />
                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">마이페이지</span>
                   </button>
-                  {/* Logout button moved to menu or kept here? User asked for MyPage on top right. Let's keep Logout hidden on mobile to save space if needed, or keep both if space allows. Mobile screen is small. Let's keep MyPage here and Logout in valid menu or next to it. Let's start with MyPage. */}
                   <button
                     onClick={handleLogout}
                     className={`hidden md:block relative group p-1 ${iconColor} ${buttonHover} transition-all`}
@@ -158,7 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={onLoginClick}
+                    onClick={() => openModal('analysis', 'login')}
                     className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-all text-sm active:scale-95"
                     disabled={loading}
                   >
@@ -171,7 +161,6 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
               <Heart className="w-6 h-6" />
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
             </button>
-            {/* Shopping Cart Removed */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`md:hidden p-1 ${textColor}`}
@@ -186,16 +175,14 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
           <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
-            {/* Mobile Navigation Links */}
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세 보기</button>
               <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">심층 데이터 상담</button>
-              <button onClick={() => { onTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">신비 타로</button>
+              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">신비 타로</button>
               <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
               <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
             </div>
 
-            {/* Mobile User Actions - Logout only since MyPage is on top */}
             <div className="border-t border-slate-200 pt-4">
               {session ? (
                 <div className="flex items-center justify-between">
@@ -215,7 +202,7 @@ const Navbar: React.FC<NavbarProps> = ({ session, onLoginClick, onTarotClick }) 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      onLoginClick();
+                      openModal('analysis', 'login');
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
