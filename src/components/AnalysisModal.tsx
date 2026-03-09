@@ -69,7 +69,8 @@ const SocialLoginForm: React.FC<{
       <button
         type="button"
         onClick={onShowTestLogin}
-        className="w-full py-2.5 px-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-all border border-dashed border-slate-200"
+        disabled={loading}
+        className="w-full py-2.5 px-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-all border border-dashed border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         테스트 계정으로 로그인 (임시)
       </button>
@@ -412,7 +413,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       });
 
       if (error) throw error;
-      // Do not setLoading(false) here, let the page redirect.
+      // Do not setLoading(false) here immediately, let the page redirect.
+      // However, add a failsafe in case the redirect is blocked by the browser.
+      setTimeout(() => {
+        setLoading(false);
+      }, 5000);
     } catch (error: any) {
       setAuthError(error.message || `${provider} 로그인/회원가입 중 에러가 발생했습니다.`);
       console.error(`${provider} Auth Error:`, error);
@@ -422,20 +427,25 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleEmailLogin START');
     setLoading(true);
     setAuthError('');
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Calling supabase.auth.signInWithPassword with email:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log('signInWithPassword result:', { data, error });
 
       if (error) throw error;
+      console.log('Login success, calling onClose');
       onClose(); // On success, close modal
     } catch (error: any) {
       setAuthError(error.message || '로그인 중 오류가 발생했습니다.');
       console.error(`Email Login Error:`, error);
     } finally {
+      console.log('handleEmailLogin FINALLY');
       setLoading(false);
     }
   };
@@ -595,7 +605,6 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           <button
             className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
             onClick={onClose}
-            disabled={loading}
           >
             <span className="sr-only">닫기</span>
             <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
