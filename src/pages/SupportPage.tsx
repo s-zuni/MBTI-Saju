@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import MobileHeader from '../components/MobileHeader';
+
 
 interface Inquiry {
     id: string;
@@ -101,7 +101,7 @@ const SupportPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 pt-14 md:pt-20 lg:pt-24 animate-fade-in">
-            <MobileHeader title="고객센터" />
+
 
             <div className="max-w-4xl mx-auto px-6">
                 <div className="mb-12">

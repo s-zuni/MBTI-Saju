@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import MobileHeader from '../components/MobileHeader';
+
 import { SERVICE_COSTS } from '../config/creditConfig';
 
 // 각 카테고리별 코인 비용
@@ -44,7 +44,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 pt-14 md:pt-20 animate-fade-in">
-            <MobileHeader title="운세 보기" />
+
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 py-6 md:py-0">
                 <div className="mb-8 hidden md:block">

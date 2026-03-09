@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Receipt, ShoppingCart, Clock, RefreshCw } from 'lucide-react';
-import MobileHeader from '../components/MobileHeader';
+
 import RefundRequestModal from '../components/RefundRequestModal';
 import { SERVICE_NAMES, REFUND_PERIOD_DAYS } from '../config/creditConfig';
 import type { CreditPurchase, CreditUsage } from '../hooks/useCredits';
@@ -118,7 +118,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ onRequestRefund, cu
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 md:pb-0 pt-14 md:pt-20 animate-fade-in">
-            <MobileHeader title="사용 내역" />
+
 
             {/* Header */}
             <div className="hidden md:block bg-white border-b border-slate-200">

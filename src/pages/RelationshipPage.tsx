@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MobileHeader from '../components/MobileHeader';
+
 import { Plus, Trash2, Sparkles, UserPlus, Calendar, Heart } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import CompatibilityModal from '../components/CompatibilityModal';
@@ -127,7 +127,7 @@ const RelationshipPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 pt-14 md:pt-20 animate-fade-in">
-            <MobileHeader title="인연 도감" />
+
 
             <div className="max-w-3xl mx-auto px-6">
                 <div className="flex justify-between items-center mb-8">

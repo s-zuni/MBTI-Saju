@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { XCircle, AlertCircle } from 'lucide-react';
-import MobileHeader from '../components/MobileHeader';
+
 
 const PaymentFail: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -13,7 +13,7 @@ const PaymentFail: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 pt-14 md:pt-20 pb-24 flex flex-col items-center justify-center px-4">
-            <MobileHeader title="결제 실패" />
+
 
             <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 max-w-md w-full text-center animate-fade-in">
                 <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">

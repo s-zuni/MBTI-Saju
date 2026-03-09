@@ -5,11 +5,7 @@ import Footer from '../components/Footer';
 const PrivacyPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-white">
-            <Navbar
-                session={null}
-                onLoginClick={() => window.location.href = '/'}
-                onTarotClick={() => window.location.href = '/'}
-            />
+            <Navbar />
             <div className="max-w-4xl mx-auto px-6 py-24">
                 <h1 className="text-3xl font-bold mb-8 text-slate-900">MBTIJU 개인정보처리방침</h1>
                 <div className="prose prose-slate max-w-none text-slate-600 space-y-6 text-sm">

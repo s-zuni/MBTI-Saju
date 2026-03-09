@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
-import MobileHeader from '../components/MobileHeader';
+
 import type { PricingPlan } from '../hooks/useCredits';
 
 interface PricingPageProps {
@@ -97,7 +97,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 md:pb-0 pt-14 md:pt-20 animate-fade-in">
-            <MobileHeader title="요금제" />
+
 
             {/* Header */}
             <div className="hidden md:block bg-gradient-to-r from-amber-400 to-orange-500 text-white">

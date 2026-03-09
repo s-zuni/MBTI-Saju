@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import MobileHeader from '../components/MobileHeader';
+
 import { useCredits } from '../hooks/useCredits';
 
 export default function SuccessPage() {
@@ -54,7 +54,7 @@ export default function SuccessPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pt-14 md:pt-20">
-            <MobileHeader title="결제 처리" />
+
             <div className="flex-1 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full text-center">
                     {status === 'loading' && (
