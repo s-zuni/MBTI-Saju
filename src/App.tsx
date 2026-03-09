@@ -84,32 +84,24 @@ function App() {
 
   useEffect(() => {
     let isSubscribed = true;
-
-    // 6초 타임아웃: 어떤 이유로든 인증 상태 확인이 멈추면 강제로 로딩을 해제하여 앱 접근 차단 방지
     const failsafeTimeout = setTimeout(() => {
       if (isSubscribed && isAuthLoading) {
-        console.warn('Auth initialization timed out. Proceeding to app...');
         setIsAuthLoading(false);
       }
-    }, 6000);
+    }, 3000); // Reduce to 3s
 
     const fetchOrCreateProfile = async (session: Session) => {
       try {
         const { user } = session;
-        // 1. 프로필 존재 여부 확인
         const { data: profile, error: fetchError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          throw fetchError;
-        }
+        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-        // 2. 프로필 없으면 생성 (Upsert)
         if (!profile) {
-          console.log('Profile not found, creating default profile for:', user.id);
           const { error: upsertError } = await supabase
             .from('profiles')
             .upsert({
@@ -124,37 +116,27 @@ function App() {
               credits: 0,
               updated_at: new Date().toISOString(),
             });
-
           if (upsertError) throw upsertError;
         }
       } catch (error) {
-        console.error('Profile fetch/create error:', error);
-        // 에러가 발생해도 로딩은 해제되어야 함
+        console.error('Profile init error:', error);
       }
     };
 
     const initializeAuth = async () => {
       if (window.location.pathname === '/auth/callback') {
-        // Prevent race condition: AuthCallback will handle session and redirect
-        if (isSubscribed) {
-          setIsAuthLoading(false);
-          clearTimeout(failsafeTimeout);
-        }
+        if (isSubscribed) setIsAuthLoading(false);
         return;
       }
 
       try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (isSubscribed) {
           setSession(currentSession);
-          if (currentSession) {
-            await fetchOrCreateProfile(currentSession);
-          }
+          if (currentSession) await fetchOrCreateProfile(currentSession);
         }
       } catch (error) {
-        console.error('Initial auth error:', error);
+        console.error('Auth init error:', error);
       } finally {
         if (isSubscribed) {
           setIsAuthLoading(false);
@@ -165,23 +147,15 @@ function App() {
 
     initializeAuth();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, currentSession: Session | null) => {
-      try {
-        if (isSubscribed) {
-          setSession(currentSession);
-          if (currentSession && (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED')) {
-            await fetchOrCreateProfile(currentSession);
-          }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (isSubscribed) {
+        setSession(currentSession);
+        // Only fetch profile on sign in or token refresh, avoid redundant calls
+        if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          await fetchOrCreateProfile(currentSession);
         }
-      } catch (error) {
-        console.error('Auth state change processing error:', error);
-      } finally {
-        if (isSubscribed) {
-          setIsAuthLoading(false);
-          clearTimeout(failsafeTimeout);
-        }
+        setIsAuthLoading(false);
+        clearTimeout(failsafeTimeout);
       }
     });
 

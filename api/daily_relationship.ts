@@ -26,7 +26,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             return res.status(400).json({ error: 'Invalid input. myProfile and partners array are required.' });
         }
 
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
 
         // Calculate Saju for User

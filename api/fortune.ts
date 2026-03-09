@@ -8,14 +8,21 @@ type VercelRequest = any;
 type VercelResponse = any;
 
 // It's crucial to use environment variables for Supabase credentials
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
+// Superseded by internal handler initialization for environment variable robustness
+let supabase: any;
+let GEMINI_API_KEY: string;
 
 export default async (req: VercelRequest, res: VercelResponse) => {
     // CORS configuration
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+
+    if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'Server Configuration Error: Missing API Keys' });
+    }
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');

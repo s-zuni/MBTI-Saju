@@ -361,19 +361,33 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     if (initialData && (initialMode === 'edit' || initialMode === 'complete_profile')) {
       setName(initialData.name || initialData.full_name || '');
       setNickname(initialData.nickname || '');
-      setGender(initialData.gender || '');
-      setMbti(initialData.mbti || '');
-      setBirthDate(initialData.birth_date || '');
 
-      if (initialData.birth_time) {
-        const [h, m] = initialData.birth_time.split(':');
-        setBirthHour(h);
-        setBirthMinute(m);
-        setUnknownBirthTime(false);
+      // For 'edit' mode, we keep existing data.
+      // For 'complete_profile' mode, we force manual input by leaving fields empty,
+      // except for name which is usually reliable from social login.
+      if (initialMode === 'edit') {
+        setGender(initialData.gender || '');
+        setMbti(initialData.mbti || '');
+        setBirthDate(initialData.birth_date || '');
+
+        if (initialData.birth_time) {
+          const [h, m] = initialData.birth_time.split(':');
+          setBirthHour(h);
+          setBirthMinute(m);
+          setUnknownBirthTime(false);
+        } else {
+          setBirthHour('00');
+          setBirthMinute('00');
+          setUnknownBirthTime(true);
+        }
       } else {
+        // complete_profile: Force manual entry
+        setGender('');
+        setMbti('');
+        setBirthDate('');
         setBirthHour('00');
         setBirthMinute('00');
-        setUnknownBirthTime(true);
+        setUnknownBirthTime(false);
       }
     } else {
       setName('');
