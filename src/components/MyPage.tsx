@@ -80,33 +80,47 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
     setLoading(true);
     setError(null);
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-      navigate('/');
-      return;
-    }
+      if (sessionError) {
+        throw sessionError;
+      }
+      if (!session) {
+        navigate('/');
+        return;
+      }
 
-    const user = session.user;
-    setSession(session);
+      const user = session.user;
+      setSession(session);
 
-    const { full_name, gender, mbti, birth_date, birth_time, analysis } = user.user_metadata;
+      const metadata = user.user_metadata || {};
+      const { full_name, gender, mbti, birth_date, birth_time, analysis } = metadata;
 
-    if (full_name && mbti && birth_date) {
+      // Make sure we at least set the profile so the UI can render
       setProfile({
         id: user.id,
-        name: full_name,
+        name: full_name || user.email?.split('@')[0] || '사용자',
         email: user.email,
-        gender, mbti, birth_date, birth_time
+        gender: gender || '',
+        mbti: mbti || '',
+        birth_date: birth_date || '',
+        birth_time: birth_time || null
       });
+
       if (analysis) {
         setAnalysis(analysis);
       }
-    } else {
-      setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
-    }
 
-    setLoading(false);
+      if (!full_name || !mbti || !birth_date) {
+        setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
+      }
+    } catch (err: any) {
+      console.error('Error fetching profile in MyPage:', err);
+      setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
 
   useEffect(() => {
