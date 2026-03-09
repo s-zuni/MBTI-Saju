@@ -134,6 +134,15 @@ function App() {
     };
 
     const initializeAuth = async () => {
+      if (window.location.pathname === '/auth/callback') {
+        // Prevent race condition: AuthCallback will handle session and redirect
+        if (isSubscribed) {
+          setIsAuthLoading(false);
+          clearTimeout(failsafeTimeout);
+        }
+        return;
+      }
+
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         if (error) throw error;
