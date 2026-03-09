@@ -10,7 +10,7 @@ import MyPage from './components/MyPage';
 import FortuneModal from './components/FortuneModal';
 import MbtiSajuModal from './components/MbtiSajuModal';
 import { supabase } from './supabaseClient';
-import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import BottomNav from './components/BottomNav';
 import CommunityPage from './components/CommunityPage';
 import RecommendationModal from './components/RecommendationModal';
