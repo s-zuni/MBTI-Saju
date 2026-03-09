@@ -395,6 +395,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   useEffect(() => {
     if (isOpen) {
       resetFields();
+      setLoading(false); // Ensure loading is reset when modal opens
+      setAuthError('');  // Clear previous errors
     }
   }, [isOpen, resetFields]);
 
@@ -405,7 +407,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/`,
           queryParams: {
             prompt: 'select_account',
           },

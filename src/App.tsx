@@ -93,12 +93,56 @@ function App() {
       }
     }, 6000);
 
+    const fetchOrCreateProfile = async (session: Session) => {
+      try {
+        const { user } = session;
+        // 1. 프로필 존재 여부 확인
+        const { data: profile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
+
+        // 2. 프로필 없으면 생성 (Upsert)
+        if (!profile) {
+          console.log('Profile not found, creating default profile for:', user.id);
+          const { error: upsertError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata.full_name || user.user_metadata.name || 'User',
+              gender: user.user_metadata.gender || null,
+              mbti: user.user_metadata.mbti || null,
+              birth_date: user.user_metadata.birth_date || null,
+              birth_time: user.user_metadata.birth_time || null,
+              tier: 'free',
+              credits: 0,
+              updated_at: new Date().toISOString(),
+            });
+
+          if (upsertError) throw upsertError;
+        }
+      } catch (error) {
+        console.error('Profile fetch/create error:', error);
+        // 에러가 발생해도 로딩은 해제되어야 함
+      }
+    };
+
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         if (error) throw error;
+
         if (isSubscribed) {
-          setSession(session);
+          setSession(currentSession);
+          if (currentSession) {
+            await fetchOrCreateProfile(currentSession);
+          }
         }
       } catch (error) {
         console.error('Initial auth error:', error);
@@ -114,11 +158,21 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      if (isSubscribed) {
-        setSession(session);
-        setIsAuthLoading(false);
-        clearTimeout(failsafeTimeout);
+    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, currentSession: Session | null) => {
+      try {
+        if (isSubscribed) {
+          setSession(currentSession);
+          if (currentSession && (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED')) {
+            await fetchOrCreateProfile(currentSession);
+          }
+        }
+      } catch (error) {
+        console.error('Auth state change processing error:', error);
+      } finally {
+        if (isSubscribed) {
+          setIsAuthLoading(false);
+          clearTimeout(failsafeTimeout);
+        }
       }
     });
 
