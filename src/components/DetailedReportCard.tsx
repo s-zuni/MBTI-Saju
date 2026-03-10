@@ -16,7 +16,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
     if (!analysis) return null;
 
     return (
-        <div ref={ref} className="w-[800px] bg-white p-16 text-slate-900 relative shadow-none font-sans report-container overflow-hidden">
+        <div ref={ref} className="w-[850px] bg-white p-20 text-slate-900 relative shadow-none font-sans report-container overflow-hidden">
             {/* Background Decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-50"></div>
@@ -26,18 +26,15 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                 <div className="flex justify-between items-start">
                     <div>
                         <div className="flex items-center gap-2 text-indigo-600 font-bold tracking-[0.2em] text-xs uppercase mb-3">
-                            <Sparkles className="w-4 h-4" /> MBTIJU Premium Archive
+                            MBTIJU 리포트
                         </div>
                         <h1 className="text-5xl font-black text-slate-950 tracking-tight leading-tight mb-4">
-                            SOUL REPORT<br />
-                            <span className="text-indigo-600">{userName}</span>
+                            <span className="text-indigo-600">{userName}</span> 님의 분석 결과
                         </h1>
                     </div>
                     <div className="text-right">
-                        <div className="w-24 h-24 border-4 border-indigo-600/20 rounded-full flex items-center justify-center mb-2 mx-auto">
-                            <div className="w-16 h-16 border-2 border-indigo-600 rounded-full flex items-center justify-center">
-                                <span className="text-[10px] font-black text-indigo-600 leading-tight">ORIGINAL<br />VERIFIED</span>
-                            </div>
+                        <div className="w-24 h-24 mb-2 mx-auto">
+                            <img src="/logo.png" alt="MBTIJU Logo" className="w-24 h-24 object-contain" />
                         </div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Doc No. MS-{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
                     </div>
@@ -154,6 +151,31 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                             </div>
                             <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                                 {analysis.mbtiCompatibility || "종합적인 사회적 페르소나 분석 결과입니다."}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3.1. 연애 & 소울메이트 (Romance) - NEW SECTION */}
+                {analysis.romanceDepth && (
+                    <div className="report-section">
+                        <h2 className="report-section-title">
+                            <Heart className="w-5 h-5 text-rose-500" /> 04. 심층 연애 & 소울메이트 분석
+                        </h2>
+                        <div className="space-y-6">
+                            <div className="report-card bg-rose-50/20 border-rose-100">
+                                <h4 className="font-black text-rose-700 text-lg mb-3">내 안의 숨겨진 연애 본능</h4>
+                                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{analysis.romanceDepth.style}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="report-card !mb-0 border-slate-200">
+                                    <h4 className="font-bold text-slate-900 mb-2 text-sm">운명적 소울메이트</h4>
+                                    <p className="text-xs text-slate-600 leading-relaxed">{analysis.romanceDepth.idealType}</p>
+                                </div>
+                                <div className="report-card !mb-0 border-slate-200 bg-slate-50/50">
+                                    <h4 className="font-bold text-slate-800 mb-2 text-sm">연애 경보: 주의사항</h4>
+                                    <p className="text-xs text-slate-600 leading-relaxed">{analysis.romanceDepth.caution}</p>
+                                </div>
                             </div>
                         </div>
                     </div>

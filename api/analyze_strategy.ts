@@ -53,21 +53,38 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 "warnings": {
                     "title": "2026년 주의사항 및 금기사항",
                     "watchOut": [
-                        {"title": "Title (e.g. 인간관계 조심)", "description": "Detailed description of what to watch out for."}
+                        {"title": "Specific Warning 1", "description": "Highly detailed behavior-based warning (150+ characters)"},
+                        {"title": "Specific Warning 2", "description": "Highly detailed behavior-based warning (150+ characters)"}
                     ],
                     "avoid": [
-                        {"title": "Title (e.g. 피해야 할 장소나 사람)", "description": "Specific places, directions, or types of people to strictly avoid based on their Saju and MBTI."}
+                        {"title": "Specific Avoidance 1", "description": "Detailed advice on what to avoid (150+ characters)"},
+                        {"title": "Specific Avoidance 2", "description": "Detailed advice on what to avoid (150+ characters)"}
                     ]
                 },
                 "fieldStrategies": {
                     "title": "분야별 전략: 연애 & 직업 & 재물",
-                    "love": { "subtitle": "연애운", "analysis": "Love analysis", "advice": "Actionable advice" },
-                    "career": { "subtitle": "직업운", "analysis": "Career analysis", "advice": "Actionable advice" },
-                    "wealth": { "subtitle": "재물운", "analysis": "Wealth and financial analysis for 2026", "advice": "Wealth management advice" }
+                    "love": { 
+                        "subtitle": "연애운", 
+                        "analysis": "Specific romance and relationship strategy. Focus on how to attract or maintain relationships using their unique energy. (300+ characters)", 
+                        "advice": "Actionable advice",
+                        "keywords": ["love keywords"]
+                    },
+                    "career": { 
+                        "subtitle": "직업운", 
+                        "analysis": "Professional and detailed career strategy based on the fusion of user's MBTI cognitive functions and Saju energy. (300+ characters)", 
+                        "advice": "Actionable advice",
+                        "keywords": ["career keywords"]
+                    },
+                    "wealth": { 
+                        "subtitle": "재물운", 
+                        "analysis": "Financial and wealth-building strategy. When to invest or save based on their fortune flow. (300+ characters)", 
+                        "advice": "Wealth management advice",
+                        "keywords": ["wealth keywords"]
+                    }
                 },
                 "finalSolution": {
                     "title": "최종 심리 솔루션",
-                    "theme": "A poetic and empowering theme",
+                    "theme": "A powerful closing theme",
                     "tips": [
                         {"title": "Mindset Tip", "description": "Psychological tip combining MBTI and Saju."}
                     ],

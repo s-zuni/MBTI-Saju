@@ -46,6 +46,8 @@ const HealingModal = lazy(() => import('./components/HealingModal'));
 const JobModal = lazy(() => import('./components/JobModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CoinPurchaseModal = lazy(() => import('./components/CoinPurchaseModal'));
+const CustomerCenterModal = lazy(() => import('./components/CustomerCenterModal'));
+const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 
 function App() {
@@ -141,6 +143,7 @@ function App() {
             <Route path="users" element={<UserManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="refunds" element={<RefundManagement />} />
+            <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="plans" element={<PlanManagement />} />
           </Route>
 
@@ -388,6 +391,11 @@ function App() {
                 onClose={handleCloseOnboarding}
                 onCheckPlans={() => openModal('coinPurchase')}
                 userName={session?.user?.user_metadata?.full_name}
+              />
+
+              <CustomerCenterModal
+                isOpen={modals?.customerCenter?.isOpen || false}
+                onClose={() => closeModal('customerCenter')}
               />
 
               <PremiumBanner

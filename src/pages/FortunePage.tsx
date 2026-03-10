@@ -7,10 +7,10 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 // 각 카테고리별 코인 비용
 const subCategories = [
     { img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 확인하는 행운', cost: SERVICE_COSTS.FORTUNE_TODAY },
-    { img: '/assets/icons/3d_mbti.png', label: 'MBTI & 사주 융합', sub: '진짜 나를 찾는 시간', cost: SERVICE_COSTS.MBTI_SAJU },
-    { img: '/assets/icons/3d_trip.png', label: '궁합 여행지', sub: '우리에게 딱 맞는 곳', cost: SERVICE_COSTS.COMPATIBILITY_TRIP },
-    { img: '/assets/icons/3d_healing.png', label: '힐링 장소', sub: '마음이 편해지는 공간', cost: SERVICE_COSTS.HEALING },
-    { img: '/assets/icons/3d_job.png', label: '추천 직업', sub: '잠재력을 깨우는 천직', cost: SERVICE_COSTS.JOB },
+    { img: '/assets/icons/3d_mbti.png', label: '융합 분석', sub: '사주와 MBTI의 깊은 만남', cost: SERVICE_COSTS.MBTI_SAJU },
+    { img: '/assets/icons/3d_trip.png', label: '여행', sub: '나의 운명에 맞는 행운의 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP },
+    { img: '/assets/icons/3d_healing.png', label: '힐링', sub: '마음의 안정을 주는 치유의 공간', cost: SERVICE_COSTS.HEALING },
+    { img: '/assets/icons/3d_job.png', label: '직업', sub: '나의 잠재력을 깨우는 최고의 천직', cost: SERVICE_COSTS.JOB },
     { img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리하기', cost: SERVICE_COSTS.RELATIONSHIP_ADD },
 ];
 
@@ -64,7 +64,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                             `}
                         >
                             <div className={`
-                                w-20 h-20 rounded-2xl flex items-center justify-center 
+                                w-24 h-24 rounded-2xl flex items-center justify-center 
                                 flex-shrink-0 transition-transform group-hover:scale-105
                             `}>
                                 <img
@@ -75,7 +75,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                             </div>
                             <div className="flex-1 min-w-0 pt-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">
+                                    <h4 className="font-bold text-slate-900 text-xl group-hover:text-indigo-600 transition-colors">
                                         {cat.label}
                                     </h4>
                                     {/* 코인 비용 표시 */}
@@ -96,7 +96,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                         )}
                                     </span>
                                 </div>
-                                <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                                <p className="text-base text-slate-500 leading-relaxed font-medium">
                                     {cat.sub}
                                 </p>
                             </div>

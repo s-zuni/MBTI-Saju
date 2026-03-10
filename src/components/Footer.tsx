@@ -1,6 +1,10 @@
 import React from 'react';
+import { Mail, Instagram, MessageSquare } from 'lucide-react';
+import { useModalStore } from '../hooks/useModalStore';
 
-const Footer: React.FC = () => {
+const Footer = () => {
+  const { openModal } = useModalStore();
+
   return (
     <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-20">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8">
@@ -28,7 +32,16 @@ const Footer: React.FC = () => {
             <a href="/terms" className="hover:text-indigo-600 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-indigo-600 transition-colors">개인정보처리방침</a>
           </div>
-          <span className="text-xs text-slate-400 tracking-wide mt-2">© 2026 MBTIJU Corp. All Rights Reserved.</span>
+          <p className="text-slate-500 text-sm leading-relaxed mb-6">
+            © 2026 MBTIJU. All rights reserved.<br />
+            당신의 성향과 운명을 잇는 특별한 여정.
+          </p>
+          <button
+            onClick={() => openModal('customerCenter')}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-4 py-2 rounded-full transition-colors inline-flex items-center gap-1"
+          >
+            <MessageSquare className="w-3 h-3" /> 고객센터 문의하기
+          </button>
         </div>
       </div>
     </footer>

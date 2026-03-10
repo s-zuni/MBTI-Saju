@@ -6,7 +6,8 @@ import {
     CreditCard,
     RotateCcw,
     Settings,
-    LogOut
+    LogOut,
+    MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
@@ -27,6 +28,7 @@ const AdminSidebar: React.FC = () => {
         { name: '회원 관리', icon: <Users size={20} />, path: '/admin/users' },
         { name: '결제 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
         { name: '환불 관리', icon: <RotateCcw size={20} />, path: '/admin/refunds' },
+        { name: '고객 문의 관리', icon: <MessageSquare size={20} />, path: '/admin/inquiries' },
         { name: '요금제 관리', icon: <Settings size={20} />, path: '/admin/plans' },
     ];
 
