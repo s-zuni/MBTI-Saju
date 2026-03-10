@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
     MessageSquare,
     Search,
-    Filter,
     Clock,
     CheckCircle2,
     AlertCircle,
@@ -35,11 +34,7 @@ const AdminInquiries: React.FC = () => {
     const [rewardCoins, setRewardCoins] = useState(0);
     const [filter, setFilter] = useState<'all' | 'pending' | 'answered'>('all');
 
-    useEffect(() => {
-        fetchInquiries();
-    }, [filter]);
-
-    const fetchInquiries = async () => {
+    const fetchInquiries = useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -64,7 +59,11 @@ const AdminInquiries: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        fetchInquiries();
+    }, [fetchInquiries]);
 
     const handleAnswer = async () => {
         if (!selectedInquiry) return;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Brain, ScrollText, Zap, Calendar, AlertTriangle, Briefcase, Heart, Lightbulb, Layers } from 'lucide-react';
+import { Brain, ScrollText, Zap, Calendar, AlertTriangle, Briefcase, Heart, Lightbulb, Layers } from 'lucide-react';
 
 interface DetailedReportCardProps {
     userName: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Instagram, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useModalStore } from '../hooks/useModalStore';
 
 const Footer = () => {
