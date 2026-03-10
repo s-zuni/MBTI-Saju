@@ -36,6 +36,8 @@ const UserManagement: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
+            console.log('Fetched users count:', data?.length);
+            console.log('Fetched users data:', data);
             setUsers(data || []);
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -70,10 +72,12 @@ const UserManagement: React.FC = () => {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(u => {
+        const name = (u.name || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const search = searchTerm.toLowerCase();
+        return name.includes(search) || email.includes(search);
+    });
 
     return (
         <div className="space-y-8">
