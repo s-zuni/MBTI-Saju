@@ -29,7 +29,7 @@ export const useAuth = () => {
                     .upsert({
                         id: user.id,
                         email: user.email,
-                        name: user.user_metadata.full_name || user.user_metadata.name || 'User',
+                        name: user.user_metadata.full_name || user.user_metadata.name || user.user_metadata.user_name || 'User',
                         gender: user.user_metadata.gender || null,
                         mbti: user.user_metadata.mbti || null,
                         birth_date: user.user_metadata.birth_date || null,
