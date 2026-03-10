@@ -75,7 +75,7 @@ const ChatPage: React.FC = () => {
                     setMessages([{
                         id: 'welcome',
                         role: 'assistant',
-                        content: "안녕하세요! 저는 당신의 운명을 읽어주는 AI 점술가입니다. 사주와 MBTI를 기반으로 어떤 고민이든 들어드릴게요.",
+                        content: "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.",
                         createdAt: new Date()
                     }]);
                     setMessageCount(0);
@@ -163,7 +163,7 @@ const ChatPage: React.FC = () => {
             if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
                 const success = await consumeCredits('AI_CHAT_10');
                 if (!success) {
-                    console.error('Failed to spend coins for AI chat');
+                    console.error('Failed to spend coins for professional chat');
                 }
             }
         } catch (err) {
@@ -193,7 +193,7 @@ const ChatPage: React.FC = () => {
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-8 text-white font-bold text-xl px-2">
                         <Bot className="w-8 h-8 text-indigo-400" />
-                        <span>심층 상담</span>
+                        <span>운명 심층 상담</span>
                     </div>
 
                     <button
@@ -250,7 +250,7 @@ const ChatPage: React.FC = () => {
                         <button onClick={() => navigate('/')} className="p-2 -ml-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6" /></svg>
                         </button>
-                        <span className="font-bold ml-1 text-slate-800 text-lg">심층 상담</span>
+                        <span className="font-bold ml-1 text-slate-800 text-lg">운명 심층 상담</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
@@ -350,7 +350,7 @@ const ChatPage: React.FC = () => {
                             </button>
                         </form>
                         <p className="text-center text-xs text-slate-400 mt-2">
-                            AI는 실수할 수 있습니다. · 10회 대화마다 25코인이 차감됩니다.
+                            분석 결과는 참고용이며, 10회 대화마다 25코인이 차감됩니다.
                         </p>
                     </div>
                 </div>

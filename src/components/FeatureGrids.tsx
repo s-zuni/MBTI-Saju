@@ -36,7 +36,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
         },
         {
             icon: MessageSquare,
-            label: 'AI 심층 상담',
+            label: '운명 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
             bg: 'from-amber-400 to-orange-500',
             action: () => {

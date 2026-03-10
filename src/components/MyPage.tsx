@@ -491,7 +491,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
           <div className="flex justify-center gap-6 mb-4">
             <button onClick={() => navigate('/terms')} className="hover:text-slate-600">이용약관</button>
             <button onClick={() => navigate('/privacy')} className="hover:text-slate-600">개인정보처리방침</button>
-            <a href="mailto:support@mbtisaju.com" className="hover:text-slate-600">고객센터 문의</a>
+            <button onClick={() => navigate('/support')} className="hover:text-slate-600">고객센터 문의</button>
           </div>
           <p>© 2026 MBTI Saju. All rights reserved.</p>
         </div>

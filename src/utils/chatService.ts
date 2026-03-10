@@ -181,6 +181,6 @@ export const getDetailedAnalysis = async (
         return await response.json();
     } catch (error) {
         console.error("Analysis Service Error", error);
-        throw new Error("AI 분석 중 오류가 발생했습니다.");
+        throw new Error("심층 분석 중 오류가 발생했습니다.");
     }
 };

@@ -46,7 +46,6 @@ const HealingModal = lazy(() => import('./components/HealingModal'));
 const JobModal = lazy(() => import('./components/JobModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CoinPurchaseModal = lazy(() => import('./components/CoinPurchaseModal'));
-const CustomerCenterModal = lazy(() => import('./components/CustomerCenterModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 
@@ -129,7 +128,11 @@ function App() {
   // 로딩 화면 표시 로직을 BrowserRouter 내부로 이동하여 /auth/callback 경로가 차단되지 않도록 함
   return (
     <BrowserRouter>
-      <Suspense fallback={null}>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
+          <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+        </div>
+      }>
         <Routes>
           {/* 인증 콜백 경로는 로딩 상태와 무관하게 즉시 렌더링하여 데드락 방지 */}
           <Route path="/auth/callback" element={<AuthCallback />} />
@@ -152,10 +155,13 @@ function App() {
             <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
               <Navbar />
 
-              {isAuthLoading ? (
-                <div className="min-h-[60vh] flex flex-col items-center justify-center">
-                  <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-                  <p className="text-sm text-slate-500">인증 정보를 확인 중입니다...</p>
+              {isAuthLoading && !session ? (
+                <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
+                  </div>
+                  <p className="mt-6 text-slate-500 font-bold tracking-tight">당신의 운명을 불러오는 중...</p>
                 </div>
               ) : (
                 <Routes>
@@ -393,10 +399,6 @@ function App() {
                 userName={session?.user?.user_metadata?.full_name}
               />
 
-              <CustomerCenterModal
-                isOpen={modals?.customerCenter?.isOpen || false}
-                onClose={() => closeModal('customerCenter')}
-              />
 
               <PremiumBanner
                 isVisible={showPremiumBanner}

@@ -89,7 +89,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-400">
                             <X className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span className="line-through">AI 점술가 심층 상담</span>
+                            <span className="line-through">운명 심층 상담 서비스</span>
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-400">
                             <X className="w-4 h-4 shrink-0 mt-0.5" />
@@ -135,7 +135,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-300">
                             <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                            <span>AI 점술가와 무제한 심층 상담</span>
+                            <span>전문가와 무제한 심층 상담</span>
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-300">
                             <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />

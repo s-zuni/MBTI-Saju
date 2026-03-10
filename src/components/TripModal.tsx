@@ -202,7 +202,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
                                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Plane className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
-                                    {loading ? 'AI 분석 중...' : '맞춤 여행 플랜 확인하기'}
+                                    {loading ? '심층 분석 중...' : '맞춤 여행 플랜 확인하기'}
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             </button>

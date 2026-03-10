@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle, RotateCcw, CreditCard, AlertTriangle, HelpCircle, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
 
 interface Inquiry {
     id: string;
+    category: string;
     title: string;
     content: string;
-    status: 'pending' | 'replied';
-    reply: string | null;
+    answer: string | null;
+    status: 'pending' | 'answered';
+    coins_rewarded: number;
     created_at: string;
+    answered_at: string | null;
     user_id: string;
 }
+
+const categories = [
+    { id: 'refund', label: '환불 요청', icon: <RotateCcw size={16} /> },
+    { id: 'payment', label: '결제/요금제 문의', icon: <CreditCard size={16} /> },
+    { id: 'error', label: '서비스 오류 제보', icon: <AlertTriangle size={16} /> },
+    { id: 'other', label: '기타 문의', icon: <HelpCircle size={16} /> },
+];
 
 const SupportPage: React.FC = () => {
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [category, setCategory] = useState('other');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [user, setUser] = useState<any>(null);
@@ -40,7 +50,7 @@ const SupportPage: React.FC = () => {
     const fetchInquiries = async (userId: string) => {
         try {
             const { data, error } = await supabase
-                .from('inquiries')
+                .from('support_inquiries')
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
@@ -61,9 +71,10 @@ const SupportPage: React.FC = () => {
         setIsSubmitting(true);
         try {
             const { error } = await supabase
-                .from('inquiries')
+                .from('support_inquiries')
                 .insert({
                     user_id: user.id,
+                    category,
                     title,
                     content,
                     status: 'pending'
@@ -74,6 +85,7 @@ const SupportPage: React.FC = () => {
             alert('문의가 등록되었습니다. 최대한 빨리 답변해 드리겠습니다.');
             setTitle('');
             setContent('');
+            setCategory('other');
             fetchInquiries(user.id);
         } catch (err) {
             console.error('Error submitting inquiry:', err);
@@ -118,7 +130,28 @@ const SupportPage: React.FC = () => {
                     {/* Inquiry Form */}
                     <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm h-fit">
                         <h2 className="text-xl font-bold text-slate-900 mb-6">새로운 문의 남기기</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-3">문의 카테고리</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setCategory(cat.id)}
+                                            className={`
+                                                flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-xs font-bold
+                                                ${category === cat.id
+                                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-sm'
+                                                    : 'border-slate-100 hover:border-slate-200 text-slate-500'}
+                                            `}
+                                        >
+                                            {cat.icon}
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">제목</label>
                                 <input
@@ -126,7 +159,7 @@ const SupportPage: React.FC = () => {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="문의 제목을 입력해주세요"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-medium"
                                     required
                                 />
                             </div>
@@ -136,14 +169,14 @@ const SupportPage: React.FC = () => {
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
                                     placeholder="궁금하신 내용을 자세히 적어주세요"
-                                    className="w-full h-40 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none"
+                                    className="w-full h-40 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none font-medium"
                                     required
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-100 active:scale-[0.98]"
                             >
                                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                 문의 등록하기
@@ -162,34 +195,37 @@ const SupportPage: React.FC = () => {
                         ) : (
                             <div className="space-y-4">
                                 {inquiries.map((inquiry) => (
-                                    <div key={inquiry.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:border-indigo-200 transition-all">
+                                    <div key={inquiry.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:border-indigo-200 transition-all group">
                                         <div className="p-5">
                                             <div className="flex items-start justify-between mb-3">
                                                 <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        {inquiry.status === 'replied' ? (
+                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-[10px] font-bold rounded flex items-center gap-1 uppercase">
+                                                            {categories.find(c => c.id === inquiry.category)?.label || inquiry.category}
+                                                        </span>
+                                                        {inquiry.status === 'answered' ? (
                                                             <span className="px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-full uppercase tracking-wider">답변완료</span>
                                                         ) : (
                                                             <span className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[10px] font-bold rounded-full uppercase tracking-wider">처리중</span>
                                                         )}
-                                                        <h3 className="font-bold text-slate-800">{inquiry.title}</h3>
+                                                        <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{inquiry.title}</h3>
                                                     </div>
-                                                    <p className="text-xs text-slate-400">{formatDate(inquiry.created_at)}</p>
+                                                    <p className="text-[10px] text-slate-400 font-medium">{formatDate(inquiry.created_at)}</p>
                                                 </div>
-                                                <ChevronRight className="w-4 h-4 text-slate-300" />
+                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-indigo-400 transition-all" />
                                             </div>
-                                            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{inquiry.content}</p>
+                                            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">{inquiry.content}</p>
                                         </div>
 
-                                        {inquiry.status === 'replied' && inquiry.reply && (
-                                            <div className="bg-indigo-50/50 p-5 border-t border-indigo-100/50">
+                                        {inquiry.status === 'answered' && inquiry.answer && (
+                                            <div className="bg-indigo-50/50 p-5 border-t border-indigo-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
                                                         <ShieldCheck className="w-3.5 h-3.5 text-white" />
                                                     </div>
                                                     <span className="text-xs font-bold text-indigo-900">운영팀 답변</span>
                                                 </div>
-                                                <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-line font-medium">{inquiry.reply}</p>
+                                                <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-line font-medium">{inquiry.answer}</p>
                                             </div>
                                         )}
                                     </div>

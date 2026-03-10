@@ -50,6 +50,6 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   HEALING: '힐링장소',
   JOB: '추천직업',
   RELATIONSHIP_ADD: '인연 추가',
-  AI_CHAT_10: 'AI 상담 (10회)',
+  AI_CHAT_10: '운명 심층 상담 (10회)',
   TAROT: '신비타로'
 };

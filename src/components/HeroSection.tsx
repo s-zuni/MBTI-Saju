@@ -25,10 +25,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 text-center text-white">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 backdrop-blur-md border border-indigo-400/50 rounded-full text-base font-bold text-white mb-8 animate-bounce shadow-lg shadow-indigo-500/20">
-          <Sparkles className="w-4 h-4 text-indigo-200" />
-          <span>✨ MBTI x 사주 AI 융합 분석 서비스</span>
-        </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight animate-fade-up drop-shadow-xl">
           {user ? (

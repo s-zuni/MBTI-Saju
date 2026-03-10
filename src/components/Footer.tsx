@@ -32,16 +32,10 @@ const Footer = () => {
             <a href="/terms" className="hover:text-indigo-600 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-indigo-600 transition-colors">개인정보처리방침</a>
           </div>
-          <p className="text-slate-500 text-sm leading-relaxed mb-6">
+          <p className="text-slate-500 text-sm leading-relaxed">
             © 2026 MBTIJU. All rights reserved.<br />
             당신의 성향과 운명을 잇는 특별한 여정.
           </p>
-          <button
-            onClick={() => openModal('customerCenter')}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-4 py-2 rounded-full transition-colors inline-flex items-center gap-1"
-          >
-            <MessageSquare className="w-3 h-3" /> 고객센터 문의하기
-          </button>
         </div>
       </div>
     </footer>
