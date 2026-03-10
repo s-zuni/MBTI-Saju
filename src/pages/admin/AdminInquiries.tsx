@@ -36,21 +36,31 @@ const AdminInquiries: React.FC = () => {
 
     const fetchInquiries = useCallback(async () => {
         setLoading(true);
+        console.log('Fetching inquiries with filter:', filter);
         try {
+            // Using left join (implicitly) but ensuring we get data even if profile is missing
             let query = supabase
                 .from('support_inquiries')
-                .select('*, profiles(email)');
+                .select(`
+                    *,
+                    profiles!left(email)
+                `);
 
             if (filter !== 'all') {
                 query = query.eq('status', filter);
             }
 
             const { data, error } = await query.order('created_at', { ascending: false });
-            if (error) throw error;
 
-            const formattedData = data.map((item: any) => ({
+            console.log('Inquiries raw data:', data);
+            if (error) {
+                console.error('Supabase query error:', error);
+                throw error;
+            }
+
+            const formattedData = (data || []).map((item: any) => ({
                 ...item,
-                user_email: item.profiles?.email || 'N/A'
+                user_email: item.profiles?.email || '이메일 정보 없음'
             }));
 
             setInquiries(formattedData);
