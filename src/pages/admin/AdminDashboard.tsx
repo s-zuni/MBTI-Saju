@@ -34,7 +34,7 @@ const AdminDashboard: React.FC = () => {
                     supabase.from('profiles').select('*', { count: 'exact', head: true }),
                     supabase.from('credit_purchases').select('price_paid').eq('status', 'active'),
                     supabase.from('credit_purchases').select('*', { count: 'exact', head: true }).eq('status', 'pending_refund'),
-                    supabase.from('inquiries').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+                    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'pending')
                 ]);
 
                 const totalSales = salesData?.reduce((sum, item) => sum + (item.price_paid || 0), 0) || 0;
