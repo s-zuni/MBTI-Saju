@@ -36,8 +36,6 @@ const UserManagement: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            console.log('Fetched users count:', data?.length);
-            console.log('Fetched users data:', data);
             setUsers(data || []);
         } catch (err) {
             console.error('Error fetching users:', err);
