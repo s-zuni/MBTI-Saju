@@ -16,9 +16,9 @@ import StorePage from './pages/StorePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
-import { useSubscription, FEATURES } from './hooks/useSubscription';
+import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
-import { SERVICE_COSTS, ServiceType } from './config/creditConfig';
+import { SERVICE_COSTS } from './config/creditConfig';
 import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
@@ -59,7 +59,7 @@ function App() {
   } | null>(null);
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
-  const { tier, checkAccess } = useSubscription(session);
+  const { tier } = useSubscription(session);
   const { credits: coins, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
