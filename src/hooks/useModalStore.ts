@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export type ModalType =
     | 'analysis'
@@ -19,43 +19,61 @@ export interface ModalState {
     data?: any;
 }
 
+// Global state outside the hook to act as a singleton
+let globalModals: Record<string, ModalState> = {
+    analysis: { isOpen: false, mode: 'signup' },
+    fortune: { isOpen: false },
+    mbtiSaju: { isOpen: false },
+    recommendation: { isOpen: false },
+    compatibility: { isOpen: false },
+    trip: { isOpen: false },
+    healing: { isOpen: false },
+    job: { isOpen: false },
+    tarot: { isOpen: false },
+    coinPurchase: { isOpen: false },
+    onboarding: { isOpen: false },
+};
+
+// Listeners to notify hooks of changes
+let listeners: Array<(state: Record<string, ModalState>) => void> = [];
+
+const notifyListeners = () => {
+    listeners.forEach((listener) => listener({ ...globalModals }));
+};
+
 export const useModalStore = () => {
-    const [modals, setModals] = useState<Record<string, ModalState>>({
-        analysis: { isOpen: false, mode: 'signup' },
-        fortune: { isOpen: false },
-        mbtiSaju: { isOpen: false },
-        recommendation: { isOpen: false },
-        compatibility: { isOpen: false },
-        trip: { isOpen: false },
-        healing: { isOpen: false },
-        job: { isOpen: false },
-        tarot: { isOpen: false },
-        coinPurchase: { isOpen: false },
-        onboarding: { isOpen: false },
-    });
+    const [modals, setModals] = useState<Record<string, ModalState>>(globalModals);
+
+    useEffect(() => {
+        listeners.push(setModals);
+        return () => {
+            listeners = listeners.filter((li) => li !== setModals);
+        };
+    }, []);
 
     const openModal = useCallback((type: ModalType, mode?: any, data?: any) => {
-        setModals((prev) => ({
-            ...prev,
+        globalModals = {
+            ...globalModals,
             [type]: { isOpen: true, mode, data },
-        }));
+        };
+        notifyListeners();
     }, []);
 
     const closeModal = useCallback((type: ModalType) => {
-        setModals((prev) => ({
-            ...prev,
-            [type]: { ...prev[type], isOpen: false },
-        }));
+        globalModals = {
+            ...globalModals,
+            [type]: { ...globalModals[type], isOpen: false },
+        };
+        notifyListeners();
     }, []);
 
     const closeAllModals = useCallback(() => {
-        setModals((prev) => {
-            const newState = { ...prev };
-            Object.keys(newState).forEach((key) => {
-                newState[key] = { ...newState[key], isOpen: false };
-            });
-            return newState;
+        const newState = { ...globalModals };
+        Object.keys(newState).forEach((key) => {
+            newState[key] = { ...newState[key], isOpen: false };
         });
+        globalModals = newState;
+        notifyListeners();
     }, []);
 
     return {

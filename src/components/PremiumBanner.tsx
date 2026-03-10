@@ -13,7 +13,7 @@ const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onChe
     if (!isVisible || currentCoins >= 50) return null;
 
     return (
-        <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-40 animate-fade-in-up">
+        <div className="fixed bottom-20 left-4 right-4 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-40 animate-fade-in-up">
             <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">

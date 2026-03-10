@@ -49,7 +49,7 @@ const CoinPurchaseModal = lazy(() => import('./components/CoinPurchaseModal'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 
 function App() {
-  const [showSplash, setShowSplash] = useState(window.innerWidth <= 768);
+  const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
   const { modals, openModal, closeModal, closeAllModals } = useModalStore();
 
@@ -127,13 +127,7 @@ function App() {
   // 로딩 화면 표시 로직을 BrowserRouter 내부로 이동하여 /auth/callback 경로가 차단되지 않도록 함
   return (
     <BrowserRouter>
-      <Suspense fallback={
-        <div className="min-h-screen bg-indigo-50/50 flex flex-col items-center justify-center">
-          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-          <h2 className="text-xl font-bold text-slate-800">MBTIJU</h2>
-          <p className="text-sm text-slate-500 mt-2">서비스를 불러오는 중입니다...</p>
-        </div>
-      }>
+      <Suspense fallback={null}>
         <Routes>
           {/* 인증 콜백 경로는 로딩 상태와 무관하게 즉시 렌더링하여 데드락 방지 */}
           <Route path="/auth/callback" element={<AuthCallback />} />
