@@ -248,8 +248,8 @@ const CommunityPage: React.FC = () => {
                                         key={num}
                                         onClick={() => setCurrentPage(num)}
                                         className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${currentPage === num
-                                                ? 'bg-indigo-600 text-white shadow-md'
-                                                : 'text-slate-600 hover:bg-slate-100'
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'text-slate-600 hover:bg-slate-100'
                                             }`}
                                     >
                                         {num}
@@ -473,15 +473,15 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                         <h2 className="text-xl font-bold text-slate-900">{post.title}</h2>
                         <div className="flex items-center gap-3 mt-1">
                             <p className="text-sm text-slate-500">작성자: {post.author_name}</p>
-                            {user && user.id === post.user_id && (
+                            {user && (user.id === post.user_id || user.user_metadata?.role === 'admin') && (
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={async () => {
-                                            if (!window.confirm('정말 삭제하시겠습니까?')) return;
+                                            if (!window.confirm('정말 삭제하시겠습니까? (관리자 권한 포함)')) return;
                                             const { error } = await supabase.from('posts').delete().eq('id', post.id);
                                             if (error) alert('삭제 실패: ' + error.message);
                                             else {
-                                                alert('게시글이 삭제되었습니다.');
+                                                alert('게시글물이 삭제되었습니다.');
                                                 onClose();
                                                 onDelete?.();
                                             }
@@ -490,12 +490,14 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                                     >
                                         <Trash2 className="w-3 h-3" /> 삭제
                                     </button>
-                                    <button
-                                        onClick={onEdit}
-                                        className="text-xs text-slate-500 hover:underline flex items-center gap-0.5"
-                                    >
-                                        <Edit2 className="w-3 h-3" /> 수정
-                                    </button>
+                                    {user.id === post.user_id && (
+                                        <button
+                                            onClick={onEdit}
+                                            className="text-xs text-slate-500 hover:underline flex items-center gap-0.5"
+                                        >
+                                            <Edit2 className="w-3 h-3" /> 수정
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>

@@ -116,18 +116,18 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             `;
 
             const userQuery = `
-            Analyze this person (CORE sections only):
-            - Name: ${name}
-            - Gender: ${gender}
-            - MBTI: ${mbti}
-            - Birth: ${birthDate} ${birthTime || '(Time Unknown)'}
+            다음 사용자 정보를 심층 분석해주세요:
+            - 성명: \${name}
+            - 성별: \${gender}
+            - MBTI: \${mbti}
+            - 생년월일시: \${birthDate} \${birthTime || '(시간 모름)'}
             
-            [Saju Data]
-            - GanZhi (사주 원국): Year ${sajuResult.ganZhi.year}, Month ${sajuResult.ganZhi.month}, Day ${sajuResult.ganZhi.day}, Hour ${sajuResult.ganZhi.hour}
-            - Day Master: ${sajuResult.dayMaster.korean}
-            - Elements Count: Wood ${sajuResult.elements.wood}, Fire ${sajuResult.elements.fire}, Earth ${sajuResult.elements.earth}, Metal ${sajuResult.elements.metal}, Water ${sajuResult.elements.water}
+            [사주 데이터]
+            - 간지 (사주 원국): \${sajuResult.ganZhi.year}년, \${sajuResult.ganZhi.month}월, \${sajuResult.ganZhi.day}일, \${sajuResult.ganZhi.hour}시
+            - 일간(Day Master): \${sajuResult.dayMaster.korean}
+            - 오행 구성: 목(\${sajuResult.elements.wood}), 화(\${sajuResult.elements.fire}), 토(\${sajuResult.elements.earth}), 금(\${sajuResult.elements.metal}), 수(\${sajuResult.elements.water})
             
-            Provide the Core Analysis JSON. Identify any notable Shensha (신살) like 도화살, 홍염살, 역마살 from their GanZhi to make the 'dayPillarSummary' more engaging.
+            분석 리포트를 JSON 형식으로 답변해주세요. 'dayPillarSummary'에는 도화살, 홍염살, 역마살 등 흥미로운 신살 정보를 포함하여 사용자가 자신의 매력을 느낄 수 있도록 작성해주세요.
             `;
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
