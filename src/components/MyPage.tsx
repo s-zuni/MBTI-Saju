@@ -217,7 +217,8 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
     } catch (error: any) {
       console.error('Logout error:', error);
     } finally {
-      window.location.href = '/';
+      navigate('/');
+      window.location.reload();
     }
   };
 
@@ -310,6 +311,21 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                   <span className="text-3xl font-black text-amber-600">{coins}</span>
                   <span className="text-sm text-slate-500">코인</span>
                 </div>
+
+                {/* Quick Transaction History Summary */}
+                <div className="mt-4 pt-4 border-t border-amber-200/50">
+                  <div className="flex items-center justify-between text-xs text-amber-700/70 font-bold mb-2">
+                    <span>최근 이용 내역</span>
+                    <button onClick={() => navigate('/usage-history')} className="hover:text-amber-800 hover:underline">전체보기</button>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg text-xs">
+                      <span className="text-slate-600">결제 및 환불 문의</span>
+                      <button onClick={() => navigate('/support')} className="text-indigo-600 font-bold">고객센터</button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex gap-2 w-full mt-4">
                   <button
                     onClick={() => setIsCoinModalOpen(true)}

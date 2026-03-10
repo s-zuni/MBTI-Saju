@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -146,16 +146,15 @@ function App() {
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
           <Route path="*" element={
-            isAuthLoading ? (
-              <div className="min-h-screen bg-indigo-50/50 flex flex-col items-center justify-center">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-                <h2 className="text-xl font-bold text-slate-800">MBTIJU</h2>
-                <p className="text-sm text-slate-500 mt-2">잠시만 기다려주세요...</p>
-              </div>
-            ) : (
-              <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
-                <Navbar />
+            <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
+              <Navbar />
 
+              {isAuthLoading ? (
+                <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                  <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                  <p className="text-sm text-slate-500">인증 정보를 확인 중입니다...</p>
+                </div>
+              ) : (
                 <Routes>
                   <Route path="/" element={
                     <>
@@ -257,147 +256,147 @@ function App() {
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
+              )}
 
-                <Footer />
-                <BottomNav />
+              <Footer />
+              <BottomNav />
 
-                {/* Modals are now lazy loaded and managed by openModal store */}
-                <AnalysisModal
-                  isOpen={modals?.analysis?.isOpen || false}
-                  onClose={() => closeModal('analysis')}
-                  mode={modals?.analysis?.mode}
-                  initialData={session?.user?.user_metadata}
-                />
-                <FortuneModal
-                  isOpen={modals?.fortune?.isOpen || false}
-                  onClose={() => closeModal('fortune')}
-                  fortune={fortune}
-                  loading={isFortuneLoading}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  coins={coins}
-                  onUseCoin={async (serviceType) => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits(serviceType);
-                  }}
-                  onOpenCoinPurchase={(requiredCoins) => {
-                    openModal('coinPurchase', undefined, { requiredCoins });
-                  }}
-                />
-                <MbtiSajuModal
-                  isOpen={modals?.mbtiSaju?.isOpen || false}
-                  onClose={() => closeModal('mbtiSaju')}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  onUseCoin={async (isRegenerate?: boolean) => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
-                  }}
-                />
+              {/* Modals are now lazy loaded and managed by openModal store */}
+              <AnalysisModal
+                isOpen={modals?.analysis?.isOpen || false}
+                onClose={() => closeModal('analysis')}
+                mode={modals?.analysis?.mode}
+                initialData={session?.user?.user_metadata}
+              />
+              <FortuneModal
+                isOpen={modals?.fortune?.isOpen || false}
+                onClose={() => closeModal('fortune')}
+                fortune={fortune}
+                loading={isFortuneLoading}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                coins={coins}
+                onUseCoin={async (serviceType) => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits(serviceType);
+                }}
+                onOpenCoinPurchase={(requiredCoins) => {
+                  openModal('coinPurchase', undefined, { requiredCoins });
+                }}
+              />
+              <MbtiSajuModal
+                isOpen={modals?.mbtiSaju?.isOpen || false}
+                onClose={() => closeModal('mbtiSaju')}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                onUseCoin={async (isRegenerate?: boolean) => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
+                }}
+              />
 
-                <RecommendationModal
-                  isOpen={modals?.recommendation?.isOpen || false}
-                  onClose={() => closeModal('recommendation')}
-                  initialTab={modals?.recommendation?.mode}
-                />
-                <CompatibilityModal
-                  isOpen={modals?.compatibility?.isOpen || false}
-                  onClose={() => closeModal('compatibility')}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  onUseCoin={async () => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits('COMPATIBILITY_TRIP');
-                  }}
-                />
+              <RecommendationModal
+                isOpen={modals?.recommendation?.isOpen || false}
+                onClose={() => closeModal('recommendation')}
+                initialTab={modals?.recommendation?.mode}
+              />
+              <CompatibilityModal
+                isOpen={modals?.compatibility?.isOpen || false}
+                onClose={() => closeModal('compatibility')}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                onUseCoin={async () => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits('COMPATIBILITY_TRIP');
+                }}
+              />
 
-                <TripModal
-                  isOpen={modals?.trip?.isOpen || false}
-                  onClose={() => closeModal('trip')}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  onUseCoin={async () => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits('COMPATIBILITY_TRIP');
-                  }}
-                />
-                <HealingModal
-                  isOpen={modals?.healing?.isOpen || false}
-                  onClose={() => closeModal('healing')}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  onUseCoin={async () => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits('HEALING');
-                  }}
-                />
-                <JobModal
-                  isOpen={modals?.job?.isOpen || false}
-                  onClose={() => closeModal('job')}
-                  onNavigate={(service) => {
-                    closeAllModals();
-                    if (service === 'fortune') handleFetchFortune();
-                    else openModal(service as any);
-                  }}
-                  onUseCoin={async () => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits('JOB');
-                  }}
-                />
-                <TarotModal
-                  isOpen={modals?.tarot?.isOpen || false}
-                  onClose={() => closeModal('tarot')}
-                  tier={tier}
-                  onUpgradeRequired={() => {
-                    openModal('coinPurchase', undefined, { requiredCoins: SERVICE_COSTS.TAROT });
-                  }}
-                  onUseCoin={async () => {
-                    if (!session?.user?.id) return false;
-                    return await consumeCredits('TAROT');
-                  }}
-                />
+              <TripModal
+                isOpen={modals?.trip?.isOpen || false}
+                onClose={() => closeModal('trip')}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                onUseCoin={async () => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits('COMPATIBILITY_TRIP');
+                }}
+              />
+              <HealingModal
+                isOpen={modals?.healing?.isOpen || false}
+                onClose={() => closeModal('healing')}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                onUseCoin={async () => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits('HEALING');
+                }}
+              />
+              <JobModal
+                isOpen={modals?.job?.isOpen || false}
+                onClose={() => closeModal('job')}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal(service as any);
+                }}
+                onUseCoin={async () => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits('JOB');
+                }}
+              />
+              <TarotModal
+                isOpen={modals?.tarot?.isOpen || false}
+                onClose={() => closeModal('tarot')}
+                tier={tier}
+                onUpgradeRequired={() => {
+                  openModal('coinPurchase', undefined, { requiredCoins: SERVICE_COSTS.TAROT });
+                }}
+                onUseCoin={async () => {
+                  if (!session?.user?.id) return false;
+                  return await consumeCredits('TAROT');
+                }}
+              />
 
-                <CoinPurchaseModal
-                  isOpen={modals?.coinPurchase?.isOpen || false}
-                  onClose={() => closeModal('coinPurchase')}
-                  userEmail={session?.user?.email}
-                  currentCoins={coins}
-                  requiredCoins={modals?.coinPurchase?.data?.requiredCoins}
-                  onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
-                    await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
-                  }}
-                />
+              <CoinPurchaseModal
+                isOpen={modals?.coinPurchase?.isOpen || false}
+                onClose={() => closeModal('coinPurchase')}
+                userEmail={session?.user?.email}
+                currentCoins={coins}
+                requiredCoins={modals?.coinPurchase?.data?.requiredCoins}
+                onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+                  await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
+                }}
+              />
 
-                <OnboardingModal
-                  isOpen={modals?.onboarding?.isOpen || false}
-                  onClose={handleCloseOnboarding}
-                  onCheckPlans={() => openModal('coinPurchase')}
-                  userName={session?.user?.user_metadata?.full_name}
-                />
+              <OnboardingModal
+                isOpen={modals?.onboarding?.isOpen || false}
+                onClose={handleCloseOnboarding}
+                onCheckPlans={() => openModal('coinPurchase')}
+                userName={session?.user?.user_metadata?.full_name}
+              />
 
-                <PremiumBanner
-                  isVisible={showPremiumBanner}
-                  onClose={() => setShowPremiumBanner(false)}
-                  onCheckPlans={() => openModal('coinPurchase')}
-                  currentCoins={coins}
-                />
-              </div>
-            )
+              <PremiumBanner
+                isVisible={showPremiumBanner}
+                onClose={() => setShowPremiumBanner(false)}
+                onCheckPlans={() => openModal('coinPurchase')}
+                currentCoins={coins}
+              />
+            </div>
           } />
         </Routes>
       </Suspense>
@@ -409,6 +408,7 @@ function App() {
 const AuthCallback = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const hasExchanged = React.useRef(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     // Check for error parameters in the URL first (common in OAuth failures)
@@ -440,18 +440,18 @@ const AuthCallback = () => {
           hasExchanged.current = true;
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
-          window.location.href = '/';
+          navigate('/', { replace: true });
         } else {
           // If no code, check if session already exists
           const { data: { session }, error } = await supabase.auth.getSession();
           if (error) throw error;
           if (session) {
-            window.location.href = '/';
+            navigate('/', { replace: true });
           } else {
-            // Wait briefly for background recovery
+            // Fallback: If no session after 3 seconds, redirect to home
             const timer = setTimeout(() => {
-              window.location.href = '/';
-            }, 2000);
+              navigate('/', { replace: true });
+            }, 3000);
             return () => clearTimeout(timer);
           }
         }
@@ -462,7 +462,7 @@ const AuthCallback = () => {
     };
 
     processAuth();
-  }, []);
+  }, [navigate]);
 
   if (errorMsg) {
     return (
@@ -476,7 +476,7 @@ const AuthCallback = () => {
           <h2 className="text-xl font-bold text-slate-900 mb-2">로그인 실패</h2>
           <p className="text-slate-600 mb-6">{errorMsg}</p>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => navigate('/')}
             className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
           >
             메인으로 돌아가기

@@ -9,6 +9,12 @@ export const useAuth = () => {
     const fetchOrCreateProfile = async (session: Session) => {
         try {
             const { user } = session;
+
+            // Optimization: If profile metadata already exists in the session, skip fetching
+            if (user.user_metadata?.mbti && user.user_metadata?.birth_date) {
+                return;
+            }
+
             const { data: profile, error: fetchError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -36,6 +42,7 @@ export const useAuth = () => {
             }
         } catch (error) {
             console.error('Profile init error:', error);
+            // Non-blocking error
         }
     };
 
@@ -64,7 +71,7 @@ export const useAuth = () => {
                 if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
                     await fetchOrCreateProfile(currentSession);
                 }
-                setLoading(false);
+                setLoading(false); // Ensure loading is false on any auth change
             }
         });
 
