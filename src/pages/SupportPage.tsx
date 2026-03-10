@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle, RotateCcw, CreditCard, AlertTriangle, HelpCircle, User } from 'lucide-react';
+import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle, RotateCcw, CreditCard, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Inquiry {

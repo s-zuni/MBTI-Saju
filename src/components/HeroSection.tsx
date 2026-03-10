@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import mysticalBg from '../assets/mystical_hero_bg.png';

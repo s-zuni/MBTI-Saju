@@ -1,9 +1,6 @@
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
-import { useModalStore } from '../hooks/useModalStore';
 
 const Footer = () => {
-  const { openModal } = useModalStore();
 
   return (
     <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-20">
