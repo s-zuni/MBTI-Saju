@@ -255,13 +255,25 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {analysis.fiveElements.elements.map((el: any, idx: number) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
-                        <td className="px-4 py-3 text-center font-black text-indigo-600">{el.count}</td>
-                        <td className="px-4 py-3 text-slate-600">{el.interpretation}</td>
-                      </tr>
-                    ))}
+                    {analysis.fiveElements.elements.map((el: any, idx: number) => {
+                      // 실제 사주 데이터에서 오행 수치 가져오기
+                      const getElementCount = (name: string) => {
+                        if (!analysis.saju?.elements) return el.count;
+                        const mapping: Record<string, keyof typeof analysis.saju.elements> = {
+                          '목(木)': 'wood', '화(火)': 'fire', '토(土)': 'earth', '금(金)': 'metal', '수(水)': 'water'
+                        };
+                        const key = mapping[el.element];
+                        return key ? analysis.saju.elements[key] : el.count;
+                      };
+
+                      return (
+                        <tr key={idx}>
+                          <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
+                          <td className="px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
+                          <td className="px-4 py-3 text-slate-600">{el.interpretation}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -418,7 +430,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <Sparkles className="w-4 h-4" /> Comprehensive Analysis
               </div>
               <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
-                SOUL REPORT
+                운명 리포트
               </h3>
             </div>
             <div className="flex items-center gap-3 pb-1">
@@ -452,21 +464,21 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               onClick={() => setActiveTab('soul')}
               className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'soul' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              General Perspective
+              종합 분석
               {activeTab === 'soul' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
             </button>
             <button
               onClick={() => setActiveTab('mbti')}
               className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'mbti' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              MBTI Depth
+              MBTI 심층
               {activeTab === 'mbti' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
             </button>
             <button
               onClick={() => setActiveTab('saju')}
               className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'saju' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Saju Depth
+              사주 심층
               {activeTab === 'saju' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
             </button>
           </div>

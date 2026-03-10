@@ -73,7 +73,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                                 <Briefcase className="w-4 h-4" /> Career Destiny
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
-                                Vocational Report
+                                천직 분석 리포트
                             </h3>
                         </div>
                     </div>

@@ -122,7 +122,7 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
                                 <Wind className="w-4 h-4" /> Spiritual Sanctuary
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
-                                Healing Map
+                                힐링 명당 지도
                             </h3>
                         </div>
                     </div>

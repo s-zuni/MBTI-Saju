@@ -53,19 +53,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 "yearlyFortune": {
                     "title": "2026년(丙午年) 종합운세 흐름",
                     "theme": "A poetic and artistic theme for 2026",
-                    "yearlyElementAnalysis": "Deep analysis of how 2026's energy interacts with the user's Saju. Mention '2026년' explicitly. (300+ characters)",
-                    "overview": "Comprehensive and detailed overview of the year's fortune (800+ characters). Focus on specific turning points, opportunities, and psychological shifts.",
+                    "yearlyElementAnalysis": "2026년의 기운과 사주의 상호작용을 **개괄식**으로 분석 (300+ chars)",
+                    "overview": "이해하기 쉬운 **블렛포인트(개괄식)** 구조의 종합 운세 (800+ chars). 구체적인 변곡점과 기회 요소를 서술.",
                     "keywords": ["4-5 key trendy themes"]
                 },
                 "monthlyFortune": {
                     "title": "2026년 월별 상세 흐름 및 가이드",
                     "months": [
-                        {"period": "1~2월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"},
-                        {"period": "3~4월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"},
-                        {"period": "5~6월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"},
-                        {"period": "7~8월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"},
-                        {"period": "9~10월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"},
-                        {"period": "11~12월", "energy": "energy name", "guide": "Detailed guide for these months (250+ characters)"}
+                        {"period": "1~2월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"},
+                        {"period": "3~4월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"},
+                        {"period": "5~6월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"},
+                        {"period": "7~8월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"},
+                        {"period": "9~10월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"},
+                        {"period": "11~12월", "energy": "energy name", "guide": "핵심 요약 형식의 상세 가이드 (250+ characters)"}
                     ]
                 }
             }

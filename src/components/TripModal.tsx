@@ -127,7 +127,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                 <Plane className="w-4 h-4" /> Destination Guidance
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
-                                Travel Plan
+                                운명 여행 플랜
                             </h3>
                         </div>
                     </div>

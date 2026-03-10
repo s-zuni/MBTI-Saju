@@ -53,31 +53,31 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 "warnings": {
                     "title": "2026년 주의사항 및 금기사항",
                     "watchOut": [
-                        {"title": "Specific Warning 1", "description": "Highly detailed behavior-based warning (150+ characters)"},
-                        {"title": "Specific Warning 2", "description": "Highly detailed behavior-based warning (150+ characters)"}
+                        {"title": "Specific Warning 1", "description": "**블렛포인트**를 활용한 구체적 행동 지침 (150+ chars)"},
+                        {"title": "Specific Warning 2", "description": "**블렛포인트**를 활용한 구체적 행동 지침 (150+ chars)"}
                     ],
                     "avoid": [
-                        {"title": "Specific Avoidance 1", "description": "Detailed advice on what to avoid (150+ characters)"},
-                        {"title": "Specific Avoidance 2", "description": "Detailed advice on what to avoid (150+ characters)"}
+                        {"title": "Specific Avoidance 1", "description": "**블렛포인트**를 활용한 상세 조언 (150+ chars)"},
+                        {"title": "Specific Avoidance 2", "description": "**블렛포인트**를 활용한 상세 조언 (150+ chars)"}
                     ]
                 },
                 "fieldStrategies": {
                     "title": "분야별 전략: 연애 & 직업 & 재물",
                     "love": { 
                         "subtitle": "연애운", 
-                        "analysis": "Specific romance and relationship strategy. Focus on how to attract or maintain relationships using their unique energy. (300+ characters)", 
+                        "analysis": "연애/관계 전략을 **개괄식**으로 기술 (300+ characters)", 
                         "advice": "Actionable advice",
                         "keywords": ["love keywords"]
                     },
                     "career": { 
                         "subtitle": "직업운", 
-                        "analysis": "Professional and detailed career strategy based on the fusion of user's MBTI cognitive functions and Saju energy. (300+ characters)", 
+                        "analysis": "성향과 에너지를 융합한 직업 전략을 **개괄식**으로 기술 (300+ characters)", 
                         "advice": "Actionable advice",
                         "keywords": ["career keywords"]
                     },
                     "wealth": { 
                         "subtitle": "재물운", 
-                        "analysis": "Financial and wealth-building strategy. When to invest or save based on their fortune flow. (300+ characters)", 
+                        "analysis": "재무/투자 전략을 **개괄식**으로 기술 (300+ characters)", 
                         "advice": "Wealth management advice",
                         "keywords": ["wealth keywords"]
                     }
