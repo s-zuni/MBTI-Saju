@@ -54,7 +54,9 @@ const AdminLoginPage: React.FC = () => {
 
                 if (profile?.role !== 'admin') {
                     await supabase.auth.signOut();
-                    throw new Error(`관리자 권한이 없습니다. (현재 역할: ${profile?.role || '없음'})`);
+                    alert(`관리자 권한이 없습니다. (현재 역할: ${profile?.role || '없음'})`);
+                    navigate('/');
+                    return;
                 }
 
                 navigate('/admin');

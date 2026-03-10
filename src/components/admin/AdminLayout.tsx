@@ -25,6 +25,8 @@ const AdminLayout: React.FC = () => {
                 .single();
 
             if (error || profile?.role !== 'admin') {
+                setIsAdmin(false);
+                setLoading(false);
                 alert('관리자 권한이 없습니다.');
                 navigate('/');
                 return;
