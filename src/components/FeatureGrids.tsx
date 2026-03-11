@@ -12,7 +12,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     const { openModal } = useModalStore();
-    const { credits: credits } = useCredits(session);
+    const { credits } = useCredits(session);
 
     const checkCreditsAndOpen = (cost: number, openFn: () => void) => {
         if (!session) {

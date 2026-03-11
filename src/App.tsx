@@ -61,7 +61,7 @@ function App() {
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
   const { tier } = useSubscription(session);
-  const { credits: credits, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
+  const { credits, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   // Check if profile needs completion
