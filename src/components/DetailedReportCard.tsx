@@ -212,7 +212,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                                     "{analysis.yearlyFortune.theme}"
                                 </h3>
                             )}
-                            <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                            <p className="text-slate-300 text-sm leading-relaxed mb-6 whitespace-pre-line">
                                 {analysis.yearlyFortune?.overview || analysis.fortune2026}
                             </p>
                             {analysis.yearlyFortune?.keywords && (

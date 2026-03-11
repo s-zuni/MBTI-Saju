@@ -228,7 +228,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         <Icon className="w-6 h-6 text-indigo-500" />
         <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
       </div>
-      <p className={`text-slate-600 leading-relaxed font-medium ${isLongText ? 'whitespace-pre-line' : ''}`}>{content}</p>
+      <p className={`text-slate-600 leading-relaxed font-medium whitespace-pre-line`}>{content}</p>
     </div>
   );
 
@@ -409,7 +409,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
               </div>
             )}
 
-            {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
+                    {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
             {(analysis.deepIntegration || (analysis as any).commonalities) &&
               renderAnalysisSection(Users, "두 결과의 공통점 및 융합 분석",
                 analysis.deepIntegration?.integrationPoints?.map(p => p.content).join('\n\n') || (analysis as any).commonalities, true)

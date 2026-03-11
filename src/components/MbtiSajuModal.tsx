@@ -233,7 +233,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   {analysis.nature?.dayMasterAnalysis && <p>• 일간: {analysis.nature.dayMasterAnalysis}</p>}
                   {analysis.nature?.dayBranchAnalysis && <p>• 일지: {analysis.nature.dayBranchAnalysis}</p>}
                   {analysis.nature?.monthBranchAnalysis && <p>• 월지: {analysis.nature.monthBranchAnalysis}</p>}
-                  {!analysis.nature && analysis.sajuReading && <p className="whitespace-pre-wrap">{analysis.sajuReading}</p>}
+                  {!analysis.nature && analysis.sajuReading && <p className="whitespace-pre-line">{analysis.sajuReading}</p>}
                 </div>
               </div>
             </section>
@@ -290,7 +290,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.deepIntegration.integrationPoints?.map((p: any, i: number) => (
                   <div key={i} className="report-card">
                     <h5 className="font-bold text-slate-900 mb-2">{p.subtitle}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed">{p.content}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
                   </div>
                 ))}
               </div>
@@ -308,7 +308,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <h5 className="text-2xl font-black mb-6 italic leading-tight">
                   {analysis.yearlyFortune?.theme ? `"${analysis.yearlyFortune.theme}"` : "2026년 대운세 흐름"}
                 </h5>
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
                   {analysis.yearlyFortune?.overview || analysis.fortune2026}
                 </p>
               </div>
@@ -449,11 +449,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
 
           <div className="mt-6 flex flex-wrap gap-2 justify-start">
-            {analysis?.keywords?.split(',').map((k: string, i: number) => (
-              <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg text-[11px] font-bold border border-slate-100 uppercase tracking-wider">
-                #{k.trim()}
+            {analysis?.keywords && (
+              <span className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg text-[11px] font-bold border border-slate-100 uppercase tracking-wider">
+                #{analysis.keywords.trim()}
               </span>
-            ))}
+            )}
           </div>
         </div>
 
@@ -543,7 +543,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               mbti={analysis.mbti}
               sajuElement={SAJU_ELEMENTS[currentSajuKey]}
               sajuTrait="타고난 운명과 후천적 성격의 조화"
-              keywords={analysis.keywords?.split(',') || []}
+              keywords={analysis.keywords ? [analysis.keywords.trim()] : []}
             />
           </div>
         )}
