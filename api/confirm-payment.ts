@@ -75,23 +75,24 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
                 return res.status(500).json({ message: '결제는 완료되었으나 주문 기록에 실패했습니다.', error: orderError });
             }
 
-            // 2-2. 사용자 코인 증감
+            // 2-2. credit_purchases 테이블에 기록 (Frontend hook과 연동)
             if (addCoins > 0) {
-                const { data: profile, error: profileErr } = await supabaseAdmin
-                    .from('profiles')
-                    .select('coins')
-                    .eq('id', userId)
-                    .single();
+                const { error: purchaseError } = await supabaseAdmin
+                    .from('credit_purchases')
+                    .insert({
+                        user_id: userId,
+                        plan_id: productId === 'custom_coin' ? null : productId,
+                        purchased_credits: addCoins,
+                        remaining_credits: addCoins,
+                        price_paid: amount,
+                        payment_id: paymentKey,
+                        status: 'active'
+                    });
 
-                if (profileErr) {
-                    console.error('Profile Fetch Error:', profileErr);
-                } else if (profile) {
-                    const { error: updateErr } = await supabaseAdmin
-                        .from('profiles')
-                        .update({ coins: (profile.coins || 0) + addCoins })
-                        .eq('id', userId);
-
-                    if (updateErr) console.error('Profile Update Error:', updateErr);
+                if (purchaseError) {
+                    console.error('Credit Purchase Insert Error:', purchaseError);
+                    // Critical failure because coins won't show up otherwise
+                    return res.status(500).json({ message: '결제는 완료되었으나 크레딧 지급에 실패했습니다.', error: purchaseError });
                 }
             }
         }
