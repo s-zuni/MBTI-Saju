@@ -34,7 +34,6 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
 
         let heightLeft = imgHeight;
         let position = 0;
-        let page = 1;
 
         // 첫 페이지 여백 및 콘텐츠 추가
         pdf.addImage(
@@ -60,7 +59,6 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
                 imgHeight
             );
             heightLeft -= contentHeight;
-            page++;
         }
 
         pdf.save(`${fileName}.pdf`);
