@@ -16,7 +16,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
     if (!analysis) return null;
 
     return (
-        <div ref={ref} className="w-[850px] bg-white p-20 text-slate-900 relative shadow-none font-sans report-container overflow-hidden">
+        <div ref={ref} className="w-[850px] bg-white p-24 text-slate-900 relative shadow-none font-sans report-container pdf-report-container overflow-hidden">
             {/* Background Decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-50"></div>
@@ -68,8 +68,8 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
             <div className="space-y-16">
                 {/* 1. 본성 (Nature) */}
                 {(analysis.nature || analysis.sajuReading) && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
                             <ScrollText className="w-5 h-5 text-indigo-600" /> 01. 본성 (Nature): 선천적 기질 진단
                         </h2>
                         <div className="report-card bg-slate-50/30">
@@ -98,8 +98,8 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
 
                 {/* 2. 오행 (Five Elements) */}
                 {analysis.fiveElements?.elements && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
                             <Layers className="w-5 h-5 text-indigo-600" /> 02. 에너지 밸런스 점검
                         </h2>
                         <div className="report-card p-0 overflow-hidden border-slate-200">
@@ -127,8 +127,8 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
 
                 {/* 3. 페르소나 (Persona) */}
                 {(analysis.persona || analysis.mbtiCompatibility) && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
                             <Brain className="w-5 h-5 text-indigo-600" /> 03. 페르소나 (Persona): 사회적 자아 분석
                         </h2>
                         <div className="report-card bg-indigo-50/20 border-indigo-100">
@@ -158,8 +158,8 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
 
                 {/* 3.1. 연애 & 소울메이트 (Romance) - NEW SECTION */}
                 {analysis.romanceDepth && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
                             <Heart className="w-5 h-5 text-rose-500" /> 04. 심층 연애 & 소울메이트 분석
                         </h2>
                         <div className="space-y-6">
@@ -183,9 +183,9 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
 
                 {/* 4. 융합 진단 (Integration) */}
                 {analysis.deepIntegration && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
-                            <Zap className="w-5 h-5 text-indigo-600" /> 04. 심층 융합 진단
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
+                            <Zap className="w-5 h-5 text-indigo-600" /> 05. 심층 융합 진단
                         </h2>
                         <div className="space-y-4">
                             {analysis.deepIntegration.integrationPoints?.map((point: any, idx: number) => (
@@ -201,9 +201,9 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
 
                 {/* 5. 연간 운세 (Fortune) */}
                 {(analysis.yearlyFortune || analysis.fortune2026) && (
-                    <div className="report-section">
-                        <h2 className="report-section-title">
-                            <Calendar className="w-5 h-5 text-indigo-600" /> 05. 연간 운세 및 흐름 리포트
+                    <div className="report-section mb-20">
+                        <h2 className="report-section-title mb-8">
+                            <Calendar className="w-5 h-5 text-indigo-600" /> 06. 연간 운세 및 흐름 리포트
                         </h2>
                         <div className="report-card border-none bg-indigo-950 text-white p-10">
                             {analysis.yearlyFortune?.theme && (
