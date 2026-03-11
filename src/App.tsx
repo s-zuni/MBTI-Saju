@@ -442,32 +442,41 @@ const AuthCallback = () => {
     }
 
     const processAuth = async () => {
-      // Prevent double execution in React Strict Mode (code is single-use)
+      // Prevent double execution
       if (hasExchanged.current) return;
 
       try {
+        // 1. Handle PKCE code exchange if present
         if (code) {
           hasExchanged.current = true;
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
           navigate('/', { replace: true });
+        } 
+        // 2. No code? Check if session already exists (Implicit flow or session cookie)
+        else {
+          const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          
+          if (existingSession) {
+            navigate('/', { replace: true });
           } else {
-            // Check if there's a session even without a code (e.g., implicit flow or slow mobile redirect)
-            const { data: { session: existingSession } } = await supabase.auth.getSession();
-            if (existingSession) {
+            // Failsafe: Wait a bit more for slow mobile redirects
+            const timer = setTimeout(() => {
               navigate('/', { replace: true });
-            } else {
-              // Fallback: If no session after 5 seconds, redirect to home
-              // On mobile, sometimes the redirect doesn't trigger immediately
-              // This is a failsafe to ensure the loading state doesn't stay forever
-              // but the actual redirect is handled by Supabase internal logic.
-              const timer = setTimeout(() => {
-                navigate('/', { replace: true });
-              }, 5000);
-              return () => clearTimeout(timer);
-            }
+            }, 4000);
+            return () => clearTimeout(timer);
           }
+        }
       } catch (err: any) {
+        // If the error is specific to PKCE storage, try to just check current session
+        if (err.message?.includes('verifier not found')) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            navigate('/', { replace: true });
+            return;
+          }
+        }
         console.error('Auth processing error:', err);
         setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
       }

@@ -26,7 +26,7 @@ export const supabase = createClient(
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            flowType: 'pkce'
+            flowType: 'implicit' // Switch to implicit for better in-app browser compatibility
         }
     }
 );
