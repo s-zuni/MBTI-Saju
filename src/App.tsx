@@ -451,20 +451,22 @@ const AuthCallback = () => {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
           navigate('/', { replace: true });
-        } else {
-          // If no code, check if session already exists
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (error) throw error;
-          if (session) {
-            navigate('/', { replace: true });
           } else {
-            // Fallback: If no session after 3 seconds, redirect to home
-            const timer = setTimeout(() => {
+            // Check if there's a session even without a code (e.g., implicit flow or slow mobile redirect)
+            const { data: { session: existingSession } } = await supabase.auth.getSession();
+            if (existingSession) {
               navigate('/', { replace: true });
-            }, 3000);
-            return () => clearTimeout(timer);
+            } else {
+              // Fallback: If no session after 5 seconds, redirect to home
+              // On mobile, sometimes the redirect doesn't trigger immediately
+              // This is a failsafe to ensure the loading state doesn't stay forever
+              // but the actual redirect is handled by Supabase internal logic.
+              const timer = setTimeout(() => {
+                navigate('/', { replace: true });
+              }, 5000);
+              return () => clearTimeout(timer);
+            }
           }
-        }
       } catch (err: any) {
         console.error('Auth processing error:', err);
         setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');

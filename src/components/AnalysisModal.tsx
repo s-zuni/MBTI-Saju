@@ -427,11 +427,10 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       });
 
       if (error) throw error;
-      // Do not setLoading(false) here immediately, let the page redirect.
-      // However, add a failsafe in case the redirect is blocked by the browser.
-      setTimeout(() => {
-        setLoading(false);
-      }, 5000);
+      
+      // On mobile, sometimes the redirect doesn't trigger immediately.
+      // We rely on Supabase's internal redirect logic which is now optimized via PKCE.
+      console.log(`${provider} login initiated`);
     } catch (error: any) {
       setAuthError(error.message || `${provider} 로그인/회원가입 중 에러가 발생했습니다.`);
       console.error(`${provider} Auth Error:`, error);
