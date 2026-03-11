@@ -4,22 +4,22 @@ import { supabase } from '../supabaseClient';
 import { requestPayment } from '../utils/paymentHandlers';
 import type { PricingPlan } from '../hooks/useCredits';
 
-interface CoinPurchaseModalProps {
+interface CreditPurchaseModalProps {
     isOpen: boolean;
     onClose: () => void;
     userEmail: string | undefined;
     onSuccess: (planId: string, pricePaid: number, credits: number, paymentId: string) => void;
-    requiredCoins?: number;
-    currentCoins?: number;
+    requiredCredits?: number;
+    currentCredits?: number;
 }
 
-const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
+const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     isOpen,
     onClose,
     userEmail,
     onSuccess,
-    requiredCoins,
-    currentCoins = 0
+    requiredCredits,
+    currentCredits = 0,
 }) => {
     const [plans, setPlans] = useState<PricingPlan[]>([]);
     const [plansLoading, setPlansLoading] = useState(true);
@@ -54,7 +54,7 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
 
     if (!isOpen) return null;
 
-    const needsMore = requiredCoins ? requiredCoins - currentCoins : 0;
+    const needsMore = requiredCredits ? requiredCredits - currentCredits : 0;
 
     const handlePurchase = async (plan: PricingPlan) => {
         if (!userEmail) {
@@ -129,12 +129,12 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                     </div>
                 </div>
 
-                {/* Coin Shortage Warning */}
-                {requiredCoins && needsMore > 0 && (
+                {/* Credit Shortage Warning */}
+                {requiredCredits && needsMore > 0 && (
                     <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-100 rounded-xl">
                         <p className="text-sm text-red-600 font-medium">
-                            💡 이 서비스 이용에 <span className="font-bold">{requiredCoins}크레딧</span>이 필요합니다.
-                            현재 {currentCoins}크레딧 보유 중 (<span className="font-bold">{needsMore}크레딧</span> 부족)
+                            💡 이 서비스 이용에 <span className="font-bold">{requiredCredits}크레딧</span>이 필요합니다.
+                            현재 {currentCredits}크레딧 보유 중 (<span className="font-bold">{needsMore}크레딧</span> 부족)
                         </p>
                     </div>
                 )}
@@ -151,7 +151,7 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                         plans.map((plan) => {
                             const discountPercent = getDiscountPercent(plan);
                             const isSelected = selectedPlanId === plan.id;
-                            const meetsRequirement = requiredCoins ? (currentCoins + plan.credits >= requiredCoins) : true;
+                            const meetsRequirement = requiredCredits ? (currentCredits + plan.credits >= requiredCredits) : true;
 
                             return (
                                 <button
@@ -166,7 +166,7 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                                             : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/50'
                                         }
                                         ${isProcessing && isSelected ? 'opacity-70' : ''}
-                                        ${meetsRequirement && requiredCoins ? 'ring-2 ring-green-400 ring-offset-1' : ''}
+                                        ${meetsRequirement && requiredCredits ? 'ring-2 ring-green-400 ring-offset-1' : ''}
                                     `}
                                 >
                                     <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                                                         BEST
                                                     </span>
                                                 )}
-                                                {meetsRequirement && requiredCoins && (
+                                                {meetsRequirement && requiredCredits && (
                                                     <Check className="w-4 h-4 text-green-500" />
                                                 )}
                                             </div>
@@ -221,7 +221,7 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
                     <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl">
                         <Zap className="w-4 h-4 text-amber-500" />
                         <span className="text-sm text-slate-600">
-                            현재 보유: <span className="font-bold text-slate-900">{currentCoins} 크레딧</span>
+                            현재 보유: <span className="font-bold text-slate-900">{currentCredits} 크레딧</span>
                         </span>
                     </div>
 
@@ -235,4 +235,4 @@ const CoinPurchaseModal: React.FC<CoinPurchaseModalProps> = ({
     );
 };
 
-export default CoinPurchaseModal;
+export default CreditPurchaseModal;

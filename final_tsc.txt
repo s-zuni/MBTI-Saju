@@ -1,0 +1,15 @@
+src/components/CreditPurchaseModal.tsx(2,19): error TS1005: ',' expected.
+src/components/CreditPurchaseModal.tsx(22,5): error TS1005: ',' expected.
+src/components/FortuneModal.tsx(2,16): error TS1005: ',' expected.
+src/components/MyPage.tsx(4,33): error TS1005: ',' expected.
+src/components/MyPage.tsx(77,64): error TS1005: ',' expected.
+src/components/PremiumBanner.tsx(2,16): error TS1005: ',' expected.
+src/pages/admin/AdminInquiries.tsx(11,5): error TS1005: ',' expected.
+src/pages/admin/AdminInquiries.tsx(34,24): error TS1005: ',' expected.
+src/pages/admin/AdminInquiries.tsx(88,21): error TS1005: ',' expected.
+src/pages/admin/AdminInquiries.tsx(105,80): error TS1005: ',' expected.
+src/pages/admin/PlanManagement.tsx(10,5): error TS1005: ',' expected.
+src/pages/ChatPage.tsx(2,69): error TS1005: ',' expected.
+src/pages/ChatPage.tsx(24,56): error TS1005: ',' expected.
+src/pages/ChatPage.tsx(24,91): error TS1005: ',' expected.
+src/pages/PricingPage.tsx(4,16): error TS1005: ',' expected.

@@ -36,7 +36,7 @@ export default function SuccessPage() {
                 if (response.ok) {
                     setStatus('success');
                     setMessage('결제가 성공적으로 반영되었습니다.');
-                    refreshCredits(); // Refresh coins after success
+                    refreshCredits(); // Refresh credits after success
                 } else {
                     const errorData = await response.json();
                     setStatus('fail');

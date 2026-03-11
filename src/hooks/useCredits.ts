@@ -81,15 +81,20 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setPurchases(activePurchases);
             const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
-            // profiles.coins도 함께 조회하여 합산
-            const { data: profile } = await supabase
+            // profiles 테이블도 함께 조회하여 합산 (에러 방지를 위해 list로 가져옴)
+            const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
-                .select('coins')
-                .eq('id', session.user.id)
-                .single();
+                .select('credits')
+                .eq('id', session.user.id);
 
-            const coins = profile?.coins ?? 0;
-            setCredits(totalCredits + coins);
+            let profileCredits = 0;
+            if (profileError) {
+                console.error('Error fetching profile for credits:', profileError);
+            } else if (profileData && profileData.length > 0) {
+                profileCredits = profileData[0]?.credits ?? 0;
+            }
+
+            setCredits(totalCredits + profileCredits);
         } catch (err) {
             console.error('Error fetching credits:', err);
             setCredits(0);
@@ -123,22 +128,31 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         try {
             let remainingCost = cost;
 
-            // 1. profiles.coins 우선 차감
-            const { data: profile } = await supabase
+            // 1. profiles.credits 우선 차감
+            const { data: profileData, error: profileFetchError } = await supabase
                 .from('profiles')
-                .select('coins')
-                .eq('id', session.user.id)
-                .single();
+                .select('credits')
+                .eq('id', session.user.id);
 
-            const currentProfileCoins = profile?.coins ?? 0;
+            if (profileFetchError) {
+                 console.error('Profile fetch error during deduction:', profileFetchError);
+            }
 
-            if (currentProfileCoins > 0) {
-                const deductFromProfile = Math.min(currentProfileCoins, remainingCost);
+            let profileToUpdate: any = null;
+            let currentProfileCredits = 0;
+
+            if (profileData && profileData.length > 0) {
+                profileToUpdate = profileData[0];
+                currentProfileCredits = profileToUpdate?.credits ?? 0;
+            }
+
+            if (currentProfileCredits > 0 && remainingCost > 0) {
+                const deductFromProfile = Math.min(currentProfileCredits, remainingCost);
                 remainingCost -= deductFromProfile;
 
                 const { error: profileUpdateError } = await supabase
                     .from('profiles')
-                    .update({ coins: currentProfileCoins - deductFromProfile })
+                    .update({ credits: currentProfileCredits - deductFromProfile })
                     .eq('id', session.user.id);
 
                 if (profileUpdateError) throw profileUpdateError;

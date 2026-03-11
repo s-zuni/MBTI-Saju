@@ -14,7 +14,7 @@ interface Profile {
     id: string;
     name: string;
     email: string;
-    coins: number;
+    credits?: number;
     role: string;
     created_at: string;
 }
@@ -24,7 +24,7 @@ const UserManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<Profile | null>(null);
-    const [newCoins, setNewCoins] = useState<number>(0);
+    const [newCredits, setNewCredits] = useState<number>(0);
     const [newRole, setNewRole] = useState<string>('user');
 
     const fetchUsers = async () => {
@@ -52,12 +52,12 @@ const UserManagement: React.FC = () => {
         if (!editingUser) return;
 
         try {
+            // Since we unified to credits, we explicitly update the 'credits' column
+            const updatePayload: any = { role: newRole, credits: newCredits };
+
             const { error } = await supabase
                 .from('profiles')
-                .update({
-                    coins: newCoins,
-                    role: newRole
-                })
+                .update(updatePayload)
                 .eq('id', editingUser.id);
 
             if (error) throw error;
@@ -102,7 +102,7 @@ const UserManagement: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">사용자</th>
-                                <th className="px-6 py-4 text-sm font-bold text-slate-400">보유 코인</th>
+                                <th className="px-6 py-4 text-sm font-bold text-slate-400">보유 크레딧</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">권한</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">가입일</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">관리</th>
@@ -136,7 +136,7 @@ const UserManagement: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5 font-bold text-slate-700">
                                                 <Coins size={16} className="text-amber-500" />
-                                                {user.coins?.toLocaleString()}
+                                                {(user.credits ?? 0).toLocaleString()}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -153,7 +153,7 @@ const UserManagement: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         setEditingUser(user);
-                                                        setNewCoins(user.coins || 0);
+                                                        setNewCredits(user.credits ?? 0);
                                                         setNewRole(user.role || 'user');
                                                     }}
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
@@ -196,13 +196,13 @@ const UserManagement: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-400 ml-1">보유 코인</label>
+                                <label className="text-sm font-bold text-slate-400 ml-1">보유 크레딧</label>
                                 <div className="relative">
                                     <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                     <input
                                         type="number"
-                                        value={newCoins}
-                                        onChange={(e) => setNewCoins(parseInt(e.target.value) || 0)}
+                                        value={newCredits}
+                                        onChange={(e) => setNewCredits(parseInt(e.target.value) || 0)}
                                         className="w-full bg-slate-50 border-none pl-12 pr-4 py-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none"
                                     />
                                 </div>

@@ -12,10 +12,10 @@ interface FortuneModalProps {
     tomorrow: { fortune: string; lucky: { color: string; number: string; direction: string }; mission?: string };
   } | null;
   loading: boolean;
-  // 코인 관련 props
-  coins: number;
-  onUseCoin: (serviceType: 'FORTUNE_TOMORROW') => Promise<boolean>;
-  onOpenCoinPurchase: (requiredCoins: number) => void;
+  // 크레딧 관련 props
+  credits: number;
+  onUseCredit: (serviceType: 'FORTUNE_TOMORROW') => Promise<boolean>;
+  onOpenCreditPurchase: (requiredCredits: number) => void;
 }
 
 const FortuneModal: React.FC<FortuneModalProps> = ({
@@ -24,9 +24,9 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
   onNavigate,
   fortune,
   loading,
-  coins,
-  onUseCoin,
-  onOpenCoinPurchase
+  credits,
+  onUseCredit,
+  onOpenCreditPurchase
 }) => {
   const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
   const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
@@ -58,21 +58,21 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
       return;
     }
 
-    // 이미 내일 운세 탭인데 잠금 해제 안됨 -> 코인 차감 시도
-    if (coins < tomorrowCost) {
-      onOpenCoinPurchase(tomorrowCost);
+    // 이미 내일 운세 탭인데 잠금 해제 안됨 -> 크레딧 차감 시도
+    if (credits < tomorrowCost) {
+      onOpenCreditPurchase(tomorrowCost);
       return;
     }
 
     setIsUnlocking(true);
-    const success = await onUseCoin('FORTUNE_TOMORROW');
+    const success = await onUseCredit('FORTUNE_TOMORROW');
     setIsUnlocking(false);
 
     if (success) {
       setTomorrowUnlocked(true);
       setTab('tomorrow');
     } else {
-      alert('코인 차감에 실패했습니다. 다시 시도해주세요.');
+      alert('크레딧 차감에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -91,10 +91,10 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                 {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
               </p>
             </div>
-            {/* 코인 표시 */}
+            {/* 크레딧 표시 */}
             <div className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-600 rounded-full text-sm font-bold">
               <Coins className="w-4 h-4" />
-              {coins}
+              {credits}
             </div>
           </div>
 
@@ -149,7 +149,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               </div>
               <h4 className="text-lg font-bold text-slate-900 mb-2">내일 운세 미리보기</h4>
               <p className="text-sm text-slate-500 mb-4">
-                {tomorrowCost}코인으로 내일의 운세를 확인하세요
+                {tomorrowCost}크레딧으로 내일의 운세를 확인하세요
               </p>
               <button
                 onClick={handleTomorrowClick}
@@ -157,7 +157,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                 className="px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
               >
                 <Coins className="w-5 h-5" />
-                {coins >= tomorrowCost ? `${tomorrowCost}코인으로 잠금 해제` : '코인 충전하기'}
+                {credits >= tomorrowCost ? `${tomorrowCost}크레딧으로 잠금 해제` : '크레딧 충전하기'}
               </button>
             </div>
           ) : activeData ? (

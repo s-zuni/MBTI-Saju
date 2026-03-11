@@ -10,7 +10,7 @@ export type ModalType =
     | 'healing'
     | 'job'
     | 'tarot'
-    | 'coinPurchase'
+    | 'creditPurchase'
     | 'onboarding';
 
 export interface ModalState {
@@ -30,7 +30,7 @@ let globalModals: Record<string, ModalState> = {
     healing: { isOpen: false },
     job: { isOpen: false },
     tarot: { isOpen: false },
-    coinPurchase: { isOpen: false },
+    creditPurchase: { isOpen: false },
     onboarding: { isOpen: false },
 };
 

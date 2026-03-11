@@ -5,9 +5,9 @@ import { createSession, loadMessages, sendMessage, ChatMessage } from '../utils/
 import { useNavigate } from 'react-router-dom';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import CoinPurchaseModal from '../components/CoinPurchaseModal';
+import CreditPurchaseModal from '../components/CreditPurchaseModal';
 
-const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 코인 차감
+const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 크레딧 차감
 
 const ChatPage: React.FC = () => {
     const navigate = useNavigate();
@@ -20,11 +20,11 @@ const ChatPage: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [session, setSession] = useState<any>(null);
 
-    // 코인 시스템
-    const { credits: coins, useCredits: consumeCredits, purchaseCredits } = useCredits(session);
+    // 크레딧 시스템
+    const { credits, useCredits: consumeCredits, purchaseCredits } = useCredits(session);
     const [messageCount, setMessageCount] = useState(0); // 현재 세션 메시지 카운트
-    const [showCoinModal, setShowCoinModal] = useState(false);
-    const [showCoinWarning, setShowCoinWarning] = useState(false);
+    const [showCreditModal, setShowCreditModal] = useState(false);
+    const [showCreditWarning, setShowCreditWarning] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +81,7 @@ const ChatPage: React.FC = () => {
                     setMessageCount(0);
                 } else {
                     setMessages(history);
-                    // 사용자 메시지 수 계산 (10회마다 코인 차감을 위해)
+                    // 사용자 메시지 수 계산 (10회마다 크레딧 차감을 위해)
                     const userMsgCount = history.filter(m => m.role === 'user').length;
                     setMessageCount(userMsgCount % MESSAGES_PER_COIN_CHARGE);
                 }
@@ -121,19 +121,19 @@ const ChatPage: React.FC = () => {
         e?.preventDefault();
         if (!inputText.trim() || !sessionId || isTyping) return;
 
-        // 10회마다 코인 체크 (다음 메시지가 10의 배수일 때)
+        // 10회마다 크레딧 체크 (다음 메시지가 10의 배수일 때)
         const nextCount = messageCount + 1;
         if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
-            if (coins < SERVICE_COSTS.AI_CHAT_10) {
-                setShowCoinModal(true);
+            if (credits < SERVICE_COSTS.AI_CHAT_10) {
+                setShowCreditModal(true);
                 return;
             }
         }
 
-        // 코인 경고 표시 (9회째 메시지일 때)
+        // 크레딧 경고 표시 (9회째 메시지일 때)
         if ((messageCount + 1) % MESSAGES_PER_COIN_CHARGE === MESSAGES_PER_COIN_CHARGE - 1) {
-            setShowCoinWarning(true);
-            setTimeout(() => setShowCoinWarning(false), 5000);
+            setShowCreditWarning(true);
+            setTimeout(() => setShowCreditWarning(false), 5000);
         }
 
         const text = inputText;
@@ -159,11 +159,11 @@ const ChatPage: React.FC = () => {
             };
             setMessages(prev => [...prev, botMsg]);
 
-            // 10회 도달 시 코인 차감
+            // 10회 도달 시 크레딧 차감
             if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
                 const success = await consumeCredits('AI_CHAT_10');
                 if (!success) {
-                    console.error('Failed to spend coins for professional chat');
+                    console.error('Failed to spend credits for professional chat');
                 }
             }
         } catch (err) {
@@ -204,17 +204,17 @@ const ChatPage: React.FC = () => {
                         새로운 상담 시작
                     </button>
 
-                    {/* 코인 표시 */}
+                    {/* 크레딧 표시 */}
                     <div className="mb-4 p-3 bg-slate-800 rounded-xl">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-400">보유 코인</span>
+                            <span className="text-slate-400">보유 크레딧</span>
                             <div className="flex items-center gap-1 text-amber-400 font-bold">
                                 <Coins className="w-4 h-4" />
-                                {coins}
+                                {credits}
                             </div>
                         </div>
                         <div className="text-xs text-slate-500 mt-1">
-                            10회 대화 = 25코인
+                            10회 대화 = 25크레딧
                         </div>
                     </div>
 
@@ -255,7 +255,7 @@ const ChatPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
                             <Coins className="w-3 h-3" />
-                            {coins}
+                            {credits}
                         </div>
                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                             <Menu className="w-6 h-6" />
@@ -263,11 +263,11 @@ const ChatPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Coin Warning Banner */}
-                {showCoinWarning && (
+                {/* Credit Warning Banner */}
+                {showCreditWarning && (
                     <div className="absolute top-14 md:top-0 left-0 right-0 bg-amber-500 text-white p-3 flex items-center justify-center gap-2 z-10 animate-fade-in">
                         <AlertCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">다음 메시지 후 25코인이 차감됩니다 (현재: {coins}코인)</span>
+                        <span className="text-sm font-medium">다음 메시지 후 25크레딧이 차감됩니다 (현재: {credits}크레딧)</span>
                     </div>
                 )}
 
@@ -276,17 +276,17 @@ const ChatPage: React.FC = () => {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5 text-sm text-slate-600">
                             <Coins className="w-4 h-4 text-amber-500" />
-                            <span>보유: <strong className="text-slate-900">{coins}</strong> 코인</span>
+                            <span>보유: <strong className="text-slate-900">{credits}</strong> 크레딧</span>
                         </div>
                         <div className="text-sm text-slate-500">
                             남은 무료 메시지: <strong className="text-indigo-600">{remainingFreeMessages}회</strong>
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowCoinModal(true)}
+                        onClick={() => setShowCreditModal(true)}
                         className="text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full font-medium hover:bg-amber-200 transition-colors"
                     >
-                        + 코인 충전
+                        + 크레딧 충전
                     </button>
                 </div>
 
@@ -350,22 +350,22 @@ const ChatPage: React.FC = () => {
                             </button>
                         </form>
                         <p className="text-center text-xs text-slate-400 mt-2">
-                            분석 결과는 참고용이며, 10회 대화마다 25코인이 차감됩니다.
+                            분석 결과는 참고용이며, 10회 대화마다 25크레딧이 차감됩니다.
                         </p>
                     </div>
                 </div>
             </main>
 
-            {/* Coin Purchase Modal */}
-            <CoinPurchaseModal
-                isOpen={showCoinModal}
-                onClose={() => setShowCoinModal(false)}
+            {/* Credit Purchase Modal */}
+            <CreditPurchaseModal
+                isOpen={showCreditModal}
+                onClose={() => setShowCreditModal(false)}
                 userEmail={session?.user?.email}
-                currentCoins={coins}
-                requiredCoins={SERVICE_COSTS.AI_CHAT_10}
+                currentCredits={credits}
+                requiredCredits={SERVICE_COSTS.AI_CHAT_10}
                 onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                     await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
-                    setShowCoinModal(false);
+                    setShowCreditModal(false);
                 }}
             />
         </div>

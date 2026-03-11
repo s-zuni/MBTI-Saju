@@ -12,17 +12,17 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     const { openModal } = useModalStore();
-    const { credits: coins } = useCredits(session);
+    const { credits: credits } = useCredits(session);
 
-    const checkCoinsAndOpen = (cost: number, openFn: () => void) => {
+    const checkCreditsAndOpen = (cost: number, openFn: () => void) => {
         if (!session) {
             openModal('analysis', 'login');
             return;
         }
-        if (coins >= cost) {
+        if (credits >= cost) {
             openFn();
         } else {
-            openModal('coinPurchase', undefined, { requiredCoins: cost });
+            openModal('creditPurchase', undefined, { requiredCredits: cost });
         }
     };
 
@@ -44,10 +44,10 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
                     openModal('analysis', 'login');
                     return;
                 }
-                if (coins >= SERVICE_COSTS.AI_CHAT_10) {
+                if (credits >= SERVICE_COSTS.AI_CHAT_10) {
                     navigate('/chat');
                 } else {
-                    openModal('coinPurchase', undefined, { requiredCoins: SERVICE_COSTS.AI_CHAT_10 });
+                    openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_10 });
                 }
             },
         },
@@ -70,7 +70,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             label: '신비 타로',
             sub: '카드로 보는 미래',
             bg: 'from-cyan-500 to-blue-600',
-            action: () => checkCoinsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
+            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
     ];
 

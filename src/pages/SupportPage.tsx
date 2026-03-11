@@ -10,7 +10,7 @@ interface Inquiry {
     content: string;
     answer: string | null;
     status: 'pending' | 'answered';
-    coins_rewarded: number;
+    credits_rewarded: number;
     created_at: string;
     answered_at: string | null;
     user_id: string;

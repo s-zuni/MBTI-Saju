@@ -10,10 +10,10 @@ interface TarotModalProps {
     onClose: () => void;
     tier: Tier;
     onUpgradeRequired: () => void;
-    onUseCoin?: () => Promise<boolean>;
+    onUseCredit?: () => Promise<boolean>;
 }
 
-const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCoin }) => {
+const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit }) => {
     // New Steps: spread -> question -> shuffle -> select -> result
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
@@ -94,10 +94,10 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         setStep('result');
         setLoading(true);
 
-        if (onUseCoin) {
-            const success = await onUseCoin();
+        if (onUseCredit) {
+            const success = await onUseCredit();
             if (!success) {
-                alert("코인이 부족합니다.");
+                alert("크레딧이 부족합니다.");
                 setStep('select');
                 setSelectedCards([]);
                 setLoading(false);

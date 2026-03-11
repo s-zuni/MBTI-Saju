@@ -1,0 +1,2 @@
+src/components/MyPage.tsx(6,10): error TS2305: Module '"../hooks/useCredits"' has no exported member 'useCoins'.
+src/components/MyPage.tsx(77,40): error TS2552: Cannot find name 'useCredits'. Did you mean 'credits'?

@@ -1,0 +1,15 @@
+src/components/CreditPurchaseModal.tsx:2  ->  import { X, Coins Sparkles, Check, Zap, Loader2 } from 'lucide-react';
+src/components/CreditPurchaseModal.tsx:22  ->  currentCredits = 0
+src/components/FortuneModal.tsx:2  ->  import { Coins Lock } from 'lucide-react';
+src/components/MyPage.tsx:4  ->  import { Users, Sparkles, Coins Loader2, AlertCircle, Key, FileText } from 'lucide-react';
+src/components/MyPage.tsx:77  ->  const { credits: credits, purchaseCoins = useCredits(session);
+src/components/PremiumBanner.tsx:2  ->  import { Coins X } from 'lucide-react';
+src/pages/admin/AdminInquiries.tsx:11  ->  User,
+src/pages/admin/AdminInquiries.tsx:34  ->  const [rewardCoins setRewardCredits] = useState(0);
+src/pages/admin/AdminInquiries.tsx:88  ->  answered_at: new Date().toISOString()
+src/pages/admin/AdminInquiries.tsx:105  ->  .update({ credits: (profile.credits || 0) + rewardCoins)
+src/pages/admin/PlanManagement.tsx:10  ->  CreditCard
+src/pages/ChatPage.tsx:2  ->  import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare, Coins AlertCircle } from 'lucide-react';
+src/pages/ChatPage.tsx:24  ->  const { credits: credits, useCredits: consumeCoins purchaseCoins = useCredits(session);
+src/pages/ChatPage.tsx:24  ->  const { credits: credits, useCredits: consumeCoins purchaseCoins = useCredits(session);
+src/pages/PricingPage.tsx:4  ->  import { Coins Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';

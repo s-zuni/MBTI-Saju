@@ -20,7 +20,7 @@ interface Inquiry {
     content: string;
     answer: string | null;
     status: 'pending' | 'answered';
-    coins_rewarded: number;
+    credits_rewarded: number;
     created_at: string;
     answered_at: string | null;
     user_email?: string;
@@ -31,7 +31,7 @@ const AdminInquiries: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
     const [answerText, setAnswerText] = useState('');
-    const [rewardCoins, setRewardCoins] = useState(0);
+    const [rewardCredits, setRewardCredits] = useState(0);
     const [filter, setFilter] = useState<'all' | 'pending' | 'answered'>('all');
 
     const fetchInquiries = useCallback(async () => {
@@ -84,25 +84,25 @@ const AdminInquiries: React.FC = () => {
                 .update({
                     answer: answerText,
                     status: 'answered',
-                    coins_rewarded: rewardCoins,
-                    answered_at: new Date().toISOString()
+                    credits_rewarded: rewardCredits,
+                    answered_at: new Date().toISOString(),
                 })
                 .eq('id', selectedInquiry.id);
 
             if (updateError) throw updateError;
 
-            // If coins rewarded, update user profile
-            if (rewardCoins > 0) {
+            // If credits rewarded, update user profile
+            if (rewardCredits > 0) {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('coins')
+                    .select('credits')
                     .eq('id', selectedInquiry.user_id)
                     .single();
 
                 if (profile) {
                     await supabase
                         .from('profiles')
-                        .update({ coins: (profile.coins || 0) + rewardCoins })
+                        .update({ credits: (profile.credits || 0) + rewardCredits })
                         .eq('id', selectedInquiry.user_id);
                 }
             }
@@ -110,7 +110,7 @@ const AdminInquiries: React.FC = () => {
             alert('답변이 등록되었습니다.');
             setSelectedInquiry(null);
             setAnswerText('');
-            setRewardCoins(0);
+            setRewardCredits(0);
             fetchInquiries();
         } catch (error: any) {
             console.error('Answer error:', error);
@@ -191,15 +191,15 @@ const AdminInquiries: React.FC = () => {
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                        <Coins size={16} className="text-amber-500" /> 보상 코인 지급 (Optional)
+                                        <Coins size={16} className="text-amber-500" /> 보상 크레딧 지급 (Optional)
                                     </label>
                                     <input
                                         type="number"
                                         className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none transition-all"
-                                        value={rewardCoins}
-                                        onChange={(e) => setRewardCoins(parseInt(e.target.value) || 0)}
+                                        value={rewardCredits}
+                                        onChange={(e) => setRewardCredits(parseInt(e.target.value) || 0)}
                                     />
-                                    <p className="text-[10px] text-slate-400 mt-2 px-1">* 오류 보상 등으로 코인을 지급할 경우 입력하세요.</p>
+                                    <p className="text-[10px] text-slate-400 mt-2 px-1">* 오류 보상 등으로 크레딧을 지급할 경우 입력하세요.</p>
                                 </div>
                                 <button
                                     onClick={handleAnswer}
@@ -257,7 +257,7 @@ const AdminInquiries: React.FC = () => {
                                     onClick={() => {
                                         setSelectedInquiry(inquiry);
                                         setAnswerText(inquiry.answer || '');
-                                        setRewardCoins(inquiry.coins_rewarded || 0);
+                                        setRewardCredits(inquiry.credits_rewarded || 0);
                                     }}
                                     className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between group text-left w-full"
                                 >
@@ -280,9 +280,9 @@ const AdminInquiries: React.FC = () => {
                                                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                                     <Clock size={12} /> {new Date(inquiry.created_at).toLocaleDateString()}
                                                 </span>
-                                                {inquiry.coins_rewarded > 0 && (
+                                                {inquiry.credits_rewarded > 0 && (
                                                     <span className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
-                                                        <Coins size={12} /> {inquiry.coins_rewarded} 지급됨
+                                                        <Coins size={12} /> {inquiry.credits_rewarded} 지급됨
                                                     </span>
                                                 )}
                                             </div>

@@ -45,19 +45,19 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
 
         // 2. 승인 완료 -> DB 업데이트
         let userId = data.metadata?.userId || data.customerKey; // V2에서는 customerKey가 전송됨
-        let productId = data.metadata?.productId || 'custom_coin';
-        let addCoins = 0;
+        let productId = data.metadata?.productId || 'custom_credit';
+        let addCredits = 0;
 
-        // 금액에 따른 코인 부여 로직 (PricingPage의 요금제와 일치시킴)
-        if (amount === 5000) addCoins = 50;
-        else if (amount === 10000) addCoins = 120;
-        else if (amount === 30000) addCoins = 400;
-        else if (amount === 50000) addCoins = 750;
+        // 금액에 따른 크레딧 부여 로직 (PricingPage의 요금제와 일치시킴)
+        if (amount === 5000) addCredits = 50;
+        else if (amount === 10000) addCredits = 120;
+        else if (amount === 30000) addCredits = 400;
+        else if (amount === 50000) addCredits = 750;
         else if (amount >= 1000) {
             // StorePage의 예시 상품들 (1000원, 1500원 등) 처리
-            // 여기서는 금액 10원당 1코인 등으로 환산하거나, 상품 ID에 따라 처리 가능
-            // 일단 1000원당 10코인으로 임시 설정 (필요시 수정)
-            addCoins = Math.floor(amount / 100);
+            // 여기서는 금액 10원당 1크레딧 등으로 환산하거나, 상품 ID에 따라 처리 가능
+            // 일단 1000원당 10크레딧으로 임시 설정 (필요시 수정)
+            addCredits = Math.floor(amount / 100);
         }
 
         if (userId) {
@@ -76,14 +76,14 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
             }
 
             // 2-2. credit_purchases 테이블에 기록 (Frontend hook과 연동)
-            if (addCoins > 0) {
+            if (addCredits > 0) {
                 const { error: purchaseError } = await supabaseAdmin
                     .from('credit_purchases')
                     .insert({
                         user_id: userId,
-                        plan_id: productId === 'custom_coin' ? null : productId,
-                        purchased_credits: addCoins,
-                        remaining_credits: addCoins,
+                        plan_id: productId === 'custom_credit' ? null : productId,
+                        purchased_credits: addCredits,
+                        remaining_credits: addCredits,
                         price_paid: amount,
                         payment_id: paymentKey,
                         status: 'active'
@@ -91,7 +91,7 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
 
                 if (purchaseError) {
                     console.error('Credit Purchase Insert Error:', purchaseError);
-                    // Critical failure because coins won't show up otherwise
+                    // Critical failure because credits won't show up otherwise
                     return res.status(500).json({ message: '결제는 완료되었으나 크레딧 지급에 실패했습니다.', error: purchaseError });
                 }
             }

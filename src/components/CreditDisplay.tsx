@@ -1,16 +1,16 @@
 import React from 'react';
 import { Coins } from 'lucide-react';
 
-interface CoinDisplayProps {
-    coins: number;
+interface CreditDisplayProps {
+    credits: number;
     loading?: boolean;
     onClick?: () => void;
     size?: 'sm' | 'md' | 'lg';
     showAddButton?: boolean;
 }
 
-const CoinDisplay: React.FC<CoinDisplayProps> = ({
-    coins,
+const CreditDisplay: React.FC<CreditDisplayProps> = ({
+    credits,
     loading = false,
     onClick,
     size = 'md',
@@ -43,7 +43,7 @@ const CoinDisplay: React.FC<CoinDisplayProps> = ({
       `}
         >
             <Coins className={`${iconSizes[size]} ${loading ? 'animate-spin' : ''}`} />
-            <span>{loading ? '...' : coins.toLocaleString()}</span>
+            <span>{loading ? '...' : credits.toLocaleString()}</span>
             {showAddButton && onClick && (
                 <span className="ml-0.5 text-amber-100">+</span>
             )}
@@ -51,4 +51,4 @@ const CoinDisplay: React.FC<CoinDisplayProps> = ({
     );
 };
 
-export default CoinDisplay;
+export default CreditDisplay;

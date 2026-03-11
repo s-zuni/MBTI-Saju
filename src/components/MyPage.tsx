@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
 import { useCredits } from '../hooks/useCredits';
-import CoinPurchaseModal from './CoinPurchaseModal';
+import CreditPurchaseModal from './CreditPurchaseModal';
 
 interface Profile {
   id: string;
@@ -71,10 +71,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const [isCoinModalOpen, setIsCoinModalOpen] = useState(false);
+  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { credits: coins, purchaseCredits } = useCredits(session);
+  const { credits, purchaseCredits } = useCredits(session);
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -291,25 +291,25 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
               </div>
             </div>
 
-            {/* Coin & Account Management Card */}
+            {/* Credit & Account Management Card */}
             <div className="flex-1 space-y-4">
-              {/* Coin Balance Card */}
+              {/* Credit Balance Card */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Coins className="w-5 h-5 text-amber-600" />
-                    <h3 className="font-bold text-slate-800">보유 코인</h3>
+                    <h3 className="font-bold text-slate-800">보유 크레딧</h3>
                   </div>
                   <button
-                    onClick={() => setIsCoinModalOpen(true)}
+                    onClick={() => setIsCreditModalOpen(true)}
                     className="text-amber-600 text-xs font-bold hover:underline"
                   >
                     충전하기
                   </button>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-amber-600">{coins}</span>
-                  <span className="text-sm text-slate-500">코인</span>
+                  <span className="text-3xl font-black text-amber-600">{credits}</span>
+                  <span className="text-sm text-slate-500">크레딧</span>
                 </div>
 
                 {/* Quick Transaction History Summary */}
@@ -328,10 +328,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
                 <div className="flex gap-2 w-full mt-4">
                   <button
-                    onClick={() => setIsCoinModalOpen(true)}
+                    onClick={() => setIsCreditModalOpen(true)}
                     className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-bold text-sm hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm"
                   >
-                    코인 충전하기
+                    크레딧 충전하기
                   </button>
                   <button
                     onClick={() => navigate('/usage-history')}
@@ -508,11 +508,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
 
 
-      <CoinPurchaseModal
-        isOpen={isCoinModalOpen}
-        onClose={() => setIsCoinModalOpen(false)}
+      <CreditPurchaseModal
+        isOpen={isCreditModalOpen}
+        onClose={() => setIsCreditModalOpen(false)}
         userEmail={profile?.email}
-        currentCoins={coins}
+        currentCredits={credits}
         onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
           await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
         }}

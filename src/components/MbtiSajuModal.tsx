@@ -11,10 +11,10 @@ interface MbtiSajuModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
-  onUseCoin?: (isRegenerate?: boolean) => Promise<boolean>;
+  onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
 }
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCoin }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
@@ -88,15 +88,15 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
   const handleRegenerate = async () => {
-    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 보존되지 않으며, 코인이 10회 차감됩니다.")) return;
+    if (!window.confirm("새로운 분석 결과를 생성하시겠습니까? 기존 결과는 보존되지 않으며, 크레딧이 10회 차감됩니다.")) return;
 
     setIsRegenerating(true);
 
-    if (onUseCoin) {
-      const success = await onUseCoin(true); // Pass true to indicate regeneration
+    if (onUseCredit) {
+      const success = await onUseCredit(true); // Pass true to indicate regeneration
       if (!success) {
         setIsRegenerating(false);
-        alert("코인 차감에 실패했습니다. 코인이 부족하거나 네트워크 오류가 발생했습니다.");
+        alert("크레딧 차감에 실패했습니다. 크레딧이 부족하거나 네트워크 오류가 발생했습니다.");
         return;
       }
     }
@@ -409,7 +409,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             disabled={isRegenerating}
             className="mt-4 text-slate-400 text-xs font-bold hover:text-indigo-600 transition-colors underline underline-offset-4"
           >
-            {isRegenerating ? "재분석 진행 중..." : "정밀 데이터 재생성 (10코인)"}
+            {isRegenerating ? "재분석 진행 중..." : "정밀 데이터 재생성 (10크레딧)"}
           </button>
         </div>
       </div>

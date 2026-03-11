@@ -45,7 +45,7 @@ const TripModal = lazy(() => import('./components/TripModal'));
 const HealingModal = lazy(() => import('./components/HealingModal'));
 const JobModal = lazy(() => import('./components/JobModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
-const CoinPurchaseModal = lazy(() => import('./components/CoinPurchaseModal'));
+const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 
@@ -61,7 +61,7 @@ function App() {
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
   const { tier } = useSubscription(session);
-  const { credits: coins, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
+  const { credits: credits, purchaseCredits, useCredits: consumeCredits, requestRefund } = useCredits(session);
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   // Check if profile needs completion
@@ -114,7 +114,7 @@ function App() {
     }
   };
 
-  // handleSwitchService and checkCoinsAndOpen removed as components now handle their own navigation and credit checks
+  // handleSwitchService and checkCreditsAndOpen removed as components now handle their own navigation and credit checks
 
   const handleStart = async () => {
     if (session) handleFetchFortune();
@@ -245,7 +245,7 @@ function App() {
                   <Route path="/store" element={<StorePage />} />
                   <Route path="/pricing" element={
                     <PricingPage
-                      currentCredits={coins}
+                      currentCredits={credits}
                       onPurchaseSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                         await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                       }}
@@ -255,7 +255,7 @@ function App() {
                   <Route path="/payment/fail" element={<PaymentFail />} />
                   <Route path="/usage-history" element={
                     <UsageHistoryPage
-                      currentCredits={coins}
+                      currentCredits={credits}
                       onRequestRefund={requestRefund}
                     />
                   } />
@@ -287,13 +287,13 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                coins={coins}
-                onUseCoin={async (serviceType) => {
+                credits={credits}
+                onUseCredit={async (serviceType) => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits(serviceType);
                 }}
-                onOpenCoinPurchase={(requiredCoins) => {
-                  openModal('coinPurchase', undefined, { requiredCoins });
+                onOpenCreditPurchase={(requiredCredits) => {
+                  openModal('creditPurchase', undefined, { requiredCredits });
                 }}
               />
               <MbtiSajuModal
@@ -304,7 +304,7 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                onUseCoin={async (isRegenerate?: boolean) => {
+                onUseCredit={async (isRegenerate?: boolean) => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
                 }}
@@ -323,7 +323,7 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                onUseCoin={async () => {
+                onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
@@ -337,7 +337,7 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                onUseCoin={async () => {
+                onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
@@ -350,7 +350,7 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                onUseCoin={async () => {
+                onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('HEALING');
                 }}
@@ -363,7 +363,7 @@ function App() {
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
-                onUseCoin={async () => {
+                onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('JOB');
                 }}
@@ -373,20 +373,20 @@ function App() {
                 onClose={() => closeModal('tarot')}
                 tier={tier}
                 onUpgradeRequired={() => {
-                  openModal('coinPurchase', undefined, { requiredCoins: SERVICE_COSTS.TAROT });
+                  openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.TAROT });
                 }}
-                onUseCoin={async () => {
+                onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('TAROT');
                 }}
               />
 
-              <CoinPurchaseModal
-                isOpen={modals?.coinPurchase?.isOpen || false}
-                onClose={() => closeModal('coinPurchase')}
+              <CreditPurchaseModal
+                isOpen={modals?.creditPurchase?.isOpen || false}
+                onClose={() => closeModal('creditPurchase')}
                 userEmail={session?.user?.email}
-                currentCoins={coins}
-                requiredCoins={modals?.coinPurchase?.data?.requiredCoins}
+                currentCredits={credits}
+                requiredCredits={modals?.creditPurchase?.data?.requiredCredits}
                 onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                   await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                 }}
@@ -395,7 +395,7 @@ function App() {
               <OnboardingModal
                 isOpen={modals?.onboarding?.isOpen || false}
                 onClose={handleCloseOnboarding}
-                onCheckPlans={() => openModal('coinPurchase')}
+                onCheckPlans={() => openModal('creditPurchase')}
                 userName={session?.user?.user_metadata?.full_name}
               />
 
@@ -403,8 +403,8 @@ function App() {
               <PremiumBanner
                 isVisible={showPremiumBanner}
                 onClose={() => setShowPremiumBanner(false)}
-                onCheckPlans={() => openModal('coinPurchase')}
-                currentCoins={coins}
+                onCheckPlans={() => openModal('creditPurchase')}
+                currentCredits={credits}
               />
             </div>
           } />

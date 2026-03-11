@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { SERVICE_COSTS } from '../config/creditConfig';
 
-// 각 카테고리별 코인 비용
+// 각 카테고리별 크레딧 비용
 const subCategories = [
     { img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 확인하는 행운', cost: SERVICE_COSTS.FORTUNE_TODAY },
     { img: '/assets/icons/3d_mbti.png', label: '융합 분석', sub: '사주와 MBTI의 깊은 만남', cost: SERVICE_COSTS.MBTI_SAJU },
@@ -78,7 +78,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                     <h4 className="font-bold text-slate-900 text-xl group-hover:text-indigo-600 transition-colors">
                                         {cat.label}
                                     </h4>
-                                    {/* 코인 비용 표시 */}
+                                    {/* 크레딧 비용 표시 */}
                                     <span className={`
                                         inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
                                         ${cat.cost === 0

@@ -51,7 +51,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
 
                     <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 mb-6">
                         <p className="text-indigo-700 font-bold text-sm flex items-center gap-2">
-                            ✨ 코인을 충전하고 다양한 심층 분석을 경험해보세요!
+                            ✨ 크레딧을 충전하고 다양한 심층 분석을 경험해보세요!
                         </p>
                         <p className="text-indigo-600 text-xs mt-1">운세, 사주, 타로, 운명 심층 상담 등 다양한 서비스가 준비되어 있습니다.</p>
                     </div>
@@ -71,7 +71,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                             }}
                             className="w-full py-3 text-slate-400 font-medium hover:text-slate-600 transition-colors text-sm"
                         >
-                            코인 더 충전하기
+                            크레딧 더 충전하기
                         </button>
                     </div>
                 </div>

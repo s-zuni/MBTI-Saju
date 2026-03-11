@@ -5,12 +5,12 @@ interface PremiumBannerProps {
     isVisible: boolean;
     onClose: () => void;
     onCheckPlans: () => void;
-    currentCoins?: number;
+    currentCredits?: number;
 }
 
-const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onCheckPlans, currentCoins = 0 }) => {
-    // Don't show if user has enough coins or explicit close
-    if (!isVisible || currentCoins >= 50) return null;
+const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onCheckPlans, currentCredits = 0 }) => {
+    // Don't show if user has enough credits or explicit close
+    if (!isVisible || currentCredits >= 50) return null;
 
     return (
         <div className="fixed bottom-20 left-4 right-4 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-40 animate-fade-in-up">
@@ -21,10 +21,10 @@ const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onChe
                     </div>
                     <div>
                         <p className="text-white font-bold text-sm md:text-base">
-                            코인이 부족하신가요?
+                            크레딧이 부족하신가요?
                         </p>
                         <p className="text-slate-400 text-xs md:text-sm">
-                            코인을 충전하고 <span className="text-amber-400 font-bold">AI 심층 분석</span>을 받아보세요!
+                            크레딧을 충전하고 <span className="text-amber-400 font-bold">AI 심층 분석</span>을 받아보세요!
                         </p>
                     </div>
                 </div>
@@ -34,7 +34,7 @@ const PremiumBanner: React.FC<PremiumBannerProps> = ({ isVisible, onClose, onChe
                         onClick={onCheckPlans}
                         className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:from-amber-500 hover:to-orange-600 transition-colors whitespace-nowrap"
                     >
-                        코인 충전
+                        크레딧 충전
                     </button>
                     <button
                         onClick={onClose}
