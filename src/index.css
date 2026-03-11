@@ -120,3 +120,54 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ===== PDF Report Optimized Layout ===== */
+.pdf-report-container {
+  width: 820px !important;
+  padding: 60px !important;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* 각 섹션이 페이지 중간에 잘리지 않도록 */
+.pdf-report-container .report-section {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 48px !important;
+  padding-bottom: 32px !important;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pdf-report-container .report-section:last-child {
+  border-bottom: none;
+}
+
+/* 카드 내부 콘텐츠 잘림 방지 */
+.pdf-report-container .report-card {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  margin-bottom: 20px !important;
+}
+
+/* 테이블이 페이지 경계에 걸리지 않도록 */
+.pdf-report-container table {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* 섹션 타이틀 바로 다음에 페이지가 넘어가지 않도록 */
+.pdf-report-container .report-section-title {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* 텍스트 줄이 잘리지 않도록 */
+.pdf-report-container p,
+.pdf-report-container li {
+  orphans: 3;
+  widows: 3;
+  line-height: 1.75 !important;
+}

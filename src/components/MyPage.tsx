@@ -74,7 +74,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { credits, purchaseCredits } = useCredits(session);
+  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits, refreshCredits } = useCredits(session);
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -129,12 +129,25 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
   // Handle re-analysis manually
   const handleReAnalyze = () => {
-    if (window.confirm('기존 분석 결과가 사라지고 새로 분석합니다. 계속하시겠습니까?')) {
+    const isFirstTime = !analysis;
+    const confirmMsg = isFirstTime
+      ? '처음 분석은 무료입니다. 분석을 시작하시겠습니까?'
+      : '기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 1코인이 차감됩니다. 계속하시겠습니까?';
+    if (window.confirm(confirmMsg)) {
       handleGenerateAnalysis();
     }
   };
 
   const handleGenerateAnalysis = async () => {
+    // 크레딧 확인 (재분석의 경우)
+    if (analysis) {
+      if (!checkSufficientCredits('REGENERATE_MBTI_SAJU')) {
+        setError('크레딧이 부족합니다. 충전 후 다시 시도해주세요.');
+        setIsCreditModalOpen(true);
+        return;
+      }
+    }
+
     setAnalysisLoading(true);
     setError(null);
 
@@ -201,6 +214,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
       await supabase.auth.updateUser({
         data: { ...profile, analysis: mergedAnalysis }
       });
+
+      // 분석 성공 후 크레딧 차감 (재분석인 경우)
+      if (analysis) {
+        try {
+          await spendCredits('REGENERATE_MBTI_SAJU');
+        } catch (creditErr) {
+          console.error('Credit deduction failed after analysis:', creditErr);
+        }
+      }
 
     } catch (e: any) {
       setError(e.message);

@@ -24,7 +24,7 @@ export const SERVICE_COSTS = {
   RELATIONSHIP_ADD: 5,
   AI_CHAT_10: 25,
   TAROT: 2,
-  REGENERATE_MBTI_SAJU: 0
+  REGENERATE_MBTI_SAJU: 1
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
