@@ -1,9 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const A4_WIDTH_PX = 1240;  // ~210mm at 150dpi
-const A4_HEIGHT_PX = 1754; // ~297mm at 150dpi
-const MARGIN_PX = 60;
 
 /**
  * PDF를 생성합니다.

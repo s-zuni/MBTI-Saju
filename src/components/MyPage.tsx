@@ -74,7 +74,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits, refreshCredits } = useCredits(session);
+  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits } = useCredits(session);
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
