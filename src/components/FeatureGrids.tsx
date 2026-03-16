@@ -56,7 +56,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             label: '운세템 상점',
             sub: '부적 & 굿즈 쇼핑',
             bg: 'from-purple-500 to-pink-600',
-            action: () => navigate('/store'),
+            action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
         },
         {
             icon: Users,
