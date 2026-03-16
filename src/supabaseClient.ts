@@ -27,6 +27,10 @@ export const supabase = createClient(
             autoRefreshToken: true,
             detectSessionInUrl: true,
             flowType: 'pkce'
+        },
+        global: {
+            // Safari specific fix: ensure fetch is explicitly called without implicit keep-alive issues
+            fetch: (...args) => fetch(...args)
         }
     }
 );

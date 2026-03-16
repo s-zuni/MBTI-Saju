@@ -85,13 +85,19 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         // Double check session if not provided (important for mobile tab recovery)
         if (!currentUserId) {
             try {
-                const { data: { session: activeSession }, error: sessionErr } = await supabase.auth.getSession();
-                if (sessionErr) throw sessionErr;
-                currentUserId = activeSession?.user?.id;
-                setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getSession 성공' : 'getSession 결과 없음' }));
+                // geUser() is more rigorous than getSession() as it verifies with the server
+                const { data: { user }, error: userErr } = await supabase.auth.getUser();
+                if (userErr) throw userErr;
+                currentUserId = user?.id;
+                setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getUser 성공' : 'getUser 결과 없음' }));
             } catch (authErr: any) {
                 setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', authStatus: '에러', error: authErr.message }));
             }
+        } else {
+            // Even if we have ID, verify user state once for Safari context
+            supabase.auth.getUser().then(({ data }) => {
+                if (data.user) setDebugInfo(prev => ({ ...prev!, authStatus: '세션 확인됨(Live)' }));
+            }).catch(() => {});
         }
 
         if (!currentUserId) {
