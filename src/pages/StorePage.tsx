@@ -26,13 +26,15 @@ const StorePage: React.FC = () => {
 
             const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+            const currentUserId = user.id;
+
             const response = await requestPayment({
                 name: pkg.name,
                 amount: pkg.price,
                 orderId: orderId,
-                customerKey: user.id || 'ANONYMOUS',
+                customerKey: currentUserId,
                 metadata: {
-                    userId: user.id,
+                    userId: currentUserId,
                     productId: pkg.id
                 },
                 ...(user.email && { customerEmail: user.email }),
