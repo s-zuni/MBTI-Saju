@@ -24,7 +24,6 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
     const { paymentKey, orderId, amount } = req.body;
 
     console.log('[Confirm Payment] Request Body:', { orderId, amount, paymentKey: paymentKey ? '***' + paymentKey.substring(paymentKey.length - 4) : 'null' });
@@ -33,15 +32,7 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         return res.status(400).json({ message: 'Missing parameters (paymentKey, orderId, amount)' });
     }
 
-    // 환경 변수 확인 (로그)
-    console.log('[Confirm Payment] Env Check:', {
-        HAS_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL || !!process.env.SUPABASE_URL,
-        HAS_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        HAS_TOSS_KEY: !!process.env.TOSS_SECRET_KEY
-    });
-
     try {
-        // 1. 토스페이먼츠 승인(Confirm) API 호출
         const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
         const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
 
@@ -65,25 +56,27 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         }
 
         // 2. 승인 완료 -> DB 업데이트
-        let userId = data.metadata?.userId || data.customerKey; // V2에서는 customerKey가 전송됨
-        let productId = data.metadata?.productId || 'custom_credit';
+        // customerKey를 우선순위로 사용 (StorePage에서 user.id가 전달됨)
+        const userId = data.customerKey || data.metadata?.userId; 
+        const productId = data.metadata?.productId || 'custom_credit';
         let addCredits = 0;
 
-        // 금액에 따른 크레딧 부여 로직 (PricingPage의 요금제와 일치시킴)
-        if (amount === 5000) addCredits = 50;
-        else if (amount === 10000) addCredits = 120;
-        else if (amount === 30000) addCredits = 400;
-        else if (amount === 50000) addCredits = 750;
-        else if (amount >= 1000) {
-            // StorePage의 예시 상품들 (1000원, 1500원 등) 처리
-            // 여기서는 금액 10원당 1크레딧 등으로 환산하거나, 상품 ID에 따라 처리 가능
-            // 일단 1000원당 10크레딧으로 임시 설정 (필요시 수정)
-            addCredits = Math.floor(amount / 100);
+        // 금액에 따른 크레딧 부여 로직 (StorePage 기준: 1000원=100, 4500원=500, 8000원=1000)
+        if (amount === 1000) addCredits = 100;
+        else if (amount === 4500) addCredits = 500;
+        else if (amount === 8000) addCredits = 1000;
+        else if (amount === 5000) addCredits = 50; 
+        else if (amount === 10000) addCredits = 120; 
+        else if (amount === 30000) addCredits = 400; 
+        else if (amount === 50000) addCredits = 750; 
+        else {
+            addCredits = Math.floor(amount / 10);
         }
 
         if (userId) {
             console.log('[Confirm Payment] Processing DB updates for user:', userId);
-            // 2-1. orders 테이블에 기록
+            
+            // 2-1. orders 테이블 기록
             const { error: orderError } = await supabaseAdmin.from('orders').insert({
                 user_id: userId,
                 product_id: productId,
@@ -94,12 +87,10 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
 
             if (orderError) {
                 console.error('[Confirm Payment] Order Insert Error:', orderError);
-                return res.status(500).json({ message: '결제는 완료되었으나 주문 기록에 실패했습니다.', error: orderError.message });
             }
 
-            // 2-2. credit_purchases 테이블에 기록 (Frontend hook과 연동)
+            // 2-2. credit_purchases 테이블 기록
             if (addCredits > 0) {
-                console.log('[Confirm Payment] Adding credits:', addCredits);
                 const { error: purchaseError } = await supabaseAdmin
                     .from('credit_purchases')
                     .insert({
@@ -114,37 +105,23 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
 
                 if (purchaseError) {
                     console.error('[Confirm Payment] Credit Purchase Insert Error:', purchaseError);
-                    // Critical failure because credits won't show up otherwise
-                    return res.status(500).json({ message: '결제는 완료되었으나 크레딧 지급에 실패했습니다.', error: purchaseError.message });
+                    return res.status(500).json({ message: '크레딧 지급 기록에 실패했습니다.', error: purchaseError.message });
                 }
             }
-        } else {
-            console.warn('[Confirm Payment] No userId found in metadata or customerKey');
-        }
 
-        // 5. profiles 테이블의 credits 업데이트
-        console.log(`Updating credits for user ${userId}: adding ${addCredits}`);
-        
-        // 현재 크레딧을 가져와서 더해주는 방식 (동시성 방지를 위해 rpc를 쓰는 것이 좋으나 우선 직접 업데이트)
-        const { data: profileData, error: profileFetchError } = await supabaseAdmin
-            .from('profiles')
-            .select('credits')
-            .eq('id', userId)
-            .single();
-
-        if (profileFetchError) {
-            console.error('Error fetching profile for credit update:', profileFetchError);
-            // 구매 기록은 남았으므로 에러를 던지지 않고 로그만 남김 (나중에 대조 가능)
-        } else {
-            const newCredits = (profileData?.credits || 0) + addCredits;
-            const { error: profileUpdateError } = await supabaseAdmin
+            // 3. profiles 테이블의 credits 즉시 업데이트
+            const { data: profileData, error: profileFetchError } = await supabaseAdmin
                 .from('profiles')
-                .update({ credits: newCredits })
-                .eq('id', userId);
+                .select('credits')
+                .eq('id', userId)
+                .single();
 
-            if (profileUpdateError) {
-                console.error('Error updating profile credits:', profileUpdateError);
-            } else {
+            if (!profileFetchError) {
+                const newCredits = (profileData?.credits || 0) + addCredits;
+                await supabaseAdmin
+                    .from('profiles')
+                    .update({ credits: newCredits })
+                    .eq('id', userId);
                 console.log(`Successfully updated credits for user ${userId}. New total: ${newCredits}`);
             }
         }

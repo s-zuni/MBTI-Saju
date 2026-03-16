@@ -49,7 +49,16 @@ const PaymentSuccess: React.FC = () => {
                 }
 
                 // 성공적으로 처리됨
+                // 2. 세션 강제 새로고침하여 profiles 상태 동기화 (크레딧 즉시 반영 유도)
+                const { supabase } = await import('../supabaseClient');
+                await supabase.auth.refreshSession();
+                
                 setLoading(false);
+
+                // 3초 후 내역 페이지로 자동 이동하여 내역 확인 유도
+                setTimeout(() => {
+                    navigate('/usage-history', { replace: true });
+                }, 2000);
 
             } catch (err: any) {
                 console.error('Payment Confirmation Error:', err);

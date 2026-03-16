@@ -24,12 +24,14 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ onRequestRefund, cu
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.id) return;
 
+            // 크레딧 구매 내역과 사용 내역을 병렬로 조회
+            // 'purchased_at' 컬럼명이 맞는지 확인 필요 (보통 created_at일 수도 있음)
             const [purchaseRes, usageRes] = await Promise.all([
                 supabase
                     .from('credit_purchases')
                     .select('*')
                     .eq('user_id', session.user.id)
-                    .order('purchased_at', { ascending: false }),
+                    .order('created_at', { ascending: false }), // purchased_at 대신 created_at 시도 (안전빵)
                 supabase
                     .from('credit_usages')
                     .select('*')
@@ -37,7 +39,14 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ onRequestRefund, cu
                     .order('used_at', { ascending: false }),
             ]);
 
-            if (purchaseRes.data) setPurchases(purchaseRes.data as CreditPurchase[]);
+            // purchased_at이 없는 경우 created_at을 대체값으로 사용하도록 매핑
+            if (purchaseRes.data) {
+                const mappedPurchases = purchaseRes.data.map((p: any) => ({
+                    ...p,
+                    purchased_at: p.purchased_at || p.created_at
+                }));
+                setPurchases(mappedPurchases as CreditPurchase[]);
+            }
             if (usageRes.data) setUsages(usageRes.data as CreditUsage[]);
         } catch (err) {
             console.error('Error fetching history:', err);
