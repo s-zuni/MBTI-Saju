@@ -62,60 +62,27 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         else addCredits = Math.floor(amount / 10);
 
         if (userId) {
-            const now = new Date().toISOString();
-            
-            // 1. orders 테이블 기록
-            await supabaseAdmin.from('orders').insert({
-                user_id: userId,
-                product_id: productId,
-                payment_id: paymentKey,
-                amount: amount,
-                status: 'paid',
-                created_at: now
+            // RPC 함수 호출 (Atomic Transaction)
+            // SQL: add_credits_after_payment(p_user_id, p_credits, p_amount, p_payment_id, p_plan_id)
+            const { error: rpcError } = await supabaseAdmin.rpc('add_credits_after_payment', {
+                p_user_id: userId,
+                p_credits: addCredits,
+                p_amount: amount,
+                p_payment_id: paymentKey,
+                p_plan_id: productId === 'custom_credit' ? 'credit_custom' : productId
             });
 
-            // 2. credit_purchases 테이블 기록 (purchased_at 필수!)
-            const { error: purchaseError } = await supabaseAdmin
-                .from('credit_purchases')
-                .insert({
-                    user_id: userId,
-                    plan_id: productId === 'custom_credit' ? null : productId,
-                    purchased_credits: addCredits,
-                    remaining_credits: addCredits,
-                    price_paid: amount,
-                    payment_id: paymentKey,
-                    status: 'active',
-                    purchased_at: now,
-                    created_at: now
+            if (rpcError) {
+                console.error('RPC Error (add_credits_after_payment):', rpcError);
+                // 만약 RPC 실패 시 개별 테이블 인서트라도 시도하는 폴백 로직을 고려할 수 있으나,
+                // RPC 자체가 트랜잭션을 보장하므로 여기선 에러 응답을 보냅니다.
+                return res.status(500).json({ 
+                    message: '데이터베이스 연동 중 오류가 발생했습니다.',
+                    details: rpcError.message 
                 });
-
-            if (purchaseError) {
-                console.error('Credit Purchase Insert Error:', purchaseError);
-                return res.status(500).json({ message: '크레딧 지급 기록 중 오류가 발생했습니다.' });
             }
 
-            // 3. profiles 테이블의 credits 즉시 업데이트 (사용자가 가장 원하는 부분)
-            const { data: profile, error: fetchErr } = await supabaseAdmin
-                .from('profiles')
-                .select('credits')
-                .eq('id', userId)
-                .single();
-
-            if (fetchErr) {
-                console.error('Profile Fetch Error:', fetchErr);
-            } else {
-                const currentCredits = profile?.credits || 0;
-                const { error: updateErr } = await supabaseAdmin
-                    .from('profiles')
-                    .update({ credits: currentCredits + addCredits })
-                    .eq('id', userId);
-                
-                if (updateErr) {
-                    console.error('Profile Credit Update Error:', updateErr);
-                } else {
-                    console.log(`Updated credits for ${userId}: ${currentCredits} -> ${currentCredits + addCredits}`);
-                }
-            }
+            console.log(`Successfully synced credits for user ${userId}: +${addCredits} credits`);
         }
 
         return res.status(200).json({
