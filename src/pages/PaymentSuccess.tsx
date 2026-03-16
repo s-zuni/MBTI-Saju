@@ -34,10 +34,18 @@ const PaymentSuccess: React.FC = () => {
                     }),
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type');
+                let data: any;
+
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(`서버 응답 오류 (JSON이 아님): ${response.status} ${response.statusText}\n${text.substring(0, 100)}...`);
+                }
 
                 if (!response.ok) {
-                    throw new Error(data.message || '결제 승인 중 오류가 발생했습니다.');
+                    throw new Error(data.message || `결제 승인 중 오류가 발생했습니다. (상태 코드: ${response.status})`);
                 }
 
                 // 성공적으로 처리됨

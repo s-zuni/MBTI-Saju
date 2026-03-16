@@ -15,9 +15,18 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
 
     const { paymentKey, orderId, amount } = req.body;
 
+    console.log('[Confirm Payment] Request Body:', { orderId, amount, paymentKey: paymentKey ? '***' + paymentKey.substring(paymentKey.length - 4) : 'null' });
+
     if (!paymentKey || !orderId || !amount) {
         return res.status(400).json({ message: 'Missing parameters (paymentKey, orderId, amount)' });
     }
+
+    // 환경 변수 확인 (로그)
+    console.log('[Confirm Payment] Env Check:', {
+        HAS_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL || !!process.env.SUPABASE_URL,
+        HAS_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        HAS_TOSS_KEY: !!process.env.TOSS_SECRET_KEY
+    });
 
     try {
         // 1. 토스페이먼츠 승인(Confirm) API 호출
@@ -61,6 +70,7 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         }
 
         if (userId) {
+            console.log('[Confirm Payment] Processing DB updates for user:', userId);
             // 2-1. orders 테이블에 기록
             const { error: orderError } = await supabaseAdmin.from('orders').insert({
                 user_id: userId,
@@ -71,12 +81,13 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
             });
 
             if (orderError) {
-                console.error('Order Insert Error:', orderError);
-                return res.status(500).json({ message: '결제는 완료되었으나 주문 기록에 실패했습니다.', error: orderError });
+                console.error('[Confirm Payment] Order Insert Error:', orderError);
+                return res.status(500).json({ message: '결제는 완료되었으나 주문 기록에 실패했습니다.', error: orderError.message });
             }
 
             // 2-2. credit_purchases 테이블에 기록 (Frontend hook과 연동)
             if (addCredits > 0) {
+                console.log('[Confirm Payment] Adding credits:', addCredits);
                 const { error: purchaseError } = await supabaseAdmin
                     .from('credit_purchases')
                     .insert({
@@ -90,11 +101,13 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
                     });
 
                 if (purchaseError) {
-                    console.error('Credit Purchase Insert Error:', purchaseError);
+                    console.error('[Confirm Payment] Credit Purchase Insert Error:', purchaseError);
                     // Critical failure because credits won't show up otherwise
-                    return res.status(500).json({ message: '결제는 완료되었으나 크레딧 지급에 실패했습니다.', error: purchaseError });
+                    return res.status(500).json({ message: '결제는 완료되었으나 크레딧 지급에 실패했습니다.', error: purchaseError.message });
                 }
             }
+        } else {
+            console.warn('[Confirm Payment] No userId found in metadata or customerKey');
         }
 
         return res.status(200).json({ success: true, payment: data });
