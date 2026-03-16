@@ -22,7 +22,7 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { paymentKey, orderId, amount } = req.body;
+    const { paymentKey, orderId, amount, userId: bodyUserId } = req.body;
 
     if (!paymentKey || !orderId || !amount) {
         return res.status(400).json({ success: false, message: '필수 파라미터가 누락되었습니다.' });
@@ -56,21 +56,20 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         }
 
         // 3. 사용자 식별 및 크레딧 계산
-        // Toss V2 SDK에서 보낸 metadata는 tossData.metadata에 담겨 옵니다.
-        // 여러 필드를 순차적으로 확인하여 누락 가능성을 최소화합니다.
-        const userId = tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
+        // 프론트엔드에서 보낸 userId를 최우선으로 하며, 토스 메타데이터와 customerKey를 폴백으로 사용합니다.
+        const userId = bodyUserId || tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const productId = tossData.metadata?.productId || 'credit_custom';
         
         console.log('[DEBUG] Full Toss Confirmation Data:', JSON.stringify(tossData));
         console.log('[DEBUG] Extraction Logic:', {
+            'bodyUserId': bodyUserId,
             'metadata.userId': tossData.metadata?.userId,
             'customerKey': tossData.customerKey,
-            'metadata.customerKey': tossData.metadata?.customerKey,
             'finalUserId': userId
         });
 
         if (!userId || userId === 'ANONYMOUS') {
-            console.error('[CRITICAL] User Identification Failed. Check data above.');
+            console.error('[CRITICAL] User Identification Failed.');
             return res.status(400).json({
                 success: false,
                 message: '사용자 장치 식별에 실패했습니다. (유저 ID 누락)',
@@ -78,7 +77,7 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
                     receivedUserId: userId,
                     hasMetadata: !!tossData.metadata,
                     metadataKeys: tossData.metadata ? Object.keys(tossData.metadata) : [],
-                    fullData: tossData // 프론트엔드에서도 확인할 수 있도록 전달
+                    fullData: tossData 
                 }
             });
         }

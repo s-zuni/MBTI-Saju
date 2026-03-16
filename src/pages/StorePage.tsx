@@ -37,6 +37,7 @@ const StorePage: React.FC = () => {
                     userId: currentUserId,
                     productId: pkg.id
                 },
+                successUrl: `${window.location.origin}/payment/success?userId=${currentUserId}`,
                 ...(user.email && { customerEmail: user.email }),
             });
 

@@ -18,6 +18,8 @@ export interface TossPaymentConfig {
     customerName?: string;
     customerEmail?: string;
     metadata?: Record<string, any>;
+    successUrl?: string;
+    failUrl?: string;
 }
 
 export interface PaymentResponse {
@@ -62,8 +64,8 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
             },
             orderId: config.orderId,
             orderName: config.name,
-            successUrl: `${window.location.origin}/payment/success`,
-            failUrl: `${window.location.origin}/payment/fail`,
+            successUrl: config.successUrl || `${window.location.origin}/payment/success`,
+            failUrl: config.failUrl || `${window.location.origin}/payment/fail`,
             customerEmail: config.customerEmail,
             customerName: config.customerName,
             metadata: config.metadata,

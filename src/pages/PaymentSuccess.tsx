@@ -21,6 +21,8 @@ const PaymentSuccess: React.FC = () => {
                 return;
             }
 
+            const userIdFromUrl = searchParams.get('userId');
+            
             try {
                 // 1. 서버리스 함수 호출하여 결제 승인 및 DB 반영
                 const response = await fetch('/api/confirm-payment', {
@@ -30,6 +32,7 @@ const PaymentSuccess: React.FC = () => {
                         paymentKey,
                         orderId,
                         amount: Number(amount),
+                        userId: userIdFromUrl, // URL에서 받은 ID 전달
                     }),
                 });
 
