@@ -530,6 +530,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             <p>● DB 구매내역 수: {debugInfo?.purchaseCount ?? 0}</p>
             <p>● DB 프로필 크레딧: {debugInfo?.profileCredits ?? 0}</p>
             {debugInfo?.error && <p className="text-red-400 font-bold">● 에러: {debugInfo.error}</p>}
+            <p>● Host: {debugInfo?.host ?? 'N/A'}</p>
             <p>● 마지막 갱신: {debugInfo?.lastRefresh ?? 'N/A'}</p>
             <p>● Device Time: {new Date().toLocaleTimeString()}</p>
             <button 

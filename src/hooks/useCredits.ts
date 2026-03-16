@@ -47,6 +47,7 @@ interface UseCreditsReturn {
         profileCredits: number;
         lastRefresh: string;
         error?: string;
+        host?: string;
     } | undefined;
     refreshCredits: () => Promise<void>;
     useCredits: (serviceType: ServiceType) => Promise<boolean>;
@@ -73,7 +74,8 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             phase: '1. 세션 확인 시작',
             purchaseCount: 0,
             profileCredits: 0,
-            lastRefresh: new Date().toLocaleTimeString()
+            lastRefresh: new Date().toLocaleTimeString(),
+            host: window.location.host
         });
 
         // Double check session if not provided (important for mobile tab recovery)
@@ -96,36 +98,47 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
         try {
             setLoading(true);
-            setDebugInfo(prev => ({ ...prev!, phase: '2. 구매 내역 조회 중' }));
+            setDebugInfo(prev => ({ ...prev!, phase: '2. 구매 내역 조회 중 (Wait 10s...)' }));
             
-            // credit_purchases에서 remaining_credits 합계 조회
-            const { data, error } = await supabase
-                .from('credit_purchases')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .eq('status', 'active')
-                .gt('remaining_credits', 0)
-                .order('purchased_at', { ascending: true });
+            // Timeout logic for mobile diagnostics
+            const fetchPurchases = async () => {
+                const { data, error } = await supabase
+                    .from('credit_purchases')
+                    .select('*')
+                    .eq('user_id', currentUserId)
+                    .eq('status', 'active')
+                    .gt('remaining_credits', 0)
+                    .order('purchased_at', { ascending: true });
+                if (error) throw error;
+                return data;
+            };
 
-            if (error) throw error;
+            const queryTimeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('결제 내역 조회 타임아웃 (10초 초과)')), 10000)
+            );
 
-            const activePurchases = (data || []) as CreditPurchase[];
+            const data = await Promise.race([fetchPurchases(), queryTimeout]) as CreditPurchase[];
+
+            const activePurchases = (data || []);
             setPurchases(activePurchases);
             const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
             setDebugInfo(prev => ({ ...prev!, phase: '3. 프로필 조회 중', purchaseCount: activePurchases.length }));
 
-            // profiles 테이블도 함께 조회하여 합산
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('credits')
-                .eq('id', currentUserId);
+            // profiles 테이블도 함께 조회하여 합산 (타임아웃 적용)
+            const fetchProfile = async () => {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('credits')
+                    .eq('id', currentUserId);
+                if (error) throw error;
+                return data;
+            };
+
+            const profileData = await Promise.race([fetchProfile(), queryTimeout]) as any[];
 
             let profileCredits = 0;
-            if (profileError) {
-                console.error('Error fetching profile for credits:', profileError);
-                // Don't throw here to allow partial data (purchases) to show
-            } else if (profileData && profileData.length > 0) {
+            if (profileData && profileData.length > 0) {
                 profileCredits = profileData[0]?.credits ?? 0;
             }
 
@@ -134,7 +147,8 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 phase: '4. 조회 완료',
                 purchaseCount: activePurchases.length,
                 profileCredits: profileCredits,
-                lastRefresh: new Date().toLocaleTimeString()
+                lastRefresh: new Date().toLocaleTimeString(),
+                host: window.location.host
             });
         } catch (err: any) {
             console.error('Error fetching credits:', err);
