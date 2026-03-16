@@ -68,7 +68,7 @@ const PaymentSuccess: React.FC = () => {
         };
 
         confirmPayment();
-    }, [paymentKey, orderId, amount]);
+    }, [paymentKey, orderId, amount, navigate]);
 
     if (loading) {
         return (
