@@ -119,7 +119,8 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
             return res.status(500).json({
                 success: false,
                 message: '결제 기록 업데이트에 실패했습니다.',
-                error: rpcResult.error
+                error: rpcResult.error,
+                debug: { userId, addCredits, paymentKey }
             });
         }
 

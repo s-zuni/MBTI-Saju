@@ -48,7 +48,8 @@ const PaymentSuccess: React.FC = () => {
 
                 if (!response.ok || data.success === false) {
                     console.error('Failed API Response:', data);
-                    throw new Error(data.message || data.error || '결제 승인 중 오류가 발생했습니다.');
+                    const errorMessage = data.error || data.message || '결제 승인 중 오류가 발생했습니다.';
+                    throw new Error(errorMessage);
                 }
 
                 // 3. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
