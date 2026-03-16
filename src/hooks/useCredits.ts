@@ -48,6 +48,8 @@ interface UseCreditsReturn {
         lastRefresh: string;
         error?: string;
         host?: string;
+        urlStatus?: string;
+        authStatus?: string;
     } | undefined;
     refreshCredits: () => Promise<void>;
     useCredits: (serviceType: ServiceType) => Promise<boolean>;
@@ -75,16 +77,20 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             purchaseCount: 0,
             profileCredits: 0,
             lastRefresh: new Date().toLocaleTimeString(),
-            host: window.location.host
+            host: window.location.host,
+            urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'missing').substring(0, 15) + '...',
+            authStatus: session ? 'Session 존재' : 'Session 없음'
         });
 
         // Double check session if not provided (important for mobile tab recovery)
         if (!currentUserId) {
             try {
-                const { data: { session: activeSession } } = await supabase.auth.getSession();
+                const { data: { session: activeSession }, error: sessionErr } = await supabase.auth.getSession();
+                if (sessionErr) throw sessionErr;
                 currentUserId = activeSession?.user?.id;
+                setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getSession 성공' : 'getSession 결과 없음' }));
             } catch (authErr: any) {
-                setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', error: authErr.message }));
+                setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', authStatus: '에러', error: authErr.message }));
             }
         }
 
@@ -98,7 +104,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
         try {
             setLoading(true);
-            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중' }));
+            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중 (Wait 30s...)' }));
             
             // Single RPC call to skip multiple round-trips (Critical for mobile)
             const fetchSummary = async () => {
@@ -109,8 +115,9 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 return data;
             };
 
+            // Increased timeout to 30s for slow mobile networks
             const queryTimeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (10초 초과)')), 10000)
+                setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (30초 초과)')), 30000)
             );
 
             const result = await Promise.race([fetchSummary(), queryTimeout]) as any;
@@ -129,11 +136,13 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 purchaseCount: activePurchases.length,
                 profileCredits: profileCredits,
                 lastRefresh: new Date().toLocaleTimeString(),
-                host: window.location.host
+                host: window.location.host,
+                urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',
+                authStatus: '성공'
             });
         } catch (err: any) {
             console.error('Error fetching credits via RPC:', err);
-            setDebugInfo(prev => ({ ...prev!, phase: '에러: RPC 실패', error: err.message || JSON.stringify(err) }));
+            setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
         } finally {
             setLoading(false);
         }
