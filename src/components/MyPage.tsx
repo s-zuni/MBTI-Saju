@@ -521,29 +521,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             <button onClick={() => navigate('/support')} className="hover:text-slate-600">고객센터 문의</button>
           </div>
           <p>© 2026 MBTI Saju. All rights reserved.</p>
-          
-          {/* Temporary Diagnostic Section - Remove after fix */}
-          <div className="mt-8 p-4 bg-slate-100 rounded-lg text-[10px] text-slate-500 font-mono text-left break-all opacity-50">
-            <p className="font-bold border-b border-slate-200 pb-1 mb-1">[진단 정보 - PC/모바일 대조용]</p>
-            <p>● User ID: {profile?.id || '세션 없음'}</p>
-            <p>● 단계: {debugInfo?.phase ?? '조회 대기'}</p>
-            <p>● DB 구매내역 수: {debugInfo?.purchaseCount ?? 0}</p>
-            <p>● DB 프로필 크레딧: {debugInfo?.profileCredits ?? 0}</p>
-            {debugInfo?.error && <p className="text-red-400 font-bold">● 에러: {debugInfo.error}</p>}
-            <p>● Host: {debugInfo?.host ?? 'N/A'}</p>
-            <p>● URL 상태: {debugInfo?.urlStatus ?? 'N/A'}</p>
-            <p>● 인증 상태: {debugInfo?.authStatus ?? 'N/A'}</p>
-            <p>● 마지막 갱신: {debugInfo?.lastRefresh ?? 'N/A'}</p>
-            <p>● Device Time: {new Date().toLocaleTimeString()}</p>
-            <button 
-              onClick={() => { window.location.reload(); }}
-              className="mt-2 px-2 py-1 bg-slate-200 rounded text-slate-600"
-            >
-              새로고침(강제)
-            </button>
-          </div>
         </div>
-
       </div>
 
       <AnalysisModal
@@ -553,8 +531,6 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
         initialData={profile}
         onUpdate={() => fetchProfileData()}
       />
-
-
 
       <CreditPurchaseModal
         isOpen={isCreditModalOpen}
