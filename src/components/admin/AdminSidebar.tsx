@@ -25,6 +25,7 @@ const AdminSidebar: React.FC = () => {
 
     const navItems = [
         { name: '대시보드', icon: <LayoutDashboard size={20} />, path: '/admin' },
+        { name: '커뮤니티 관리', icon: <MessageSquare size={20} />, path: '/admin/community' },
         { name: '회원 관리', icon: <Users size={20} />, path: '/admin/users' },
         { name: '결제 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
         { name: '환불 관리', icon: <RotateCcw size={20} />, path: '/admin/refunds' },

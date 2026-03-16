@@ -32,6 +32,7 @@ import UserManagement from './pages/admin/UserManagement';
 import PaymentManagement from './pages/admin/PaymentManagement';
 import RefundManagement from './pages/admin/RefundManagement';
 import PlanManagement from './pages/admin/PlanManagement';
+import AdminCommunity from './pages/admin/AdminCommunity';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
@@ -148,6 +149,7 @@ function App() {
           {/* Admin System - With Sidebar, No Header/Footer */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="community" element={<AdminCommunity />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="refunds" element={<RefundManagement />} />

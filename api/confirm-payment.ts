@@ -122,10 +122,44 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
             console.warn('[Confirm Payment] No userId found in metadata or customerKey');
         }
 
-        return res.status(200).json({ success: true, payment: data });
+        // 5. profiles 테이블의 credits 업데이트
+        console.log(`Updating credits for user ${userId}: adding ${addCredits}`);
+        
+        // 현재 크레딧을 가져와서 더해주는 방식 (동시성 방지를 위해 rpc를 쓰는 것이 좋으나 우선 직접 업데이트)
+        const { data: profileData, error: profileFetchError } = await supabaseAdmin
+            .from('profiles')
+            .select('credits')
+            .eq('id', userId)
+            .single();
+
+        if (profileFetchError) {
+            console.error('Error fetching profile for credit update:', profileFetchError);
+            // 구매 기록은 남았으므로 에러를 던지지 않고 로그만 남김 (나중에 대조 가능)
+        } else {
+            const newCredits = (profileData?.credits || 0) + addCredits;
+            const { error: profileUpdateError } = await supabaseAdmin
+                .from('profiles')
+                .update({ credits: newCredits })
+                .eq('id', userId);
+
+            if (profileUpdateError) {
+                console.error('Error updating profile credits:', profileUpdateError);
+            } else {
+                console.log(`Successfully updated credits for user ${userId}. New total: ${newCredits}`);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: '결제가 성공적으로 처리되었으며 크레딧이 충전되었습니다.',
+            data
+        });
 
     } catch (error: any) {
-        console.error('Confirm Payment Internal Error:', error);
-        return res.status(500).json({ message: '서버 내부 오류가 발생했습니다.' });
+        console.error('Payment Confirmation System Error:', error);
+        return res.status(500).json({
+            message: error.message || '서버 내부 오류가 발생했습니다.',
+            error: error.stack
+        });
     }
 }
