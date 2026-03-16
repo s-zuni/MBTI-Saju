@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { useCredits } from '../hooks/useCredits';
 import { Loader2, RefreshCw, Receipt } from 'lucide-react';
 import { SERVICE_NAMES } from '../config/creditConfig';
 
@@ -8,7 +7,6 @@ const UsageHistoryPage = () => {
     const [activeTab, setActiveTab] = useState<'purchases' | 'usages'>('purchases');
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<{ purchases: any[], usages: any[] }>({ purchases: [], usages: [] });
-    const [refundTarget, setRefundTarget] = useState<any | null>(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
