@@ -260,12 +260,7 @@ function App() {
                   } />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
-                  <Route path="/usage-history" element={
-                    <UsageHistoryPage
-                      currentCredits={credits}
-                      onRequestRefund={requestRefund}
-                    />
-                  } />
+                  <Route path="/usage-history" element={<UsageHistoryPage />} />
                   <Route path="/room" element={<ChatPage />} />
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/relationship" element={<RelationshipPage />} />
