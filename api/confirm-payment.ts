@@ -3,15 +3,23 @@ import { createClient } from '@supabase/supabase-js';
 type VercelRequest = any;
 type VercelResponse = any;
 
-const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
 export default async function confirmPayment(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        console.error('[Confirm Payment] Missing Supabase configuration');
+        return res.status(500).json({ 
+            message: '서버 설정 오류: Supabase 환경 변수가 누락되었습니다.',
+            details: { hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey }
+        });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     const { paymentKey, orderId, amount } = req.body;
 

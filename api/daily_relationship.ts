@@ -27,7 +27,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-        if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
+        if (!GEMINI_API_KEY) {
+            return res.status(500).json({ error: '서버 설정 오류: GEMINI_API_KEY가 누락되었습니다.' });
+        }
 
         // Calculate Saju for User
         const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);

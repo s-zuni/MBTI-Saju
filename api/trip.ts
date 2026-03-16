@@ -9,11 +9,13 @@ export default async (req: any, res: any) => {
 
     try {
         const { birthDate, birthTime, mbti, gender, name, region, startDate, endDate } = req.body;
-        const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
-        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
+        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-        if (!GEMINI_API_KEY) throw new Error('Missing Gemini API Key');
+        if (!GEMINI_API_KEY) {
+            return res.status(500).json({ error: '서버 설정 오류: GEMINI_API_KEY가 누락되었습니다.' });
+        }
 
         // Calculate Saju
         const saju = calculateSaju(birthDate, birthTime);
@@ -35,7 +37,7 @@ export default async (req: any, res: any) => {
 [핵심 규칙 - 반드시 지킬 것]
 1. 언어: 무조건 **한국어(Korean)**로만 작성하세요. (영어 사용 금지)
 2. 분량 및 깊이: 단순히 장소만 나열하지 마세요. 각 장소를 추천하는 이유(reason)는 이 사람의 MBTI 성향과 사주 오행(예: 사주에 수(水) 기운이 부족하여 물가 여행이 필요함 등)을 엮어 최소 300자 이상의 매우 상세하고 설득력 있는 스토리텔링으로 작성하세요.
-3. 가독성: 단순히 나열하지 말고, **개괄식(블렛 포인트)** 구조를 사용하여 핵심 내용을 한눈에 파악할 수 있게 하세요. 답변 본문에서 마크다운 **볼드체**('**')를 절대 사용하지 마세요. 장소 정보와 일정 사이에는 충분한 줄바꿈(`\n\n`)을 적용하세요.
+3. 가독성: 단순히 나열하지 말고, **개괄식(블렛 포인트)** 구조를 사용하여 핵심 내용을 한눈에 파악할 수 있게 하세요. 답변 본문에서 마크다운 **볼드체**('**')를 절대 사용하지 마세요. 장소 정보와 일정 사이에는 충분한 줄바꿈(\`\\n\\n\`)을 적용하세요.
 4. 이모지: 글이 지루하지 않게 ✈️, 🏞️, 🏖️, 🏯 등의 이모지를 섞어 사용하세요.
 
 응답 형식은 아래 JSON 구조를 반드시 지키세요:
