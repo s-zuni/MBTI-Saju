@@ -117,7 +117,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         return credits >= cost;
     }, [credits, getCost]);
 
-    // FIFO 크레딧 사용
+    // FIFO 크레딧 사용 (RPC 전환)
     const useCreditsFunc = useCallback(async (serviceType: ServiceType): Promise<boolean> => {
         if (!session?.user?.id) return false;
 
@@ -126,98 +126,21 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         if (credits < cost) return false;
 
         try {
-            let remainingCost = cost;
+            // 서버 사이드 RPC 호출로 원자적 차감 수행
+            const { data, error } = await supabase.rpc('deduct_credits', {
+                p_user_id: session.user.id,
+                p_service_type: serviceType,
+                p_cost: cost
+            });
 
-            // 1. profiles.credits 우선 차감
-            const { data: profileData, error: profileFetchError } = await supabase
-                .from('profiles')
-                .select('credits')
-                .eq('id', session.user.id);
-
-            if (profileFetchError) {
-                 console.error('Profile fetch error during deduction:', profileFetchError);
+            if (error) {
+                console.error('RPC Error during credit deduction:', error);
+                return false;
             }
 
-            let profileToUpdate: any = null;
-            let currentProfileCredits = 0;
-
-            if (profileData && profileData.length > 0) {
-                profileToUpdate = profileData[0];
-                currentProfileCredits = profileToUpdate?.credits ?? 0;
-            }
-
-            if (currentProfileCredits > 0 && remainingCost > 0) {
-                const deductFromProfile = Math.min(currentProfileCredits, remainingCost);
-                remainingCost -= deductFromProfile;
-
-                const { error: profileUpdateError } = await supabase
-                    .from('profiles')
-                    .update({ credits: currentProfileCredits - deductFromProfile })
-                    .eq('id', session.user.id);
-
-                if (profileUpdateError) throw profileUpdateError;
-            }
-
-            // 2. 남은 비용이 있으면 credit_purchases FIFO 차감
-            if (remainingCost > 0) {
-                const { data: activePurchases, error: fetchError } = await supabase
-                    .from('credit_purchases')
-                    .select('*')
-                    .eq('user_id', session.user.id)
-                    .eq('status', 'active')
-                    .gt('remaining_credits', 0)
-                    .order('purchased_at', { ascending: true });
-
-                if (fetchError) throw fetchError;
-                if (!activePurchases || activePurchases.length === 0) return false;
-
-                const usages: { purchase_id: string; credits_used: number }[] = [];
-                const updates: { id: string; remaining_credits: number }[] = [];
-
-                for (const purchase of activePurchases) {
-                    if (remainingCost <= 0) break;
-
-                    const deduct = Math.min(purchase.remaining_credits, remainingCost);
-                    remainingCost -= deduct;
-
-                    usages.push({
-                        purchase_id: purchase.id,
-                        credits_used: deduct,
-                    });
-
-                    updates.push({
-                        id: purchase.id,
-                        remaining_credits: purchase.remaining_credits - deduct,
-                    });
-                }
-
-                if (remainingCost > 0) return false; // 크레딧 부족
-
-                // 구매건 잔여 크레딧 업데이트
-                for (const update of updates) {
-                    const { error: updateError } = await supabase
-                        .from('credit_purchases')
-                        .update({ remaining_credits: update.remaining_credits })
-                        .eq('id', update.id);
-
-                    if (updateError) throw updateError;
-                }
-
-                // 사용 기록 삽입
-                if (usages.length > 0) {
-                    const usageRecords = usages.map(u => ({
-                        user_id: session.user.id,
-                        purchase_id: u.purchase_id,
-                        credits_used: u.credits_used,
-                        service_type: serviceType.toLowerCase(),
-                    }));
-
-                    const { error: usageError } = await supabase
-                        .from('credit_usages')
-                        .insert(usageRecords);
-
-                    if (usageError) console.error('Usage log failed:', usageError);
-                }
+            if (data && data.success === false) {
+                console.error('Credit deduction failed:', data.error);
+                return false;
             }
 
             // 3. 로컬 상태 업데이트
