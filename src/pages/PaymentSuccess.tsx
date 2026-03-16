@@ -23,7 +23,13 @@ const PaymentSuccess: React.FC = () => {
             const finalUserId = userIdFromUrl || userIdFromStorage || currentUser?.id;
 
             if (!paymentKey || !orderId || !amount) {
-                // 1. 서버리스 함수 호출하여 결제 승인 및 DB 반영
+                setError('결제 정보가 누락되었습니다.');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // 2. 서버리스 함수 호출하여 결제 승인 및 DB 반영
                 const response = await fetch('/api/confirm-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -35,7 +41,7 @@ const PaymentSuccess: React.FC = () => {
                     }),
                 });
 
-                // 성공 시 임시 데이터 삭제
+                // 승인 요청 후 임시 데이터 삭제 (성공/실패 여부와 상관없이 시도했으므로 정리)
                 localStorage.removeItem('pending_payment_user_id');
 
                 const data = await response.json();
@@ -45,7 +51,7 @@ const PaymentSuccess: React.FC = () => {
                     throw new Error(data.message || data.error || '결제 승인 중 오류가 발생했습니다.');
                 }
 
-                // 2. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
+                // 3. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
                 await supabase.auth.refreshSession();
                 
                 // 추가적으로 프로필 데이터를 다시 불러와서 UI 상태를 확실히 함
