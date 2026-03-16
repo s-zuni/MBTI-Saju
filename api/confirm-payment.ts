@@ -47,11 +47,12 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         const tossData = await tossResponse.json();
 
         if (!tossResponse.ok) {
-            console.error('[Toss Error]', tossData);
+            console.error('[Toss Error API Response]', tossData);
             return res.status(tossResponse.status).json({
                 success: false,
                 message: tossData.message || '토스 결제 승인이 거절되었습니다.',
-                code: tossData.code
+                code: tossData.code,
+                tossError: tossData // 상세 에러 객체 포함
             });
         }
 

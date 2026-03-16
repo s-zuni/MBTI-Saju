@@ -52,7 +52,7 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
 
         // V2 SDK 인스턴스 생성
         const payment = tossPayments.payment({
-            customerKey: config.customerKey,
+            customerKey: config.customerKey || 'ANONYMOUS', // 필드 유실 대비 폴백
         });
 
         // 결제 요청 (v2 규격)
@@ -83,8 +83,11 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
         let errorMessage = "결제 준비 중 알 수 없는 오류가 발생했습니다.";
         if (error.message) {
             errorMessage = error.message;
-        } else if (error.code) {
-            errorMessage = `에러 코드: ${error.code}`;
+        }
+        
+        // 토스 전용 에러 코드 포함
+        if (error.code) {
+            errorMessage = `[${error.code}] ${errorMessage}`;
         }
 
         return {
