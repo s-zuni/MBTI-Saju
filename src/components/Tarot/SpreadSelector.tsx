@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Heart, Briefcase, Sparkles, Lock } from 'lucide-react';
+import { Heart, Briefcase, Sparkles, Lock } from 'lucide-react';
 import { Tier, TIERS } from '../../hooks/useSubscription';
 
 export type SpreadType = 'daily' | 'love' | 'career';
