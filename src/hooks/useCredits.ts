@@ -42,9 +42,11 @@ interface UseCreditsReturn {
     loading: boolean;
     purchases: CreditPurchase[];
     debugInfo: {
+        phase: string;
         purchaseCount: number;
         profileCredits: number;
         lastRefresh: string;
+        error?: string;
     } | undefined;
     refreshCredits: () => Promise<void>;
     useCredits: (serviceType: ServiceType) => Promise<boolean>;
@@ -66,22 +68,36 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
     const refreshCredits = useCallback(async () => {
         let currentUserId = session?.user?.id;
 
+        // 1. Initial State Trace
+        setDebugInfo({
+            phase: '1. 세션 확인 시작',
+            purchaseCount: 0,
+            profileCredits: 0,
+            lastRefresh: new Date().toLocaleTimeString()
+        });
+
         // Double check session if not provided (important for mobile tab recovery)
         if (!currentUserId) {
-            const { data: { session: activeSession } } = await supabase.auth.getSession();
-            currentUserId = activeSession?.user?.id;
+            try {
+                const { data: { session: activeSession } } = await supabase.auth.getSession();
+                currentUserId = activeSession?.user?.id;
+            } catch (authErr: any) {
+                setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', error: authErr.message }));
+            }
         }
 
         if (!currentUserId) {
             setCredits(0);
             setPurchases([]);
             setLoading(false);
-            setDebugInfo(undefined);
+            setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음' }));
             return;
         }
 
         try {
             setLoading(true);
+            setDebugInfo(prev => ({ ...prev!, phase: '2. 구매 내역 조회 중' }));
+            
             // credit_purchases에서 remaining_credits 합계 조회
             const { data, error } = await supabase
                 .from('credit_purchases')
@@ -97,6 +113,8 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setPurchases(activePurchases);
             const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
+            setDebugInfo(prev => ({ ...prev!, phase: '3. 프로필 조회 중', purchaseCount: activePurchases.length }));
+
             // profiles 테이블도 함께 조회하여 합산
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
@@ -106,19 +124,21 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             let profileCredits = 0;
             if (profileError) {
                 console.error('Error fetching profile for credits:', profileError);
+                // Don't throw here to allow partial data (purchases) to show
             } else if (profileData && profileData.length > 0) {
                 profileCredits = profileData[0]?.credits ?? 0;
             }
 
             setCredits(totalCredits + profileCredits);
             setDebugInfo({
+                phase: '4. 조회 완료',
                 purchaseCount: activePurchases.length,
                 profileCredits: profileCredits,
                 lastRefresh: new Date().toLocaleTimeString()
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error fetching credits:', err);
-            // Don't reset to 0 immediately on transient network errors on mobile
+            setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
         } finally {
             setLoading(false);
         }

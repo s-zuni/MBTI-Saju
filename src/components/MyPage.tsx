@@ -526,9 +526,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
           <div className="mt-8 p-4 bg-slate-100 rounded-lg text-[10px] text-slate-500 font-mono text-left break-all opacity-50">
             <p className="font-bold border-b border-slate-200 pb-1 mb-1">[진단 정보 - PC/모바일 대조용]</p>
             <p>● User ID: {profile?.id || '세션 없음'}</p>
-            <p>● Email: {profile?.email || 'N/A'}</p>
-            <p>● DB 구매내역 수: {debugInfo?.purchaseCount ?? '조회 전'}</p>
-            <p>● DB 프로필 크레딧: {debugInfo?.profileCredits ?? '조회 전'}</p>
+            <p>● 단계: {debugInfo?.phase ?? '조회 대기'}</p>
+            <p>● DB 구매내역 수: {debugInfo?.purchaseCount ?? 0}</p>
+            <p>● DB 프로필 크레딧: {debugInfo?.profileCredits ?? 0}</p>
+            {debugInfo?.error && <p className="text-red-400 font-bold">● 에러: {debugInfo.error}</p>}
             <p>● 마지막 갱신: {debugInfo?.lastRefresh ?? 'N/A'}</p>
             <p>● Device Time: {new Date().toLocaleTimeString()}</p>
             <button 
