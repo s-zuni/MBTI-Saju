@@ -513,7 +513,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
           </div>
         )}
 
-        {/* Footer Support Links (Requested Enhancement) */}
+        {/* Footer Support Links */}
         <div className="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-sm">
           <div className="flex justify-center gap-6 mb-4">
             <button onClick={() => navigate('/terms')} className="hover:text-slate-600">이용약관</button>
@@ -521,6 +521,20 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             <button onClick={() => navigate('/support')} className="hover:text-slate-600">고객센터 문의</button>
           </div>
           <p>© 2026 MBTI Saju. All rights reserved.</p>
+          
+          {/* Temporary Diagnostic Section - Remove after fix */}
+          <div className="mt-8 p-4 bg-slate-100 rounded-lg text-[10px] text-slate-500 font-mono text-left break-all opacity-50">
+            <p className="font-bold border-b border-slate-200 pb-1 mb-1">[진단 정보 - PC/모바일 대조용]</p>
+            <p>● User ID: {profile?.id || '세션 없음'}</p>
+            <p>● Email: {profile?.email || 'N/A'}</p>
+            <p>● SDK Path: {window.location.host}</p>
+            <button 
+              onClick={() => { window.location.reload(); }}
+              className="mt-2 px-2 py-1 bg-slate-200 rounded text-slate-600"
+            >
+              새로고침(강제)
+            </button>
+          </div>
         </div>
 
       </div>
