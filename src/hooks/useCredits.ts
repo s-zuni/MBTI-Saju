@@ -98,61 +98,42 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
         try {
             setLoading(true);
-            setDebugInfo(prev => ({ ...prev!, phase: '2. 구매 내역 조회 중 (Wait 10s...)' }));
+            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중' }));
             
-            // Timeout logic for mobile diagnostics
-            const fetchPurchases = async () => {
-                const { data, error } = await supabase
-                    .from('credit_purchases')
-                    .select('*')
-                    .eq('user_id', currentUserId)
-                    .eq('status', 'active')
-                    .gt('remaining_credits', 0)
-                    .order('purchased_at', { ascending: true });
+            // Single RPC call to skip multiple round-trips (Critical for mobile)
+            const fetchSummary = async () => {
+                const { data, error } = await supabase.rpc('get_user_available_credits_v2', {
+                    p_user_id: currentUserId
+                });
                 if (error) throw error;
                 return data;
             };
 
             const queryTimeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('결제 내역 조회 타임아웃 (10초 초과)')), 10000)
+                setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (10초 초과)')), 10000)
             );
 
-            const data = await Promise.race([fetchPurchases(), queryTimeout]) as CreditPurchase[];
+            const result = await Promise.race([fetchSummary(), queryTimeout]) as any;
 
-            const activePurchases = (data || []);
+            if (!result) throw new Error('조회 결과가 없습니다.');
+
+            const activePurchases = (result.purchases || []) as CreditPurchase[];
+            const profileCredits = result.profile_credits || 0;
+            const totalPurchaseCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
+
             setPurchases(activePurchases);
-            const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
+            setCredits(totalPurchaseCredits + profileCredits);
 
-            setDebugInfo(prev => ({ ...prev!, phase: '3. 프로필 조회 중', purchaseCount: activePurchases.length }));
-
-            // profiles 테이블도 함께 조회하여 합산 (타임아웃 적용)
-            const fetchProfile = async () => {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('credits')
-                    .eq('id', currentUserId);
-                if (error) throw error;
-                return data;
-            };
-
-            const profileData = await Promise.race([fetchProfile(), queryTimeout]) as any[];
-
-            let profileCredits = 0;
-            if (profileData && profileData.length > 0) {
-                profileCredits = profileData[0]?.credits ?? 0;
-            }
-
-            setCredits(totalCredits + profileCredits);
             setDebugInfo({
-                phase: '4. 조회 완료',
+                phase: '4. 조회 완료(RPC)',
                 purchaseCount: activePurchases.length,
                 profileCredits: profileCredits,
                 lastRefresh: new Date().toLocaleTimeString(),
                 host: window.location.host
             });
         } catch (err: any) {
-            console.error('Error fetching credits:', err);
-            setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
+            console.error('Error fetching credits via RPC:', err);
+            setDebugInfo(prev => ({ ...prev!, phase: '에러: RPC 실패', error: err.message || JSON.stringify(err) }));
         } finally {
             setLoading(false);
         }
