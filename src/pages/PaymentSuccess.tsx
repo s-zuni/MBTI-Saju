@@ -15,15 +15,14 @@ const PaymentSuccess: React.FC = () => {
 
     useEffect(() => {
         const confirmAndSync = async () => {
-            if (!paymentKey || !orderId || !amount) {
-                setError('결제 정보가 누락되었습니다.');
-                setLoading(false);
-                return;
-            }
-
+            // 1. 사용자 식별자를 여러 경로에서 시도 (URL -> LocalStorage -> Current Session)
             const userIdFromUrl = searchParams.get('userId');
+            const userIdFromStorage = localStorage.getItem('pending_payment_user_id');
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
             
-            try {
+            const finalUserId = userIdFromUrl || userIdFromStorage || currentUser?.id;
+
+            if (!paymentKey || !orderId || !amount) {
                 // 1. 서버리스 함수 호출하여 결제 승인 및 DB 반영
                 const response = await fetch('/api/confirm-payment', {
                     method: 'POST',
@@ -32,9 +31,12 @@ const PaymentSuccess: React.FC = () => {
                         paymentKey,
                         orderId,
                         amount: Number(amount),
-                        userId: userIdFromUrl, // URL에서 받은 ID 전달
+                        userId: finalUserId, 
                     }),
                 });
+
+                // 성공 시 임시 데이터 삭제
+                localStorage.removeItem('pending_payment_user_id');
 
                 const data = await response.json();
 

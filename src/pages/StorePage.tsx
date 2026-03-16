@@ -27,6 +27,9 @@ const StorePage: React.FC = () => {
             const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
             const currentUserId = user.id;
+            
+            // [FAILSAFE] 리다이렉트 시 세션 유실이나 파라미터 누락에 대비하여 로컬 스토리지에 임시 저장
+            localStorage.setItem('pending_payment_user_id', currentUserId);
 
             const response = await requestPayment({
                 name: pkg.name,
