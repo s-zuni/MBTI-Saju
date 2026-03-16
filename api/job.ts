@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { calculateSaju } from './_utils/saju';
 import { cleanAndParseJSON } from './_utils/json';

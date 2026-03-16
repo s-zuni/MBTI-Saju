@@ -8,14 +8,18 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-        console.error('[Confirm Payment] Missing Supabase configuration');
+        console.error('[Confirm Payment] Missing Supabase configuration:', { hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey });
         return res.status(500).json({ 
             message: '서버 설정 오류: Supabase 환경 변수가 누락되었습니다.',
-            details: { hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey }
+            details: { 
+                hasUrl: !!supabaseUrl, 
+                hasKey: !!supabaseServiceKey,
+                info: 'SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY가 필요합니다.'
+            }
         });
     }
 
