@@ -19,6 +19,12 @@ const UsageHistoryPage = () => {
                 supabase.from('credit_usages').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
             ]);
 
+            console.log('[UsageHistory] Purchases:', pRes);
+            console.log('[UsageHistory] Usages:', uRes);
+
+            if (pRes.error) console.error('[UsageHistory] Purchases Error:', pRes.error);
+            if (uRes.error) console.error('[UsageHistory] Usages Error:', uRes.error);
+
             setData({
                 purchases: (pRes.data || []).map(p => ({ ...p, purchased_at: p.purchased_at || p.created_at })),
                 usages: (uRes.data || []).map(u => ({ ...u, used_at: u.used_at || u.created_at }))
