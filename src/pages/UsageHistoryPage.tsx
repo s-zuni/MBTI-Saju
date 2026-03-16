@@ -69,8 +69,8 @@ const UsageHistoryPage = () => {
                 </div>
 
                 <div className="flex bg-white rounded-2xl p-1 mb-6 border border-slate-100 shadow-sm">
-                    <button onClick={() => setActiveTab('purchases')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'purchases' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>구매 내역</button>
-                    <button onClick={() => setActiveTab('usages')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'usages' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>사용 내역</button>
+                    <button onClick={() => setActiveTab('purchases')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'purchases' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>구매 내역</button>
+                    <button onClick={() => setActiveTab('usages')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'usages' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>사용 내역</button>
                 </div>
 
                 <div className="space-y-3">

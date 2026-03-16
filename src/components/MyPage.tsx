@@ -296,9 +296,9 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-black text-slate-900">마이페이지</h1>
             </div>
-            <div className='flex gap-2 invisible md:visible'>
-              <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-600">정보 수정</button>
-              <button onClick={handleLogout} className="btn-secondary px-4 py-2 text-sm">로그아웃</button>
+            <div className='flex gap-2 min-w-fit'>
+              <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary px-3 py-2 text-xs md:text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold">정보 수정</button>
+              <button onClick={handleLogout} className="btn-secondary px-3 py-2 text-xs md:text-sm bg-slate-900 text-white rounded-lg font-bold">로그아웃</button>
             </div>
           </div>
 
