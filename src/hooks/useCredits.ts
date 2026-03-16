@@ -58,7 +58,15 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
     const refreshCredits = useCallback(async () => {
-        if (!session?.user?.id) {
+        let currentUserId = session?.user?.id;
+
+        // Double check session if not provided (important for mobile tab recovery)
+        if (!currentUserId) {
+            const { data: { session: activeSession } } = await supabase.auth.getSession();
+            currentUserId = activeSession?.user?.id;
+        }
+
+        if (!currentUserId) {
             setCredits(0);
             setPurchases([]);
             setLoading(false);
@@ -66,11 +74,12 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         }
 
         try {
+            setLoading(true);
             // credit_purchases에서 remaining_credits 합계 조회
             const { data, error } = await supabase
                 .from('credit_purchases')
                 .select('*')
-                .eq('user_id', session.user.id)
+                .eq('user_id', currentUserId)
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .order('purchased_at', { ascending: true });
@@ -81,11 +90,11 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setPurchases(activePurchases);
             const totalCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
-            // profiles 테이블도 함께 조회하여 합산 (에러 방지를 위해 list로 가져옴)
+            // profiles 테이블도 함께 조회하여 합산
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('credits')
-                .eq('id', session.user.id);
+                .eq('id', currentUserId);
 
             let profileCredits = 0;
             if (profileError) {
@@ -97,8 +106,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setCredits(totalCredits + profileCredits);
         } catch (err) {
             console.error('Error fetching credits:', err);
-            setCredits(0);
-            setPurchases([]);
+            // Don't reset to 0 immediately on transient network errors on mobile
         } finally {
             setLoading(false);
         }

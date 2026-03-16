@@ -234,13 +234,18 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const handleLogout = async () => {
     setLoading(true);
     try {
+      // Clear local cache/storage first to prevent ghost sessions on mobile
+      localStorage.clear();
+      sessionStorage.clear();
+      
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
-      await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeoutPromise]);
+      // Use global signout (default) instead of scope:'local' for better cross-device consistency
+      await Promise.race([supabase.auth.signOut(), timeoutPromise]);
     } catch (error: any) {
       console.error('Logout error:', error);
     } finally {
-      navigate('/');
-      window.location.reload();
+      // Force direct navigation and reload to clean the state
+      window.location.href = '/';
     }
   };
 
