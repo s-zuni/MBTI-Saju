@@ -35,19 +35,26 @@ const PaymentSuccess: React.FC = () => {
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.message || '결제 승인 중 오류가 발생했습니다.');
+                if (!response.ok || data.success === false) {
+                    console.error('Failed API Response:', data);
+                    throw new Error(data.message || data.error || '결제 승인 중 오류가 발생했습니다.');
                 }
 
                 // 2. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
                 await supabase.auth.refreshSession();
                 
+                // 추가적으로 프로필 데이터를 다시 불러와서 UI 상태를 확실히 함
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                   await supabase.from('profiles').select('*').eq('id', user.id).single();
+                }
+
                 setLoading(false);
                 
-                // 2.5초 후 내역 페이지로 자동 이동
+                // 3초 후 내역 페이지로 자동 이동
                 setTimeout(() => {
                     navigate('/usage-history', { replace: true });
-                }, 2500);
+                }, 3000);
 
             } catch (err: any) {
                 console.error('Payment Confirmation Error:', err);
