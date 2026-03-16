@@ -14,10 +14,15 @@ const UsageHistoryPage = () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.id) return;
 
+            console.log('[UsageHistory] Querying for User ID:', session.user.id);
+            
             const [pRes, uRes] = await Promise.all([
                 supabase.from('credit_purchases').select('*').eq('user_id', session.user.id).order('purchased_at', { ascending: false }),
                 supabase.from('credit_usages').select('*').eq('user_id', session.user.id).order('used_at', { ascending: false })
             ]);
+
+            console.log('[UsageHistory] Purchases Result:', { count: pRes.data?.length, error: pRes.error, data: pRes.data });
+            console.log('[UsageHistory] Usages Result:', { count: uRes.data?.length, error: uRes.error, data: uRes.data });
 
             setData({
                 purchases: pRes.data || [],
