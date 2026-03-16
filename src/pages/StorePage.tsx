@@ -31,6 +31,10 @@ const StorePage: React.FC = () => {
                 amount: pkg.price,
                 orderId: orderId,
                 customerKey: user.id || 'ANONYMOUS',
+                metadata: {
+                    userId: user.id,
+                    productId: pkg.id
+                },
                 ...(user.email && { customerEmail: user.email }),
             });
 

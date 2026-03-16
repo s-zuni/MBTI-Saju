@@ -17,6 +17,7 @@ export interface TossPaymentConfig {
     customerKey: string; // V2 필수값 (Sanitized user id 또는 ANONYMOUS)
     customerName?: string;
     customerEmail?: string;
+    metadata?: Record<string, any>;
 }
 
 export interface PaymentResponse {
@@ -65,6 +66,7 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
             failUrl: `${window.location.origin}/payment/fail`,
             customerEmail: config.customerEmail,
             customerName: config.customerName,
+            metadata: config.metadata,
             card: {
                 flowMode: "DEFAULT",
                 useCardPoint: false,
