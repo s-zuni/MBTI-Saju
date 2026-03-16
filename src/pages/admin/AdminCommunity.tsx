@@ -1,16 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import { 
-    MessageSquare, 
     Trash2, 
     Search, 
     Loader2, 
     ExternalLink,
     AlertCircle,
-    Calendar,
-    User as UserIcon,
-    ThumbsUp,
-    Filter
+    Calendar
 } from 'lucide-react';
 
 interface Post {
