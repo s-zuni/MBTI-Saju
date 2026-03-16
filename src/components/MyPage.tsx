@@ -74,7 +74,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits } = useCredits(session);
+  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits, debugInfo } = useCredits(session);
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -527,7 +527,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
             <p className="font-bold border-b border-slate-200 pb-1 mb-1">[진단 정보 - PC/모바일 대조용]</p>
             <p>● User ID: {profile?.id || '세션 없음'}</p>
             <p>● Email: {profile?.email || 'N/A'}</p>
-            <p>● SDK Path: {window.location.host}</p>
+            <p>● DB 구매내역 수: {debugInfo?.purchaseCount ?? '조회 전'}</p>
+            <p>● DB 프로필 크레딧: {debugInfo?.profileCredits ?? '조회 전'}</p>
+            <p>● 마지막 갱신: {debugInfo?.lastRefresh ?? 'N/A'}</p>
+            <p>● Device Time: {new Date().toLocaleTimeString()}</p>
             <button 
               onClick={() => { window.location.reload(); }}
               className="mt-2 px-2 py-1 bg-slate-200 rounded text-slate-600"

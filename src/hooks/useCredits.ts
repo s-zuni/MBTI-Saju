@@ -41,6 +41,11 @@ interface UseCreditsReturn {
     credits: number;
     loading: boolean;
     purchases: CreditPurchase[];
+    debugInfo: {
+        purchaseCount: number;
+        profileCredits: number;
+        lastRefresh: string;
+    } | undefined;
     refreshCredits: () => Promise<void>;
     useCredits: (serviceType: ServiceType) => Promise<boolean>;
     purchaseCredits: (planId: string, pricePaid: number, credits: number, paymentId?: string) => Promise<boolean>;
@@ -55,6 +60,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [credits, setCredits] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
+    const [debugInfo, setDebugInfo] = useState<UseCreditsReturn['debugInfo']>();
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
     const refreshCredits = useCallback(async () => {
@@ -70,6 +76,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setCredits(0);
             setPurchases([]);
             setLoading(false);
+            setDebugInfo(undefined);
             return;
         }
 
@@ -104,6 +111,11 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             }
 
             setCredits(totalCredits + profileCredits);
+            setDebugInfo({
+                purchaseCount: activePurchases.length,
+                profileCredits: profileCredits,
+                lastRefresh: new Date().toLocaleTimeString()
+            });
         } catch (err) {
             console.error('Error fetching credits:', err);
             // Don't reset to 0 immediately on transient network errors on mobile
@@ -290,6 +302,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         credits,
         loading,
         purchases,
+        debugInfo,
         refreshCredits,
         useCredits: useCreditsFunc,
         purchaseCredits,
