@@ -249,7 +249,14 @@ function App() {
                       onCompatibilityClick={() => openModal('compatibility')}
                     />
                   } />
-                  <Route path="/store" element={<StorePage />} />
+                  <Route path="/store" element={
+                    <PricingPage
+                      currentCredits={credits}
+                      onPurchaseSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+                        await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
+                      }}
+                    />
+                  } />
                   <Route path="/pricing" element={
                     <PricingPage
                       currentCredits={credits}

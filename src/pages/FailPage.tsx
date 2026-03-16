@@ -23,7 +23,7 @@ export default function FailPage() {
                             <span>{errorMessage || '사용자가 결제를 취소했거나 승인 과정에서 문제가 발생했습니다.'}</span>
                         </div>
                         <button
-                            onClick={() => navigate('/store')}
+                            onClick={() => navigate('/pricing')}
                             className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
                         >
                             상점으로 돌아가기

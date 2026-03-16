@@ -56,18 +56,11 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
             });
         }
 
-        // 3. 사용자 식별 및 크레딧 계산
-        // 프론트엔드에서 보낸 userId를 최우선으로 하며, 토스 메타데이터와 customerKey를 폴백으로 사용합니다.
+        // 3. 사용자 식별
         const userId = bodyUserId || tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const productId = tossData.metadata?.productId || 'credit_custom';
         
         console.log('[DEBUG] Full Toss Confirmation Data:', JSON.stringify(tossData));
-        console.log('[DEBUG] Extraction Logic:', {
-            'bodyUserId': bodyUserId,
-            'metadata.userId': tossData.metadata?.userId,
-            'customerKey': tossData.customerKey,
-            'finalUserId': userId
-        });
 
         if (!userId || userId === 'ANONYMOUS') {
             console.error('[CRITICAL] User Identification Failed.');
@@ -76,24 +69,39 @@ export default async function confirmPayment(req: VercelRequest, res: VercelResp
                 message: '사용자 장치 식별에 실패했습니다. (유저 ID 누락)',
                 debug: { 
                     receivedUserId: userId,
-                    hasMetadata: !!tossData.metadata,
-                    metadataKeys: tossData.metadata ? Object.keys(tossData.metadata) : [],
                     fullData: tossData 
                 }
             });
         }
 
+        // 4. 크레딧 양 조회 (DB 기반 동적 매핑)
         let addCredits = 0;
-        if (amount === 1000) addCredits = 100;
-        else if (amount === 4500) addCredits = 500;
-        else if (amount === 8000) addCredits = 1000;
-        else if (amount === 5000) addCredits = 50; 
-        else if (amount === 10000) addCredits = 120; 
-        else if (amount === 30000) addCredits = 400; 
-        else if (amount === 50000) addCredits = 750; 
-        else addCredits = Math.floor(amount / 10);
+        
+        // 4-1. DB에서 해당 플랜의 크레딧 조회
+        const { data: planData, error: planError } = await supabaseAdmin
+            .from('pricing_plans')
+            .select('credits')
+            .eq('id', productId)
+            .single();
 
-        // 4. Supabase RPC 호출 (Atomic Transaction)
+        if (planData && !planError) {
+            addCredits = planData.credits;
+            console.log(`[Payment] Plan found: ${productId}, Credits to add: ${addCredits}`);
+        } else {
+            // 4-2. 플랜을 못 찾을 경우 금액 기반 폴백 (기존 호환성 유지)
+            console.warn(`[Payment] Plan ${productId} not found. Falling back to amount-based calculation.`);
+            if (amount === 9900) addCredits = 100;
+            else if (amount === 5900) addCredits = 50;
+            else if (amount === 2900) addCredits = 10;
+            else if (amount === 1000) addCredits = 100;
+            else if (amount === 4500) addCredits = 500;
+            else if (amount === 8000) addCredits = 1000;
+            else addCredits = Math.floor(amount / 10);
+            
+            console.log(`[Payment] Fallback applied. Amount: ${amount}, Credits to add: ${addCredits}`);
+        }
+
+        // 5. Supabase RPC 호출 (Atomic Transaction)
         // SQL: add_credits_after_payment(p_user_id, p_credits, p_amount, p_payment_id, p_plan_id)
         const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('add_credits_after_payment', {
             p_user_id: userId,
