@@ -12,7 +12,6 @@ import SplashScreen from './components/SplashScreen';
 import MyPage from './components/MyPage';
 import ChatPage from './pages/ChatPage';
 import FortunePage from './pages/FortunePage';
-import StorePage from './pages/StorePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
