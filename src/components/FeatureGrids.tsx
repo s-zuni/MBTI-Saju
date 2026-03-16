@@ -67,7 +67,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
         },
         {
             icon: Layers,
-            label: '신비 타로',
+            label: '타로',
             sub: '카드로 보는 미래',
             bg: 'from-cyan-500 to-blue-600',
             action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),

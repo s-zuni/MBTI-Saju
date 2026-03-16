@@ -34,6 +34,7 @@ import RefundManagement from './pages/admin/RefundManagement';
 import PlanManagement from './pages/admin/PlanManagement';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
+import { useInactivityLogout } from './hooks/useInactivityLogout';
 
 // Lazy load modals for better initial performance
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
@@ -52,6 +53,10 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
+  
+  // Apply inactivity logout
+  useInactivityLogout(session);
+
   const { modals, openModal, closeModal, closeAllModals } = useModalStore();
 
   const [fortune, setFortune] = useState<{

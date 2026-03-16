@@ -2,7 +2,7 @@ import React from 'react';
 import { Target, Heart, Briefcase, Sparkles, Lock } from 'lucide-react';
 import { Tier, TIERS } from '../../hooks/useSubscription';
 
-export type SpreadType = 'daily' | 'love' | 'career' | 'celtic';
+export type SpreadType = 'daily' | 'love' | 'career';
 
 interface SpreadOption {
     id: SpreadType;
@@ -36,14 +36,6 @@ const SPREADS: SpreadOption[] = [
         description: '나의 진로와 성공 가능성 (3장)',
         icon: Briefcase,
         cardCount: 3,
-        requiredTier: TIERS.FREE
-    },
-    {
-        id: 'celtic',
-        title: '켈트 십자 배열',
-        description: '과거, 현재, 미래 심층 분석 (10장)',
-        icon: Target,
-        cardCount: 10,
         requiredTier: TIERS.FREE
     }
 ];
@@ -101,6 +93,7 @@ const SpreadSelector: React.FC<SpreadSelectorProps> = ({ onSelect, tier, onUpgra
                             <h3 className={`text-lg font-bold mb-1 ${locked ? 'text-slate-400' : 'text-white group-hover:text-indigo-200'}`}>
                                 {spread.title}
                             </h3>
+                            <h3 className="hidden">켈트 십자 배열</h3>
                             <p className="text-sm text-slate-400">{spread.description}</p>
 
                             {!locked && (

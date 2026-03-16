@@ -110,7 +110,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             운명 심층 상담
           </button>
           <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
-            신비 타로
+            타로
           </button>
           <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
             커뮤니티
@@ -178,7 +178,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세 보기</button>
               <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운명 심층 상담</button>
-              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">신비 타로</button>
+              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">타로</button>
               <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
               <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
             </div>

@@ -47,6 +47,8 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
 
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
+        setSelectedCards([]); // Reset cards when changing spread
+        setReading(null);     // Reset reading when changing spread
         setStep('question');
     };
 
@@ -72,7 +74,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             case 'daily': return 1;
             case 'love': return 3;
             case 'career': return 3;
-            case 'celtic': return 10;
             default: return 3;
         }
     };
@@ -160,7 +161,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-indigo-500/20 bg-indigo-950/30 relative z-10">
                     <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-indigo-200 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-purple-400" /> AI 타로 상담소
+                        <Sparkles className="w-5 h-5 text-purple-400" /> 타로 상담소
                     </h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white">
                         <X className="w-6 h-6" />
@@ -187,7 +188,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                 {selectedSpread === 'daily' && "오늘 하루, 나에게 필요한 조언은?"}
                                 {selectedSpread === 'love' && "그 사람의 속마음이 궁금한가요?"}
                                 {selectedSpread === 'career' && "이직, 취업, 사업... 나의 성공 운은?"}
-                                {selectedSpread === 'celtic' && "복잡한 문제의 심층적인 해답을 찾아보세요."}
                             </p>
 
                             <input
@@ -265,9 +265,9 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                 })}
                             </div>
 
-                            {/* Deck Spread */}
-                            <div className="w-full max-w-6xl overflow-x-auto pb-12 custom-scrollbar px-4">
-                                <div className="flex justify-center -space-x-12 min-w-max pt-8 pb-4">
+                            {/* Deck Spread - Grid pattern */}
+                            <div className="w-full max-w-5xl overflow-y-auto pb-12 custom-scrollbar px-4">
+                                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-2 sm:gap-4 pt-8 pb-4">
                                     {deck.map((card, idx) => {
                                         const isSelected = selectedCards.find(c => c.id === card.id);
                                         return (
@@ -275,26 +275,19 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                 key={card.id}
                                                 onClick={() => handleCardSelect(card)}
                                                 disabled={!!isSelected}
-                                                style={{
-                                                    transform: isSelected ? 'translateY(40px) scale(0.9)' : `rotate(${(idx - 39) * 1.5}deg) translateY(${Math.abs(idx - 39) * 2}px)`,
-                                                    zIndex: isSelected ? 0 : 40,
-                                                    transitionDelay: `${idx * 10}ms`
-                                                }}
                                                 className={`
-                                                    w-32 h-48 rounded-xl border-2 border-white/10 shadow-xl transition-all duration-300 transform origin-bottom
+                                                    aspect-[2/3] rounded-lg border border-white/10 shadow-lg transition-all duration-300
                                                     bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 relative group
                                                     ${isSelected
-                                                        ? 'opacity-0 pointer-events-none'
-                                                        : 'hover:-translate-y-10 hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] hover:z-50 hover:scale-110 cursor-pointer'
+                                                        ? 'opacity-0 pointer-events-none scale-50'
+                                                        : 'hover:-translate-y-2 hover:shadow-[0_0_20px_rgba(139,92,246,0.6)] hover:z-50 hover:scale-110 cursor-pointer'
                                                     }
                                                 `}
                                             >
-                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay rounded-xl"></div>
-                                                <div className="absolute inset-2 border border-white/10 rounded-lg"></div>
+                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay rounded-lg"></div>
+                                                <div className="absolute inset-1 border border-white/5 rounded-md"></div>
                                                 <div className="w-full h-full flex items-center justify-center">
-                                                    <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center">
-                                                        <Sparkles className="w-6 h-6 text-indigo-300/30" />
-                                                    </div>
+                                                    <Sparkles className="w-4 h-4 text-indigo-300/30" />
                                                 </div>
                                             </button>
                                         );
@@ -400,8 +393,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
 const SPREADS = [
     { id: 'daily', title: '오늘의 운세' },
     { id: 'love', title: '연애 고민' },
-    { id: 'career', title: '취업/이직' },
-    { id: 'celtic', title: '켈트 십자 배열' }
+    { id: 'career', title: '취업/이직' }
 ];
 
 export default TarotModal;
