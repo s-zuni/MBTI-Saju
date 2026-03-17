@@ -9,7 +9,9 @@ import {
     ChevronRight,
     Coins,
     User,
-    ArrowLeft
+    ArrowLeft,
+    RotateCcw,
+    Loader2
 } from 'lucide-react';
 
 interface Inquiry {
@@ -23,7 +25,9 @@ interface Inquiry {
     credits_rewarded: number;
     created_at: string;
     answered_at: string | null;
+    linked_purchase_id: string | null;
     user_email?: string;
+    linked_purchase?: any;
 }
 
 const AdminInquiries: React.FC = () => {
@@ -33,17 +37,17 @@ const AdminInquiries: React.FC = () => {
     const [answerText, setAnswerText] = useState('');
     const [rewardCredits, setRewardCredits] = useState(0);
     const [filter, setFilter] = useState<'all' | 'pending' | 'answered'>('all');
+    const [refunding, setRefunding] = useState(false);
 
     const fetchInquiries = useCallback(async () => {
         setLoading(true);
-        console.log('Fetching inquiries with filter:', filter);
         try {
-            // Using left join (implicitly) but ensuring we get data even if profile is missing
             let query = supabase
                 .from('support_inquiries')
                 .select(`
                     *,
-                    profiles!left(email)
+                    profiles!left(email),
+                    linked_purchase:linked_purchase_id(*)
                 `);
 
             if (filter !== 'all') {
@@ -52,11 +56,7 @@ const AdminInquiries: React.FC = () => {
 
             const { data, error } = await query.order('created_at', { ascending: false });
 
-            console.log('Inquiries raw data:', data);
-            if (error) {
-                console.error('Supabase query error:', error);
-                throw error;
-            }
+            if (error) throw error;
 
             const formattedData = (data || []).map((item: any) => ({
                 ...item,
@@ -64,16 +64,22 @@ const AdminInquiries: React.FC = () => {
             }));
 
             setInquiries(formattedData);
+            
+            // If currently selected inquiry is in the list, update it
+            if (selectedInquiry) {
+                const updated = formattedData.find(i => i.id === selectedInquiry.id);
+                if (updated) setSelectedInquiry(updated);
+            }
         } catch (error) {
             console.error('Fetch error:', error);
         } finally {
             setLoading(false);
         }
-    }, [filter]);
+    }, [filter, selectedInquiry?.id]);
 
     useEffect(() => {
         fetchInquiries();
-    }, [fetchInquiries]);
+    }, [filter]); // fetchInquiries depends on filter
 
     const handleAnswer = async () => {
         if (!selectedInquiry) return;
@@ -91,7 +97,6 @@ const AdminInquiries: React.FC = () => {
 
             if (updateError) throw updateError;
 
-            // If credits rewarded, update user profile
             if (rewardCredits > 0) {
                 const { data: profile } = await supabase
                     .from('profiles')
@@ -118,6 +123,39 @@ const AdminInquiries: React.FC = () => {
         }
     };
 
+    const handleRefund = async () => {
+        if (!selectedInquiry?.linked_purchase_id) return;
+        
+        const confirmRefund = window.confirm('정말로 환불을 실행하시겠습니까? 토스페이먼츠 결제가 취소되고 사용자 크레딧이 차감됩니다.');
+        if (!confirmRefund) return;
+
+        setRefunding(true);
+        try {
+            const response = await fetch('/api/cancel-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    purchaseId: selectedInquiry.linked_purchase_id,
+                    cancelReason: '고객센터 문의를 통한 관리자 환불 처리'
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || '환불 처리 중 오류가 발생했습니다.');
+            }
+
+            alert('환불 처리가 완료되었습니다.');
+            fetchInquiries();
+        } catch (error: any) {
+            console.error('Refund error:', error);
+            alert(error.message || '환불 중 오류가 발생했습니다.');
+        } finally {
+            setRefunding(false);
+        }
+    };
+
     const getCategoryLabel = (cat: string) => {
         const labels: Record<string, string> = {
             'refund': '환불 요청',
@@ -140,7 +178,7 @@ const AdminInquiries: React.FC = () => {
                             <ArrowLeft size={20} /> 목록으로 돌아가기
                         </button>
                         <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold \${
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                                 selectedInquiry.status === 'answered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                             }`}>
                                 {selectedInquiry.status === 'answered' ? '답변 완료' : '답변 대기'}
@@ -168,9 +206,56 @@ const AdminInquiries: React.FC = () => {
                                             <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">{getCategoryLabel(selectedInquiry.category)}</p>
                                             <h2 className="text-xl font-black text-slate-900">{selectedInquiry.title}</h2>
                                         </div>
-                                        <div className="p-4 bg-white rounded-xl border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                        <div className="p-4 bg-white rounded-xl border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap mb-4">
                                             {selectedInquiry.content}
                                         </div>
+
+                                        {selectedInquiry.linked_purchase && (
+                                            <div className="p-6 bg-white rounded-2xl border-2 border-indigo-50 shadow-sm animate-in fade-in zoom-in duration-300">
+                                                <h4 className="text-xs font-black text-indigo-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                                    <RotateCcw size={14} /> 연결된 구매 내역
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">상품(크레딧)</p>
+                                                        <p className="text-sm font-black text-slate-800">{selectedInquiry.linked_purchase.purchased_credits} C</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">결제 금액</p>
+                                                        <p className="text-sm font-black text-slate-800">₩{selectedInquiry.linked_purchase.price_paid.toLocaleString()}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">상태</p>
+                                                        <p className={`text-sm font-black ${
+                                                            selectedInquiry.linked_purchase.status === 'refunded' ? 'text-slate-400' : 'text-indigo-600'
+                                                        }`}>
+                                                            {selectedInquiry.linked_purchase.status === 'active' ? '결제 완료' : 
+                                                             selectedInquiry.linked_purchase.status === 'pending_refund' ? '환불 대기' : '환불 완료'}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">주문 일시</p>
+                                                        <p className="text-[11px] font-bold text-slate-800">{new Date(selectedInquiry.linked_purchase.purchased_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {selectedInquiry.linked_purchase.status !== 'refunded' && (
+                                                    <button
+                                                        onClick={handleRefund}
+                                                        disabled={refunding}
+                                                        className="w-full py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                                    >
+                                                        {refunding ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+                                                        즉시 환불 실행 (Toss Payments)
+                                                    </button>
+                                                )}
+                                                {selectedInquiry.linked_purchase.status === 'refunded' && (
+                                                    <div className="w-full py-3 bg-slate-50 text-slate-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-slate-100">
+                                                        <CheckCircle2 size={16} /> 이미 환불 처리된 항목입니다.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -226,7 +311,7 @@ const AdminInquiries: React.FC = () => {
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
-                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all \${
+                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
                                         filter === f ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'
                                     }`}
                                 >
@@ -262,7 +347,7 @@ const AdminInquiries: React.FC = () => {
                                     className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between group text-left w-full"
                                 >
                                     <div className="flex items-center gap-6">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center \${
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                                             inquiry.status === 'answered' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
                                         }`}>
                                             {inquiry.status === 'answered' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
@@ -283,6 +368,11 @@ const AdminInquiries: React.FC = () => {
                                                 {inquiry.credits_rewarded > 0 && (
                                                     <span className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
                                                         <Coins size={12} /> {inquiry.credits_rewarded} 지급됨
+                                                    </span>
+                                                )}
+                                                {inquiry.linked_purchase_id && (
+                                                    <span className="text-[10px] text-indigo-500 font-black flex items-center gap-1">
+                                                        <RotateCcw size={10} /> 환불 정보 포함
                                                     </span>
                                                 )}
                                             </div>

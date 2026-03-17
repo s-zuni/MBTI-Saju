@@ -6,7 +6,8 @@ import {
     Loader2,
     CheckCircle2,
     Clock,
-    AlertCircle
+    AlertCircle,
+    RotateCcw
 } from 'lucide-react';
 
 interface Payment {
@@ -27,6 +28,7 @@ const PaymentManagement: React.FC = () => {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [refundingId, setRefundingId] = useState<string | null>(null);
 
     const fetchPayments = async () => {
         try {
@@ -52,22 +54,75 @@ const PaymentManagement: React.FC = () => {
         fetchPayments();
     }, []);
 
+    const handleRefund = async (payment: Payment) => {
+        const confirmRefund = window.confirm(`[${payment.profiles?.name}]님의 ${payment.purchased_credits} 크레딧 결제를 환불하시겠습니까? 토스페이먼츠 승인이 취소됩니다.`);
+        if (!confirmRefund) return;
+
+        setRefundingId(payment.id);
+        try {
+            const response = await fetch('/api/cancel-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    purchaseId: payment.id,
+                    cancelReason: '관리자 페이지를 통한 직접 환불 처리'
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || '환불 처리 중 오류가 발생했습니다.');
+            }
+
+            alert('환불 처리가 완료되었습니다.');
+            fetchPayments();
+        } catch (error: any) {
+            console.error('Refund error:', error);
+            alert(error.message || '환불 중 오류가 발생했습니다.');
+        } finally {
+            setRefundingId(null);
+        }
+    };
+
     const filteredPayments = payments.filter(p =>
         p.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.payment_id?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
+    const getStatusBadge = (p: Payment) => {
+        switch (p.status) {
             case 'active':
-                return <span className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 결제완료</span>;
+                return (
+                    <div className="flex flex-col gap-2">
+                        <span className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 결제완료</span>
+                        <button 
+                            onClick={() => handleRefund(p)}
+                            disabled={refundingId === p.id}
+                            className="text-[10px] text-slate-400 hover:text-rose-500 font-bold flex items-center gap-1 transition-colors disabled:opacity-50"
+                        >
+                            {refundingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />} 환불처리
+                        </button>
+                    </div>
+                );
             case 'pending_refund':
-                return <span className="bg-amber-100 text-amber-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><Clock size={12} /> 환불요청</span>;
+                return (
+                    <div className="flex flex-col gap-2">
+                        <span className="bg-amber-100 text-amber-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><Clock size={12} /> 환불요청</span>
+                        <button 
+                            onClick={() => handleRefund(p)}
+                            disabled={refundingId === p.id}
+                            className="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[10px] font-black hover:bg-rose-100 transition-all flex items-center gap-1 disabled:opacity-50"
+                        >
+                             {refundingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />} 즉시 환불 승인
+                        </button>
+                    </div>
+                );
             case 'refunded':
                 return <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><AlertCircle size={12} /> 환불완료</span>;
             default:
-                return <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black w-fit">{status}</span>;
+                return <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black w-fit">{p.status}</span>;
         }
     };
 
@@ -133,7 +188,7 @@ const PaymentManagement: React.FC = () => {
                                             <span className="text-indigo-600 font-black">{p.purchased_credits?.toLocaleString()} C</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {getStatusBadge(p.status)}
+                                            {getStatusBadge(p)}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {new Date(p.purchased_at).toLocaleString()}
