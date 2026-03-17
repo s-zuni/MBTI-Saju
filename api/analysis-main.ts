@@ -63,8 +63,8 @@ export default async function handler(req: any, res: any) {
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.1-flash-lite-preview", 
-            systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use plain text or bullet points for emphasis."
+            model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview", 
+            systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Instead, use clear line breaks, bullet points, and appropriate emojis to enhance readability. Ensure content is formatted in a way that is easy to scan."
         });
         
         const result = await generateContentWithRetry(model, {

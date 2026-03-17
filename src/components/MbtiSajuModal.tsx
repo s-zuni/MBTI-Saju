@@ -552,7 +552,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               mbti={analysis.mbti}
               sajuElement={SAJU_ELEMENTS[currentSajuKey]}
               sajuTrait="타고난 운명과 후천적 성격의 조화"
-              keywords={analysis.keywords ? [analysis.keywords.trim()] : []}
+              keywords={analysis.keywords ? (typeof analysis.keywords === 'string' ? [analysis.keywords.trim()] : Array.isArray(analysis.keywords) ? (analysis.keywords as string[]).map((k: string) => k.trim()) : []) : []}
             />
           </div>
         )}
