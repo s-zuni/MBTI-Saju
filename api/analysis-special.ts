@@ -42,7 +42,7 @@ export default async function handler(req: any, res: any) {
         userQuery = `User: ${name || '사용자'}, MBTI: ${mbti}, Saju: ${saju.dayMaster.korean}, Region: ${region || '전국'}`;
     } else if (type === 'fortune') {
         const getZodiacSign = (dateStr: string) => {
-            const year = parseInt(dateStr.split('-')[0]);
+            const year = parseInt(dateStr.split('-')[0] || '1990');
             const animals = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"];
             return animals[(year - 4) % 12];
         };
