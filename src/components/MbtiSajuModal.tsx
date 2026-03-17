@@ -249,18 +249,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           )}
 
           {/* 2. 오행 구성 */}
-          {analysis.fiveElements?.elements && (
-            <section className="report-section">
-              <h4 className="report-section-title">
-                <Layers className="w-5 h-5" /> 오행 에너지 구성
-              </h4>
-              <div className="report-card !p-0 overflow-hidden text-sm">
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-100">
+          {analysis.fiveE                  <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
-                      <th className="px-4 py-3 text-left font-bold text-slate-700">오행</th>
-                      <th className="px-4 py-3 text-center font-bold text-slate-700">지표</th>
-                      <th className="px-4 py-3 text-left font-bold text-slate-700">해석</th>
+                      <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700">오행</th>
+                      <th className="px-2 sm:px-4 py-3 text-center font-bold text-slate-700">지표</th>
+                      <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700">해석</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -269,7 +262,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                       const getElementCount = (name: string) => {
                         if (!analysis.saju?.elements) return el.count;
                         const mapping: Record<string, keyof typeof analysis.saju.elements> = {
-                          '목(木)': 'wood', '화(火)': 'fire', '토(土)': 'earth', '금(金)': 'metal', '수(水)': 'water'
+                          '목(木)': 'wood', '화(火)': 'fire', '토(土)': 'earth', '금(金)': 'metal', '수(수)': 'water'
                         };
                         const key = mapping[el.element];
                         return key ? analysis.saju.elements[key] : el.count;
@@ -277,7 +270,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
                       return (
                         <tr key={idx}>
-                          <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
+                          <td className="px-3 sm:px-4 py-3 font-bold text-slate-900 whitespace-nowrap">{el.element}</td>
+                          <td className="px-2 sm:px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
+                          <td className="px-3 sm:px-4 py-3 text-slate-600 text-[11px] sm:text-sm leading-relaxed">{el.interpretation}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+    <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
                           <td className="px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
                           <td className="px-4 py-3 text-slate-600">{el.interpretation}</td>
                         </tr>
@@ -336,9 +336,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <h4 className="report-section-title">
                 <Calendar className="w-5 h-5" /> 운세 흐름 가이드
               </h4>
-              <div className="report-card bg-slate-900 text-white border-none p-10">
+              <div className="report-card bg-slate-900 text-white border-none p-6 sm:p-10">
                 <p className="text-indigo-400 font-bold mb-2 uppercase tracking-widest text-[10px]">Annual Theme</p>
-                <h5 className="text-2xl font-black mb-6 italic leading-tight">
+                <h5 className="text-xl sm:text-2xl font-black mb-6 italic leading-tight">
                   {analysis.yearlyFortune?.theme ? `"${analysis.yearlyFortune.theme}"` : "2026년 대운세 흐름"}
                 </h5>
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
@@ -451,18 +451,18 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   return (
     <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
-      <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
+      <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[32px] sm:rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
         {/* Navigation */}
         <ServiceNavigation currentService="mbti" onNavigate={onNavigate} onClose={onClose} />
 
         {/* Professional Header: Luxury White Concept */}
-        <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
+        <div className="bg-white px-6 sm:px-12 pt-10 pb-4 shrink-0">
           <div className="flex justify-between items-end">
             <div>
               <div className="flex items-center gap-2 text-indigo-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
                 <Sparkles className="w-4 h-4" /> Comprehensive Analysis
               </div>
-              <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
+              <h3 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
                 운명 리포트
               </h3>
             </div>
@@ -491,7 +491,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         </div>
 
         {/* Tabs: Ultra Minimal Line Style - Single Tab Only */}
-        <div className="px-8 sm:px-12 mt-4 shrink-0">
+        <div className="px-6 sm:px-12 mt-4 shrink-0">
           <div className="flex gap-10 border-b border-slate-100">
             <button
               onClick={() => setActiveTab('soul')}
@@ -504,7 +504,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         </div>
 
         {/* Content Area */}
-        <div className="px-8 sm:px-12 pb-12 pt-8 overflow-y-auto custom-scrollbar grow bg-white">
+        <div className="px-6 sm:px-12 pb-12 pt-8 overflow-y-auto custom-scrollbar grow bg-white">
           {loading ? (
             <div className="flex flex-col justify-center items-center h-80">
               <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
