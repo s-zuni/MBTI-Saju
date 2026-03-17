@@ -18,7 +18,7 @@ interface MbtiSajuModalProps {
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
+  const [activeTab, setActiveTab] = useState<'soul'>('soul');
   const shareCardRef = React.useRef<HTMLDivElement>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -306,6 +306,30 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             </section>
           )}
 
+          {/* 3. MBTI 심층 분석 (Persona) - 통합됨 */}
+          {analysis.persona && (
+            <section className="report-section">
+              <h4 className="report-section-title">
+                <Brain className="w-5 h-5" /> {analysis.mbti} 심층 분석
+              </h4>
+              <div className="report-card bg-slate-50 border-slate-200">
+                <h5 className="font-black text-slate-900 mb-4 text-lg">
+                  {analysis.persona.mbtiNickname || analysis.mbti}
+                </h5>
+                <div className="space-y-6 text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+                  <div>
+                    <strong className="text-slate-900 block mb-1">핵심 에너지 (주기능)</strong>
+                    {analysis.persona.dominantFunction}
+                  </div>
+                  <div>
+                    <strong className="text-slate-900 block mb-1">사회적 상호작용 (부기능)</strong>
+                    {analysis.persona.auxiliaryFunction}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* 운세 흐름 */}
           {(analysis.yearlyFortune || analysis.fortune2026) && (
             <section className="report-section">
@@ -466,29 +490,15 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           </div>
         </div>
 
-        {/* Tabs: Ultra Minimal Line Style */}
+        {/* Tabs: Ultra Minimal Line Style - Single Tab Only */}
         <div className="px-8 sm:px-12 mt-4 shrink-0">
           <div className="flex gap-10 border-b border-slate-100">
             <button
               onClick={() => setActiveTab('soul')}
-              className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'soul' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative text-slate-950`}
             >
-              종합 분석
-              {activeTab === 'soul' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
-            </button>
-            <button
-              onClick={() => setActiveTab('mbti')}
-              className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'mbti' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              MBTI 심층
-              {activeTab === 'mbti' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
-            </button>
-            <button
-              onClick={() => setActiveTab('saju')}
-              className={`pb-4 text-[11px] font-black tracking-[0.15em] uppercase transition-all relative ${activeTab === 'saju' ? 'text-slate-950' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              사주 심층
-              {activeTab === 'saju' && <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>}
+              종합 분석 리포트
+              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-950 animate-fade-in"></div>
             </button>
           </div>
         </div>
