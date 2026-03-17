@@ -43,12 +43,12 @@ export default async function handler(req: any, res: any) {
 
         [중요: 분석 분량 및 깊이 가이드라인]
         1. **MBTI 심층 분석 (persona 필드)**: 
-           - **매우 풍성하고 깊이 있는** 분량으로 작성하세요. (700자 이상의 상세 분석 지향)
+           - **매우 상세하고 깊이 있는** 분량으로 작성하세요. 
            - 단순히 주기능/부기능을 설명하는 것을 넘어, 이 조합이 일상, 스트레스 상황, 인간관계에서 어떻게 발현되는지 구체적인 에피소드처럼 묘사하세요.
            - 사용자가 "내 속마음을 들켰다!"고 느낄 정도로 깊이 있는 심리 묘사를 포함하세요.
         
         2. **사주 심층 분석 (nature 필드)**: 
-           - **압도적이고 깊이 있는** 분량으로 작성하세요. (1,000자 이상의 대서사 지향)
+           - **풍성하고 전문적인** 분량으로 작성하세요. 
            - 일주(Day Pillar)의 상징(예: 갑목, 임수 등)을 현대적인 비유로 풀어내고, 월지와의 관계, 오행의 흐름이 사용자의 천성과 기질에 주는 영향을 매우 상세히 분석하세요.
            - 과거-현재-미래의 잠재력을 연결하여 한 편의 서사시처럼 서술하세요.
  
@@ -97,16 +97,16 @@ export default async function handler(req: any, res: any) {
         5. '...'이나 '!' 등을 적절히 섞어 생동감 있게 표현하세요.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
     } else if (part === 'fortune') {
-        systemPrompt = `당신은 '운명 전략가'입니다. 2026년 한 해의 운세와 테마를 분석합니다.
+        systemPrompt = `당신은 '운명 전략가'입니다. 사용자의 사주와 2026년 병오년의 기운을 대조하여 한 해의 운세와 테마를 분석합니다.
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
         {
           "yearlyFortune": {
-            "theme": "올해의 핵심 테마/키워드",
-            "overview": "전반적인 운의 흐름 및 조언 (가독성 있게 작성)",
-            "keywords": ["핵심", "운세", "키워드"]
+            "theme": "올해를 관통하는 핵심 테마 한 문장",
+            "overview": "전반적인 운의 흐름, 기회, 주의할 점을 포함한 상세한 조언",
+            "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"]
           }
         }
-        [가독성 규칙] **(볼드체) 사용금지. 줄바꿈과 이모지 적극 활용.`;
+        [가독성 규칙] **(볼드체) 절대 사용 금지. 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
     } else if (part === 'strategy') {
         systemPrompt = `당신은 '솔루션 가이드'입니다. 분야별 구체적인 조언과 전략을 제시합니다.
@@ -161,7 +161,7 @@ export default async function handler(req: any, res: any) {
         console.error(`[Error Stack]:`, error.stack);
         const errorMessage = getKoreanErrorMessage(error);
         res.status(500).json({ 
-            error: errorMessage,
+            error: `${part} 분석 중 오류 발생: ${errorMessage}`,
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
