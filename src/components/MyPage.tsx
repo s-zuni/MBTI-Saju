@@ -436,10 +436,17 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
               </div>
             )}
 
-                    {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", analysis.keywords)}
+                    {renderAnalysisSection(Key, "MBTI와 사주 핵심 키워드", 
+                      Array.isArray(analysis.keywords) 
+                        ? (analysis.keywords as string[]).join(', ') 
+                        : (typeof analysis.keywords === 'string' ? analysis.keywords : '')
+                    )}
             {(analysis.deepIntegration || (analysis as any).commonalities) &&
               renderAnalysisSection(Users, "두 결과의 공통점 및 융합 분석",
-                analysis.deepIntegration?.integrationPoints?.map(p => p.content).join('\n\n') || (analysis as any).commonalities, true)
+                analysis.deepIntegration?.integrationPoints 
+                  ? analysis.deepIntegration.integrationPoints.map((p: any) => p.content).join('\n\n') 
+                  : (analysis as any).commonalities, 
+                true)
             }
 
 

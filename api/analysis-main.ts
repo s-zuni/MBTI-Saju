@@ -39,22 +39,73 @@ export default async function handler(req: any, res: any) {
 
     if (part === 'core') {
         systemPrompt = `당신은 '소울 융합 분석가'입니다. 사용자의 MBTI 성향과 사주 명리학의 핵심 원리를 결합하여, 유일무이한 자아 정체성과 삶의 방향성을 제시해 줍니다. 
-        규칙:
-        1. 결과는 반드시 JSON 형식이어야 합니다.
-        2. 'keywords', 'summary', 'details' (심층 분석), 'mbtiAnalysis', 'sajuAnalysis' 필드를 포함하세요.
-        3. 정중하고 깊이 있는 한국어를 사용하세요.`;
+        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
+        {
+          "reportTitle": "한 줄 요약 제목",
+          "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
+          "nature": {
+            "dayPillarSummary": "일주 요약 (예: '갑목의 지혜를 가진 실천가')",
+            "dayMasterAnalysis": "일간 분석 내용",
+            "dayBranchAnalysis": "일지 분석 내용",
+            "monthBranchAnalysis": "월지 분석 내용"
+          },
+          "fiveElements": {
+            "elements": [
+              {"element": "목(木)", "count": 0, "function": "심리 기능", "interpretation": "해석 내용"},
+              {"element": "화(火)", "count": 0, "function": "심리 기능", "interpretation": "해석 내용"},
+              {"element": "토(土)", "count": 0, "function": "심리 기능", "interpretation": "해석 내용"},
+              {"element": "금(金)", "count": 0, "function": "심리 기능", "interpretation": "해석 내용"},
+              {"element": "수(水)", "count": 0, "function": "심리 기능", "interpretation": "해석 내용"}
+            ]
+          },
+          "persona": {
+            "mbtiNickname": "MBTI 별칭",
+            "dominantFunction": "주기능 설명",
+            "auxiliaryFunction": "부기능 설명"
+          },
+          "deepIntegration": {
+            "integrationPoints": [
+              {"subtitle": "융합 포인트 1 제목", "content": "내용"},
+              {"subtitle": "융합 포인트 2 제목", "content": "내용"}
+            ]
+          }
+        }
+        [가독성 규칙]
+        1. ** (볼드체)는 절대 사용하지 마세요. (사용금지 유지)
+        2. 적절한 줄바꿈과 줄공백을 넣어 읽기 쾌적하게 작성하세요.
+        3. 문장은 20대 여성 타겟의 트렌디하고 공감적인 말투를 사용하세요.
+        4. 적절한 이모지를 사용하여 밝은 분위기를 조성하세요.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
     } else if (part === 'fortune') {
-        systemPrompt = `당신은 '운명 전략가'입니다. 사용자의 사주 구성과 MBTI 행동 패턴을 기반으로 오늘의 운세와 전반적인 운의 흐름을 분석합니다.
-        규칙:
-        1. JSON 형식으로 답하세요.
-        2. 'todayFortune', 'luckyItems', 'caution' 필드를 포함하세요.`;
+        systemPrompt = `당신은 '운명 전략가'입니다. 2026년 한 해의 운세와 테마를 분석합니다.
+        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
+        {
+          "yearlyFortune": {
+            "theme": "올해의 핵심 테마/키워드",
+            "overview": "전반적인 운의 흐름 및 조언 (가독성 있게 작성)",
+            "keywords": ["핵심", "운세", "키워드"]
+          }
+        }
+        [가독성 규칙] **(볼드체) 사용금지. 줄바꿈과 이모지 적극 활용.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
     } else if (part === 'strategy') {
-        systemPrompt = `당신은 '솔루션 가이드'입니다. 사용자의 타고난 기질과 현재 직면한 상황에 대한 맞춤형 전략을 제시합니다.
-        규칙:
-        1. JSON 형식으로 답하세요.
-        2. 'actionPlan', 'tips', 'mindset' 필드를 포함하세요.`;
+        systemPrompt = `당신은 '솔루션 가이드'입니다. 분야별 구체적인 조언과 전략을 제시합니다.
+        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
+        {
+          "fieldStrategies": {
+            "career": {"subtitle": "커리어 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"},
+            "love": {"subtitle": "연애 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"},
+            "wealth": {"subtitle": "재물 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"}
+          },
+          "warnings": {
+            "watchOut": [{"title": "주의사항 제목", "description": "상세 내용"}],
+            "avoid": [{"title": "금기사항 제목", "description": "상세 내용"}]
+          },
+          "finalSolution": {
+            "closingMessage": "마지막 따뜻한 응원의 메시지"
+          }
+        }
+        [가독성 규칙] **(볼드체) 사용금지. 줄바꿈과 이모지 적극 활용.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
     } else {
         return res.status(400).json({ error: 'Invalid part' });
