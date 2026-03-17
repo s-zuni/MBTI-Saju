@@ -29,13 +29,7 @@ const CustomerCenterModal: React.FC<CustomerCenterModalProps> = ({ isOpen, onClo
     const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null);
     const [showPurchaseList, setShowPurchaseList] = useState(false);
 
-    useEffect(() => {
-        if (isOpen && session && category === 'refund') {
-            fetchPurchases();
-        }
-    }, [isOpen, session, category]);
-
-    const fetchPurchases = async () => {
+    const fetchPurchases = React.useCallback(async () => {
         if (!session) return;
         const { data, error } = await supabase
             .from('credit_purchases')
@@ -46,7 +40,13 @@ const CustomerCenterModal: React.FC<CustomerCenterModalProps> = ({ isOpen, onClo
         if (!error && data) {
             setPurchases(data);
         }
-    };
+    }, [session]);
+
+    useEffect(() => {
+        if (isOpen && session && category === 'refund') {
+            fetchPurchases();
+        }
+    }, [isOpen, session, category, fetchPurchases]);
 
     if (!isOpen) return null;
 

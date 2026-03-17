@@ -65,21 +65,29 @@ const AdminInquiries: React.FC = () => {
 
             setInquiries(formattedData);
             
-            // If currently selected inquiry is in the list, update it
-            if (selectedInquiry) {
-                const updated = formattedData.find(i => i.id === selectedInquiry.id);
-                if (updated) setSelectedInquiry(updated);
-            }
+            // If currently selected inquiry is in the list, update it using functional state to avoid dependency loops
+            setSelectedInquiry(prev => {
+                if (!prev) return null;
+                const updated = formattedData.find(i => i.id === prev.id);
+                if (updated) {
+                    // Update user_email as well if needed
+                    return {
+                        ...updated,
+                        user_email: updated.profiles?.email || '이메일 정보 없음'
+                    };
+                }
+                return prev;
+            });
         } catch (error) {
             console.error('Fetch error:', error);
         } finally {
             setLoading(false);
         }
-    }, [filter, selectedInquiry?.id]);
+    }, [filter]); // selectedInquiry is no longer a dependency
 
     useEffect(() => {
         fetchInquiries();
-    }, [filter]); // fetchInquiries depends on filter
+    }, [fetchInquiries]); // fetchInquiries depends on filter and selectedInquiry
 
     const handleAnswer = async () => {
         if (!selectedInquiry) return;

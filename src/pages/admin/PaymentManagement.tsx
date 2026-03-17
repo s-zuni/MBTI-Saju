@@ -30,7 +30,7 @@ const PaymentManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [refundingId, setRefundingId] = useState<string | null>(null);
 
-    const fetchPayments = async () => {
+    const fetchPayments = React.useCallback(async () => {
         try {
             setLoading(true);
             const { data, error } = await supabase
@@ -48,11 +48,11 @@ const PaymentManagement: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchPayments();
-    }, []);
+    }, [fetchPayments]);
 
     const handleRefund = async (payment: Payment) => {
         const confirmRefund = window.confirm(`[${payment.profiles?.name}]님의 ${payment.purchased_credits} 크레딧 결제를 환불하시겠습니까? 토스페이먼츠 승인이 취소됩니다.`);
