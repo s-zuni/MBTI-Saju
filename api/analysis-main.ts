@@ -144,7 +144,8 @@ export default async function handler(req: any, res: any) {
             contents: [{ role: 'user', parts: [{ text: userQuery }] }],
             generationConfig: { 
                 responseMimeType: "application/json",
-                temperature: 0.7
+                temperature: 0.7,
+                maxOutputTokens: 4096
             }
         });
         
