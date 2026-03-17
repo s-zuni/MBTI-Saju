@@ -187,10 +187,9 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                         <h2 className="report-section-title mb-8">
                             <Zap className="w-5 h-5 text-indigo-600" /> 05. 심층 융합 진단
                         </h2>
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-6">
                             {analysis.deepIntegration.integrationPoints?.map((point: any, idx: number) => (
                                 <div key={idx} className="report-card !mb-0 !p-8 bg-slate-50/50">
-                                    <div className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-3">Analysis Point 0{idx + 1}</div>
                                     <h4 className="font-black text-slate-950 text-lg mb-3">{point.subtitle}</h4>
                                     <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{point.content}</p>
                                 </div>

@@ -61,23 +61,8 @@ export default async function handler(req: any, res: any) {
 
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
         {
-          "reportTitle": "사용자의 심장을 뛰게 할 매력적인 통합 분석 제목",
-          "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3", "핵심키워드4", "핵심키워드5"],
-          "nature": {
-            "dayPillarSummary": "일주의 현대적 재해석 별칭",
-            "dayMasterAnalysis": "일간 중심의 심층 기질 분석 (압도적 분량)",
-            "dayBranchAnalysis": "내면의 욕구와 무의식적 행동 패턴 분석 (상세히)",
-            "monthBranchAnalysis": "사회적 환경과 직업적 소명 분석 (상세히)"
-          },
-          "fiveElements": {
-            "elements": [
-              {"element": "목(木)", "count": 0, "function": "심리/신체 에너지", "interpretation": "삶에 미치는 상세 영향"},
-              {"element": "화(火)", "count": 0, "function": "열정/표현 에너지", "interpretation": "삶에 미치는 상세 영향"},
-              {"element": "토(土)", "count": 0, "function": "안정/중재 에너지", "interpretation": "삶에 미치는 상세 영향"},
-              {"element": "금(金)", "count": 0, "function": "결단/원칙 에너지", "interpretation": "삶에 미치는 상세 영향"},
-              {"element": "수(水)", "count": 0, "function": "지혜/유연 에너지", "interpretation": "삶에 미치는 상세 영향"}
-            ]
-          },
+          "mbti": "사용자 MBTI",
+          "keywords": "핵심, 키워드, 3개",
           "persona": {
             "mbtiNickname": "트렌디한 MBTI 별칭",
             "dominantFunction": "주기능의 일상적 발현과 잠재력 (풍성하게)",
