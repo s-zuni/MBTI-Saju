@@ -91,7 +91,7 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
             pdf.setFontSize(8);
             pdf.setTextColor(180, 180, 180);
             pdf.text(
-                `MBTIJU 소울 리포트  ${currentPage}`,
+                `MBTIJU Soul Report  ${currentPage}`,
                 pdfPageWidth / 2,
                 pdfPageHeight - 6,
                 { align: 'center' }

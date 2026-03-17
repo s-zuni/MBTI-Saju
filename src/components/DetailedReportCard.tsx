@@ -282,12 +282,12 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
             <div className="mt-24 pt-12 border-t border-slate-200 flex justify-between items-end grayscale opacity-50">
                 <div className="text-left">
                     <p className="text-[10px] font-black text-slate-950 tracking-widest uppercase mb-2">Authenticated By</p>
-                    <p className="text-[14px] font-black leading-none">MBTIJU ANALYTICS GROUP</p>
+                    <p className="text-[14px] font-black leading-none">MBTIJU</p>
                     <p className="text-[10px] font-medium text-slate-500 mt-1">Advanced Psychology & Destiny Fusion Systems</p>
                 </div>
                 <div className="text-right">
                     <p className="text-[10px] font-bold text-slate-400 mb-2">Official Website</p>
-                    <p className="text-[12px] font-black text-slate-950">WWW.MBTI-SAJU.COM</p>
+                    <p className="text-[12px] font-black text-slate-950">WWW.MBTIJU.COM</p>
                 </div>
             </div>
 

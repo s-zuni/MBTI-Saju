@@ -58,7 +58,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(({
             <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-6">
                 <div>
                     <p className="text-xs text-indigo-300 font-medium mb-1">당신의 운명을 확인해보세요</p>
-                    <p className="text-lg font-bold text-white">MBTI-Saju.com</p>
+                    <p className="text-lg font-bold text-white">mbtiju.com</p>
                 </div>
                 <div className="bg-white p-2 rounded-xl">
                     <QrCode className="w-10 h-10 text-slate-900" />
