@@ -113,7 +113,8 @@ export default async function handler(req: any, res: any) {
 
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = (process.env.GEMINI_MODEL || "gemini-1.5-flash").trim();
+        // 사용자가 명시한 정확한 모델명 사용 (공백 제거 필수)
+        const modelName = (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview").trim();
         const model = genAI.getGenerativeModel({ 
             model: modelName, 
             systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Instead, use clear line breaks, bullet points, and appropriate emojis to enhance readability. Ensure content is formatted in a way that is easy to scan."
@@ -127,8 +128,7 @@ export default async function handler(req: any, res: any) {
             }
         });
         
-        const response = await result.response;
-        const responseText = response.text();
+        const responseText = result.response.text(); // generateContentWithRetry에서 이미 처리됨
         if (!responseText) throw new Error("AI returned an empty response");
         
         const content = cleanAndParseJSON(responseText);
@@ -138,7 +138,7 @@ export default async function handler(req: any, res: any) {
         const errorMessage = getKoreanErrorMessage(error);
         res.status(500).json({ 
             error: errorMessage,
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message
         });
     }
 }
