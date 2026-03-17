@@ -249,14 +249,21 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           )}
 
           {/* 2. 오행 구성 */}
-          {analysis.fiveE                  <thead className="bg-slate-50 border-b border-slate-100">
+          {analysis.fiveElements?.elements && (
+            <section className="report-section">
+              <h4 className="report-section-title">
+                <Layers className="w-5 h-5" /> 오행 에너지 구성
+              </h4>
+              <div className="report-card !p-0 overflow-hidden text-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
-                      <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700">오행</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold text-slate-700">오행</th>
                       <th className="px-2 sm:px-4 py-3 text-center font-bold text-slate-700">지표</th>
-                      <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700">해석</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold text-slate-700">해석</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 text-slate-600">
                     {analysis.fiveElements.elements.map((el: any, idx: number) => {
                       // 실제 사주 데이터에서 오행 수치 가져오기
                       const getElementCount = (name: string) => {
@@ -269,17 +276,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                       };
 
                       return (
-                        <tr key={idx}>
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-3 sm:px-4 py-3 font-bold text-slate-900 whitespace-nowrap">{el.element}</td>
                           <td className="px-2 sm:px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
-                          <td className="px-3 sm:px-4 py-3 text-slate-600 text-[11px] sm:text-sm leading-relaxed">{el.interpretation}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-    <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
-                          <td className="px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
-                          <td className="px-4 py-3 text-slate-600">{el.interpretation}</td>
+                          <td className="px-3 sm:px-4 py-3 text-[11px] sm:text-sm leading-relaxed">{el.interpretation}</td>
                         </tr>
                       );
                     })}
