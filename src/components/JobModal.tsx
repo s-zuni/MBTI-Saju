@@ -9,9 +9,10 @@ interface JobModalProps {
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
     onUseCredit?: () => Promise<boolean>;
+    credits?: number;
 }
 
-const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit }) => {
+const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ jobs: string[], reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -19,15 +20,18 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
     const fetchRecommendation = async () => {
         setLoading(true);
         setError(null);
-
-        if (onUseCredit) {
-            const success = await onUseCredit();
-            if (!success) {
-                setLoading(false);
-                setError('크레딧 차감에 실패했습니다. 크레딧이 부족하거나 네트워크 오류가 발생했습니다.');
-                return;
-            }
+        
+        // Final check before starting
+        if (credits !== undefined && credits < 1) {
+            setLoading(false);
+            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
+            return;
         }
+
+        // Check if credits are sufficient before starting
+        // Since onUseCredit currently deducts, we need a way to check without deducting or change the flow.
+        // For now, we will proceed with the API call and only call onUseCredit if successful.
+        // But we should still warn the user if they have 0 credits.
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -43,6 +47,15 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
             });
 
             setResult(resultData);
+            
+            // Deduct credit only after success
+            if (onUseCredit) {
+                const creditSuccess = await onUseCredit();
+                if (!creditSuccess) {
+                    console.error('Credit deduction failed after successful analysis');
+                    // We still show the result since analysis was successful
+                }
+            }
 
         } catch (e: any) {
             setError(e.message);

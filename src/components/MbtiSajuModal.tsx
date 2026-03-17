@@ -12,9 +12,10 @@ interface MbtiSajuModalProps {
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
   onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
+  credits?: number;
 }
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul' | 'mbti' | 'saju'>('soul');
@@ -92,14 +93,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
     setIsRegenerating(true);
 
-    if (onUseCredit) {
-      const success = await onUseCredit(true); // Pass true to indicate regeneration
-      if (!success) {
-        setIsRegenerating(false);
-        alert("크레딧 차감에 실패했습니다. 크레딧이 부족하거나 네트워크 오류가 발생했습니다.");
-        return;
-      }
+    // Pre-check for 10 credits
+    if (credits !== undefined && credits < 10) {
+      setIsRegenerating(false);
+      alert("크레딧이 부족합니다. (재분석에는 10크레딧이 필요합니다)");
+      return;
     }
+
+    // Deduction will happen after all promises resolve successfully
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -168,6 +169,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         full_name: metadata.full_name,
         mbti: metadata.mbti
       });
+      
+      // Deduct credit only after all analyses (core, fortune, strategy) are successful
+      if (onUseCredit) {
+        const creditSuccess = await onUseCredit(true);
+        if (!creditSuccess) {
+          console.error("Credit deduction failed after regeneration");
+        }
+      }
 
       // Final Save to Supabase
       await supabase.auth.updateUser({

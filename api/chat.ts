@@ -140,15 +140,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     } catch (error: any) {
         console.error('ChatServer Error:', error);
 
-        // Detailed error logging
-        if (error instanceof Error) {
-            console.error('Error name:', error.name);
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
+        // Explicitly check for model availability or forbidden errors
+        const errorMessage = getKoreanErrorMessage(error);
+        if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+            console.error('Requested model not found. Check availability of gemini-3.1-flash-lite-preview');
         }
 
         res.status(500).json({
-            error: getKoreanErrorMessage(error)
+            error: errorMessage || "채팅 분석 중 오류가 발생했습니다."
         });
     }
 };

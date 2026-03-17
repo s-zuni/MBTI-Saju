@@ -8,6 +8,7 @@ interface HealingModalProps {
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
     onUseCredit?: () => Promise<boolean>;
+    credits?: number;
 }
 
 const REGION_MAP: { [key: string]: string[] } = {
@@ -32,7 +33,7 @@ const REGION_MAP: { [key: string]: string[] } = {
 
 const PROVINCES = Object.keys(REGION_MAP);
 
-const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit }) => {
+const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ place: string, placeType?: string, activity: string, reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -65,15 +66,15 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
     const handleAnalyze = async () => {
         setLoading(true);
         setError(null);
-
-        if (onUseCredit) {
-            const success = await onUseCredit();
-            if (!success) {
-                setLoading(false);
-                setError('크레딧 차감에 실패했습니다. 크레딧이 부족하거나 네트워크 오류가 발생했습니다.');
-                return;
-            }
+        
+        // Final check before starting (though button should be disabled)
+        if (credits !== undefined && credits < 1) {
+            setLoading(false);
+            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
+            return;
         }
+
+        // Deduction will happen after success
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -99,6 +100,14 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
             if (!response.ok) throw new Error('추천을 받아오지 못했습니다.');
             const data = await response.json();
             setResult(data);
+            
+            // Deduct credit only after success
+            if (onUseCredit) {
+                const creditSuccess = await onUseCredit();
+                if (!creditSuccess) {
+                    console.error('Credit deduction failed after successful analysis');
+                }
+            }
 
         } catch (e: any) {
             setError(e.message);

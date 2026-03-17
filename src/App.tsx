@@ -316,6 +316,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
                 }}
+                credits={credits}
               />
 
               <RecommendationModal
@@ -362,6 +363,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('HEALING');
                 }}
+                credits={credits}
               />
               <JobModal
                 isOpen={modals?.job?.isOpen || false}
@@ -375,6 +377,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('JOB');
                 }}
+                credits={credits}
               />
               <TarotModal
                 isOpen={modals?.tarot?.isOpen || false}

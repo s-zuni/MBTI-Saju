@@ -16,9 +16,10 @@ interface CompatibilityModalProps {
         relation?: string;
     } | null;
     onUseCredit?: () => Promise<boolean>;
+    credits?: number;
 }
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData, onUseCredit }) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData, onUseCredit, credits }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -54,14 +55,14 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         setLoading(true);
         setError(null);
 
-        if (onUseCredit) {
-            const success = await onUseCredit();
-            if (!success) {
-                setLoading(false);
-                setError('크레딧 차감에 실패했습니다. 크레딧이 부족하거나 네트워크 오류가 발생했습니다.');
-                return;
-            }
+        // Final check before starting
+        if (credits !== undefined && credits < 1) {
+            setLoading(false);
+            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
+            return;
         }
+
+        // We will call onUseCredit after success
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -85,6 +86,14 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
 
             const data = await getDetailedAnalysis('compatibility', myProfile, partnerProfile);
             setResult(data);
+            
+            // Deduct credit only after success
+            if (onUseCredit) {
+                const creditSuccess = await onUseCredit();
+                if (!creditSuccess) {
+                    console.error('Credit deduction failed after successful analysis');
+                }
+            }
 
         } catch (e: any) {
             setError(e.message);
