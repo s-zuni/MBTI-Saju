@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
-    Mail,
     ChevronRight,
     ArrowLeft,
     Send,
@@ -191,7 +190,7 @@ const AdminInquiries: React.FC = () => {
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">답변 작성하기</h3>
                         <div className="flex-1 flex flex-col space-y-4">
                             <textarea
-                                className="flex-1 w-full p-6 p-4 rounded-3xl border border-slate-200 focus:border-indigo-500 outline-none transition-all text-sm resize-none"
+                                className="flex-1 w-full p-6 rounded-3xl border border-slate-200 focus:border-indigo-500 outline-none transition-all text-sm resize-none"
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
                                 placeholder="사용자에게 보낼 상세한 답변을 입력하세요..."
