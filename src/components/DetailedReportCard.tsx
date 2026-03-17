@@ -80,13 +80,13 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                             )}
                             <div className="space-y-4 text-slate-700 text-sm leading-relaxed">
                                 {analysis.nature?.dayMasterAnalysis && (
-                                    <p><span className="font-bold text-slate-950 mr-2">● 일간(日干):</span> {analysis.nature.dayMasterAnalysis}</p>
+                                    <p className="whitespace-pre-wrap"><span className="font-bold text-slate-950 mr-2">● 일간(日干):</span> {analysis.nature.dayMasterAnalysis}</p>
                                 )}
                                 {analysis.nature?.dayBranchAnalysis && (
-                                    <p><span className="font-bold text-slate-950 mr-2">● 일지(日支):</span> {analysis.nature.dayBranchAnalysis}</p>
+                                    <p className="whitespace-pre-wrap"><span className="font-bold text-slate-950 mr-2">● 일지(日支):</span> {analysis.nature.dayBranchAnalysis}</p>
                                 )}
                                 {analysis.nature?.monthBranchAnalysis && (
-                                    <p><span className="font-bold text-slate-950 mr-2">● 월지(月支):</span> {analysis.nature.monthBranchAnalysis}</p>
+                                    <p className="whitespace-pre-wrap"><span className="font-bold text-slate-950 mr-2">● 월지(月支):</span> {analysis.nature.monthBranchAnalysis}</p>
                                 )}
                                 {!analysis.nature && analysis.sajuReading && (
                                     <p className="whitespace-pre-wrap">{analysis.sajuReading}</p>
@@ -139,13 +139,13 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                                 {analysis.persona?.dominantFunction && (
                                     <div className="p-3 bg-white rounded-lg border border-indigo-100">
                                         <div className="text-indigo-400 font-bold mb-1">주기능</div>
-                                        <div className="text-slate-900 font-bold">{analysis.persona.dominantFunction}</div>
+                                        <div className="text-slate-900 font-bold whitespace-pre-wrap">{analysis.persona.dominantFunction}</div>
                                     </div>
                                 )}
                                 {analysis.persona?.auxiliaryFunction && (
                                     <div className="p-3 bg-white rounded-lg border border-indigo-100">
                                         <div className="text-indigo-400 font-bold mb-1">부기능</div>
-                                        <div className="text-slate-900 font-bold">{analysis.persona.auxiliaryFunction}</div>
+                                        <div className="text-slate-900 font-bold whitespace-pre-wrap">{analysis.persona.auxiliaryFunction}</div>
                                     </div>
                                 )}
                             </div>
@@ -192,7 +192,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                                 <div key={idx} className="report-card !mb-0 !p-8 bg-slate-50/50">
                                     <div className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-3">Analysis Point 0{idx + 1}</div>
                                     <h4 className="font-black text-slate-950 text-lg mb-3">{point.subtitle}</h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed">{point.content}</p>
+                                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{point.content}</p>
                                 </div>
                             ))}
                         </div>
@@ -212,7 +212,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                                     "{analysis.yearlyFortune.theme}"
                                 </h3>
                             )}
-                            <p className="text-slate-300 text-sm leading-relaxed mb-6 whitespace-pre-line">
+                            <p className="text-slate-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap">
                                 {analysis.yearlyFortune?.overview || analysis.fortune2026}
                             </p>
                             {analysis.yearlyFortune?.keywords && (
@@ -243,7 +243,7 @@ export const DetailedReportCard = React.forwardRef<HTMLDivElement, DetailedRepor
                             </div>
                             <div className="report-card border-slate-200 !p-5">
                                 <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">💰 재물 (Wealth)</h4>
-                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{analysis.fieldStrategies?.wealth?.analysis || "재물 축적과 경제적 흐름 파악"}</p>
+                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{analysis.fieldStrategies?.wealth?.analysis || "재물 축적과 경제적 흐름 파악"}</p>
                             </div>
                         </div>
 

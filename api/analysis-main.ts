@@ -34,6 +34,8 @@ export default async function handler(req: any, res: any) {
     if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
 
     const sajuResult = calculateSaju(birthDate, birthTime);
+    const sajuContext = `사주 원국: ${sajuResult.ganZhi.year} ${sajuResult.ganZhi.month} ${sajuResult.ganZhi.day} ${sajuResult.ganZhi.hour} (일간: ${sajuResult.dayMaster.korean} / 성질: ${sajuResult.dayMaster.description})`;
+
     let systemPrompt = '';
     let userQuery = '';
 
@@ -44,16 +46,17 @@ export default async function handler(req: any, res: any) {
         [중요: 분석 분량 및 깊이 가이드라인]
         1. **MBTI 심층 분석 (persona 필드)**: 
            - **매우 상세하고 깊이 있는** 분량으로 작성하세요. 
-           - 단순히 주기능/부기능을 설명하는 것을 넘어, 이 조합이 일상, 스트레스 상황, 인간관계에서 어떻게 발현되는지 구체적인 에피소드처럼 묘사하세요.
-           - 사용자가 "내 속마음을 들켰다!"고 느낄 정도로 깊이 있는 심리 묘사를 포함하세요.
+           - **가독성을 위해 문단 사이마다 줄바꿈(\n\n)을 넣고, 각 포인트는 '•' 머리표를 사용하세요.**
+           - 이 MBTI 조합이 일상, 스트레스 상황, 인간관계에서 어떻게 발현되는지 구체적인 심리 묘사를 포함하세요.
         
         2. **사주 심층 분석 (nature 필드)**: 
            - **풍성하고 전문적인** 분량으로 작성하세요. 
-           - 일주(Day Pillar)의 상징(예: 갑목, 임수 등)을 현대적인 비유로 풀어내고, 월지와의 관계, 오행의 흐름이 사용자의 천성과 기질에 주는 영향을 매우 상세히 분석하세요.
-           - 과거-현재-미래의 잠재력을 연결하여 한 편의 서사시처럼 서술하세요.
- 
+           - **가독성을 위해 문단 사이마다 줄바꿈(\n\n)을 넣고, 주요 특징은 '•' 머리표를 사용하세요.**
+           - 일주(Day Pillar)의 상징을 현대적인 비유로 풀어내고, 월지와의 관계, 오행의 흐름이 사용자의 천성과 기질에 주는 영향을 매우 상세히 분석하세요.
+
         3. **융합 포인트 (deepIntegration 필드)**:
            - MBTI와 사주가 만났을 때 생기는 독특한 시너지를 **최소 3개 이상의 주제**로 깊게 분석하세요.
+           - 각 주제는 명확한 subtitle과 상세한 content(\n을 활용한 가독성 확보)로 구성하세요.
            - 두 결과가 상충할 때의 내적 갈등이나, 일치할 때의 폭발적인 강점을 구체적으로 짚어주세요.
 
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
@@ -90,54 +93,47 @@ export default async function handler(req: any, res: any) {
         }
 
         [가독성 및 어조 규칙]
-        1. ** (볼드체) 절대 사용 금지. (사용금지 유지)
-        2. 적절한 줄바꿈과 줄공백을 넣어 호흡이 긴 글도 쾌적하게 읽히도록 하세요.
+        1. ** (볼드체) 절대 사용 금지.
+        2. **문장과 문장 사이, 항목 마다 줄바꿈(\n)과 줄공백을 넣어 여유롭게 읽히도록 하세요.**
         3. 20대 여성 타겟의 트렌디하고 친근하며, 깊은 공감을 이끌어내는 말투를 사용하세요.
         4. 적절한 이모지를 문맥에 맞게 배치하여 시각적인 재미를 더하세요.
         5. '...'이나 '!' 등을 적절히 섞어 생동감 있게 표현하세요.`;
-        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
+        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
     } else if (part === 'fortune') {
         systemPrompt = `당신은 '운명 전략가'입니다. 사용자의 사주와 2026년 병오년의 기운을 대조하여 한 해의 운세와 테마를 분석합니다.
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
         {
           "yearlyFortune": {
             "theme": "올해를 관통하는 핵심 테마 한 문장",
-            "overview": "전반적인 운의 흐름, 기회, 주의할 점을 포함한 상세한 조언",
+            "overview": "전반적인 운의 흐름, 기회, 주의할 점을 포함한 상세한 조언 (줄바꿈 \n 활용 필수)",
             "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"]
           }
         }
-        [가독성 규칙] **(볼드체) 절대 사용 금지. 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
-        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
+        [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
+        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else if (part === 'strategy') {
         systemPrompt = `당신은 '솔루션 가이드'입니다. 사용자의 사주와 MBTI를 기반으로 2026년 분야별 구체적인 조언과 성공 전략을 제시합니다.
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
         {
           "fieldStrategies": {
-            "career": {"subtitle": "커리어 전략 한줄 요약", "analysis": "상세한 직업/사업운 분석", "advice": "실질적이고 구체적인 실천 조언"},
-            "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석", "advice": "마음을 움직이는 실천 조언"},
-            "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석", "advice": "부의 기운을 부르는 실천 조언"}
+            "career": {"subtitle": "커리어 전략 한줄 요약", "analysis": "상세한 직업/사업운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"},
+            "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"},
+            "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"}
           },
-          "warnings": {
-            "watchOut": [{"title": "주의사항 제목", "description": "상세한 행동 지침"}],
-            "avoid": [{"title": "금기사항 제목", "description": "상세한 금기 내용"}]
-          },
-          "finalSolution": {
-            "closingMessage": "사용자의 앞날을 축복하는 따뜻하고 힘이 되는 마지막 메시지"
-          }
+          ...
         }
-        [가독성 규칙] **(볼드체) 절대 사용 금지. 줄바꿈과 이모지 적극 활용. 20대 여성 타겟의 공감 어린 트렌디한 어조 유지.`;
-        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
+        [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 트렌디한 어조 유지.`;
+        userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else {
         return res.status(400).json({ error: 'Invalid part' });
     }
 
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        // 사용자가 명시한 정확한 모델명 사용 (공백 제거 필수)
         const modelName = (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview").trim();
         const model = genAI.getGenerativeModel({ 
             model: modelName, 
-            systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Instead, use clear line breaks, bullet points, and appropriate emojis to enhance readability. Ensure content is formatted in a way that is easy to scan."
+            systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
         });
         
         const result = await generateContentWithRetry(model, {
@@ -145,7 +141,7 @@ export default async function handler(req: any, res: any) {
             generationConfig: { 
                 responseMimeType: "application/json",
                 temperature: 0.7,
-                maxOutputTokens: 4096
+                maxOutputTokens: part === 'core' ? 4096 : 2048
             }
         });
         

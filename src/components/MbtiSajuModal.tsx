@@ -239,9 +239,9 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   {analysis.nature?.dayPillarSummary ? `"${analysis.nature.dayPillarSummary}"` : "사주 원국 분석"}
                 </p>
                 <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
-                  {analysis.nature?.dayMasterAnalysis && <p>• 일간: {analysis.nature.dayMasterAnalysis}</p>}
-                  {analysis.nature?.dayBranchAnalysis && <p>• 일지: {analysis.nature.dayBranchAnalysis}</p>}
-                  {analysis.nature?.monthBranchAnalysis && <p>• 월지: {analysis.nature.monthBranchAnalysis}</p>}
+                  {analysis.nature?.dayMasterAnalysis && <p className="whitespace-pre-wrap">• 일간: {analysis.nature.dayMasterAnalysis}</p>}
+                  {analysis.nature?.dayBranchAnalysis && <p className="whitespace-pre-wrap">• 일지: {analysis.nature.dayBranchAnalysis}</p>}
+                  {analysis.nature?.monthBranchAnalysis && <p className="whitespace-pre-wrap">• 월지: {analysis.nature.monthBranchAnalysis}</p>}
                   {!analysis.nature && analysis.sajuReading && <p className="whitespace-pre-line">{analysis.sajuReading}</p>}
                 </div>
               </div>
@@ -299,7 +299,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.deepIntegration.integrationPoints?.map((p: any, i: number) => (
                   <div key={i} className="report-card">
                     <h5 className="font-bold text-slate-900 mb-2">{p.subtitle}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{p.content}</p>
                   </div>
                 ))}
               </div>
@@ -316,7 +316,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <h5 className="font-black text-slate-900 mb-4 text-lg">
                   {analysis.persona.mbtiNickname || analysis.mbti}
                 </h5>
-                <div className="space-y-6 text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+                <div className="space-y-6 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                   <div>
                     <strong className="text-slate-900 block mb-1">핵심 에너지 (주기능)</strong>
                     {analysis.persona.dominantFunction}
@@ -341,7 +341,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <h5 className="text-xl sm:text-2xl font-black mb-6 italic leading-tight">
                   {analysis.yearlyFortune?.theme ? `"${analysis.yearlyFortune.theme}"` : "2026년 대운세 흐름"}
                 </h5>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
                   {analysis.yearlyFortune?.overview || analysis.fortune2026}
                 </p>
               </div>
@@ -381,7 +381,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.fieldStrategies.career && (
                   <div className="report-card bg-teal-50/50 border-none">
                     <h5 className="font-bold text-teal-900 mb-2 bg-teal-100/50 inline-block px-3 py-1 rounded-md text-xs">💼 {analysis.fieldStrategies.career.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.career.analysis}</p>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.career.analysis}</p>
                     <p className="text-teal-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.career.advice}</p>
                   </div>
                 )}
@@ -389,7 +389,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.fieldStrategies.love && (
                   <div className="report-card bg-pink-50/50 border-none">
                     <h5 className="font-bold text-pink-900 mb-2 bg-pink-100/50 inline-block px-3 py-1 rounded-md text-xs">💖 {analysis.fieldStrategies.love.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.love.analysis}</p>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.love.analysis}</p>
                     <p className="text-pink-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.love.advice}</p>
                   </div>
                 )}
@@ -397,7 +397,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.fieldStrategies.wealth && (
                   <div className="report-card bg-amber-50/50 border-none">
                     <h5 className="font-bold text-amber-900 mb-2 bg-amber-100/50 inline-block px-3 py-1 rounded-md text-xs">💰 {analysis.fieldStrategies.wealth.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2">{analysis.fieldStrategies.wealth.analysis}</p>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.wealth.analysis}</p>
                     <p className="text-amber-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.wealth.advice}</p>
                   </div>
                 )}
