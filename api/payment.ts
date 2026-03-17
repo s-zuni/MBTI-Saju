@@ -24,7 +24,8 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-        return res.status(500).json({ success: false, message: '서버 설정 오류: Supabase 환경 변수가 누락되었습니다.' });
+        console.error('Missing Supabase env vars in confirmPayment');
+        return res.status(500).json({ success: false, message: 'Payment configuration missing (Supabase)' });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -107,7 +108,8 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-        return res.status(500).json({ success: false, message: 'Supabase configuration missing' });
+        console.error('Missing Supabase env vars in cancelPayment');
+        return res.status(500).json({ success: false, message: 'Payment configuration missing (Supabase)' });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

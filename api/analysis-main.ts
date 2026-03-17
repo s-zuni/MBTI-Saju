@@ -14,7 +14,10 @@ export default async function handler(req: any, res: any) {
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) return res.status(500).json({ error: 'Config missing' });
+    if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) {
+        console.error('Missing environment variables:', { supabaseUrl: !!supabaseUrl, supabaseAnonKey: !!supabaseAnonKey, GEMINI_API_KEY: !!GEMINI_API_KEY });
+        return res.status(500).json({ error: 'Core configuration missing (Env vars)' });
+    }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const authHeader = req.headers.authorization;

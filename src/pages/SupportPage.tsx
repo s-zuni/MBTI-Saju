@@ -73,7 +73,7 @@ const SupportPage: React.FC = () => {
 
     const fetchPurchases = async (uid: string) => {
         const { data } = await supabase
-            .from('purchase_history')
+            .from('credit_purchases')
             .select('*')
             .eq('user_id', uid)
             .order('purchased_at', { ascending: false });
@@ -274,6 +274,20 @@ const SupportPage: React.FC = () => {
                                 <p className="text-xs text-slate-500 font-medium mt-0.5">오류가 발생했다면 알려주세요.</p>
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
+                        </button>
+
+                        <button 
+                            onClick={() => setView('list')}
+                            className="w-full p-6 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100 flex items-center gap-4 hover:bg-indigo-700 transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
+                                <Inbox size={24} />
+                            </div>
+                            <div className="text-left flex-1">
+                                <h3 className="font-black text-white">나의 문의 내역 확인</h3>
+                                <p className="text-xs text-indigo-100 font-medium mt-0.5">이전에 남기신 문의와 답변을 확인하세요.</p>
+                            </div>
+                            <ChevronRight className="text-indigo-200" size={20} />
                         </button>
                     </div>
                 )}

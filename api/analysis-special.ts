@@ -10,7 +10,10 @@ export default async function handler(req: any, res: any) {
     const { birthDate, birthTime, mbti, region, gender, name, startDate, endDate } = req.body;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-    if (!GEMINI_API_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY missing' });
+    if (!GEMINI_API_KEY) {
+        console.error('Missing GEMINI_API_KEY');
+        return res.status(500).json({ error: 'Special analysis configuration missing (API Key)' });
+    }
 
     const saju = calculateSaju(birthDate, birthTime);
     let systemPrompt = '';
