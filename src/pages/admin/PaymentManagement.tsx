@@ -60,7 +60,7 @@ const PaymentManagement: React.FC = () => {
 
         setRefundingId(payment.id);
         try {
-            const response = await fetch('/api/cancel-payment', {
+            const response = await fetch('/api/payment?action=cancel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

@@ -48,7 +48,8 @@ const AdminInquiries: React.FC = () => {
                     *,
                     profiles!left(email),
                     linked_purchase:linked_purchase_id(*)
-                `);
+                `)
+                .neq('category', 'refund');
 
             if (filter !== 'all') {
                 query = query.eq('status', filter);
