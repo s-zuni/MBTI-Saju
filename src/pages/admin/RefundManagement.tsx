@@ -2,14 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
     RotateCcw,
-    CheckCircle2,
-    XSquare,
     Loader2,
     AlertTriangle,
     Mail,
-    Coins,
-    Calendar,
-    MessageSquare,
     ChevronRight,
     ArrowLeft,
     ShieldCheck,
@@ -62,19 +57,20 @@ const RefundManagement: React.FC = () => {
                 .eq('category', 'refund')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setInquiries(data || []);
-            
-            if (selectedInquiry) {
-                const updated = data?.find(i => i.id === selectedInquiry.id);
-                if (updated) setSelectedInquiry(updated);
+            if (data) {
+                setInquiries(data);
+                setSelectedInquiry(prev => {
+                    if (!prev) return null;
+                    const updated = data.find(i => i.id === prev.id);
+                    return updated || prev;
+                });
             }
         } catch (err) {
             console.error('Error fetching refund inquiries:', err);
         } finally {
             setLoading(false);
         }
-    }, [selectedInquiry?.id]);
+    }, []);
 
     useEffect(() => {
         fetchInquiries();
