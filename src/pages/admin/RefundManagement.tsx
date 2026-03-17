@@ -47,7 +47,7 @@ const RefundManagement: React.FC = () => {
     const fetchInquiries = useCallback(async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('support_inquiries')
                 .select(`
                     *,
