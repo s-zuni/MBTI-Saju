@@ -8,8 +8,16 @@ import {
     ChevronRight,
     ArrowLeft,
     ShieldCheck,
-    ShieldAlert
+    ShieldAlert,
+    Send
 } from 'lucide-react';
+
+interface Message {
+    id: string;
+    sender_role: 'user' | 'admin';
+    content: string;
+    created_at: string;
+}
 
 interface RefundInquiry {
     id: string;
@@ -42,7 +50,10 @@ const RefundManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedInquiry, setSelectedInquiry] = useState<RefundInquiry | null>(null);
     const [processing, setProcessing] = useState(false);
+    const [sendingReply, setSendingReply] = useState(false);
     const [answerText, setAnswerText] = useState('');
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     const fetchInquiries = useCallback(async () => {
         try {
@@ -72,43 +83,84 @@ const RefundManagement: React.FC = () => {
         }
     }, []);
 
+    const fetchMessages = useCallback(async (inquiryId: string) => {
+        setLoadingMessages(true);
+        try {
+            const { data } = await supabase
+                .from('support_inquiry_messages')
+                .select('*')
+                .eq('inquiry_id', inquiryId)
+                .order('created_at', { ascending: true });
+            setMessages(data || []);
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        } finally {
+            setLoadingMessages(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchInquiries();
     }, [fetchInquiries]);
 
-    const handleRefundAndReply = async () => {
+    useEffect(() => {
+        if (selectedInquiry) {
+            fetchMessages(selectedInquiry.id);
+        }
+    }, [selectedInquiry, fetchMessages]);
+
+    const handleRefundOnly = async () => {
         if (!selectedInquiry) return;
-        
-        const confirmMsg = selectedInquiry.linked_purchase.status === 'refunded' 
-            ? '이미 환불된 주문입니다. 답변만 등록하시겠습니까?' 
-            : '실제 환불(Toss)을 실행하고 답변을 등록하시겠습니까?';
-            
-        if (!window.confirm(confirmMsg)) return;
+        if (selectedInquiry.linked_purchase.status === 'refunded') {
+            alert('이미 환불된 주문입니다.');
+            return;
+        }
+
+        if (!window.confirm('실제 환불(Toss)을 실행하시겠습니까? 결제가 취소되고 크레딧이 회수됩니다.')) return;
 
         setProcessing(true);
         try {
-            // 1. If not already refunded, call Toss Cancel API
-            if (selectedInquiry.linked_purchase.status !== 'refunded') {
-                const response = await fetch('/api/payment?action=cancel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        purchaseId: selectedInquiry.linked_purchase_id,
-                        cancelReason: '관리자 페이지 환불 관리 검토 승인'
-                    }),
-                });
+            const response = await fetch('/api/payment?action=cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    purchaseId: selectedInquiry.linked_purchase_id,
+                    cancelReason: '관리자 페이지 환불 관리 검토 승인'
+                }),
+            });
 
-                const result = await response.json();
-                if (!response.ok || !result.success) {
-                    throw new Error(result.message || '환불 시스템 API 오류가 발생했습니다.');
-                }
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || '환불 시스템 API 오류가 발생했습니다.');
             }
 
-            // 2. Update Inquiry Status & Answer
+            alert('환불 처리가 완료되었습니다.');
+            fetchInquiries();
+        } catch (err: any) {
+            alert(`환불 오류: ${err.message}`);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleSendReply = async () => {
+        if (!selectedInquiry || !answerText.trim()) return;
+
+        setSendingReply(true);
+        try {
+            const { error: msgError } = await supabase
+                .from('support_inquiry_messages')
+                .insert({
+                    inquiry_id: selectedInquiry.id,
+                    sender_role: 'admin',
+                    content: answerText
+                });
+
+            if (msgError) throw msgError;
+
             const { error: inquiryError } = await supabase
                 .from('support_inquiries')
                 .update({
-                    answer: answerText || '환불 처리가 완료되었습니다.',
                     status: 'answered',
                     answered_at: new Date().toISOString()
                 })
@@ -116,14 +168,14 @@ const RefundManagement: React.FC = () => {
 
             if (inquiryError) throw inquiryError;
 
-            alert('환불 처리 및 답변 등록이 완료되었습니다.');
-            setSelectedInquiry(null);
+            alert('답변이 등록되었습니다.');
             setAnswerText('');
+            fetchMessages(selectedInquiry.id);
             fetchInquiries();
         } catch (err: any) {
-            alert(`처리 오류: ${err.message}`);
+            alert(`답변 등록 오류: ${err.message}`);
         } finally {
-            setProcessing(false);
+            setSendingReply(false);
         }
     };
 
@@ -175,87 +227,108 @@ const RefundManagement: React.FC = () => {
                                         <p className="text-[10px] text-slate-400">요청일: {new Date(selectedInquiry.created_at).toLocaleString()}</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-100 mb-6">
-                                    <h4 className="text-sm font-black text-slate-800 mb-2">{selectedInquiry.title}</h4>
-                                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedInquiry.content}</p>
-                                </div>
-
-                                {selectedInquiry.linked_purchase && (
-                                    <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
-                                        <h4 className="text-xs font-black text-indigo-600 uppercase mb-4 flex items-center gap-2">
-                                            <RotateCcw size={14} /> 결제 정보
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-y-4 text-sm">
-                                            <div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase">상품명</p>
-                                                <p className="font-bold text-slate-700">{selectedInquiry.linked_purchase.purchased_credits} 크레딧</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase">금액</p>
-                                                <p className="font-bold text-slate-700">{selectedInquiry.linked_purchase.price_paid.toLocaleString()}원</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase">결제일</p>
-                                                <p className="font-bold text-slate-700">{new Date(selectedInquiry.linked_purchase.purchased_at).toLocaleDateString()}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase">현재 상태</p>
-                                                <p className={`font-black ${selectedInquiry.linked_purchase.status === 'refunded' ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                                    {selectedInquiry.linked_purchase.status === 'refunded' ? '이미 환불됨' : '결제 완료'}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-6 pt-6 border-t border-indigo-100">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3">환불 정책 준수 여부</h4>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
-                                                    <span className="text-xs font-bold text-slate-600">구매 7일 이내</span>
-                                                    {policy.is7Days ? <ShieldCheck className="text-emerald-500" size={18} /> : <ShieldAlert className="text-rose-500" size={18} />}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">대화 히스토리</h4>
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                                        {loadingMessages ? (
+                                            <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-300" /></div>
+                                        ) : messages.length === 0 ? (
+                                            <p className="text-xs text-slate-400 text-center py-4">대화 내용이 없습니다.</p>
+                                        ) : (
+                                            messages.map((msg) => (
+                                                <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-end' : 'items-start'}`}>
+                                                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
+                                                        msg.sender_role === 'admin' 
+                                                        ? 'bg-indigo-600 text-white rounded-tr-none' 
+                                                        : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none shadow-sm'
+                                                    }`}>
+                                                        {msg.content}
+                                                    </div>
+                                                    <span className="text-[9px] text-slate-400 mt-1 px-1">
+                                                        {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                    </span>
                                                 </div>
-                                                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
-                                                    <span className="text-xs font-bold text-slate-600">크레딧 미사용</span>
-                                                    {policy.isUnused ? <ShieldCheck className="text-emerald-500" size={18} /> : <ShieldAlert className="text-rose-500" size={18} />}
-                                                </div>
-                                            </div>
-                                            {!policy.allOk && (
-                                                <div className="mt-3 flex items-start gap-2 p-3 bg-rose-50 rounded-xl border border-rose-100">
-                                                    <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
-                                                    <p className="text-[10px] text-rose-600 font-bold leading-tight">정책 위반 항목이 있습니다. 환불 불가 사유를 답변에 입력해 주세요.</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                            ))
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-6">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">환불 승인 및 답변</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">답변 메시지</label>
+                        {selectedInquiry.linked_purchase && (
+                            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
+                                <h4 className="text-xs font-black text-indigo-600 uppercase mb-4 flex items-center gap-2">
+                                    <RotateCcw size={14} /> 환불 정책 검토
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">상품</p>
+                                        <p className="font-bold text-slate-700">{selectedInquiry.linked_purchase.purchased_credits} C</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">금액</p>
+                                        <p className="font-bold text-slate-700">{selectedInquiry.linked_purchase.price_paid.toLocaleString()}원</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">현재 상태</p>
+                                        <p className={`font-black ${selectedInquiry.linked_purchase.status === 'refunded' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                            {selectedInquiry.linked_purchase.status === 'refunded' ? '이미 환불됨' : '결제 완료'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">결제일</p>
+                                        <p className="font-bold text-slate-700">{new Date(selectedInquiry.linked_purchase.purchased_at).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 mb-6">
+                                    <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
+                                        <span className="text-xs font-bold text-slate-600">구매 7일 이내</span>
+                                        {policy.is7Days ? <ShieldCheck className="text-emerald-500" size={18} /> : <ShieldAlert className="text-rose-500" size={18} />}
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
+                                        <span className="text-xs font-bold text-slate-600">크레딧 미사용</span>
+                                        {policy.isUnused ? <ShieldCheck className="text-emerald-500" size={18} /> : <ShieldAlert className="text-rose-500" size={18} />}
+                                    </div>
+                                    {!policy.allOk && (
+                                        <div className="flex items-start gap-2 p-3 bg-rose-50 rounded-xl border border-rose-100">
+                                            <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-rose-600 font-bold leading-tight">정책 위반 항목이 있습니다.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={handleRefundOnly}
+                                    disabled={processing || selectedInquiry.linked_purchase.status === 'refunded'}
+                                    className="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {processing ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />}
+                                    {selectedInquiry.linked_purchase.status === 'refunded' ? '환불 완료됨' : '환불 승인 (Toss)'}
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">답변 보내기</h3>
+                            <div className="space-y-4">
                                 <textarea
-                                    className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none h-60 transition-all text-sm"
+                                    className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none h-40 transition-all text-sm resize-none"
                                     value={answerText}
                                     onChange={(e) => setAnswerText(e.target.value)}
-                                    placeholder="환불 처리 결과나 사유를 입력하세요..."
+                                    placeholder="사용자에게 보낼 메시지를 입력하세요..."
                                 />
+                                <button
+                                    onClick={handleSendReply}
+                                    disabled={sendingReply || !answerText.trim()}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-30 shadow-lg"
+                                >
+                                    {sendingReply ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                    메시지 전송하기
+                                </button>
                             </div>
-                            
-                            <button
-                                onClick={handleRefundAndReply}
-                                disabled={processing}
-                                className={`w-full py-4 rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${
-                                    selectedInquiry.linked_purchase.status === 'refunded'
-                                    ? 'bg-slate-900 text-white hover:bg-slate-800'
-                                    : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-100'
-                                }`}
-                            >
-                                {processing ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />}
-                                {selectedInquiry.linked_purchase.status === 'refunded' ? '답변만 완료하기' : '환불 승인 및 답변 전송'}
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -321,7 +394,7 @@ const RefundManagement: React.FC = () => {
                                             <button
                                                 onClick={() => {
                                                     setSelectedInquiry(si);
-                                                    setAnswerText(si.answer || '');
+                                                    setAnswerText('');
                                                 }}
                                                 className="flex items-center gap-1 px-4 py-2 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-100"
                                             >
@@ -344,7 +417,7 @@ const RefundManagement: React.FC = () => {
                     <h4 className="text-amber-900 font-black tracking-tight mb-1">관리자 환불 처리 안내</h4>
                     <p className="text-sm text-amber-700/80 font-medium leading-relaxed">
                         환불 승인 시 시스템이 자동으로 **토스페이먼츠 승인 취소**를 호출하며, 사용자 프로필에서 **해당 크레딧을 즉시 차감**합니다. 
-                        차감 후 답변이 자동으로 등록되어 사용자에게 전달됩니다. 정책 위반 사항을 꼼꼼히 검토 후 신중히 처리해 주세요.
+                        차감 후 답변은 별도로 메시지 전송 기능을 통해 사용자에게 전달할 수 있습니다. 정책 위반 사항을 꼼꼼히 검토 후 신중히 처리해 주세요.
                     </p>
                 </div>
             </div>

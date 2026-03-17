@@ -1,370 +1,478 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, MessageSquare, Send, ChevronRight, ShieldCheck, AlertCircle, RotateCcw, CreditCard, AlertTriangle, HelpCircle, ChevronDown, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import {
+    MessageCircle,
+    RotateCcw,
+    Send,
+    Loader2,
+    ChevronRight,
+    ArrowLeft,
+    Inbox,
+    AlertCircle,
+    User,
+    CheckCircle2
+} from 'lucide-react';
 
-interface CreditPurchase {
+interface PurchaseRecord {
     id: string;
-    user_id: string;
-    plan_id: string | null;
     purchased_credits: number;
-    remaining_credits: number;
     price_paid: number;
-    payment_id: string | null;
-    status: 'active' | 'pending_refund' | 'refunded';
     purchased_at: string;
+    status: string;
+}
+
+interface Message {
+    id: string;
+    sender_role: 'user' | 'admin';
+    content: string;
+    created_at: string;
 }
 
 interface Inquiry {
-// ... existing Inquiry interface remains the same ...
     id: string;
     category: string;
     title: string;
     content: string;
-    answer: string | null;
     status: 'pending' | 'answered';
-    credits_rewarded: number;
     created_at: string;
-    answered_at: string | null;
-    user_id: string;
+    linked_purchase_id: string | null;
 }
 
-const categories = [
-    { id: 'refund', label: '환불 요청', icon: <RotateCcw size={16} /> },
-    { id: 'payment', label: '결제/요금제 문의', icon: <CreditCard size={16} /> },
-    { id: 'error', label: '서비스 오류 제보', icon: <AlertTriangle size={16} /> },
-    { id: 'other', label: '기타 문의', icon: <HelpCircle size={16} /> },
-];
-
 const SupportPage: React.FC = () => {
-    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [category, setCategory] = useState('other');
+    const [view, setView] = useState<'menu' | 'form' | 'list' | 'detail'>('menu');
+    const [category, setCategory] = useState<'general' | 'bug' | 'refund'>('general');
+
+    // Form state
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [user, setUser] = useState<any>(null);
-    
-    // 구매 내역 관련 상태
-    const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
-    const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null);
-    const [showPurchaseList, setShowPurchaseList] = useState(false);
+    const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
+    const [selectedPurchaseId, setSelectedPurchaseId] = useState<string>('');
+    const [submitting, setSubmitting] = useState(false);
 
-    const navigate = useNavigate();
+    // List & Detail state
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [replyText, setReplyText] = useState('');
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     useEffect(() => {
-        const checkUser = async () => {
+        const getSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                alert('로그인이 필요한 서비스입니다.');
-                navigate('/');
-                return;
+            if (session) {
+                setUserId(session.user.id);
+                fetchPurchases(session.user.id);
+                fetchInquiries(session.user.id);
             }
-            setUser(session.user);
-            fetchInquiries(session.user.id);
-        };
-        checkUser();
-    }, [navigate]);
-
-    const fetchInquiries = async (userId: string) => {
-        try {
-            const { data, error } = await supabase
-                .from('support_inquiries')
-                .select('*')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setInquiries(data || []);
-        } catch (err) {
-            console.error('Error fetching inquiries:', err);
-        } finally {
             setLoading(false);
-        }
+        };
+        getSession();
+    }, []);
+
+    const fetchPurchases = async (uid: string) => {
+        const { data } = await supabase
+            .from('purchase_history')
+            .select('*')
+            .eq('user_id', uid)
+            .order('purchased_at', { ascending: false });
+        if (data) setPurchases(data);
     };
 
-    const fetchPurchases = useCallback(async () => {
-        if (!user?.id) return;
-        const { data, error } = await supabase
-            .from('credit_purchases')
+    const fetchInquiries = async (uid: string) => {
+        const { data } = await supabase
+            .from('support_inquiries')
             .select('*')
-            .eq('user_id', user.id)
-            .order('purchased_at', { ascending: false });
-        
-        if (!error && data) {
-            setPurchases(data);
-        }
-    }, [user?.id]);
+            .eq('user_id', uid)
+            .order('created_at', { ascending: false });
+        if (data) setInquiries(data);
+    };
 
-    useEffect(() => {
-        if (user && category === 'refund') {
-            fetchPurchases();
+    const fetchMessages = useCallback(async (inquiryId: string) => {
+        setLoadingMessages(true);
+        try {
+            const { data } = await supabase
+                .from('support_inquiry_messages')
+                .select('*')
+                .eq('inquiry_id', inquiryId)
+                .order('created_at', { ascending: true });
+            setMessages(data || []);
+        } finally {
+            setLoadingMessages(false);
         }
-    }, [user, category, fetchPurchases]);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim() || !content.trim()) return;
+        if (!userId) return;
 
-        if (category === 'refund' && !selectedPurchaseId) {
-            alert('환불하실 구매 내역을 선택해주세요.');
-            return;
-        }
-
-        setIsSubmitting(true);
+        setSubmitting(true);
         try {
-            const { error } = await supabase
+            // 1. Create Inquiry
+            const { data: inquiry, error: inquiryError } = await supabase
                 .from('support_inquiries')
                 .insert({
-                    user_id: user.id,
+                    user_id: userId,
                     category,
                     title,
                     content,
-                    status: 'pending',
-                    linked_purchase_id: selectedPurchaseId
+                    linked_purchase_id: category === 'refund' ? selectedPurchaseId : null,
+                    status: 'pending'
+                })
+                .select()
+                .single();
+
+            if (inquiryError) throw inquiryError;
+
+            // 2. Add first message to thread
+            const { error: msgError } = await supabase
+                .from('support_inquiry_messages')
+                .insert({
+                    inquiry_id: inquiry.id,
+                    sender_role: 'user',
+                    content: content
                 });
 
-            if (error) throw error;
+            if (msgError) throw msgError;
 
-            alert('문의가 등록되었습니다. 최대한 빨리 답변해 드리겠습니다.');
+            alert('문의가 접수되었습니다. 최대한 빨리 답변 드리겠습니다!');
             setTitle('');
             setContent('');
-            setCategory('other');
-            setSelectedPurchaseId(null);
-            fetchInquiries(user.id);
-        } catch (err) {
-            console.error('Error submitting inquiry:', err);
-            alert('문의 등록 중 오류가 발생했습니다.');
+            setSelectedPurchaseId('');
+            fetchInquiries(userId);
+            setView('list');
+        } catch (err: any) {
+            alert(`오류가 발생했습니다: ${err.message}`);
         } finally {
-            setIsSubmitting(false);
+            setSubmitting(false);
         }
     };
 
-    const isRefundable = (purchase: CreditPurchase) => {
-        if (purchase.status !== 'active') return false;
-        if (purchase.remaining_credits !== purchase.purchased_credits) return false;
-        
-        const purchasedAt = new Date(purchase.purchased_at);
-        const now = new Date();
-        const diffDays = Math.floor((now.getTime() - purchasedAt.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
-    };
+    const handleSendReply = async () => {
+        if (!selectedInquiry || !replyText.trim() || !userId) return;
 
-    const selectedPurchase = purchases.find(p => p.id === selectedPurchaseId);
+        setSubmitting(true);
+        try {
+            const { error: msgError } = await supabase
+                .from('support_inquiry_messages')
+                .insert({
+                    inquiry_id: selectedInquiry.id,
+                    sender_role: 'user',
+                    content: replyText
+                });
 
-    const formatDate = (dateStr: string) => {
-// ... rest of the file ...
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit'
-        });
+            if (msgError) throw msgError;
+
+            setReplyText('');
+            fetchMessages(selectedInquiry.id);
+        } catch (err: any) {
+            alert(`오류: ${err.message}`);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center pt-20">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 className="animate-spin text-indigo-600" size={32} />
+            </div>
+        );
+    }
+
+    if (!userId) {
+        return (
+            <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
+                <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center">
+                    <Inbox className="w-16 h-16 text-slate-200 mx-auto mb-6" />
+                    <h2 className="text-xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
+                    <p className="text-slate-500 text-sm mb-6 font-medium">문의 내역을 확인하고 상담하려면 먼저 로그인해 주세요.</p>
+                    <button 
+                        onClick={() => window.location.href = '/login'}
+                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black"
+                    >
+                        로그인하러 가기
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 pt-14 md:pt-20 lg:pt-24 animate-fade-in">
-
-
-            <div className="max-w-4xl mx-auto px-6">
-                <div className="mb-12">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-3 bg-indigo-100 rounded-2xl">
-                            <MessageSquare className="w-8 h-8 text-indigo-600" />
-                        </div>
-                        <h1 className="text-3xl font-black text-slate-900">고객센터</h1>
-                    </div>
-                    <p className="text-slate-500 font-medium">문의사항을 남겨주시면 정성껏 답변해 드리겠습니다.</p>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
+                <div className="max-w-xl mx-auto px-6 h-16 flex items-center justify-between">
+                    {view === 'menu' ? (
+                        <h1 className="text-xl font-black text-slate-900">고객센터</h1>
+                    ) : (
+                        <button 
+                            onClick={() => {
+                                if (view === 'detail') setView('list');
+                                else setView('menu');
+                            }}
+                            className="flex items-center gap-1 text-slate-900 font-black text-sm"
+                        >
+                            <ArrowLeft size={18} /> 뒤로가기
+                        </button>
+                    )}
+                    <button 
+                        onClick={() => setView('list')}
+                        className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full"
+                    >
+                        나의 문의내역
+                    </button>
                 </div>
+            </div>
 
-                <div className="grid lg:grid-cols-2 gap-12">
-                    {/* Inquiry Form */}
-                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm h-fit">
-                        <h2 className="text-xl font-bold text-slate-900 mb-6">새로운 문의 남기기</h2>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3">문의 카테고리</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {categories.map((cat) => (
-                                        <button
-                                            key={cat.id}
-                                            type="button"
-                                            onClick={() => {
-                                                setCategory(cat.id);
-                                                if (cat.id !== 'refund') setSelectedPurchaseId(null);
-                                            }}
-                                            className={`
-                                                flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-xs font-bold
-                                                ${category === cat.id
-                                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-sm'
-                                                    : 'border-slate-100 hover:border-slate-200 text-slate-500'}
-                                            `}
-                                        >
-                                            {cat.icon}
-                                            {cat.label}
-                                        </button>
-                                    ))}
-                                </div>
+            <div className="max-w-xl mx-auto px-6 py-8">
+                {view === 'menu' && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-black text-slate-900 mb-2">무엇을 도와드릴까요?</h2>
+                            <p className="text-slate-500 font-medium">문의 항목을 선택하시면 빠른 상담이 가능합니다.</p>
+                        </div>
+
+                        <button 
+                            onClick={() => { setCategory('general'); setView('form'); }}
+                            className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-indigo-500 hover:shadow-md transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <MessageCircle size={24} />
                             </div>
+                            <div className="text-left flex-1">
+                                <h3 className="font-black text-slate-800">일반 문의 / 제안</h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">서비스 이용 중 궁금한 점을 문의해 주세요.</p>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </button>
 
+                        <button 
+                            onClick={() => { setCategory('refund'); setView('form'); }}
+                            className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-rose-500 hover:shadow-md transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                                <RotateCcw size={24} />
+                            </div>
+                            <div className="text-left flex-1">
+                                <h3 className="font-black text-slate-800">환불 요청하기</h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">사용하지 않은 상품에 대한 환불을 요청합니다.</p>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </button>
+
+                        <button 
+                            onClick={() => { setCategory('bug'); setView('form'); }}
+                            className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-amber-500 hover:shadow-md transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                <AlertCircle size={24} />
+                            </div>
+                            <div className="text-left flex-1">
+                                <h3 className="font-black text-slate-800">버그 리포트</h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">오류가 발생했다면 알려주세요.</p>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </button>
+                    </div>
+                )}
+
+                {view === 'form' && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="mb-8">
+                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter mb-2 inline-block ${
+                                category === 'refund' ? 'bg-rose-50 text-rose-600' : 
+                                category === 'bug' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'
+                            }`}>
+                                {category === 'refund' ? '환불 요청' : category === 'bug' ? '버그 리포트' : '일반 문의'}
+                            </span>
+                            <h2 className="text-2xl font-black text-slate-900">상세한 내용을 알려주세요.</h2>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             {category === 'refund' && (
-                                <div className="animate-in slide-in-from-top-2 duration-300">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">환불 대상 구매 내역</label>
-                                    <div className="relative">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPurchaseList(!showPurchaseList)}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-left hover:border-indigo-300 transition-all font-medium text-sm"
-                                        >
-                                            {selectedPurchase ? (
-                                                <span>
-                                                    {selectedPurchase.purchased_credits} 크레딧 (₩{selectedPurchase.price_paid.toLocaleString()})
-                                                    <span className="text-[10px] text-slate-400 block">{new Date(selectedPurchase.purchased_at).toLocaleDateString()} 결제</span>
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-400">환불할 구매 내역을 선택해주세요</span>
-                                            )}
-                                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showPurchaseList ? 'rotate-180' : ''}`} />
-                                        </button>
-
-                                        {showPurchaseList && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl z-20 overflow-hidden max-h-60 overflow-y-auto animate-in fade-in zoom-in duration-200">
-                                                {purchases.length === 0 ? (
-                                                    <p className="p-4 text-center text-xs text-slate-400">구매 내역이 없습니다.</p>
-                                                ) : (
-                                                    purchases.map(p => {
-                                                        const refundable = isRefundable(p);
-                                                        return (
-                                                            <button
-                                                                key={p.id}
-                                                                type="button"
-                                                                disabled={!refundable}
-                                                                onClick={() => {
-                                                                    setSelectedPurchaseId(p.id);
-                                                                    setShowPurchaseList(false);
-                                                                }}
-                                                                className={`w-full p-4 border-b border-slate-50 text-left hover:bg-slate-50 transition-all flex items-center justify-between group ${!refundable ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <div className="flex flex-col gap-0.5">
-                                                                    <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                                                        {p.purchased_credits} 크레딧
-                                                                        {!refundable && (
-                                                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-500 text-[10px] rounded-md">환불 불가</span>
-                                                                        )}
-                                                                    </span>
-                                                                    <span className="text-[10px] text-slate-400 font-medium">₩{p.price_paid.toLocaleString()} • {new Date(p.purchased_at).toLocaleDateString()}</span>
-                                                                    {!refundable && p.remaining_credits < p.purchased_credits && (
-                                                                        <span className="text-[9px] text-rose-400 italic">이미 사용된 크레딧이 있습니다.</span>
-                                                                    )}
-                                                                </div>
-                                                                {selectedPurchaseId === p.id && <Check className="w-4 h-4 text-indigo-600" />}
-                                                            </button>
-                                                        );
-                                                    })
-                                                )}
-                                            </div>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">환불 대상 결제 내역 선택</label>
+                                    <div className="space-y-2">
+                                        {purchases.length === 0 ? (
+                                            <div className="p-4 bg-slate-100 rounded-2xl text-center text-xs font-bold text-slate-400">결제 내역이 없습니다.</div>
+                                        ) : (
+                                            purchases.map((p) => (
+                                                <div 
+                                                    key={p.id}
+                                                    onClick={() => setSelectedPurchaseId(p.id)}
+                                                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
+                                                        selectedPurchaseId === p.id 
+                                                        ? 'border-indigo-500 bg-indigo-50/50' 
+                                                        : 'border-slate-100 bg-white hover:border-slate-200'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-800">{p.purchased_credits} 크레딧 충전</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold">{new Date(p.purchased_at).toLocaleDateString()} • {p.price_paid.toLocaleString()}원</p>
+                                                    </div>
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPurchaseId === p.id ? 'border-indigo-600 bg-indigo-600' : 'border-slate-200'}`}>
+                                                        {selectedPurchaseId === p.id && <div className="w-2 h-2 bg-white rounded-full" />}
+                                                    </div>
+                                                </div>
+                                            ))
                                         )}
-                                    </div>
-                                    <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                                        <p className="text-[10px] text-amber-700 leading-relaxed font-medium">
-                                            <span className="font-black text-amber-800 underline block mb-1">💡 환불 규정 안내</span>
-                                            - 결제 후 7일 이내, 한 번도 사용하지 않은 크레딧만 환불 가능합니다.<br/>
-                                            - 이미 사용된 크레딧이 포함된 구매 건은 환불이 불가능합니다.
-                                        </p>
                                     </div>
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">제목</label>
-                                <input
-                                    type="text"
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">제목</label>
+                                <input 
+                                    required
+                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all text-sm font-medium"
+                                    placeholder="궁금하신 내용을 한 줄로 요약해 주세요."
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="문의 제목을 입력해주세요"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-medium"
-                                    required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">내용</label>
-                                <textarea
+
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">상세 설명</label>
+                                <textarea 
+                                    required
+                                    rows={6}
+                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all text-sm font-medium resize-none"
+                                    placeholder="상황을 자세히 설명해 주시면 더 정확한 답변이 가능합니다."
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
-                                    placeholder="궁금하신 내용을 자세히 적어주세요"
-                                    className="w-full h-40 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none font-medium"
-                                    required
                                 />
                             </div>
-                            <button
+
+                            <button 
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-100 active:scale-[0.98]"
+                                disabled={submitting || (category === 'refund' && !selectedPurchaseId)}
+                                className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg disabled:opacity-30 shadow-xl shadow-slate-100 flex items-center justify-center gap-2"
                             >
-                                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                {submitting ? <Loader2 className="animate-spin" size={24} /> : <Send size={20} />}
                                 문의 등록하기
                             </button>
                         </form>
                     </div>
+                )}
 
-                    {/* Inquiry List */}
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 mb-6 font-primary">나의 문의 내역</h2>
+                {view === 'list' && (
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-black text-slate-900">나의 문의 내역</h2>
+                            <p className="text-slate-500 font-medium">관리자와 상담 중인 내역입니다.</p>
+                        </div>
+
                         {inquiries.length === 0 ? (
-                            <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center">
-                                <AlertCircle className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                                <p className="text-slate-400 font-medium">등록된 문의가 없습니다.</p>
+                            <div className="bg-white rounded-3xl p-12 text-center border border-slate-100">
+                                <Inbox className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                                <p className="text-slate-400 font-bold">문의 내역이 없습니다.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {inquiries.map((inquiry) => (
-                                    <div key={inquiry.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:border-indigo-200 transition-all group">
-                                        <div className="p-5">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div>
-                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-[10px] font-bold rounded flex items-center gap-1 uppercase">
-                                                            {categories.find(c => c.id === inquiry.category)?.label || inquiry.category}
-                                                        </span>
-                                                        {inquiry.status === 'answered' ? (
-                                                            <span className="px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-full uppercase tracking-wider">답변완료</span>
-                                                        ) : (
-                                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[10px] font-bold rounded-full uppercase tracking-wider">처리중</span>
-                                                        )}
-                                                        <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{inquiry.title}</h3>
-                                                    </div>
-                                                    <p className="text-[10px] text-slate-400 font-medium">{formatDate(inquiry.created_at)}</p>
-                                                </div>
-                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-indigo-400 transition-all" />
+                            <div className="space-y-3">
+                                {inquiries.map((i) => (
+                                    <div 
+                                        key={i.id}
+                                        onClick={() => {
+                                            setSelectedInquiry(i);
+                                            fetchMessages(i.id);
+                                            setView('detail');
+                                        }}
+                                        className="bg-white p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:border-indigo-500 hover:shadow-sm transition-all cursor-pointer group"
+                                    >
+                                        <div className="flex-1 min-w-0 pr-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                                    i.category === 'refund' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'
+                                                }`}>
+                                                    {i.category === 'refund' ? '환불' : i.category === 'bug' ? '버그' : '문의'}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-bold">{new Date(i.created_at).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed font-medium">{inquiry.content}</p>
+                                            <h4 className="font-black text-slate-800 truncate">{i.title}</h4>
                                         </div>
-
-                                        {inquiry.status === 'answered' && inquiry.answer && (
-                                            <div className="bg-indigo-50/50 p-5 border-t border-indigo-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                                                        <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                                                    </div>
-                                                    <span className="text-xs font-bold text-indigo-900">운영팀 답변</span>
-                                                </div>
-                                                <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-line font-medium">{inquiry.answer}</p>
-                                            </div>
-                                        )}
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                                            i.status === 'answered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                        }`}>
+                                            {i.status === 'answered' ? '답변완료' : '검토중'}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-                </div>
+                )}
+
+                {view === 'detail' && selectedInquiry && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-[70vh]">
+                        <div className="mb-6 shrink-0">
+                            <span className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase mb-2 inline-block">상담 스레드</span>
+                            <h2 className="text-2xl font-black text-slate-900 leading-tight">{selectedInquiry.title}</h2>
+                        </div>
+
+                        {/* Thread View */}
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-6">
+                            {loadingMessages ? (
+                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-indigo-600" /></div>
+                            ) : (
+                                messages.map((msg) => (
+                                    <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-start' : 'items-end'}`}>
+                                        <div className={`max-w-[85%] p-4 rounded-3xl text-sm leading-relaxed ${
+                                            msg.sender_role === 'admin' 
+                                            ? 'bg-slate-100 text-slate-700 rounded-tl-none' 
+                                            : 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-100'
+                                        }`}>
+                                            {msg.content}
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-1.5 px-1">
+                                            {msg.sender_role === 'admin' && <CheckCircle2 size={10} className="text-indigo-500" />}
+                                            <span className="text-[10px] text-slate-400 font-bold">
+                                                {msg.sender_role === 'admin' ? '운영진 답변' : '나의 메시지'} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* User Reply Box */}
+                        <div className="bg-white p-2 rounded-3xl border border-slate-200 shadow-xl flex items-end gap-2 shrink-0">
+                            <textarea
+                                rows={1}
+                                className="flex-1 bg-transparent p-4 text-sm font-medium outline-none resize-none"
+                                placeholder="추가 문의사항을 입력하세요..."
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                            />
+                            <button 
+                                onClick={handleSendReply}
+                                disabled={submitting || !replyText.trim()}
+                                className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:opacity-30 shrink-0"
+                            >
+                                {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={20} />}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
+            
+            {/* Action Bar Floating (Only for menu view) */}
+            {view === 'menu' && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xs px-6">
+                    <div className="bg-slate-900 rounded-2xl p-4 flex items-center justify-between shadow-2xl">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+                                <User size={16} className="text-white" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">상담 대기 시간</p>
+                                <p className="text-xs text-white font-bold">평균 24시간 이내 답변</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,18 +1,22 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
-    MessageSquare,
-    Search,
-    Clock,
-    CheckCircle2,
-    AlertCircle,
+    Mail,
     ChevronRight,
-    Coins,
-    User,
     ArrowLeft,
-    RotateCcw,
-    Loader2
+    Send,
+    Loader2,
+    MessageCircle,
+    CheckCircle2,
+    Clock
 } from 'lucide-react';
+
+interface Message {
+    id: string;
+    sender_role: 'user' | 'admin';
+    content: string;
+    created_at: string;
+}
 
 interface Inquiry {
     id: string;
@@ -22,378 +26,265 @@ interface Inquiry {
     content: string;
     answer: string | null;
     status: 'pending' | 'answered';
-    credits_rewarded: number;
     created_at: string;
-    answered_at: string | null;
-    linked_purchase_id: string | null;
-    user_email?: string;
-    linked_purchase?: any;
+    profiles: {
+        name: string;
+        email: string;
+    };
 }
 
 const AdminInquiries: React.FC = () => {
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-    const [answerText, setAnswerText] = useState('');
-    const [rewardCredits, setRewardCredits] = useState(0);
-    const [filter, setFilter] = useState<'all' | 'pending' | 'answered'>('all');
-    const [refunding, setRefunding] = useState(false);
+    const [replyText, setReplyText] = useState('');
+    const [sending, setSending] = useState(false);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     const fetchInquiries = useCallback(async () => {
-        setLoading(true);
         try {
-            let query = supabase
+            setLoading(true);
+            const { data, error } = await supabase
                 .from('support_inquiries')
                 .select(`
                     *,
-                    profiles!left(email),
-                    linked_purchase:linked_purchase_id(*)
+                    profiles:user_id (name, email)
                 `)
-                .neq('category', 'refund');
+                .neq('category', 'refund') // Exclude refunds from this view
+                .order('created_at', { ascending: false });
 
-            if (filter !== 'all') {
-                query = query.eq('status', filter);
+            if (data) {
+                setInquiries(data);
+                setSelectedInquiry(prev => {
+                    if (!prev) return null;
+                    return data.find(i => i.id === prev.id) || prev;
+                });
             }
-
-            const { data, error } = await query.order('created_at', { ascending: false });
-
             if (error) throw error;
-
-            const formattedData = (data || []).map((item: any) => ({
-                ...item,
-                user_email: item.profiles?.email || '이메일 정보 없음'
-            }));
-
-            setInquiries(formattedData);
-            
-            // If currently selected inquiry is in the list, update it using functional state to avoid dependency loops
-            setSelectedInquiry(prev => {
-                if (!prev) return null;
-                const updated = formattedData.find(i => i.id === prev.id);
-                if (updated) {
-                    // Update user_email as well if needed
-                    return {
-                        ...updated,
-                        user_email: updated.profiles?.email || '이메일 정보 없음'
-                    };
-                }
-                return prev;
-            });
-        } catch (error) {
-            console.error('Fetch error:', error);
+        } catch (err) {
+            console.error('Error fetching inquiries:', err);
         } finally {
             setLoading(false);
         }
-    }, [filter]); // selectedInquiry is no longer a dependency
+    }, []);
+
+    const fetchMessages = useCallback(async (inquiryId: string) => {
+        setLoadingMessages(true);
+        try {
+            const { data } = await supabase
+                .from('support_inquiry_messages')
+                .select('*')
+                .eq('inquiry_id', inquiryId)
+                .order('created_at', { ascending: true });
+            setMessages(data || []);
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        } finally {
+            setLoadingMessages(false);
+        }
+    }, []);
 
     useEffect(() => {
         fetchInquiries();
-    }, [fetchInquiries]); // fetchInquiries depends on filter and selectedInquiry
+    }, [fetchInquiries]);
 
-    const handleAnswer = async () => {
-        if (!selectedInquiry) return;
+    useEffect(() => {
+        if (selectedInquiry) {
+            fetchMessages(selectedInquiry.id);
+        }
+    }, [selectedInquiry, fetchMessages]);
 
+    const handleSendReply = async () => {
+        if (!selectedInquiry || !replyText.trim()) return;
+
+        setSending(true);
         try {
-            const { error: updateError } = await supabase
+            // 1. Add message to thread
+            const { error: msgError } = await supabase
+                .from('support_inquiry_messages')
+                .insert({
+                    inquiry_id: selectedInquiry.id,
+                    sender_role: 'admin',
+                    content: replyText
+                });
+
+            if (msgError) throw msgError;
+
+            // 2. Update Inquiry Status
+            const { error: inquiryError } = await supabase
                 .from('support_inquiries')
                 .update({
-                    answer: answerText,
                     status: 'answered',
-                    credits_rewarded: rewardCredits,
-                    answered_at: new Date().toISOString(),
+                    answered_at: new Date().toISOString()
                 })
                 .eq('id', selectedInquiry.id);
 
-            if (updateError) throw updateError;
+            if (inquiryError) throw inquiryError;
 
-            if (rewardCredits > 0) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('credits')
-                    .eq('id', selectedInquiry.user_id)
-                    .single();
-
-                if (profile) {
-                    await supabase
-                        .from('profiles')
-                        .update({ credits: (profile.credits || 0) + rewardCredits })
-                        .eq('id', selectedInquiry.user_id);
-                }
-            }
-
-            alert('답변이 등록되었습니다.');
-            setSelectedInquiry(null);
-            setAnswerText('');
-            setRewardCredits(0);
+            alert('답변이 전송되었습니다.');
+            setReplyText('');
+            fetchMessages(selectedInquiry.id);
             fetchInquiries();
-        } catch (error: any) {
-            console.error('Answer error:', error);
-            alert('답변 등록 중 오류가 발생했습니다.');
-        }
-    };
-
-    const handleRefund = async () => {
-        if (!selectedInquiry?.linked_purchase_id) return;
-        
-        const confirmRefund = window.confirm('정말로 환불을 실행하시겠습니까? 토스페이먼츠 결제가 취소되고 사용자 크레딧이 차감됩니다.');
-        if (!confirmRefund) return;
-
-        setRefunding(true);
-        try {
-            const response = await fetch('/api/cancel-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    purchaseId: selectedInquiry.linked_purchase_id,
-                    cancelReason: '고객센터 문의를 통한 관리자 환불 처리'
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || '환불 처리 중 오류가 발생했습니다.');
-            }
-
-            alert('환불 처리가 완료되었습니다.');
-            fetchInquiries();
-        } catch (error: any) {
-            console.error('Refund error:', error);
-            alert(error.message || '환불 중 오류가 발생했습니다.');
+        } catch (err: any) {
+            alert(`답변 전송 오류: ${err.message}`);
         } finally {
-            setRefunding(false);
+            setSending(false);
         }
     };
 
-    const getCategoryLabel = (cat: string) => {
-        const labels: Record<string, string> = {
-            'refund': '환불 요청',
-            'payment': '결제 문의',
-            'error': '오류 제보',
-            'other': '기타'
-        };
-        return labels[cat] || cat;
-    };
+    if (selectedInquiry) {
+        return (
+            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 animate-in slide-in-from-right duration-300 min-h-[600px] flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <button
+                        onClick={() => setSelectedInquiry(null)}
+                        className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-semibold"
+                    >
+                        <ArrowLeft size={20} /> 목록으로
+                    </button>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-sm font-bold text-slate-900">{selectedInquiry.profiles?.name}</p>
+                            <p className="text-[10px] text-slate-400">{selectedInquiry.profiles?.email}</p>
+                        </div>
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-black ${
+                            selectedInquiry.status === 'answered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                            {selectedInquiry.status === 'answered' ? '해결됨' : '본인 검토 중'}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden grid md:grid-cols-5 h-[600px]">
+                    {/* Message Thread */}
+                    <div className="md:col-span-3 border-r border-slate-100 flex flex-col bg-slate-50/30">
+                        <div className="p-6 border-b border-slate-100 bg-white">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">문의 내용</h3>
+                            <h2 className="text-lg font-black text-slate-900 leading-tight">{selectedInquiry.title}</h2>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {loadingMessages ? (
+                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-indigo-600" /></div>
+                            ) : (
+                                messages.map((msg) => (
+                                    <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-end' : 'items-start'}`}>
+                                        <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                                            msg.sender_role === 'admin' 
+                                            ? 'bg-slate-900 text-white rounded-tr-none' 
+                                            : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none shadow-sm'
+                                        }`}>
+                                            {msg.content}
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 mt-1.5 px-1 font-bold">
+                                            {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(msg.created_at).toLocaleString([], {month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Reply Area */}
+                    <div className="md:col-span-2 p-8 bg-white flex flex-col">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">답변 작성하기</h3>
+                        <div className="flex-1 flex flex-col space-y-4">
+                            <textarea
+                                className="flex-1 w-full p-6 p-4 rounded-3xl border border-slate-200 focus:border-indigo-500 outline-none transition-all text-sm resize-none"
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder="사용자에게 보낼 상세한 답변을 입력하세요..."
+                            />
+                            <button
+                                onClick={handleSendReply}
+                                disabled={sending || !replyText.trim()}
+                                className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-indigo-100"
+                            >
+                                {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                                답변 전송하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            {selectedInquiry ? (
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 animate-in slide-in-from-right duration-300">
-                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                        <button
-                            onClick={() => setSelectedInquiry(null)}
-                            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-semibold"
-                        >
-                            <ArrowLeft size={20} /> 목록으로 돌아가기
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                selectedInquiry.status === 'answered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                            }`}>
-                                {selectedInquiry.status === 'answered' ? '답변 완료' : '답변 대기'}
-                            </span>
-                        </div>
-                    </div>
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div>
+                <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                    <MessageCircle className="w-8 h-8 text-indigo-600" /> 고객문의 관리
+                </h2>
+                <p className="text-slate-500 font-medium">서비스 이용 관련 일반 문의 및 기술 지원 요청을 관리합니다.</p>
+            </div>
 
-                    <div className="p-8 grid md:grid-cols-2 gap-12">
-                        {/* Inquiry Details */}
-                        <div className="space-y-8">
-                            <div>
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">문의 상세 정보</h3>
-                                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                            <User size={20} className="text-slate-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-900">{selectedInquiry.user_email}</p>
-                                            <p className="text-[10px] text-slate-400">{new Date(selectedInquiry.created_at).toLocaleString()}</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">{getCategoryLabel(selectedInquiry.category)}</p>
-                                            <h2 className="text-xl font-black text-slate-900">{selectedInquiry.title}</h2>
-                                        </div>
-                                        <div className="p-4 bg-white rounded-xl border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap mb-4">
-                                            {selectedInquiry.content}
-                                        </div>
-
-                                        {selectedInquiry.linked_purchase && (
-                                            <div className="p-6 bg-white rounded-2xl border-2 border-indigo-50 shadow-sm animate-in fade-in zoom-in duration-300">
-                                                <h4 className="text-xs font-black text-indigo-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                                    <RotateCcw size={14} /> 연결된 구매 내역
-                                                </h4>
-                                                <div className="grid grid-cols-2 gap-4 mb-6">
-                                                    <div>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">상품(크레딧)</p>
-                                                        <p className="text-sm font-black text-slate-800">{selectedInquiry.linked_purchase.purchased_credits} C</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">결제 금액</p>
-                                                        <p className="text-sm font-black text-slate-800">₩{selectedInquiry.linked_purchase.price_paid.toLocaleString()}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">상태</p>
-                                                        <p className={`text-sm font-black ${
-                                                            selectedInquiry.linked_purchase.status === 'refunded' ? 'text-slate-400' : 'text-indigo-600'
-                                                        }`}>
-                                                            {selectedInquiry.linked_purchase.status === 'active' ? '결제 완료' : 
-                                                             selectedInquiry.linked_purchase.status === 'pending_refund' ? '환불 대기' : '환불 완료'}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">주문 일시</p>
-                                                        <p className="text-[11px] font-bold text-slate-800">{new Date(selectedInquiry.linked_purchase.purchased_at).toLocaleDateString()}</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                {selectedInquiry.linked_purchase.status !== 'refunded' && (
-                                                    <button
-                                                        onClick={handleRefund}
-                                                        disabled={refunding}
-                                                        className="w-full py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                                    >
-                                                        {refunding ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
-                                                        즉시 환불 실행 (Toss Payments)
-                                                    </button>
-                                                )}
-                                                {selectedInquiry.linked_purchase.status === 'refunded' && (
-                                                    <div className="w-full py-3 bg-slate-50 text-slate-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-slate-100">
-                                                        <CheckCircle2 size={16} /> 이미 환불 처리된 항목입니다.
-                                                    </div>
-                                                )}
+            <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">분류</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">사용자</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">문의 제목</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">상태</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                                    </td>
+                                </tr>
+                            ) : inquiries.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400 text-sm">등록된 문의가 없습니다.</td>
+                                </tr>
+                            ) : (
+                                inquiries.map((i) => (
+                                    <tr key={i.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase">
+                                                {i.category === 'bug' ? '버그리포트' : i.category === 'feature' ? '기능제안' : '기타'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="font-bold text-slate-900">{i.profiles?.name || '익명'}</div>
+                                            <div className="text-[10px] text-slate-400">{i.profiles?.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4 max-w-sm">
+                                            <div className="font-bold text-slate-800 truncate">{i.title}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{new Date(i.created_at).toLocaleDateString()}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className={`flex items-center gap-1.5 text-[10px] font-black ${
+                                                i.status === 'answered' ? 'text-green-600' : 'text-amber-600'
+                                            }`}>
+                                                {i.status === 'answered' ? (
+                                                    <><CheckCircle2 size={12} /> 답변완료</>
+                                                ) : (
+                                                    <><Clock size={12} /> 답변대기</>
+                                                ) }
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Answer Form */}
-                        <div className="space-y-6">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">관리자 답변 작성</h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">답변 내용</label>
-                                    <textarea
-                                        className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none h-48 transition-all"
-                                        value={answerText}
-                                        onChange={(e) => setAnswerText(e.target.value)}
-                                        placeholder="사용자에게 보낼 상세 답변을 입력하세요..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                        <Coins size={16} className="text-amber-500" /> 보상 크레딧 지급 (Optional)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none transition-all"
-                                        value={rewardCredits}
-                                        onChange={(e) => setRewardCredits(parseInt(e.target.value) || 0)}
-                                    />
-                                    <p className="text-[10px] text-slate-400 mt-2 px-1">* 오류 보상 등으로 크레딧을 지급할 경우 입력하세요.</p>
-                                </div>
-                                <button
-                                    onClick={handleAnswer}
-                                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]"
-                                >
-                                    답변 완료 및 발송
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                onClick={() => setSelectedInquiry(i)}
+                                                className="flex items-center gap-1 px-4 py-2 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-100"
+                                            >
+                                                상세보기 <ChevronRight size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            ) : (
-                <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                                <MessageSquare className="w-8 h-8 text-indigo-600" /> 고객 문의 관리
-                            </h1>
-                            <p className="text-slate-500 font-medium">사용자들의 문의 내역을 확인하고 답변을 등록하세요.</p>
-                        </div>
-
-                        <div className="flex gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                            {(['all', 'pending', 'answered'] as const).map((f) => (
-                                <button
-                                    key={f}
-                                    onClick={() => setFilter(f)}
-                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-                                        filter === f ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {f === 'all' ? '전체' : f === 'pending' ? '대기 중' : '답변 완료'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {loading ? (
-                        <div className="grid gap-4">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />
-                            ))}
-                        </div>
-                    ) : inquiries.length === 0 ? (
-                        <div className="bg-white rounded-3xl p-20 text-center border-2 border-dashed border-slate-100">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Search className="text-slate-300 w-10 h-10" />
-                            </div>
-                            <p className="text-slate-400 font-bold">내역이 없습니다.</p>
-                        </div>
-                    ) : (
-                        <div className="grid gap-4">
-                            {inquiries.map((inquiry) => (
-                                <button
-                                    key={inquiry.id}
-                                    onClick={() => {
-                                        setSelectedInquiry(inquiry);
-                                        setAnswerText(inquiry.answer || '');
-                                        setRewardCredits(inquiry.credits_rewarded || 0);
-                                    }}
-                                    className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between group text-left w-full"
-                                >
-                                    <div className="flex items-center gap-6">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                            inquiry.status === 'answered' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
-                                        }`}>
-                                            {inquiry.status === 'answered' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-tighter">
-                                                    {getCategoryLabel(inquiry.category)}
-                                                </span>
-                                                <span className="text-[10px] text-slate-300">•</span>
-                                                <span className="text-[10px] font-bold text-slate-400">{inquiry.user_email}</span>
-                                            </div>
-                                            <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{inquiry.title}</h3>
-                                            <div className="flex items-center gap-3 mt-2">
-                                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                                    <Clock size={12} /> {new Date(inquiry.created_at).toLocaleDateString()}
-                                                </span>
-                                                {inquiry.credits_rewarded > 0 && (
-                                                    <span className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
-                                                        <Coins size={12} /> {inquiry.credits_rewarded} 지급됨
-                                                    </span>
-                                                )}
-                                                {inquiry.linked_purchase_id && (
-                                                    <span className="text-[10px] text-indigo-500 font-black flex items-center gap-1">
-                                                        <RotateCcw size={10} /> 환불 정보 포함
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" size={24} />
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
+            </div>
         </div>
     );
 };
