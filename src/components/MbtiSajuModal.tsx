@@ -513,35 +513,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           ) : analysis ? (
             <div className="animate-fade-up">
               {activeTab === 'soul' && renderSoulReport()}
-
-              {activeTab === 'mbti' && (
-                <div className="bg-slate-50 p-10 rounded-3xl border border-slate-100 text-center animate-fade-in">
-                  <div className="inline-block p-5 rounded-full bg-white text-slate-950 mb-6 shadow-sm">
-                    <Brain className="w-12 h-12" />
-                  </div>
-                  <h4 className="text-3xl font-black text-slate-950 mb-3 tracking-tighter">
-                    {analysis.mbti || "MBTI TYPE"}
-                  </h4>
-                  <p className="text-slate-500 font-medium leading-relaxed max-w-md mx-auto">
-                    {analysis.mbti ? getMbtiDescription(analysis.mbti) : "당신의 핵심 선천적 성격 유형입니다."}
-                  </p>
-                </div>
-              )}
-
-              {activeTab === 'saju' && (
-                <div className="bg-slate-950 p-12 rounded-3xl text-center animate-fade-in text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                  <div className="inline-block p-5 rounded-full bg-white/5 text-white mb-6 border border-white/10">
-                    <ScrollText className="w-12 h-12" />
-                  </div>
-                  <h4 className="text-3xl font-black text-white mb-3 tracking-tighter uppercase">
-                    {SAJU_ELEMENTS[currentSajuKey] || "ELEMENT"}
-                  </h4>
-                  <p className="text-slate-400 font-medium leading-relaxed max-w-md mx-auto italic">
-                    {getSajuDescription(currentSajuKey)}
-                  </p>
-                </div>
-              )}
             </div>
           ) : (
             <div className="text-center py-20 bg-slate-50 rounded-[32px] border border-slate-100">
