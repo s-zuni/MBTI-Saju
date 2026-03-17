@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
-import { SAJU_ELEMENTS, getMbtiDescription, getSajuDescription } from '../utils/sajuLogic';
+import { SAJU_ELEMENTS } from '../utils/sajuLogic';
 import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
 import html2canvas from 'html2canvas';
