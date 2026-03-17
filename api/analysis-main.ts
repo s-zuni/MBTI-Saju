@@ -109,23 +109,23 @@ export default async function handler(req: any, res: any) {
         [가독성 규칙] **(볼드체) 절대 사용 금지. 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
     } else if (part === 'strategy') {
-        systemPrompt = `당신은 '솔루션 가이드'입니다. 분야별 구체적인 조언과 전략을 제시합니다.
+        systemPrompt = `당신은 '솔루션 가이드'입니다. 사용자의 사주와 MBTI를 기반으로 2026년 분야별 구체적인 조언과 성공 전략을 제시합니다.
         [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
         {
           "fieldStrategies": {
-            "career": {"subtitle": "커리어 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"},
-            "love": {"subtitle": "연애 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"},
-            "wealth": {"subtitle": "재물 한줄 요약", "analysis": "상세 분석", "advice": "실천 조언"}
+            "career": {"subtitle": "커리어 전략 한줄 요약", "analysis": "상세한 직업/사업운 분석", "advice": "실질적이고 구체적인 실천 조언"},
+            "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석", "advice": "마음을 움직이는 실천 조언"},
+            "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석", "advice": "부의 기운을 부르는 실천 조언"}
           },
           "warnings": {
-            "watchOut": [{"title": "주의사항 제목", "description": "상세 내용"}],
-            "avoid": [{"title": "금기사항 제목", "description": "상세 내용"}]
+            "watchOut": [{"title": "주의사항 제목", "description": "상세한 행동 지침"}],
+            "avoid": [{"title": "금기사항 제목", "description": "상세한 금기 내용"}]
           },
           "finalSolution": {
-            "closingMessage": "마지막 따뜻한 응원의 메시지"
+            "closingMessage": "사용자의 앞날을 축복하는 따뜻하고 힘이 되는 마지막 메시지"
           }
         }
-        [가독성 규칙] **(볼드체) 사용금지. 줄바꿈과 이모지 적극 활용.`;
+        [가독성 규칙] **(볼드체) 절대 사용 금지. 줄바꿈과 이모지 적극 활용. 20대 여성 타겟의 공감 어린 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}`;
     } else {
         return res.status(400).json({ error: 'Invalid part' });
