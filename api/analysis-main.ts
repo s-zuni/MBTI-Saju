@@ -43,15 +43,15 @@ export default async function handler(req: any, res: any) {
 
         [중요: 분석 분량 및 깊이 가이드라인]
         1. **MBTI 심층 분석 (persona 필드)**: 
-           - **최소 700자 이상**의 매우 풍성한 분량으로 작성하세요.
+           - **매우 풍성하고 깊이 있는** 분량으로 작성하세요. (700자 이상의 상세 분석 지향)
            - 단순히 주기능/부기능을 설명하는 것을 넘어, 이 조합이 일상, 스트레스 상황, 인간관계에서 어떻게 발현되는지 구체적인 에피소드처럼 묘사하세요.
            - 사용자가 "내 속마음을 들켰다!"고 느낄 정도로 깊이 있는 심리 묘사를 포함하세요.
         
         2. **사주 심층 분석 (nature 필드)**: 
-           - **최소 1,000자 이상**의 압도적인 분량으로 작성하세요.
+           - **압도적이고 깊이 있는** 분량으로 작성하세요. (1,000자 이상의 대서사 지향)
            - 일주(Day Pillar)의 상징(예: 갑목, 임수 등)을 현대적인 비유로 풀어내고, 월지와의 관계, 오행의 흐름이 사용자의 천성과 기질에 주는 영향을 매우 상세히 분석하세요.
            - 과거-현재-미래의 잠재력을 연결하여 한 편의 서사시처럼 서술하세요.
-
+ 
         3. **융합 포인트 (deepIntegration 필드)**:
            - MBTI와 사주가 만났을 때 생기는 독특한 시너지를 **최소 3개 이상의 주제**로 깊게 분석하세요.
            - 두 결과가 상충할 때의 내적 갈등이나, 일치할 때의 폭발적인 강점을 구체적으로 짚어주세요.
@@ -148,17 +148,21 @@ export default async function handler(req: any, res: any) {
             }
         });
         
-        const responseText = result.response.text(); // generateContentWithRetry에서 이미 처리됨
+        const responseText = result.response.text();
         if (!responseText) throw new Error("AI returned an empty response");
+        
+        console.log(`[AI Raw Response - ${part}]:`, responseText.substring(0, 500) + '...');
         
         const content = cleanAndParseJSON(responseText);
         res.status(200).json(part === 'core' ? { ...content, saju: sajuResult } : content);
     } catch (error: any) {
         console.error(`[Analysis Error - ${part}]:`, error);
+        console.error(`[Error Stack]:`, error.stack);
         const errorMessage = getKoreanErrorMessage(error);
         res.status(500).json({ 
             error: errorMessage,
-            details: error.message
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 }
