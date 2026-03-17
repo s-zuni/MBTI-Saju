@@ -92,8 +92,13 @@ function App() {
     }
     closeModal('onboarding');
   };
-
   const handleFetchFortune = async () => {
+    const cost = SERVICE_COSTS.FORTUNE_TODAY;
+    if (credits < cost) {
+      openModal('creditPurchase', undefined, { requiredCredits: cost });
+      return;
+    }
+
     setIsFortuneLoading(true);
     setFortune(null);
     openModal('fortune');
@@ -107,7 +112,7 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ birthDate })
+        body: JSON.stringify({ birthDate, mbti: session.user.user_metadata.mbti })
       });
       if (!response.ok) throw new Error("Failed to fetch fortune.");
       const data = await response.json();

@@ -460,7 +460,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="mt-6 flex flex-wrap gap-2 justify-start">
             {analysis?.keywords && (
               <span className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg text-[11px] font-bold border border-slate-100 uppercase tracking-wider">
-                #{analysis.keywords.trim()}
+                #{typeof analysis.keywords === 'string' ? analysis.keywords.trim() : Array.isArray(analysis.keywords) ? analysis.keywords.join(', ').trim() : ''}
               </span>
             )}
           </div>

@@ -70,12 +70,14 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         setLoading(true);
         setError(null);
         
-        // Final check before starting
-        if (credits !== undefined && credits < 1) {
-            setLoading(false);
-            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
-            return;
+    // Final check before starting
+    if (credits !== undefined && credits < 1) {
+        setLoading(false);
+        if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+            onNavigate('creditPurchase' as any);
         }
+        return;
+    }
 
         // Deduction will happen after success
 
@@ -97,6 +99,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                     gender: user.gender,
                     name: user.full_name,
                     region: selectedRegion,
+                    regionType: regionType,
                     startDate,
                     endDate
                 })

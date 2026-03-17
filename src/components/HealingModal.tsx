@@ -70,7 +70,9 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
         // Final check before starting (though button should be disabled)
         if (credits !== undefined && credits < 1) {
             setLoading(false);
-            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
+            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+                onNavigate('creditPurchase' as any);
+            }
             return;
         }
 
