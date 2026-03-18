@@ -56,7 +56,25 @@ export default async function handler(req: any, res: any) {
 
         3. **융합 포인트 (deepIntegration 필드)**:
            - MBTI와 사주가 만났을 때 생기는 독특한 시너지를 **최소 3개 이상의 주제**로 깊게 분석하세요.
+        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
+        {
+          "reportTitle": "이 분석을 관통하는 감각적인 제목",
           "keywords": "핵심, 키워드, 3개",
+          "nature": {
+            "dayPillarSummary": "일주에 대한 한 줄 요약",
+            "dayMasterAnalysis": "일간 기질 분석 (상세히)",
+            "dayBranchAnalysis": "일지 성향 분석 (상세히)",
+            "monthBranchAnalysis": "월지 환경 분석 (상세히)"
+          },
+          "fiveElements": {
+            "elements": [
+              {"element": "목(木)", "count": 0, "interpretation": "목 기운의 의미와 영향"},
+              {"element": "화(火)", "count": 0, "interpretation": "화 기운의 의미와 영향"},
+              {"element": "토(土)", "count": 0, "interpretation": "토 기운의 의미와 영향"},
+              {"element": "금(金)", "count": 0, "interpretation": "금 기운의 의미와 영향"},
+              {"element": "수(水)", "count": 0, "interpretation": "수 기운의 의미와 영향"}
+            ]
+          },
           "persona": {
             "mbtiNickname": "트렌디한 MBTI 별칭",
             "dominantFunction": "주기능의 일상적 발현과 잠재력 (풍성하게)",
@@ -86,6 +104,16 @@ export default async function handler(req: any, res: any) {
             "theme": "올해를 관통하는 핵심 테마 한 문장",
             "overview": "전반적인 운의 흐름, 기회, 주의할 점을 포함한 상세한 조언 (줄바꿈 \n 활용 필수)",
             "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"]
+          },
+          "monthlyFortune": {
+            "months": [
+              { "period": "1-2월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" },
+              { "period": "3-4월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" },
+              { "period": "5-6월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" },
+              { "period": "7-8월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" },
+              { "period": "9-10월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" },
+              { "period": "11-12월", "energy": "기운의 흐름 요약", "guide": "상세 가이드 및 조언" }
+            ]
           }
         }
         [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
@@ -99,7 +127,16 @@ export default async function handler(req: any, res: any) {
             "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"},
             "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"}
           },
-          ...
+          "warnings": {
+            "watchOut": [
+              { "title": "주의할 점 1", "description": "상세 내용" },
+              { "title": "주의할 점 2", "description": "상세 내용" }
+            ],
+            "avoid": [
+              { "title": "피해야 할 것 1", "description": "상세 내용" },
+              { "title": "피해야 할 것 2", "description": "상세 내용" }
+            ]
+          }
         }
         [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
