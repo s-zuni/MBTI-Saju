@@ -128,7 +128,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       }).then(async res => {
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || errData.message || "핵심 분석 생성 실패");
+          const msg = errData.error || errData.message || errData.koreanError || "핵심 분석 생성 실패";
+          throw new Error(msg);
         }
         return res.json();
       });
@@ -141,7 +142,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       }).then(async res => {
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || errData.message || "운세 분석 생성 실패");
+          const msg = errData.error || errData.message || errData.koreanError || "운세 분석 생성 실패";
+          throw new Error(msg);
         }
         return res.json();
       });
@@ -154,7 +156,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       }).then(async res => {
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || errData.message || "전략 분석 생성 실패");
+          const msg = errData.error || errData.message || errData.koreanError || "전략 분석 생성 실패";
+          throw new Error(msg);
         }
         return res.json();
       });

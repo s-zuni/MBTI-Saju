@@ -174,7 +174,8 @@ export default async function handler(req: any, res: any) {
         console.error(`[Error Stack]:`, error.stack);
         const errorMessage = getKoreanErrorMessage(error);
         res.status(500).json({ 
-            error: `${part} 분석 중 오류 발생: ${errorMessage}`,
+            error: error.message || "Unknown AI Error",
+            koreanError: `${part} 분석 중 오류 발생: ${errorMessage}`,
             message: error.message,
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
