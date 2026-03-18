@@ -97,7 +97,12 @@ export default async function handler(req: any, res: any) {
         2. **문장과 문장 사이, 항목 마다 줄바꿈(\n)과 줄공백을 넣어 여유롭게 읽히도록 하세요.**
         3. 20대 여성 타겟의 트렌디하고 친근하며, 깊은 공감을 이끌어내는 말투를 사용하세요.
         4. 적절한 이모지를 문맥에 맞게 배치하여 시각적인 재미를 더하세요.
-        5. '...'이나 '!' 등을 적절히 섞어 생동감 있게 표현하세요.`;
+        5. '...'이나 '!' 등을 적절히 섞어 생동감 있게 표현하세요.
+        
+        [JSON 안전성 규칙 - 필수]
+        - 문자열 값 내부에서 실제 줄바꿈(Enter)을 절대 사용하지 마세요.
+        - 대신 반드시 '\\n' (백슬래시 n) 기호를 사용하여 줄바꿈을 표현하세요.
+        - JSON 객체 외부에 불필요한 서술이나 설명을 절대 추가하지 마세요.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
     } else if (part === 'fortune') {
         systemPrompt = `당신은 '운명 전략가'입니다. 사용자의 사주와 2026년 병오년의 기운을 대조하여 한 해의 운세와 테마를 분석합니다.
@@ -120,6 +125,7 @@ export default async function handler(req: any, res: any) {
           }
         }
         [중요 지침] 뻔한 덕담은 지양하고, 사용자의 데이터(일간, 오행, MBTI)를 근거로 한 매우 구체적이고 실질적인 변화를 예측하세요.
+        [JSON 안전성 규칙] 문자열 값 내부에서 실제 줄바꿈(Enter) 절대 금지. 줄바꿈은 반드시 '\\n' 사용.
         [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 친근하고 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else if (part === 'strategy') {
@@ -149,6 +155,7 @@ export default async function handler(req: any, res: any) {
           },
           "solution": "전반적인 인생 솔루션 및 제언 (상세히)"
         }`;
+        systemPrompt += "\n[JSON 안전성 규칙] 문자열 안에서 실제 줄바꿈을 하지 말고 반드시 \\\\n 을 사용하세요. 오직 순수한 JSON만 반환하세요.";
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else {
         return res.status(400).json({ error: 'Invalid part' });
