@@ -20,6 +20,7 @@ export const cleanAndParseJSON = (text: string): any => {
         return JSON.parse(cleaned);
     } catch (error) {
         console.error("JSON Parse Failed. Raw Text:", text);
-        throw new Error("Failed to parse AI response as JSON.");
+        const snippet = text.substring(0, 200) + (text.length > 200 ? "..." : "");
+        throw new Error(`Failed to parse AI response as JSON. Raw response start: ${snippet}`);
     }
 };

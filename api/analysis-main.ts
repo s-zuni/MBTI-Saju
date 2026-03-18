@@ -120,12 +120,18 @@ export default async function handler(req: any, res: any) {
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else if (part === 'strategy') {
         systemPrompt = `당신은 '솔루션 가이드'입니다. 사용자의 사주와 MBTI를 기반으로 2026년 분야별 구체적인 조언과 성공 전략을 제시합니다.
-        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키세요:
+        
+        [가독성 규칙]
+        - **(볼드체) 절대 사용 금지.**
+        - 문단 마다 \\n 줄바꿈과 이모지를 적극 활용하여 가독성을 높이세요.
+        - 20대 여성에게 어필할 수 있는 트렌디하고 다정한 어조를 유지하세요.
+
+        [중요: 결과 구조] 반드시 아래 JSON 구조를 엄격히 지키며 오직 JSON으로만 대답하세요:
         {
           "fieldStrategies": {
-            "career": {"subtitle": "커리어 전략 한줄 요약", "analysis": "상세한 직업/사업운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"},
-            "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"},
-            "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석 (줄바꿈 \n 활용)", "advice": "실천 조언"}
+            "career": {"subtitle": "커리어 전략 한줄 요약", "analysis": "상세한 직업/사업운 분석 (줄바꿈 \\n 활용)", "advice": "실천 조언"},
+            "love": {"subtitle": "연애/대인관계 전략 한줄 요약", "analysis": "상세한 연애/관계운 분석 (줄바꿈 \\n 활용)", "advice": "실천 조언"},
+            "wealth": {"subtitle": "재물/투자 전략 한줄 요약", "analysis": "상세한 금전/투자운 분석 (줄바꿈 \\n 활용)", "advice": "실천 조언"}
           },
           "warnings": {
             "watchOut": [
@@ -138,8 +144,7 @@ export default async function handler(req: any, res: any) {
             ]
           },
           "solution": "전반적인 인생 솔루션 및 제언 (상세히)"
-        }
-        [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 트렌디한 어조 유지.`;
+        }`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
     } else {
         return res.status(400).json({ error: 'Invalid part' });
@@ -158,7 +163,7 @@ export default async function handler(req: any, res: any) {
             generationConfig: { 
                 responseMimeType: "application/json",
                 temperature: 0.7,
-                maxOutputTokens: part === 'core' ? 4096 : 2048
+                maxOutputTokens: 4096
             }
         });
         
