@@ -136,7 +136,8 @@ export default async function handler(req: any, res: any) {
               { "title": "피해야 할 것 1", "description": "상세 내용" },
               { "title": "피해야 할 것 2", "description": "상세 내용" }
             ]
-          }
+          },
+          "solution": "전반적인 인생 솔루션 및 제언 (상세히)"
         }
         [가독성 규칙] **(볼드체) 절대 사용 금지. 문단 마다 \n 줄바꿈과 이모지 적극 활용. 트렌디한 어조 유지.`;
         userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}`;
@@ -174,6 +175,7 @@ export default async function handler(req: any, res: any) {
         const errorMessage = getKoreanErrorMessage(error);
         res.status(500).json({ 
             error: `${part} 분석 중 오류 발생: ${errorMessage}`,
+            message: error.message,
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });

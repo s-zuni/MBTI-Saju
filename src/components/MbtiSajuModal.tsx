@@ -185,7 +185,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
     } catch (error: any) {
       console.error("Regenerate Error:", error);
-      alert(`오류가 발생했습니다: ${error.message}`);
+      const errorDetail = error.message || "알 수 없는 오류가 발생했습니다.";
+      alert(`오류가 발생했습니다: ${errorDetail}`);
     } finally {
       setIsRegenerating(false);
     }
