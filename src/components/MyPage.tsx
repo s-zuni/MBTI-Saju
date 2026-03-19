@@ -79,7 +79,8 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
   // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
   const creditHook = useCredits(session);
-  const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits } = creditHook;
+  const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits, getCost } = creditHook;
+  const isFirstTime = !analysis;
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -135,9 +136,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   // Handle re-analysis manually
   const handleReAnalyze = () => {
     const isFirstTime = !analysis;
+    const cost = getCost('REGENERATE_MBTI_SAJU');
     const confirmMsg = isFirstTime
       ? '처음 분석은 무료입니다. 분석을 시작하시겠습니까?'
-      : '기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 1코인이 차감됩니다. 계속하시겠습니까?';
+      : `기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 ${cost}코인이 차감됩니다. 계속하시겠습니까?`;
     if (window.confirm(confirmMsg)) {
       handleGenerateAnalysis();
     }
@@ -147,7 +149,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     // 크레딧 확인 (재분석의 경우)
     if (analysis) {
       if (!checkSufficientCredits('REGENERATE_MBTI_SAJU')) {
-        setError('크레딧이 부족합니다. 충전 후 다시 시도해주세요.');
+        setError(`크레딧이 부족합니다. (재분석 비용: ${getCost('REGENERATE_MBTI_SAJU')} 크레딧)`);
         setIsCreditModalOpen(true);
         return;
       }

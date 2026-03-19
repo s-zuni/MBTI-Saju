@@ -22,7 +22,8 @@ interface Post {
     tag: string;
     likes: number;
     created_at: string;
-    comments_count?: number; // Fetched separately or via count
+    is_announcement: boolean;
+    comments_count?: number;
 }
 
 const CommunityPage: React.FC = () => {
@@ -31,6 +32,7 @@ const CommunityPage: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [activeTag, setActiveTag] = useState('전체');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isPopularOnly, setIsPopularOnly] = useState(false);
 
     // Pagination States
     const [currentPage, setCurrentPage] = useState(1);
@@ -45,7 +47,7 @@ const CommunityPage: React.FC = () => {
 
     // const navigate = useNavigate();
 
-    const tags = ['전체', '잡담', '질문', '공유', '궁합'];
+    const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -57,10 +59,15 @@ const CommunityPage: React.FC = () => {
         let query = supabase
             .from('posts')
             .select('*', { count: 'exact' })
+            .order('is_announcement', { ascending: false })
             .order('created_at', { ascending: false });
 
         if (activeTag !== '전체') {
             query = query.eq('tag', activeTag);
+        }
+
+        if (isPopularOnly) {
+            query = query.gte('likes', 5); // 좋아요 5개 이상을 인기 게시물로 간주
         }
 
         if (searchQuery) {
@@ -166,7 +173,7 @@ const CommunityPage: React.FC = () => {
                     </div>
 
                     {/* Tags */}
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-hide">
                         {tags.map(tag => (
                             <button
                                 key={tag}
@@ -179,6 +186,19 @@ const CommunityPage: React.FC = () => {
                                 {tag}
                             </button>
                         ))}
+                        <div className="h-6 w-[1px] bg-slate-200 mx-2 shrink-0"></div>
+                        <button
+                            onClick={() => {
+                                setIsPopularOnly(!isPopularOnly);
+                                setCurrentPage(1);
+                            }}
+                            className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${isPopularOnly
+                                ? 'bg-rose-500 text-white shadow-md'
+                                : 'bg-white text-rose-500 border border-rose-100 hover:bg-rose-50'
+                                }`}
+                        >
+                            🔥 실시간 인기
+                        </button>
                     </div>
                 </div>
 
@@ -197,7 +217,12 @@ const CommunityPage: React.FC = () => {
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-xs font-bold">{post.tag || '일반'}</span>
+                                        {post.is_announcement && (
+                                            <span className="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-xs font-black tracking-tighter">공지</span>
+                                        )}
+                                        <span className={`${post.is_announcement ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'} px-2.5 py-1 rounded-lg text-xs font-bold`}>
+                                            {post.tag || '일반'}
+                                        </span>
                                         <span className="text-xs text-slate-400 font-medium">
                                             {new Date(post.created_at).toLocaleDateString()}
                                         </span>
@@ -304,8 +329,11 @@ const CommunityPage: React.FC = () => {
 const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => void, onSuccess: () => void, user: any, postToEdit?: Post | null }) => {
     const [title, setTitle] = useState(postToEdit?.title || '');
     const [content, setContent] = useState(postToEdit?.content || '');
-    const [tag, setTag] = useState(postToEdit?.tag || '잡담');
+    const [tag, setTag] = useState(postToEdit?.tag || '사주');
+    const [isAnnouncement, setIsAnnouncement] = useState(postToEdit?.is_announcement || false);
     const [loading, setLoading] = useState(false);
+
+    const isAdmin = user?.user_metadata?.role === 'admin';
 
     // Keyboard Navigation for Modal
     useEffect(() => {
@@ -328,6 +356,7 @@ const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => v
             tag,
             user_id: user.id,
             author_name: user?.user_metadata?.nickname || user?.user_metadata?.full_name || '익명',
+            is_announcement: isAnnouncement,
         };
 
         let result;
@@ -367,10 +396,10 @@ const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => v
                             value={tag}
                             onChange={e => setTag(e.target.value)}
                         >
-                            <option>잡담</option>
-                            <option>질문</option>
-                            <option>공유</option>
+                            <option>사주</option>
+                            <option>MBTI</option>
                             <option>궁합</option>
+                            <option>기타</option>
                         </select>
                         <input
                             type="text"
@@ -386,6 +415,21 @@ const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => v
                         value={content}
                         onChange={e => setContent(e.target.value)}
                     ></textarea>
+
+                    {isAdmin && (
+                        <div className="flex items-center gap-2 p-1">
+                            <input
+                                type="checkbox"
+                                id="is_announcement"
+                                checked={isAnnouncement}
+                                onChange={e => setIsAnnouncement(e.target.checked)}
+                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <label htmlFor="is_announcement" className="text-sm font-bold text-slate-700 cursor-pointer">
+                                공지사항으로 등록하기
+                            </label>
+                        </div>
+                    )}
                     <button
                         onClick={handleSubmit}
                         disabled={loading}

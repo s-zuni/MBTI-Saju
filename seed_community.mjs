@@ -14,7 +14,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const tags = ['잡담', '질문', '공유', '궁합'];
+const tags = ['사주', 'MBTI', '궁합', '기타'];
 const dummyUserIds = [
     '3f33a510-7b13-4840-8aa0-88bb1df52435',
     '6985e004-2f37-4e73-b7b5-a23910444d9e',
@@ -74,6 +74,7 @@ async function seed() {
             user_id: randomUserId,
             tag: randomTag,
             likes,
+            is_announcement: i < 3, // 첫 3개는 공지사항으로
             created_at: date.toISOString(),
         });
     }

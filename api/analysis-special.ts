@@ -22,7 +22,7 @@ export default async function handler(req: any, res: any) {
 
     const { 
         birthDate, birthTime, mbti, region, gender, name, 
-        startDate, endDate, targetBirthDate, targetBirthTime, requirements 
+        startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements 
     } = body;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -85,7 +85,7 @@ export default async function handler(req: any, res: any) {
                     { "name": "이름 (한글)", "hanja": "이름 (한자)", "meaning": "이름의 뜻", "sajuFit": "사주적으로 좋은 이유" }
                 ] 
             }`;
-            userQuery = `작명 대상의 사주 기운: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 사용자의 특별 요청사항: ${requirements || '없음'}`;
+            userQuery = `작명 대상의 성별: ${targetGender === 'male' ? '남성' : '여성'}, 사주 기운: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 사용자의 특별 요청사항: ${requirements || '없음'}`;
         } else if (type === 'job') {
             if (!birthDate || !mbti || !saju) {
                 console.warn('[Job Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });

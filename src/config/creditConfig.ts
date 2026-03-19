@@ -19,12 +19,12 @@ export const SERVICE_COSTS = {
   FORTUNE_TOMORROW: 3,
   MBTI_SAJU: 20,
   COMPATIBILITY_TRIP: 5,
-  NAMING: 3,
-  JOB: 3,
+  NAMING: 5,
+  JOB: 5,
   RELATIONSHIP_ADD: 5,
   AI_CHAT_10: 25,
   TAROT: 2,
-  REGENERATE_MBTI_SAJU: 1
+  REGENERATE_MBTI_SAJU: 10
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;

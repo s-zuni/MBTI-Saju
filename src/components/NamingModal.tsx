@@ -38,6 +38,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
 
     const [targetBirthDate, setTargetBirthDate] = useState('');
     const [targetBirthTime, setTargetBirthTime] = useState('');
+    const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
     const [requirements, setRequirements] = useState('');
 
     useEffect(() => {
@@ -59,7 +60,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
         setLoading(true);
         setError(null);
 
-        if (credits !== undefined && credits < 3) {
+        if (credits !== undefined && credits < 5) {
             setLoading(false);
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
                 onNavigate('creditPurchase' as any);
@@ -86,6 +87,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                     name: user.full_name,
                     targetBirthDate,
                     targetBirthTime,
+                    targetGender,
                     requirements,
                 })
             });
@@ -142,7 +144,21 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                     <Calendar className="w-5 h-5 text-teal-600" /> 작명 대상 정보
                                 </h4>
                                 <p className="text-sm text-slate-500 mb-4">작명하고 싶은 분의 생년월일과 태어난 시간을 입력해주세요.</p>
-                                <div className="space-y-4">
+                                <div className="space-y-6">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setTargetGender('male')}
+                                            className={`flex-1 py-4 rounded-2xl font-bold transition-all ${targetGender === 'male' ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                                        >
+                                            남성
+                                        </button>
+                                        <button
+                                            onClick={() => setTargetGender('female')}
+                                            className={`flex-1 py-4 rounded-2xl font-bold transition-all ${targetGender === 'female' ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                                        >
+                                            여성
+                                        </button>
+                                    </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">생년월일</p>
                                         <input
