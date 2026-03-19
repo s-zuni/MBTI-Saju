@@ -1,7 +1,7 @@
 import React from 'react';
-import { Compass, Plane, Hotel, Ticket, Heart, Sparkles, X } from 'lucide-react';
+import { Compass, Plane, PenTool, Ticket, Heart, Sparkles, X } from 'lucide-react';
 
-export type ServiceType = 'fortune' | 'mbti' | 'trip' | 'healing' | 'job' | 'compatibility';
+export type ServiceType = 'fortune' | 'mbti' | 'trip' | 'naming' | 'job' | 'compatibility';
 
 interface ServiceNavigationProps {
     currentService: ServiceType;
@@ -13,7 +13,7 @@ const services = [
     { id: 'fortune', label: '운세', icon: Sparkles, color: 'text-purple-500' },
     { id: 'mbti', label: '분석', icon: Compass, color: 'text-indigo-500' },
     { id: 'trip', label: '여행', icon: Plane, color: 'text-sky-500' },
-    { id: 'healing', label: '힐링', icon: Hotel, color: 'text-teal-500' },
+    { id: 'naming', label: '작명', icon: PenTool, color: 'text-teal-500' },
     { id: 'job', label: '직업', icon: Ticket, color: 'text-orange-500' },
     { id: 'compatibility', label: '궁합', icon: Heart, color: 'text-pink-500' },
 ] as const;

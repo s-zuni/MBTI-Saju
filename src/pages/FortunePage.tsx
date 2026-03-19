@@ -9,7 +9,7 @@ const subCategories = [
     { img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 확인하는 행운', cost: SERVICE_COSTS.FORTUNE_TODAY },
     { img: '/assets/icons/3d_mbti.png', label: '융합 분석', sub: '사주와 MBTI의 깊은 만남', cost: SERVICE_COSTS.MBTI_SAJU },
     { img: '/assets/icons/3d_trip.png', label: '여행', sub: '나의 운명에 맞는 행운의 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP },
-    { img: '/assets/icons/3d_healing.png', label: '힐링', sub: '마음의 안정을 주는 치유의 공간', cost: SERVICE_COSTS.HEALING },
+    { img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '사주 명리학 기반 행운의 이름 찾기', cost: SERVICE_COSTS.NAMING },
     { img: '/assets/icons/3d_job.png', label: '직업', sub: '나의 잠재력을 깨우는 최고의 천직', cost: SERVICE_COSTS.JOB },
     { img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리하기', cost: SERVICE_COSTS.RELATIONSHIP_ADD },
 ];
@@ -18,7 +18,7 @@ interface FortunePageProps {
     onFortuneClick: () => void;
     onMbtiSajuClick: () => void;
     onTripClick: () => void;
-    onHealingClick: () => void;
+    onNamingClick: () => void;
     onJobClick: () => void;
     onCompatibilityClick: () => void;
 }
@@ -27,7 +27,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
     onFortuneClick,
     onMbtiSajuClick,
     onTripClick,
-    onHealingClick,
+    onNamingClick,
     onJobClick,
     onCompatibilityClick,
 }) => {
@@ -37,7 +37,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
         if (index === 0) onFortuneClick();
         else if (index === 1) onMbtiSajuClick();
         else if (index === 2) onTripClick();
-        else if (index === 3) onHealingClick();
+        else if (index === 3) onNamingClick();
         else if (index === 4) onJobClick();
         else if (index === 5) navigate('/relationship');
     };

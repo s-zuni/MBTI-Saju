@@ -7,7 +7,7 @@ export type ModalType =
     | 'recommendation'
     | 'compatibility'
     | 'trip'
-    | 'healing'
+    | 'naming'
     | 'job'
     | 'tarot'
     | 'creditPurchase'
@@ -27,7 +27,7 @@ let globalModals: Record<string, ModalState> = {
     recommendation: { isOpen: false },
     compatibility: { isOpen: false },
     trip: { isOpen: false },
-    healing: { isOpen: false },
+    naming: { isOpen: false },
     job: { isOpen: false },
     tarot: { isOpen: false },
     creditPurchase: { isOpen: false },

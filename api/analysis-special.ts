@@ -8,7 +8,7 @@ export default async function handler(req: any, res: any) {
 
     const { type } = req.query;
     const body = req.body || {};
-    const { birthDate, birthTime, mbti, region, gender, name, startDate, endDate } = body;
+    const { birthDate, birthTime, mbti, region, gender, name, startDate, endDate, targetBirthDate, targetBirthTime, requirements } = body;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     if (!GEMINI_API_KEY) {
@@ -40,6 +40,28 @@ export default async function handler(req: any, res: any) {
         - 추천 이유에 사주 오행(목, 화, 토, 금, 수)의 균형과 MBTI의 성향이 어떻게 힐링에 기여하는지 상세히 포함하세요.
         - 결과 형식 (JSON): { "place": "장소 이름", "placeType": "장소 유형 (예: 독립서점, 숲속 카페 등)", "activity": "구체적인 힐링 활동", "reason": "300자 이상의 상세한 추천 이유 및 기대 효과" }`;
         userQuery = `MBTI: ${mbti}, 일간(Day Master): ${saju.dayMaster.korean}, 오행분포: ${JSON.stringify(saju.elementRatio)}, 선호 지역: ${region || '전국'}`;
+    } else if (type === 'naming') {
+        systemPrompt = `당신은 정통 사주명리학에 정통한 최고의 현대 작명가입니다.
+        
+        [핵심 규칙]
+        1. 모든 답변은 진지하고 신뢰감 있는 작명 전문가의 어투를 사용하며, 경어체(존댓말)로 작성하세요. "요" 보다는 "습니다/비다"를 선호합니다.
+        2. 영어 단어는 절대 사용하지 마세요 (MBTI 용어도 제외. 순수 한국어와 한자 위주로 설명).
+        3. ** (별표 두 개) 등 마크다운 강조 문법을 절대로 사용하지 마세요. (사용 금지 유지)
+        4. 대상자의 사주(생년월일시)를 바탕으로 오행의 과부족을 분석하고, 이를 보완하거나 용신(좋은 기운)을 살릴 수 있는 이름 3가지를 추천하세요.
+        5. 결과 형식 (JSON): { 
+            "summary": "핵심 사주 기운 요약 (100자 내외)", 
+            "analysis": "사주 원국 분석 및 작명 방향성 (300자 이상 상세히)", 
+            "names": [
+                { "name": "이름 (한글)", "hanja": "이름 (한자)", "meaning": "이름의 뜻과 의미", "sajuFit": "사주적으로 이 이름이 좋은 이유 (용신 보완 등)" },
+                ... (3개)
+            ] 
+        }`;
+        // 재계산 (작명 대상의 생년월일시)
+        if (!targetBirthDate) {
+            return res.status(400).json({ error: '작명 대상의 생년월일이 누락되었습니다.' });
+        }
+        const targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
+        userQuery = `작명 대상의 사주 기운: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}, 출생시간 ${targetBirthTime || '모름'}. 사용자의 특별 요청사항: ${requirements || '없음'}`;
     } else if (type === 'job') {
         systemPrompt += `\n사용자의 타고난 기질(사주)과 성격 패턴(MBTI)이 가장 완벽한 시너지를 낼 수 있는 '천직'을 제안하세요.
         - 단순 직업명 나열이 아닌, 왜 이 직업이 당신의 운명에 맞는지 심리학적, 명리학적 근거를 들어 설명하세요.
@@ -48,8 +70,9 @@ export default async function handler(req: any, res: any) {
     } else if (type === 'trip') {
         const travelType = body.regionType === 'overseas' ? '해외' : '국내';
         systemPrompt += `\n사용자의 기운을 북돋아주고 새로운 영감을 줄 수 있는 '운명적 여행지'를 큐레이션 하세요. 현재 ${travelType} 여행을 계획 중입니다.
-        - 반드시 ${travelType} 내의 장소를 추천해야 하며, 사용자의 MBTI와 현재 사주 기운(일간 등)에 맞는 장소를 선정하세요.
-        - 결과 형식 (JSON): { "places": [{ "name": "구체적인 장소명", "reason": "이 장소가 왜 사용자와 운명적으로 맞는지에 대한 300자 이상의 상세한 설명" }], "bestTime": "추천 방문 시기 및 그 이유", "tip": "해당 여행지에서 기운을 얻을 수 있는 특별한 팁" }`;
+        ${body.requirements ? `사용자의 특별한 요구사항: "${body.requirements}"` : ''}
+        - 반드시 ${travelType} 내의 장소를 추천해야 하며, 사용자의 MBTI와 현재 사주 기운(일간 등), 그리고 특별한 요구사항을 모두 반영하여 장소를 선정하세요.
+        - 결과 형식 (JSON): { "places": [{ "name": "구체적인 장소명", "reason": "이 장소가 왜 사용자와 운명적으로 맞는지에 대한 300자 이상의 상세한 설명" }], "itinerary": [{ "day": "1일차", "schedule": "상세 일정표" }], "bestTime": "추천 방문 시기 및 그 이유", "tip": "해당 여행지에서 기운을 얻을 수 있는 특별한 팁" }`;
         userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti}, 사주 기운: ${saju.dayMaster.korean}, 선택 지역/대륙: ${region || '전국'}, 여행 타입: ${travelType}`;
     } else if (type === 'fortune') {
         const getZodiacSign = (dateStr: string) => {

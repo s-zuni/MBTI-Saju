@@ -3,7 +3,7 @@
     "rewrites": [
         { "source": "/api/confirm-payment", "destination": "/api/payment?action=confirm" },
         { "source": "/api/cancel-payment", "destination": "/api/payment?action=cancel" },
-        { "source": "/api/healing", "destination": "/api/analysis-special?type=healing" },
+        { "source": "/api/naming", "destination": "/api/analysis-special?type=naming" },
         { "source": "/api/job", "destination": "/api/analysis-special?type=job" },
         { "source": "/api/trip", "destination": "/api/analysis-special?type=trip" },
         { "source": "/api/fortune", "destination": "/api/analysis-special?type=fortune" },

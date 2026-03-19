@@ -43,7 +43,7 @@ const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
 const RecommendationModal = lazy(() => import('./components/RecommendationModal'));
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const TripModal = lazy(() => import('./components/TripModal'));
-const HealingModal = lazy(() => import('./components/HealingModal'));
+const NamingModal = lazy(() => import('./components/NamingModal'));
 const JobModal = lazy(() => import('./components/JobModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
@@ -81,7 +81,7 @@ function App() {
   const [isFortuneLoading, setIsFortuneLoading] = useState(false);
 
   const { tier } = useSubscription(session);
-  const { credits, purchaseCredits, useCredits: consumeCredits } = useCredits(session);
+  const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits } = useCredits(session);
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   // Check if profile needs completion
@@ -280,8 +280,10 @@ function App() {
                   <Route path="/mypage" element={
                     <MyPage
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
-                      onOpenHealing={() => openModal('healing')}
+                      onOpenNaming={() => openModal('naming')}
                       onOpenCompatibility={() => openModal('compatibility')}
+                      credits={credits}
+                      refreshCredits={refreshCredits}
                     />
                   } />
                   <Route path="/community" element={<CommunityPage />} />
@@ -293,7 +295,7 @@ function App() {
                         else openModal('analysis', 'login');
                       }}
                       onTripClick={() => openModal('trip')}
-                      onHealingClick={() => openModal('healing')}
+                      onNamingClick={() => openModal('naming')}
                       onJobClick={() => openModal('job')}
                       onCompatibilityClick={() => openModal('compatibility')}
                     />
@@ -401,17 +403,17 @@ function App() {
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
               />
-              <HealingModal
-                isOpen={modals?.healing?.isOpen || false}
-                onClose={() => closeModal('healing')}
-                onNavigate={(service) => {
+              <NamingModal
+                isOpen={modals?.naming?.isOpen || false}
+                onClose={() => closeModal('naming')}
+                onNavigate={(service: string) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
                   else openModal(service as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
-                  return await consumeCredits('HEALING');
+                  return await consumeCredits('NAMING');
                 }}
                 credits={credits}
               />

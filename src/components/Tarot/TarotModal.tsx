@@ -35,13 +35,26 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         fetchUserContext();
     }, []);
 
+    const fisherYatesShuffle = (array: TarotCard[]): TarotCard[] => {
+        const shuffled: TarotCard[] = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i] as TarotCard;
+            shuffled[i] = shuffled[j] as TarotCard;
+            shuffled[j] = temp;
+        }
+        return shuffled;
+    };
+
     useEffect(() => {
         if (isOpen) {
             setStep('spread');
             setQuestion("");
             setSelectedCards([]);
             setReading(null);
-            setSelectedSpread('daily'); // Reset to default
+            setSelectedSpread('daily');
+            // 모달이 열릴 때마다 덱을 랜덤으로 셔플
+            setDeck(fisherYatesShuffle(TAROT_DECK));
         }
     }, [isOpen]);
 
@@ -57,9 +70,8 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             alert("질문을 입력해주세요!");
             return;
         }
-        // Shuffle Deck
-        const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
-        setDeck(shuffled);
+        // Shuffle Deck (Fisher-Yates)
+        setDeck(fisherYatesShuffle(TAROT_DECK));
         setStep('shuffle');
 
         // Auto proceed to selection after shuffle animation

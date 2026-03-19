@@ -57,13 +57,15 @@ interface Analysis {
 
 interface MyPageProps {
   onOpenMbtiSaju: () => void;
-  onOpenHealing: () => void;
+  onOpenNaming: () => void;
   onOpenCompatibility: () => void;
   isMbtiSajuOpen?: boolean;
   onCloseMbtiSaju?: () => void;
+  credits: number;
+  refreshCredits: () => Promise<void>;
 }
 
-const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCompatibility }) => {
+const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCompatibility, credits, refreshCredits }) => {
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -74,7 +76,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { credits, purchaseCredits, useCredits: spendCredits, checkSufficientCredits } = useCredits(session);
+  // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
+  // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
+  const creditHook = useCredits(session);
+  const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits } = creditHook;
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
@@ -465,13 +470,13 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
 
               <div className="grid gap-4">
                 <button
-                  onClick={onOpenHealing}
+                  onClick={onOpenNaming}
                   className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
                 >
-                  <span className="text-2xl bg-teal-50 p-3 rounded-full">🌿</span>
+                  <span className="text-2xl bg-teal-50 p-3 rounded-full">✍️</span>
                   <div>
-                    <h3 className="font-bold text-lg">나에게 맞는 여행지 추천</h3>
-                    <p className="text-slate-500 text-sm">힐링이 필요하다면?</p>
+                    <h3 className="font-bold text-lg">사주 작명소</h3>
+                    <p className="text-slate-500 text-sm">사주에 맞는 행운의 이름</p>
                   </div>
                 </button>
 

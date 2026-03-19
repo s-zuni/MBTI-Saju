@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Loader2, MapPin, Calendar, Sparkles, Download } from 'lucide-react';
+import { Plane, Loader2, MapPin, Calendar, Sparkles, Download, MessageSquare, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
@@ -34,6 +34,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
 
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [requirements, setRequirements] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) {
@@ -57,8 +58,20 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
 
             setStartDate(formatDate(tomorrow));
             setEndDate(formatDate(threeDays));
+            setRequirements('');
         }
     }, [isOpen]);
+
+    // 14일 제한 체크
+    const getDaysDiff = () => {
+        if (!startDate || !endDate) return 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    };
+
+    const daysDiff = getDaysDiff();
+    const isTooLong = daysDiff > 14;
 
     useEffect(() => {
         if (regionType === 'domestic') setSelectedRegion(DOMESTIC_REGIONS[0] || '');
@@ -101,7 +114,8 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                     region: selectedRegion,
                     regionType: regionType,
                     startDate,
-                    endDate
+                    endDate,
+                    requirements
                 })
             });
 
@@ -207,9 +221,31 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                 </div>
                             </section>
 
+                            <section className="report-section">
+                                <h4 className="report-section-title">
+                                    <MessageSquare className="w-5 h-5" /> 요구 사항
+                                </h4>
+                                <textarea
+                                    className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all resize-none"
+                                    rows={3}
+                                    placeholder="예: 맛집 위주, 자연 탐방, 힐링 위주, 가족 여행 등"
+                                    value={requirements}
+                                    onChange={(e) => setRequirements(e.target.value)}
+                                />
+                            </section>
+
+                            {isTooLong && (
+                                <div className="flex items-center gap-2 p-4 bg-amber-50 text-amber-700 rounded-2xl text-sm font-bold border border-amber-200">
+                                    <AlertTriangle className="w-5 h-5 shrink-0" />
+                                    여행 기간은 최대 14일까지 설정할 수 있습니다.
+                                </div>
+                            )}
+
+                            <p className="text-xs text-slate-400 text-center">여행 기간은 최대 14일까지 가능합니다. MBTI와 사주를 기반으로 맞춤 여행 계획을 구성합니다.</p>
+
                             <button
                                 onClick={fetchRecommendation}
-                                disabled={loading}
+                                disabled={loading || isTooLong}
                                 className="group relative w-full py-5 bg-slate-950 text-white rounded-full text-lg font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-4 overflow-hidden"
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
