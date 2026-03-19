@@ -345,7 +345,7 @@ function App() {
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 credits={credits}
                 onUseCredit={async (serviceType) => {
@@ -362,7 +362,7 @@ function App() {
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async (isRegenerate?: boolean) => {
                   if (!session?.user?.id) return false;
@@ -382,7 +382,7 @@ function App() {
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
@@ -396,7 +396,7 @@ function App() {
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
@@ -409,7 +409,7 @@ function App() {
                 onNavigate={(service: string) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
@@ -423,7 +423,7 @@ function App() {
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal(service as any);
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;

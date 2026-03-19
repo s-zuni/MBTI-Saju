@@ -3,6 +3,8 @@ import { Briefcase, Loader2, Sparkles, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { generatePDF } from '../utils/pdfGenerator';
+import { useRef } from 'react';
 
 interface JobModalProps {
     isOpen: boolean;
@@ -13,6 +15,7 @@ interface JobModalProps {
 }
 
 const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
+    const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ jobs: string[], reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,16 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
         }
     };
 
+    const handleDownloadPDF = async () => {
+        if (!reportRef.current || !result) return;
+        try {
+            const fileName = `MBTIJU_Job_Report_${new Date().getTime()}`;
+            await generatePDF(reportRef.current, fileName);
+        } catch (err) {
+            alert('PDF 생성 중 오류가 발생했습니다.');
+        }
+    };
+
     useEffect(() => {
         if (isOpen && !result) {
             fetchRecommendation();
@@ -100,6 +113,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                 </div>
 
                 <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+                    <div ref={reportRef} className="bg-white">
                     {loading ? (
                         <div className="flex flex-col justify-center items-center h-80">
                             <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
@@ -144,17 +158,23 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                                 </div>
                             </section>
 
-                            <div className="flex flex-col items-center pt-10 border-t border-slate-100">
+                            <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
                                 <button
-                                    onClick={() => fetchRecommendation()}
+                                    onClick={handleDownloadPDF}
                                     className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
                                 >
-                                    <TrendingUp className="w-5 h-5" /> 다시 분석하기
+                                    <TrendingUp className="w-5 h-5" /> PDF 결과서 다운로드
                                 </button>
-                                <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Global Talent Strategy</p>
+                                <button
+                                    onClick={() => fetchRecommendation()}
+                                    className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
+                                >
+                                    다시 분석하기
+                                </button>
                             </div>
                         </div>
                     ) : null}
+                    </div>
                 </div>
             </div>
         </div>

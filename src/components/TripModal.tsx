@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plane, Loader2, MapPin, Calendar, Sparkles, Download, MessageSquare, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { generatePDF } from '../utils/pdfGenerator';
+import { useRef } from 'react';
 
 interface TripModalProps {
     isOpen: boolean;
@@ -21,6 +23,7 @@ const OVERSEAS_REGIONS = [
 ];
 
 const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
+    const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{
         places: { name: string, reason: string }[],
@@ -138,6 +141,16 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         }
     };
 
+    const handleDownloadPDF = async () => {
+        if (!reportRef.current || !result) return;
+        try {
+            const fileName = `MBTIJU_Trip_Report_${new Date().getTime()}`;
+            await generatePDF(reportRef.current, fileName);
+        } catch (err) {
+            alert('PDF 생성 중 오류가 발생했습니다.');
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -161,6 +174,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                 </div>
 
                 <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+                    <div ref={reportRef} className="bg-white">
                     {!result ? (
                         <div className="space-y-10 animate-fade-up py-4">
                             <section className="report-section">
@@ -311,7 +325,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                             {/* Action Buttons */}
                             <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col items-center">
                                 <button
-                                    onClick={() => alert("PDF 다운로드 기능이 준비 중입니다.")}
+                                    onClick={handleDownloadPDF}
                                     className="group relative flex items-center justify-center gap-3 px-10 py-4 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95"
                                 >
                                     <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
@@ -327,6 +341,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                             </div>
                         </div>
                     )}
+                    </div>
 
                     {error && (
                         <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100 animate-shake">

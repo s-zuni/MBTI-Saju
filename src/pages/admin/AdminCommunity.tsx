@@ -6,7 +6,10 @@ import {
     Loader2, 
     ExternalLink,
     AlertCircle,
-    Calendar
+    Calendar,
+    Plus,
+    X,
+    FileText
 } from 'lucide-react';
 
 interface Post {
@@ -17,6 +20,7 @@ interface Post {
     user_id: string;
     tag: string;
     likes: number;
+    is_announcement: boolean;
     created_at: string;
 }
 
@@ -29,7 +33,11 @@ const AdminCommunity: React.FC = () => {
     const [totalPosts, setTotalPosts] = useState(0);
     const postsPerPage = 10;
 
-    const tags = ['전체', '잡담', '질문', '공유', '궁합'];
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newPost, setNewPost] = useState({ title: '', content: '', tag: '사주', is_announcement: false });
+
+    const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
+    const writeTags = ['사주', 'MBTI', '궁합', '기타'];
 
     const fetchPosts = useCallback(async () => {
         try {
@@ -70,12 +78,46 @@ const AdminCommunity: React.FC = () => {
         fetchPosts();
     }, [fetchPosts]);
 
+    const handleCreatePost = async () => {
+        if (!newPost.title || !newPost.content) {
+            alert('제목과 내용을 입력해주세요.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('인증된 사용자가 없습니다.');
+
+            const { error } = await supabase
+                .from('posts')
+                .insert([{
+                    title: newPost.title,
+                    content: newPost.content,
+                    tag: newPost.tag,
+                    is_announcement: newPost.is_announcement,
+                    user_id: user.id,
+                    author_name: '관리자',
+                    likes: 0
+                }]);
+
+            if (error) throw error;
+
+            alert('게시글이 작성되었습니다.');
+            setIsCreateModalOpen(false);
+            setNewPost({ title: '', content: '', tag: '사주', is_announcement: false });
+            fetchPosts();
+        } catch (err: any) {
+            alert('작성 실패: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleDeletePost = async (postId: string) => {
         if (!window.confirm('이 게시글을 정말로 삭제하시겠습니까? 관련 댓글도 모두 삭제될 수 있습니다.')) return;
 
         try {
-            // Cascade delete should handle comments if set up in DB, 
-            // otherwise might need explicit comment deletion.
             const { error } = await supabase
                 .from('posts')
                 .delete()
@@ -99,9 +141,18 @@ const AdminCommunity: React.FC = () => {
                     <h2 className="text-2xl font-black text-slate-800 tracking-tight">커뮤니티 관리</h2>
                     <p className="text-slate-500 font-medium">사용자들이 작성한 게시글을 모니터링하고 관리합니다.</p>
                 </div>
-                <div className="text-right">
-                    <span className="text-sm font-bold text-slate-400">전체 게시글</span>
-                    <p className="text-xl font-black text-indigo-600">{totalPosts.toLocaleString()}개</p>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                    >
+                        <Plus size={18} />
+                        게시물 작성
+                    </button>
+                    <div className="text-right border-l border-slate-100 pl-4">
+                        <span className="text-sm font-bold text-slate-400">전체 게시글</span>
+                        <p className="text-xl font-black text-indigo-600">{totalPosts.toLocaleString()}개</p>
+                    </div>
                 </div>
             </div>
 
@@ -178,7 +229,14 @@ const AdminCommunity: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 max-w-md">
-                                            <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 mb-1">{post.title}</p>
+                                            <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1 mb-1">
+                                                {post.is_announcement && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-500 mr-2 border border-rose-100">
+                                                        공지
+                                                    </span>
+                                                )}
+                                                {post.title}
+                                            </p>
                                             <p className="text-[11px] font-medium text-slate-400 line-clamp-1">{post.content}</p>
                                         </td>
                                         <td className="px-6 py-4">
@@ -232,6 +290,102 @@ const AdminCommunity: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Create Post Modal */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white w-full max-w-xl rounded-[32px] shadow-2xl overflow-hidden animate-slide-up">
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                                    <FileText size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">게시물 작성</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Community Post</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-slate-600 transition-all shadow-sm"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {writeTags.map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => setNewPost(prev => ({ ...prev, tag }))}
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                                                newPost.tag === tag
+                                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
+                                                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                                            }`}
+                                        >
+                                            {tag}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-center gap-3 p-4 bg-rose-50/50 rounded-2xl border border-rose-100/50">
+                                    <input 
+                                        type="checkbox" 
+                                        id="is_announcement"
+                                        checked={newPost.is_announcement}
+                                        onChange={(e) => setNewPost(prev => ({ ...prev, is_announcement: e.target.checked }))}
+                                        className="w-4 h-4 text-rose-500 rounded border-slate-300 focus:ring-rose-500"
+                                    />
+                                    <label htmlFor="is_announcement" className="text-sm font-bold text-rose-600 cursor-pointer">
+                                        공지사항으로 등록 (상단 고정 및 강조)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 text-left">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">제목</label>
+                                <input
+                                    type="text"
+                                    value={newPost.title}
+                                    onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+                                    placeholder="게시물 제목을 입력하세요"
+                                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2 text-left">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">내용</label>
+                                <textarea
+                                    value={newPost.content}
+                                    onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+                                    placeholder="게시물 내용을 입력하세요"
+                                    rows={8}
+                                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all outline-none resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-8 bg-slate-50/50 border-t border-slate-50 flex gap-3">
+                            <button
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="flex-1 py-4 bg-white text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all border border-slate-100"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleCreatePost}
+                                disabled={loading}
+                                className="flex-[2] py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
+                            >
+                                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : '게시물 등록하기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

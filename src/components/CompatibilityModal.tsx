@@ -3,6 +3,8 @@ import { Heart, Loader2, User, Users, Sparkles } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { generatePDF } from '../utils/pdfGenerator';
+import { useRef } from 'react';
 
 interface CompatibilityModalProps {
     isOpen: boolean;
@@ -20,6 +22,7 @@ interface CompatibilityModalProps {
 }
 
 const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData, onUseCredit, credits }) => {
+    const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -102,6 +105,16 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         }
     };
 
+    const handleDownloadPDF = async () => {
+        if (!reportRef.current || !result) return;
+        try {
+            const fileName = `MBTIJU_Compatibility_Report_${new Date().getTime()}`;
+            await generatePDF(reportRef.current, fileName);
+        } catch (err) {
+            alert('PDF 생성 중 오류가 발생했습니다.');
+        }
+    };
+
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
@@ -141,6 +154,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 </div>
 
                 <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+                    <div ref={reportRef} className="bg-white">
                     {!result ? (
                         <div className="space-y-10 animate-fade-up py-4">
                             <section className="report-section">
@@ -258,17 +272,24 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                 </div>
                             </section>
 
-                            <div className="flex flex-col items-center pt-10 border-t border-slate-100">
+                            <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
+                                >
+                                    <Heart className="w-5 h-5 fill-rose-500 text-rose-500" /> PDF 결과서 다운로드
+                                </button>
                                 <button
                                     onClick={() => resetFields()}
-                                    className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
+                                    className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
                                 >
                                     다른 사람과 궁합 보기
                                 </button>
-                                <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by Soul Insight Engine</p>
+                                <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Soul Insight Engine</p>
                             </div>
                         </div>
                     )}
+                    </div>
 
                     {error && (
                         <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100">
