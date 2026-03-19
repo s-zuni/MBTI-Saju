@@ -87,7 +87,7 @@ const CommunityPage: React.FC = () => {
             setTotalPosts(count || 0);
         }
         setLoading(false);
-    }, [activeTag, searchQuery, currentPage]);
+    }, [activeTag, searchQuery, isPopularOnly, currentPage]);
 
     useEffect(() => {
         fetchPosts();

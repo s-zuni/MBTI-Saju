@@ -80,7 +80,6 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
   const creditHook = useCredits(session);
   const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits, getCost } = creditHook;
-  const isFirstTime = !analysis;
 
   const fetchProfileData = React.useCallback(async () => {
     setLoading(true);
