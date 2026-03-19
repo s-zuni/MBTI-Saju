@@ -54,7 +54,10 @@ export const useAuth = () => {
                 const { data: { session: currentSession } } = await supabase.auth.getSession();
                 if (isSubscribed) {
                     setSession(currentSession);
-                    if (currentSession) await fetchOrCreateProfile(currentSession);
+                    // Use then/catch to make it non-blocking
+                    if (currentSession) {
+                        fetchOrCreateProfile(currentSession).catch(err => console.error('Non-blocking profile fetch error:', err));
+                    }
                 }
             } catch (error) {
                 console.error('Auth init error:', error);
@@ -69,7 +72,8 @@ export const useAuth = () => {
             if (isSubscribed) {
                 setSession(currentSession);
                 if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-                    await fetchOrCreateProfile(currentSession);
+                    // Non-blocking
+                    fetchOrCreateProfile(currentSession).catch(err => console.error('Non-blocking profile sync error:', err));
                 }
                 setLoading(false); // Ensure loading is false on any auth change
             }

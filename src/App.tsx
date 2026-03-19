@@ -54,6 +54,21 @@ function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
   
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  // 15초 로딩 타임아웃 타이머
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isAuthLoading && !session) {
+      timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 15000);
+    } else {
+      setLoadingTimeout(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isAuthLoading, session]);
+
   // Apply inactivity logout
   useInactivityLogout(session);
 
@@ -170,12 +185,39 @@ function App() {
               <Navbar />
 
               {isAuthLoading && !session ? (
-                <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in">
-                  <div className="relative">
+                <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
+                  <div className="relative mb-6">
                     <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
                     <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
                   </div>
-                  <p className="mt-6 text-slate-500 font-bold tracking-tight">당신의 운명을 불러오는 중...</p>
+                  <p className="text-slate-500 font-bold tracking-tight">당신의 운명을 불러오는 중...</p>
+                  
+                  {loadingTimeout && (
+                    <div className="mt-8 p-6 bg-rose-50 rounded-2xl border border-rose-100 max-w-sm animate-slide-up">
+                      <p className="text-rose-600 font-bold mb-2">로딩 시간이 평소보다 길어지고 있습니다.</p>
+                      <p className="text-sm text-slate-600 mb-4 leading-relaxed text-left">
+                        모바일 환경(카카오톡, 인스타 등)에서는 소셜 로그인 처리가 지연될 수 있습니다. 
+                        문제가 지속되면 새로고침을 하거나 다시 시도해주세요.
+                      </p>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => window.location.reload()}
+                          className="flex-1 py-2.5 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 text-sm hover:bg-slate-50 transition-colors"
+                        >
+                          새로고침
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            await supabase.auth.signOut();
+                            window.location.href = '/';
+                          }}
+                          className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 transition-colors"
+                        >
+                          다시 로그인
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Routes>
@@ -470,9 +512,13 @@ const AuthCallback = () => {
           hasExchanged.current = true;
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
-          navigate('/', { replace: true });
+          
+          // Wait briefly for persistence to settle on mobile
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 500);
         } 
-        // 2. No code? Check if session already exists (Implicit flow or session cookie)
+        // 2. No code? Check if session already exists
         else {
           const { data: { session: existingSession }, error } = await supabase.auth.getSession();
           if (error) throw error;
@@ -480,16 +526,24 @@ const AuthCallback = () => {
           if (existingSession) {
             navigate('/', { replace: true });
           } else {
-            // Failsafe: Wait a bit more for slow mobile redirects
+            // Failsafe: Wait more for slow mobile redirects
             const timer = setTimeout(() => {
-              navigate('/', { replace: true });
-            }, 4000);
+              // Try one last check before giving up
+              supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) navigate('/', { replace: true });
+                else navigate('/', { replace: true }); // Fallback to root
+              });
+            }, 6000);
             return () => clearTimeout(timer);
           }
         }
       } catch (err: any) {
         // If the error is specific to PKCE storage, try to just check current session
-        if (err.message?.includes('verifier not found')) {
+        const isVerifierError = err.message?.includes('verifier not found') || 
+                               err.message?.includes('Auth session missing') ||
+                               err.message?.includes('code_verifier');
+                               
+        if (isVerifierError) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             navigate('/', { replace: true });
