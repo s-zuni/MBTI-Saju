@@ -32,23 +32,30 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   }, [isOpen]);
 
   const handleShare = async () => {
-    if (!shareCardRef.current) return;
     setIsSharing(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const canvas = await html2canvas(shareCardRef.current, {
-        scale: 2,
-        backgroundColor: null,
-      });
+      const nickname = analysis?.fusionNickname || '';
+      const shareTitle = `나의 운명 별명: ${nickname}`;
+      const shareText = `${analysis?.full_name || ''}님의 MBTI(${analysis?.mbti}) × 사주 융합 별명은 "${nickname}"입니다! 🔮\n\n나도 내 운명 분석 받아보기 👉`;
+      const shareUrl = window.location.origin;
 
-      const image = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `MBTI-Saju-Analysis-${analysis.mbti}.png`;
-      link.click();
-    } catch (error) {
-      console.error("Sharing failed:", error);
-      alert("이미지 저장 중 오류가 발생했습니다.");
+      // Web Share API 지원 시 SNS 공유
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+      } else {
+        // 미지원 브라우저: 클립보드 복사 후 안내
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        alert('공유 내용이 클립보드에 복사되었습니다! 원하는 곳에 붙여넣기 해주세요.');
+      }
+    } catch (error: any) {
+      // AbortError는 사용자가 공유 취소한 경우
+      if (error?.name !== 'AbortError') {
+        console.error("Sharing failed:", error);
+      }
     } finally {
       setIsSharing(false);
     }
@@ -230,6 +237,25 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
     return (
       <div className="space-y-6 animate-fade-up">
+        {/* Fusion Nickname Badge */}
+        {analysis.fusionNickname && (
+          <div className="text-center mb-6 py-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border border-indigo-100">
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2">나의 운명 별명</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3">
+              ✨ {analysis.fusionNickname} ✨
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">{analysis.mbti} × {analysis.saju?.dayMaster?.korean || '사주'} 융합</p>
+            <button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
+            >
+              {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              별명 공유하기
+            </button>
+          </div>
+        )}
+
         {/* Report Title */}
         {analysis.reportTitle && (
           <div className="text-center mb-10 py-4 border-y border-slate-100 italic">

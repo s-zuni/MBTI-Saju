@@ -416,6 +416,23 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     setMode(initialMode);
   }, [initialMode]);
 
+  // Window focus listener to reset loading state
+  // This handles cases where the user returns from a cancelled social login popup/redirect
+  useEffect(() => {
+    const handleFocus = () => {
+      if (loading) {
+        // Wait a small delay to see if a session is actually being established
+        const timer = setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loading]);
+
   useEffect(() => {
     if (isOpen) {
       resetFields();

@@ -131,16 +131,17 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             if (!result) throw new Error('조회 결과가 없습니다.');
 
             const activePurchases = (result.purchases || []) as CreditPurchase[];
-            const profileCredits = result.profile_credits || 0;
             const totalPurchaseCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
             setPurchases(activePurchases);
-            setCredits(totalPurchaseCredits + profileCredits);
+            // profileCredits를 합산하지 않음 - RPC가 profiles.credits와 credit_purchases 양쪽에
+            // 크레딧을 기록하므로 합산하면 이중 지급됨 (100구매→200표시 버그 원인)
+            setCredits(totalPurchaseCredits);
 
             setDebugInfo({
                 phase: '4. 조회 완료(RPC)',
                 purchaseCount: activePurchases.length,
-                profileCredits: profileCredits,
+                profileCredits: 0,
                 lastRefresh: new Date().toLocaleTimeString(),
                 host: window.location.host,
                 urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',

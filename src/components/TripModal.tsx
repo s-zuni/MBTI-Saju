@@ -71,7 +71,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         setError(null);
         
     // Final check before starting
-    if (credits !== undefined && credits < 1) {
+    if (credits !== undefined && credits < 5) {
         setLoading(false);
         if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
             onNavigate('creditPurchase' as any);

@@ -27,6 +27,8 @@ const ChatPage: React.FC = () => {
     const [showCreditWarning, setShowCreditWarning] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
     // 1. Initial Load
     useEffect(() => {
@@ -112,10 +114,20 @@ const ChatPage: React.FC = () => {
         setIsSidebarOpen(false);
     };
 
-    // Auto-scroll
+    // Smart Auto-scroll: 사용자가 하단 근처에 있을 때만 자동 스크롤
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isTyping]);
+        if (shouldAutoScroll) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isTyping, shouldAutoScroll]);
+
+    // 스크롤 위치 감지: 하단 100px 이내면 자동 스크롤 활성화
+    const handleScroll = () => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        setShouldAutoScroll(isNearBottom);
+    };
 
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -291,7 +303,7 @@ const ChatPage: React.FC = () => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-slate-50">
+                <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-slate-50">
                     {isLoadingHistory && (
                         <div className="flex justify-center py-10">
                             <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />

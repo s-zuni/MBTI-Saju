@@ -502,7 +502,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
           <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-slate-100">
             <Sparkles className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-slate-800 mb-3">아직 분석 결과가 없습니다</h2>
-            <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 AI 기반 종합 분석을 받아보세요.</p>
+            <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 종합 분석을 받아보세요.</p>
             <button
               onClick={handleGenerateAnalysis}
               className="btn-primary w-full sm:w-auto px-10 py-4 text-lg font-bold flex items-center justify-center gap-2 mx-auto"
@@ -514,7 +514,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenHealing, onOpenCo
                   <span>분석 중입니다...</span>
                 </>
               ) : (
-                "AI로 내 운명 분석하기"
+                "내 운명 분석 시작"
               )}
             </button>
           </div>

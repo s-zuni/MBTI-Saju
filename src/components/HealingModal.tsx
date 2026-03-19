@@ -68,7 +68,7 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
         setError(null);
         
         // Final check before starting (though button should be disabled)
-        if (credits !== undefined && credits < 1) {
+        if (credits !== undefined && credits < 3) {
             setLoading(false);
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
                 onNavigate('creditPurchase' as any);
@@ -186,7 +186,7 @@ const HealingModal: React.FC<HealingModalProps> = ({ isOpen, onClose, onNavigate
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
                                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 text-teal-400 group-hover:rotate-12 transition-transform" />}
-                                    {loading ? 'AI 영적 탐색 중...' : '맞춤 힐링 스팟 찾기'}
+                                    {loading ? '나만의 명당 탐색 중...' : '맞춤 힐링 스팟 찾기'}
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             </button>

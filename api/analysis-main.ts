@@ -60,6 +60,7 @@ export default async function handler(req: any, res: any) {
         {
           "reportTitle": "이 분석을 관통하는 감각적인 제목",
           "keywords": "핵심, 키워드, 3개",
+          "fusionNickname": "사용자의 일간(십간)과 MBTI를 결합한 창의적인 별명. 예: ENTP+신금=독설을 품은 다이아몬드, INFP+임수=깊은 바다의 몽상가. 십간 속성과 MBTI 핵심 특성을 결합하여 15자 이내의 매력적인 별명",
           "nature": {
             "dayPillarSummary": "일주에 대한 한 줄 요약",
             "dayMasterAnalysis": "일간 기질 분석 (상세히)",
