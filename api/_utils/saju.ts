@@ -70,14 +70,26 @@ const DAY_MASTER_DESC: { [key: string]: string } = {
     '임수': '바다, 큰 물, 지혜, 유연함, 포용, 총명함',
     '계수': '비, 시냇물, 지혜, 섬세함, 참모, 아이디어',
 };
-
 export function calculateSaju(birthDate: string, birthTime: string | null): SajuResult {
-    // birthDate format: YYYY-MM-DD
-    const partsDate = birthDate.split('-').map(Number);
-    let year = partsDate[0] || 1990;
-    let month = partsDate[1] || 1;
-    let day = partsDate[2] || 1;
-    let hour = 12; // 태어난 시간을 모를 경우 정오(12시) 기준으로 계산하여 일진 오차 최소화
+    // birthDate format: YYYY-MM-DD or YYYY.MM.DD or YYYY/MM/DD
+    const partsDate = birthDate.includes('-') ? birthDate.split('-').map(Number) :
+                     birthDate.includes('.') ? birthDate.split('.').map(Number) :
+                     birthDate.includes('/') ? birthDate.split('/').map(Number) :
+                     [Number(birthDate.substring(0, 4)), Number(birthDate.substring(4, 6)), Number(birthDate.substring(6, 8))];
+    
+    let year = partsDate[0];
+    let month = partsDate[1];
+    let day = partsDate[2];
+
+    if (year === undefined || month === undefined || day === undefined || 
+        isNaN(year) || isNaN(month) || isNaN(day)) {
+        throw new Error(`Invalid date parts: ${birthDate}`);
+    }
+
+    year = year || 1990;
+    month = month || 1;
+    day = day || 1;
+    let hour = 12;
     let minute = 0;
     let isTimeUnknown = true;
 

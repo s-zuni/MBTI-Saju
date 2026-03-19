@@ -121,7 +121,8 @@ export default async function handler(req: any, res: any) {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         // Robust model selection: trim and strip potential quotes
         const modelNameFromEnv = (process.env.GEMINI_MODEL || "").trim().replace(/^["']|["']$/g, '');
-        const modelName = (modelNameFromEnv && modelNameFromEnv.length > 5) ? modelNameFromEnv : "gemini-1.5-flash";
+        // Use gemini-3.1-flash-lite-preview as fallback as it's the working model in this project
+        const modelName = (modelNameFromEnv && modelNameFromEnv.length > 5) ? modelNameFromEnv : "gemini-3.1-flash-lite-preview";
         
         const model = genAI.getGenerativeModel({ 
             model: modelName, 
@@ -151,7 +152,8 @@ export default async function handler(req: any, res: any) {
         const errorMessage = error.message || String(error);
         res.status(500).json({ 
             error: getKoreanErrorMessage(error) || "분석 정보를 가져오는 중 오류가 발생했습니다.",
-            details: errorMessage
+            details: errorMessage,
+            model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview"
         });
     }
 }
