@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
 import { SAJU_ELEMENTS } from '../utils/sajuLogic';
-import ShareCard from './ShareCard';
 import { DetailedReportCard } from './DetailedReportCard';
-import html2canvas from 'html2canvas';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface MbtiSajuModalProps {
@@ -19,7 +17,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul'>('soul');
-  const shareCardRef = React.useRef<HTMLDivElement>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -565,17 +562,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
       {/* Hidden PDF/Image Generation Area */}
       <div className="fixed -top-[9999px] left-0 pointer-events-none">
-        {analysis && (
-          <div ref={shareCardRef}>
-            <ShareCard
-              userName={analysis.full_name || '회원'}
-              mbti={analysis.mbti}
-              sajuElement={SAJU_ELEMENTS[currentSajuKey]}
-              sajuTrait="타고난 운명과 후천적 성격의 조화"
-              keywords={analysis.keywords ? (typeof analysis.keywords === 'string' ? [analysis.keywords.trim()] : Array.isArray(analysis.keywords) ? (analysis.keywords as string[]).map((k: string) => k.trim()) : []) : []}
-            />
-          </div>
-        )}
+
         {analysis && (
           <div ref={reportRef}>
             <DetailedReportCard
