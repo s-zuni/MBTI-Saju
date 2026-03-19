@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Sparkles, PenTool, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { Loader2, Sparkles, PenTool, Calendar, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
