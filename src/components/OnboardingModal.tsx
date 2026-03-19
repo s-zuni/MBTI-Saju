@@ -61,7 +61,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                             onClick={onClose}
                             className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold font-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                         >
-                            <span>지금 바로 시작하기</span>
+                            <span>내 운명 분석 리포트 확인하기</span>
                             <ArrowRight className="w-5 h-5" />
                         </button>
                         <button

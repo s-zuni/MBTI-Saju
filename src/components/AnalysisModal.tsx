@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Provider } from '@supabase/supabase-js';
 import { isRestrictedBrowser } from '../utils/browserUtils';
+import { useNavigate } from 'react-router-dom';
 
 const MBTI_TYPES = [
   'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
@@ -349,6 +350,7 @@ const ProfileInputForm: React.FC<any> = ({
 
 const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: initialMode = 'signup', initialData, onUpdate }) => {
   const [mode, setMode] = useState(initialMode);
+  const navigate = useNavigate();
 
   // Signup/Edit fields
   const [name, setName] = useState('');
@@ -537,8 +539,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       if (mode === 'edit') {
         alert('정보가 수정되었습니다.');
       }
+      
       if (onUpdate) onUpdate();
       onClose();
+
+      // If completing profile for the first time, redirect to MyPage to guide them to "My Destiny Analysis"
+      if (mode === 'complete_profile') {
+        navigate('/mypage');
+      }
 
     } catch (error: any) {
       setAuthError(error.message || '프로필 저장 중 오류가 발생했습니다.');

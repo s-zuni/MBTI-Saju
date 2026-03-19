@@ -97,7 +97,7 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
         // Handle range formats like "23:00-01:00" or simple "12:30"
         let timeStr = birthTime.trim();
         if (timeStr.includes('-')) {
-            timeStr = timeStr.split('-')[0].trim();
+            timeStr = timeStr.split('-')[0]!.trim();
         }
         
         const parts = timeStr.split(':').map(Number);
