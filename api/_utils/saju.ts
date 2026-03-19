@@ -94,9 +94,21 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
     let isTimeUnknown = true;
 
     if (birthTime) {
-        const parts = birthTime.split(':').map(Number);
+        // Handle range formats like "23:00-01:00" or simple "12:30"
+        let timeStr = birthTime.trim();
+        if (timeStr.includes('-')) {
+            timeStr = timeStr.split('-')[0].trim();
+        }
+        
+        const parts = timeStr.split(':').map(Number);
         hour = parts[0] ?? 0;
         minute = parts[1] ?? 0;
+        
+        if (isNaN(hour) || isNaN(minute)) {
+            hour = 12;
+            minute = 0;
+        }
+
         isTimeUnknown = false;
 
         // 한국 표준시(KST) 자연시 보정
