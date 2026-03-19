@@ -175,7 +175,8 @@ export const getDetailedAnalysis = async (
 
         if (!response.ok) {
             const errBase = await response.json().catch(() => ({}));
-            throw new Error(`Analysis API Error: ${errBase.error || response.statusText}`);
+            const detailMsg = errBase.details ? ` (${errBase.details})` : '';
+            throw new Error(`Analysis API Error: ${errBase.error || response.statusText}${detailMsg}`);
         }
 
         return await response.json();

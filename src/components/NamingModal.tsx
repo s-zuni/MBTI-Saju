@@ -71,6 +71,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('로그인이 필요합니다.');
 
+            const user = session.user.user_metadata;
             const response = await fetch('/api/naming', {
                 method: 'POST',
                 headers: {
@@ -78,13 +79,22 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
+                    birthDate: user.birth_date,
+                    birthTime: user.birth_time,
+                    mbti: user.mbti,
+                    gender: user.gender,
+                    name: user.full_name,
                     targetBirthDate,
                     targetBirthTime,
                     requirements,
                 })
             });
 
-            if (!response.ok) throw new Error('작명 분석을 받아오지 못했습니다.');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                const detailMsg = errData.details ? ` (${errData.details})` : '';
+                throw new Error(`${errData.error || '작명 분석을 받아오지 못했습니다.'}${detailMsg}`);
+            }
             const data = await response.json();
             setResult(data);
 

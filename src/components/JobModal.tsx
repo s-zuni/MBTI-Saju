@@ -40,9 +40,14 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
             if (!session) throw new Error('로그인이 필요합니다.');
 
             const user = session.user.user_metadata;
+            
+            // Validate required fields explicitly before calling API to give better error messages
+            if (!user.birth_date || !user.mbti) {
+                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다. 마이페이지에서 프로필을 완성해주세요.');
+            }
 
             const resultData = await getDetailedAnalysis('job', {
-                name: user.full_name,
+                name: user.full_name || '사용자',
                 mbti: user.mbti,
                 birthDate: user.birth_date,
                 birthTime: user.birth_time
@@ -55,7 +60,6 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                 const creditSuccess = await onUseCredit();
                 if (!creditSuccess) {
                     console.error('Credit deduction failed after successful analysis');
-                    // We still show the result since analysis was successful
                 }
             }
 
