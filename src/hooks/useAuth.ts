@@ -68,7 +68,7 @@ export const useAuth = () => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
             if (isSubscribed) {
                 setSession(currentSession);
-                if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+                if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
                     await fetchOrCreateProfile(currentSession);
                 }
                 setLoading(false); // Ensure loading is false on any auth change

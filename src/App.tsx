@@ -76,15 +76,18 @@ function App() {
       const needsProfile = !meta?.mbti || !meta?.birth_date || !meta?.gender;
 
       if (needsProfile) {
-        openModal('analysis', 'complete_profile');
+        // Prevent infinite loop by checking if the modal is already open in the correct mode
+        if (modals?.analysis?.mode !== 'complete_profile' || !modals?.analysis?.isOpen) {
+          openModal('analysis', 'complete_profile');
+        }
       } else {
         const hasSeenOnboarding = localStorage.getItem(`hasSeenOnboarding_${session.user.id}`);
-        if (!hasSeenOnboarding) {
+        if (!hasSeenOnboarding && !modals?.onboarding?.isOpen) {
           openModal('onboarding');
         }
       }
     }
-  }, [session, isAuthLoading, openModal]);
+  }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen, modals?.onboarding?.isOpen]);
 
   const handleCloseOnboarding = () => {
     if (session?.user) {
