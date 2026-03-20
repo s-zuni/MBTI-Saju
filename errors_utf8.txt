@@ -1,2 +1,0 @@
-﻿src/components/CreditPurchaseModal.tsx(22,5): error TS1005: ',' expected.
-src/pages/admin/AdminInquiries.tsx(88,21): error TS1005: ',' expected.
