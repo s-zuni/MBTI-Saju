@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
 import { SAJU_ELEMENTS } from '../utils/sajuLogic';
-import { DetailedReportCard } from './DetailedReportCard';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface MbtiSajuModalProps {
@@ -547,7 +546,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">데이터를 분석 중입니다...</p>
             </div>
           ) : analysis ? (
-            <div className="animate-fade-up">
+            <div className="animate-fade-up" ref={reportRef}>
               {activeTab === 'soul' && renderSoulReport()}
             </div>
           ) : (
@@ -558,21 +557,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             </div>
           )}
         </div>
-      </div>
-
-      {/* Hidden PDF/Image Generation Area */}
-      <div className="fixed -top-[9999px] left-0 pointer-events-none">
-
-        {analysis && (
-          <div ref={reportRef}>
-            <DetailedReportCard
-              userName={analysis.full_name || '회원'}
-              mbti={analysis.mbti}
-              sajuElement={SAJU_ELEMENTS[currentSajuKey]}
-              analysis={analysis}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

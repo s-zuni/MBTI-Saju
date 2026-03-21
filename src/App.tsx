@@ -520,27 +520,37 @@ const AuthCallback = () => {
             navigate('/', { replace: true });
           }, 500);
         } 
-        // 2. No code? Check if session already exists
+        // 2. No code? Check if session already exists or wait for implicit flow
         else {
+          // If hash contains access_token, we know implicit flow is happening
+          const isImplicitFlow = new URLSearchParams(window.location.hash.substring(1)).get('access_token');
+          
+          if (isImplicitFlow) {
+            // Supabase handles the hash parsing automatically. We just need to wait for onAuthStateChange.
+            const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+              if (event === 'SIGNED_IN' || session) {
+                authListener.subscription.unsubscribe();
+                navigate('/', { replace: true });
+              }
+            });
+            
+            // Failsafe timeout just in case
+            setTimeout(() => {
+              authListener.subscription.unsubscribe();
+              navigate('/', { replace: true });
+            }, 3000);
+            
+            return;
+          }
+
+          // Otherwise, just check if a session exists (e.g. user refreshed the callback page)
           const { data: { session: existingSession }, error } = await supabase.auth.getSession();
           if (error) throw error;
           
-          if (existingSession) {
-            navigate('/', { replace: true });
-          } else {
-            // Failsafe: Wait more for slow mobile redirects
-            const timer = setTimeout(() => {
-              // Try one last check before giving up
-              supabase.auth.getSession().then(({ data: { session } }) => {
-                if (session) navigate('/', { replace: true });
-                else navigate('/', { replace: true }); // Fallback to root
-              });
-            }, 6000);
-            return () => clearTimeout(timer);
-          }
+          navigate('/', { replace: true });
         }
       } catch (err: any) {
-        // If the error is specific to PKCE storage, try to just check current session
+        // If the error is specific to PKCE storage, try to check current session
         const isVerifierError = err.message?.includes('verifier not found') || 
                                err.message?.includes('Auth session missing') ||
                                err.message?.includes('code_verifier');
@@ -551,7 +561,22 @@ const AuthCallback = () => {
             navigate('/', { replace: true });
             return;
           }
+          
+          // Even if getSession misses it initially, try checking through onAuthStateChange as a last resort
+          const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || session) {
+              authListener.subscription.unsubscribe();
+              navigate('/', { replace: true });
+            }
+          });
+          
+          setTimeout(() => {
+            authListener.subscription.unsubscribe();
+            navigate('/', { replace: true });
+          }, 2000);
+          return;
         }
+        
         console.error('Auth processing error:', err);
         setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
       }
