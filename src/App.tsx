@@ -544,7 +544,7 @@ const AuthCallback = () => {
           }
 
           // Otherwise, just check if a session exists (e.g. user refreshed the callback page)
-          const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+          const { error } = await supabase.auth.getSession();
           if (error) throw error;
           
           navigate('/', { replace: true });

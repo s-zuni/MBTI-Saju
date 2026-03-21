@@ -217,16 +217,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   if (!isOpen) return null;
 
-  const getSajuKey = (birthDate?: string) => {
-    if (!birthDate) return 'wood';
-    const yearString = birthDate.split('-')[0];
-    const yearLastDigit = parseInt((yearString || '0').slice(-1));
-    const keys = Object.keys(SAJU_ELEMENTS);
-    return keys[yearLastDigit % 5] as keyof typeof SAJU_ELEMENTS;
-  };
-
-  const currentSajuKey = analysis ? getSajuKey(analysis.birth_date) : 'wood';
-
   // Render Soul Report Section
   const renderSoulReport = () => {
     if (!analysis) return null;
