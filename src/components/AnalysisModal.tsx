@@ -73,8 +73,11 @@ const SocialLoginForm: React.FC<{
     </div>
 
     <div className="mt-8 pt-6 border-t border-slate-100">
-      <p className="text-xs text-slate-400 mb-3 text-center">
+      <p className="text-xs text-slate-400 mb-1 text-center">
         테스트 계정이 필요하신가요?
+      </p>
+      <p className="text-[10px] text-red-500 font-bold mb-3 text-center animate-pulse">
+        ⚠️ 일반 사용자는 클릭 금지
       </p>
       <button
         type="button"
