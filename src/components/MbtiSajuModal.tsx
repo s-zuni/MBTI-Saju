@@ -230,14 +230,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
   const handleStartDeepAnalysis = async () => {
-    const cost = 10; // MBTI_SAJU (Fusion) cost
+    const cost = SERVICE_COSTS.MBTI_SAJU; // 20 credits
     
     if (credits !== undefined && credits < cost) {
-        if (window.confirm(`크레딧이 부족합니다. (심층 분석에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
-            onNavigate('creditPurchase' as any);
-            onClose();
-        }
-        return;
+      if (window.confirm(`크레딧이 부족합니다. (심층 분석에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
+        onNavigate('creditPurchase' as any);
+        onClose();
+      }
+      return;
     }
 
     setIsPurchasingDeep(true);
@@ -281,7 +281,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         
         // Deduct credits
         if (onUseCredit) {
-            const success = await onUseCredit(false); // false means first time
+            const success = await onUseCredit('MBTI_SAJU' as any);
             if (!success) throw new Error("크레딧 차감에 실패했습니다.");
         }
 
@@ -336,7 +336,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-bold text-slate-600">서비스 비용</span>
-              <span className="text-lg font-black text-indigo-600">10 크레딧</span>
+              <span className="text-lg font-black text-indigo-600">{SERVICE_COSTS.MBTI_SAJU} 크레딧</span>
             </div>
             <div className="flex justify-between items-center text-xs text-slate-400">
               <span>보유 크레딧</span>

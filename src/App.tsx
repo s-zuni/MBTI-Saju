@@ -651,6 +651,9 @@ const AuthCallback = () => {
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-slate-600 font-medium">인증 정보를 확인 중입니다...</p>
+        <p className="text-slate-400 text-sm mt-2 font-medium">
+          (Chrome 환경에서 작동하는 것을 추천드립니다.)
+        </p>
       </div>
     </div>
   );

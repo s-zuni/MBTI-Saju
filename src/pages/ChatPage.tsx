@@ -144,9 +144,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
         e?.preventDefault();
         if (!inputText.trim() || !sessionId || isTyping) return;
 
-        // 10회마다 크레딧 체크 (다음 메시지가 10의 배수일 때)
-        const nextCount = messageCount + 1;
-        if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
+        // 10회마다 크레딧 체크 (0, 10, 20... 회차 대화 시작 시)
+        if (messageCount % MESSAGES_PER_COIN_CHARGE === 0) {
             if (credits < SERVICE_COSTS.AI_CHAT_10) {
                 setShowCreditModal(true);
                 return;
@@ -183,7 +182,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
             setMessages(prev => [...prev, botMsg]);
 
             // 10회 도달 시 크레딧 차감
-            if (nextCount % MESSAGES_PER_COIN_CHARGE === 0) {
+            if ((messageCount) % MESSAGES_PER_COIN_CHARGE === 0) {
                 const success = await consumeCredits('AI_CHAT_10');
                 if (!success) {
                     console.error('Failed to spend credits for professional chat');
