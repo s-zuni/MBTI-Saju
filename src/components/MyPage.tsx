@@ -193,55 +193,36 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
         'Authorization': `Bearer ${session.access_token}`,
       };
 
-      // 1. Core analysis
-      const corePromise = fetch('/api/analyze', {
+      // 1. Core analysis (Nature, Persona, Keywords)
+      const coreData = await fetch('/api/analyze', {
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify(requestPayload)
       }).then(async res => {
         if (!res.ok) {
-          try {
-            const errData = await res.json();
-            throw new Error(`핵심 분석 실패: ${errData.error || errData.message || res.statusText}`);
-          } catch (e: any) {
-            throw new Error(e.message || "핵심 분석 실패: 서버 응답을 확인할 수 없습니다.");
-          }
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(`분석 실패: ${errData.error || errData.message || res.statusText}`);
         }
         return res.json();
       });
 
-      // 2. Fortune analysis
-      const fortunePromise = fetch('/api/analyze_fortune', {
-        method: 'POST',
-        headers: authHeader,
-        body: JSON.stringify(requestPayload)
-      }).then(res => res.ok ? res.json() : {});
+      // For the first free analysis, we only save core data.
+      // Deep integration, Fortune, and Strategy are paid services in the modal.
+      const initialAnalysisData = { ...coreData };
+      setAnalysis(initialAnalysisData);
 
-      // 3. Strategy analysis
-      const strategyPromise = fetch('/api/analyze_strategy', {
-        method: 'POST',
-        headers: authHeader,
-        body: JSON.stringify(requestPayload)
-      }).then(res => res.ok ? res.json() : {});
-
-      const coreData = await corePromise;
-      setAnalysis(prev => ({ ...prev, ...coreData }));
-
-      const [fortuneData, strategyData] = await Promise.all([fortunePromise, strategyPromise]);
-      const mergedAnalysis = { ...coreData, ...fortuneData, ...strategyData };
-      setAnalysis(mergedAnalysis);
-
-      // Save to Supabase
+      // Save to Supabase metadata
       await supabase.auth.updateUser({
-        data: { ...profile, analysis: mergedAnalysis }
+        data: { ...profile, analysis: initialAnalysisData }
       });
 
-      // 분석 성공 후 크레딧 차감 (재분석인 경우)
-      if (analysis) {
+      const isRegen = !!analysis;
+      // Deduct credit only if it's a regeneration
+      if (isRegen) {
         try {
           await spendCredits('REGENERATE_MBTI_SAJU');
         } catch (creditErr) {
-          console.error('Credit deduction failed after analysis:', creditErr);
+          console.error('Credit deduction failed after regeneration:', creditErr);
         }
       }
 

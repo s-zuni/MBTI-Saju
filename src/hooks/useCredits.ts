@@ -79,33 +79,49 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             lastRefresh: new Date().toLocaleTimeString(),
             host: window.location.host,
             urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'missing').substring(0, 15) + '...',
-            authStatus: session ? 'Session 존재' : 'Session 없음'
+            authStatus: session ? 'Session 존재 (Props)' : 'Session 없음 (Props)'
         });
 
         // Double check session if not provided (important for mobile tab recovery)
         if (!currentUserId) {
             try {
                 // geUser() is more rigorous than getSession() as it verifies with the server
-                const { data: { user }, error: userErr } = await supabase.auth.getUser();
-                if (userErr) throw userErr;
-                currentUserId = user?.id;
-                setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getUser 성공' : 'getUser 결과 없음' }));
+                // We try getSession first as it's faster, then getUser as fallback.
+                const { data: { session: currentSession }, error: sessErr } = await supabase.auth.getSession();
+                if (sessErr) throw sessErr;
+                
+                if (currentSession) {
+                    currentUserId = currentSession.user.id;
+                    setDebugInfo(prev => ({ ...prev!, authStatus: 'getSession 성공' }));
+                } else {
+                    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+                    if (userErr) throw userErr;
+                    currentUserId = user?.id;
+                    setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getUser 성공' : '유저 정보 없음' }));
+                }
             } catch (authErr: any) {
                 setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', authStatus: '에러', error: authErr.message }));
             }
         } else {
             // Even if we have ID, verify user state once for Safari context
-            supabase.auth.getUser().then(({ data }) => {
-                if (data.user) setDebugInfo(prev => ({ ...prev!, authStatus: '세션 확인됨(Live)' }));
+            supabase.auth.getSession().then(({ data }) => {
+                if (data.session) setDebugInfo(prev => ({ ...prev!, authStatus: '세션 유효성 확인됨' }));
             }).catch(() => {});
         }
 
         if (!currentUserId) {
-            setCredits(0);
-            setPurchases([]);
-            setLoading(false);
-            setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음' }));
-            return;
+            // Safari ITP Fallback: If still no user, wait 1s and try one last time
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const { data: { session: finalSession } } = await supabase.auth.getSession();
+            currentUserId = finalSession?.user?.id;
+            
+            if (!currentUserId) {
+                setCredits(0);
+                setPurchases([]);
+                setLoading(false);
+                setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 최종 없음' }));
+                return;
+            }
         }
 
         try {

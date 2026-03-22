@@ -520,54 +520,61 @@ const AuthCallback = () => {
       return;
     }
 
-    const processAuth = async () => {
-      // Prevent double execution
-      if (hasExchanged.current) return;
-      
-      let isError = false;
-
-      try {
-        // 1. Handle PKCE code exchange if present
-        if (code) {
-          hasExchanged.current = true;
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-          
-          // Wait briefly for persistence to settle on mobile
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 500);
-        } 
-        // 2. No code? Check if session already exists or wait for implicit flow
-        else {
-          // If hash contains access_token, we know implicit flow is happening
-          const isImplicitFlow = new URLSearchParams(window.location.hash.substring(1)).get('access_token');
-          
-          if (isImplicitFlow) {
-            // Supabase handles the hash parsing automatically. We just need to wait for onAuthStateChange.
-            const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-              if (event === 'SIGNED_IN' || session) {
-                authListener.subscription.unsubscribe();
-                navigate('/', { replace: true });
-              }
-            });
+        const processAuth = async () => {
+            // Prevent double execution
+            if (hasExchanged.current) return;
             
-            // Failsafe timeout just in case it doesn't fire
-            setTimeout(() => {
-              authListener.subscription.unsubscribe();
-              navigate('/', { replace: true });
-            }, 3000);
-            
-            return;
-          }
+            let isError = false;
 
-          // Otherwise, just check if a session exists
-          const { error } = await supabase.auth.getSession();
-          if (error) throw error;
-          
-          navigate('/', { replace: true });
-        }
-      } catch (err: any) {
+            try {
+                // Force a small delay for Safari storage to sync
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // 1. Handle PKCE code exchange if present
+                if (code) {
+                    hasExchanged.current = true;
+                    console.log('AuthCallback: Exchanging code for session');
+                    const { error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (error) throw error;
+                    
+                    // Verify session was actually set
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        console.log('AuthCallback: Session established, navigating home');
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                } 
+                
+                // 2. Check hash fragments for implicit flow
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = hashParams.get('access_token');
+                
+                if (accessToken) {
+                    console.log('AuthCallback: Detected implicit flow access token');
+                    // Supabase handles the hash parsing automatically if configured, 
+                    // but we can help it by just checking getSession after a brief wait.
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                }
+
+                // 3. Last resort: just check if a session exists anyway (maybe already processed)
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                
+                if (session) {
+                    navigate('/', { replace: true });
+                } else {
+                    // One last wait for onAuthStateChange to fire
+                    supabase.auth.onAuthStateChange((event, session) => {
+                        if (session) navigate('/', { replace: true });
+                    });
+                }
+            } catch (err: any) {
         isError = true;
         
         // Detailed logging for Safari debugging

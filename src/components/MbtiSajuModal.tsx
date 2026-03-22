@@ -21,6 +21,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isPurchasingDeep, setIsPurchasingDeep] = useState(false);
 
   const loadAnalysis = React.useCallback(async () => {
     setLoading(true);
@@ -228,6 +229,82 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
   };
 
+  const handleStartDeepAnalysis = async () => {
+    const cost = 10; // MBTI_SAJU (Fusion) cost
+    
+    if (credits !== undefined && credits < cost) {
+        if (window.confirm(`크레딧이 부족합니다. (심층 분석에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
+            onNavigate('creditPurchase' as any);
+            onClose();
+        }
+        return;
+    }
+
+    setIsPurchasingDeep(true);
+
+    try {
+        let currentSession = initialSession;
+        if (!currentSession) {
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            currentSession = fetchedSession;
+        }
+        if (!currentSession) throw new Error("로그인이 필요합니다.");
+
+        const metadata = currentSession.user.user_metadata;
+        const requestPayload = {
+            name: metadata.full_name,
+            gender: metadata.gender,
+            birthDate: metadata.birth_date,
+            birthTime: metadata.birth_time,
+            mbti: metadata.mbti,
+        };
+
+        const authHeader = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`,
+        };
+
+        // Fetch everything (Core, Fortune, Strategy)
+        const [coreRes, fortuneRes, strategyRes] = await Promise.all([
+            fetch('/api/analyze', { method: 'POST', headers: authHeader, body: JSON.stringify(requestPayload) }),
+            fetch('/api/analyze_fortune', { method: 'POST', headers: authHeader, body: JSON.stringify(requestPayload) }),
+            fetch('/api/analyze_strategy', { method: 'POST', headers: authHeader, body: JSON.stringify(requestPayload) })
+        ]);
+
+        if (!coreRes.ok) throw new Error("분석 생성 중 오류가 발생했습니다.");
+        
+        const coreData = await coreRes.json();
+        const fortuneData = fortuneRes.ok ? await fortuneRes.json() : {};
+        const strategyData = strategyRes.ok ? await strategyRes.json() : {};
+        
+        const mergedAnalysis = { ...coreData, ...fortuneData, ...strategyData };
+        
+        // Deduct credits
+        if (onUseCredit) {
+            const success = await onUseCredit(false); // false means first time
+            if (!success) throw new Error("크레딧 차감에 실패했습니다.");
+        }
+
+        // Save to Supabase
+        await supabase.auth.updateUser({
+            data: { ...metadata, analysis: mergedAnalysis }
+        });
+
+        setAnalysis({
+            ...mergedAnalysis,
+            birth_date: metadata.birth_date,
+            full_name: metadata.full_name,
+            mbti: metadata.mbti
+        });
+
+    } catch (error: any) {
+        console.error("Deep Analysis Error:", error);
+        alert(error.message || "심층 분석 중 오류가 발생했습니다.");
+    } finally {
+        setIsPurchasingDeep(false);
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
@@ -241,6 +318,45 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   // Render Soul Report Section
   const renderSoulReport = () => {
     if (!analysis) return null;
+
+    // Check if deep analysis content exists
+    const hasDeepData = !!(analysis.deepIntegration || analysis.yearlyFortune || analysis.fieldStrategies);
+
+    if (!hasDeepData) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-fade-up">
+          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+            <Zap className="w-10 h-10 text-indigo-600 animate-pulse" />
+          </div>
+          <h3 className="text-2xl font-black text-slate-900 mb-2">심층 융합 분석이 필요합니다</h3>
+          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed">
+            기본 성향 분석 외에 MBTI와 사주를 결합한 상세 융합 진단, 2026년 운세 흐름, 분야별 전략은 유료 서비스입니다.
+          </p>
+          
+          <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-sm font-bold text-slate-600">서비스 비용</span>
+              <span className="text-lg font-black text-indigo-600">10 크레딧</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-slate-400">
+              <span>보유 크레딧</span>
+              <span>{credits || 0} 크레딧</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartDeepAnalysis}
+            disabled={isPurchasingDeep}
+            className="w-full max-w-sm py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-black shadow-xl hover:shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
+          >
+            {isPurchasingDeep ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+            심층 분석 시작하기
+          </button>
+          
+          <p className="mt-4 text-[10px] text-slate-400">결제 시 즉시 분석이 시작되며 리포트가 완성됩니다.</p>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6 animate-fade-up">

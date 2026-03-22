@@ -34,6 +34,15 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
     const fetchPlans = async () => {
         setPlansLoading(true);
+        
+        // Timeout to prevent infinite loading in case of network/Supabase hanging
+        const timeoutId = setTimeout(() => {
+            if (plansLoading) {
+                console.warn('Plans fetching timed out');
+                setPlansLoading(false);
+            }
+        }, 8000);
+
         try {
             const { data, error } = await supabase
                 .from('pricing_plans')
@@ -45,9 +54,9 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             setPlans(data || []);
         } catch (err) {
             console.error('Error fetching plans:', err);
-            // Fallback to empty
             setPlans([]);
         } finally {
+            clearTimeout(timeoutId);
             setPlansLoading(false);
         }
     };
