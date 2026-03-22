@@ -147,7 +147,6 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             if (!result) throw new Error('조회 결과가 없습니다.');
 
             const activePurchases = (result.purchases || []) as CreditPurchase[];
-            const totalPurchaseCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
             setPurchases(activePurchases);
             // profiles.credits 테이블이 전체 누적 크레딧(무료+결제)을 담고 있는 단일 소스이므로
