@@ -75,6 +75,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
   // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
@@ -129,6 +130,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
       if (analysis) {
         setAnalysis(analysis);
+      }
+      
+      // Refresh credits to ensure synchronization
+      if (refreshCredits) {
+        await refreshCredits();
       }
 
       if (!full_name || !mbti || !birth_date) {
@@ -251,6 +257,41 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     }
   };
 
+  const handleWithdraw = async () => {
+    const confirm1 = window.confirm('정말 탈퇴하시겠습니까? 탈퇴 시 모든 크레딧 정보와 분석 리포트가 즉시 삭제됩니다.');
+    if (!confirm1) return;
+    
+    const confirm2 = window.confirm('마지막 확인입니다. 모든 데이터는 복구가 불가능합니다. 정말 탈퇴하시겠습니까?');
+    if (!confirm2) return;
+
+    setLoading(true);
+    try {
+      if (!session?.user?.id) throw new Error('유저 정보를 찾을 수 없습니다.');
+
+      // 1. Delete profile data
+      const { error: deleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', session.user.id);
+
+      if (deleteError) throw deleteError;
+
+      // 2. Clear credentials and logout
+      await handleLogout();
+    } catch (err: any) {
+      console.error('Withdrawal error:', err);
+      alert('탈퇴 처리 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
+      setLoading(false);
+    }
+  };
+
+  const handleNavigateToHistory = async () => {
+    setIsNavigating(true);
+    // Give time for spinner to be visible
+    await new Promise(resolve => setTimeout(resolve, 800));
+    navigate('/usage-history');
+  };
+
   const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-lg shadow-slate-200/40 p-8">
       <div className="flex items-center gap-3 mb-4">
@@ -363,7 +404,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
                     크레딧 충전하기
                   </button>
                   <button
-                    onClick={() => navigate('/usage-history')}
+                    onClick={handleNavigateToHistory}
                     className="flex-1 py-2.5 bg-white border border-amber-200 text-amber-700 rounded-lg font-bold text-sm hover:bg-amber-50 transition-colors shadow-sm flex items-center justify-center gap-1.5"
                   >
                     <FileText className="w-4 h-4" /> 내역 보기
@@ -529,8 +570,22 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
             <button onClick={() => navigate('/privacy')} className="hover:text-slate-600">개인정보처리방침</button>
             <button onClick={() => navigate('/support')} className="hover:text-slate-600">고객센터 문의</button>
           </div>
+          <div className='mb-4'>
+            <button onClick={handleWithdraw} className="text-slate-300 hover:text-rose-400 underline transition-colors text-xs">회원 탈퇴</button>
+          </div>
           <p>© 2026 MBTI Saju. All rights reserved.</p>
         </div>
+ 
+        {/* Navigation Overlay Spinner */}
+        {isNavigating && (
+          <div className="fixed inset-0 bg-white/60 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center animate-fade-in">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+            <p className="mt-4 text-indigo-900 font-bold animate-pulse">정보를 불러오는 중입니다...</p>
+          </div>
+        )}
       </div>
 
       <AnalysisModal

@@ -7,7 +7,8 @@ import {
     User as UserIcon,
     Loader2,
     X,
-    Check
+    Check,
+    Trash2
 } from 'lucide-react';
 
 interface Profile {
@@ -67,6 +68,28 @@ const UserManagement: React.FC = () => {
             fetchUsers();
         } catch (err: any) {
             alert(err.message);
+        }
+    };
+
+    const handleDeleteUser = async (user: Profile) => {
+        const confirmMsg = `회원 '${user.name || user.email}'님을 탈퇴 처리하시겠습니까?\n이 작업은 취소할 수 없으며 유저의 모든 데이터가 삭제됩니다.`;
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            alert('회원이 탈퇴(삭제) 처리되었습니다.');
+            fetchUsers();
+        } catch (err: any) {
+            alert('삭제 실패: ' + err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -159,6 +182,13 @@ const UserManagement: React.FC = () => {
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                 >
                                                     <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user)}
+                                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                                    title="회원 탈퇴 처리"
+                                                >
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </td>
