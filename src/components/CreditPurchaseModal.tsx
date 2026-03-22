@@ -27,39 +27,36 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
+        const fetchPlans = async () => {
+            setPlansLoading(true);
+            
+            // Timeout to prevent infinite loading in case of network/Supabase hanging
+            const timeoutId = setTimeout(() => {
+                setPlansLoading(false);
+            }, 8000);
+
+            try {
+                const { data, error } = await supabase
+                    .from('pricing_plans')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
+
+                if (error) throw error;
+                setPlans(data || []);
+            } catch (err) {
+                console.error('Error fetching plans:', err);
+                setPlans([]);
+            } finally {
+                clearTimeout(timeoutId);
+                setPlansLoading(false);
+            }
+        };
+
         if (isOpen) {
             fetchPlans();
         }
     }, [isOpen]);
-
-    const fetchPlans = async () => {
-        setPlansLoading(true);
-        
-        // Timeout to prevent infinite loading in case of network/Supabase hanging
-        const timeoutId = setTimeout(() => {
-            if (plansLoading) {
-                console.warn('Plans fetching timed out');
-                setPlansLoading(false);
-            }
-        }, 8000);
-
-        try {
-            const { data, error } = await supabase
-                .from('pricing_plans')
-                .select('*')
-                .eq('is_active', true)
-                .order('sort_order', { ascending: true });
-
-            if (error) throw error;
-            setPlans(data || []);
-        } catch (err) {
-            console.error('Error fetching plans:', err);
-            setPlans([]);
-        } finally {
-            clearTimeout(timeoutId);
-            setPlansLoading(false);
-        }
-    };
 
     if (!isOpen) return null;
 
