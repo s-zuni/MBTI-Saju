@@ -477,7 +477,6 @@ function App() {
   );
 }
 
-// A component to handle OAuth redirects (PKCE flow).
 const AuthCallback = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const hasExchanged = React.useRef(false);
@@ -534,7 +533,7 @@ const AuthCallback = () => {
               }
             });
             
-            // Failsafe timeout just in case
+            // Failsafe timeout just in case it doesn't fire
             setTimeout(() => {
               authListener.subscription.unsubscribe();
               navigate('/', { replace: true });
@@ -543,7 +542,7 @@ const AuthCallback = () => {
             return;
           }
 
-          // Otherwise, just check if a session exists (e.g. user refreshed the callback page)
+          // Otherwise, just check if a session exists
           const { error } = await supabase.auth.getSession();
           if (error) throw error;
           
@@ -556,13 +555,14 @@ const AuthCallback = () => {
                                err.message?.includes('code_verifier');
                                
         if (isVerifierError) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
+          // Fallback: If verifier is lost (common in Safari ITP), try fetching session directly.
+          // This often succeeds if the user is actually logged in, or if it fails, just redirect.
+          const { data } = await supabase.auth.getSession();
+          if (data?.session) {
             navigate('/', { replace: true });
             return;
           }
           
-          // Even if getSession misses it initially, try checking through onAuthStateChange as a last resort
           const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' || session) {
               authListener.subscription.unsubscribe();
@@ -579,11 +579,23 @@ const AuthCallback = () => {
         
         console.error('Auth processing error:', err);
         setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
+      } finally {
+        // Ultimate Failsafe: No matter what happens, do not leave the user stranded
+        // on the "Verifying authentication info..." screen forever.
+        // Wait 5 seconds to ensure redirects complete, otherwise force them back to home.
+        setTimeout(() => {
+          // If we are still on the callback page and haven't displayed an error message
+          // (which means we're stuck in the loading state UI), then forcefully go home.
+          if (window.location.pathname === '/auth/callback' && !errorMsg) {
+             console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
+             navigate('/', { replace: true });
+          }
+        }, 5000);
       }
     };
 
     processAuth();
-  }, [navigate]);
+  }, [navigate, errorMsg]);
 
   if (errorMsg) {
     return (
@@ -597,7 +609,7 @@ const AuthCallback = () => {
           <h2 className="text-xl font-bold text-slate-900 mb-2">로그인 실패</h2>
           <p className="text-slate-600 mb-6">{errorMsg}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/', { replace: true })}
             className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
           >
             메인으로 돌아가기
