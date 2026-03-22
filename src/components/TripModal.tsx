@@ -99,10 +99,8 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         setLoading(true);
         setError(null);
         
-        // Failsafe timeout for Safari
-        const timeoutId = setTimeout(() => {
-            if (loading) setLoading(false);
-        }, 12000); // Trip analysis takes longer (12s)
+        // Add a timeout for Safari compatibility
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         try {
             let currentSession = initialSession;

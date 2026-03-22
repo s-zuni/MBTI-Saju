@@ -114,7 +114,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
 
     const fetchReading = async (cards: TarotCard[]) => {
         // 1. Credit check first
-        const cost = 2; // SERVICE_COSTS.TAROT
+        const cost = SERVICE_COSTS.TAROT;
         if (credits !== undefined && credits < cost) {
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
                 onNavigate ? onNavigate('creditPurchase' as any) : onUpgradeRequired();
