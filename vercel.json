@@ -11,10 +11,6 @@
         { "source": "/api/analyze_fortune", "destination": "/api/analysis-main?part=fortune" },
         { "source": "/api/analyze_strategy", "destination": "/api/analysis-main?part=strategy" },
         {
-            "source": "/supabase-api/:path*",
-            "destination": "https://tffvsyarxfujmvbqlutr.supabase.co/:path*"
-        },
-        {
             "source": "/api/:path*",
             "destination": "/api/:path*"
         },
