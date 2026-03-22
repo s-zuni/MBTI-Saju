@@ -301,7 +301,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                                 <h5 className="text-xl font-black text-slate-950">{place.name}</h5>
                                                 <span className="px-3 py-1 bg-sky-50 text-sky-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-sky-100">Must Visit</span>
                                             </div>
-                                            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{place.reason}</p>
+                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{place.reason}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -323,7 +323,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                                     {i !== result.itinerary!.length - 1 && <div className="w-[2px] grow bg-slate-100 mt-2"></div>}
                                                 </div>
                                                 <div className="report-card flex-1">
-                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{day.schedule}</p>
+                                                    <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{day.schedule}</p>
                                                 </div>
                                             </div>
                                         ))}

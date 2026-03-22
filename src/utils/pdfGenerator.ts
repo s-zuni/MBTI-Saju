@@ -24,18 +24,27 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
         const contentWidthMm = pdfPageWidth - MARGIN_MM * 2;
         const contentHeightMm = pdfPageHeight - MARGIN_MM * 2;
 
+        // Apply PDF-specific styles
+        element.classList.add('pdf-report-container');
+        
+        // Wait briefly for style application
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         // 2. 전체 요소를 고해상도로 캡처
         const canvas = await html2canvas(element, {
             scale: 2,            // 고해상도 (Retina)
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            windowWidth: element.offsetWidth,
+            windowWidth: 820,     // Force width defined in CSS
             // 전체 스크롤 높이로 캡처
             height: element.scrollHeight,
             windowHeight: element.scrollHeight,
             scrollY: -window.scrollY,
         });
+
+        // Remove PDF-specific styles immediately after capture
+        element.classList.remove('pdf-report-container');
 
         const ctxWidth = canvas.width;
         const ctxHeight = canvas.height;

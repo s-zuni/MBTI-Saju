@@ -159,7 +159,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                                     <Sparkles className="w-5 h-5 text-orange-500" /> 종합 커리어 분석
                                 </h4>
                                 <div className="report-card p-10 bg-slate-50 border-slate-100">
-                                    <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap">
+                                    <p className="text-slate-800 leading-relaxed text-md whitespace-pre-wrap">
                                         {result.reason}
                                     </p>
                                 </div>

@@ -264,11 +264,11 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                             <div className="space-y-3">
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-400 mb-1">이름의 뜻</p>
-                                                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{item.meaning}</p>
+                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{item.meaning}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-400 mb-1">사주 적합도</p>
-                                                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{item.sajuFit}</p>
+                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{item.sajuFit}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -282,7 +282,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                     <Sparkles className="w-5 h-5 text-teal-600" /> 사주 명리학 분석
                                 </h4>
                                 <div className="report-card p-10 bg-slate-50 border-slate-100">
-                                    <p className="text-slate-600 leading-relaxed text-md whitespace-pre-wrap">
+                                    <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap">
                                         {result.analysis}
                                     </p>
                                 </div>

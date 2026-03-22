@@ -45,7 +45,7 @@
   }
 
   .report-section-title {
-    @apply text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ml-1;
+    @apply text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ml-1;
   }
 
   .report-card {
@@ -127,6 +127,39 @@
   padding: 60px !important;
   font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
   background: #ffffff !important;
+  color: #0f172a !important; /* Extremely dark slate */
+}
+
+/* Force dark text for visibility in PDF */
+.pdf-report-container * {
+  color: #0f172a !important;
+}
+
+/* Exceptions for colored elements we want to keep */
+.pdf-report-container .text-rose-500,
+.pdf-report-container .text-rose-500 *,
+.pdf-report-container .text-sky-600,
+.pdf-report-container .text-sky-600 *,
+.pdf-report-container .text-orange-500,
+.pdf-report-container .text-teal-600,
+.pdf-report-container .text-indigo-600 {
+  color: inherit !important; /* Allow the specific utility classes to work, but let's be careful */
+}
+
+/* Better approach: override specific light slate colors to be darker */
+.pdf-report-container .text-slate-400,
+.pdf-report-container .text-slate-500 {
+  color: #64748b !important; /* slate-500 darkened */
+}
+
+.pdf-report-container .text-slate-300 {
+  color: #94a3b8 !important; /* slate-400 darkened */
+}
+
+/* Ensure background is white and borders are visible */
+.pdf-report-container .report-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
   color: #0f172a !important;
 }
 
@@ -136,7 +169,7 @@
   break-inside: avoid;
   margin-bottom: 48px !important;
   padding-bottom: 32px !important;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 2px solid #f1f5f9 !important;
 }
 
 .pdf-report-container .report-section:last-child {

@@ -253,7 +253,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                             {/* Score & Keywords */}
                             <div className="flex flex-col items-center py-10 bg-slate-50 rounded-[40px] border border-slate-100 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-500"></div>
-                                <div className="text-[10px] font-black text-slate-400 tracking-[0.4em] mb-6">시너지 지수</div>
+                                <div className="text-[10px] font-black text-slate-500 tracking-[0.4em] mb-6">시너지 지수</div>
                                 <div className="relative">
                                     <div className="text-8xl sm:text-9xl font-black text-slate-950 tracking-tighter leading-none">{result.score}</div>
                                     <div className="absolute -top-4 -right-12 text-2xl font-black text-rose-500 animate-pulse">%</div>
@@ -276,7 +276,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                     <Sparkles className="w-5 h-5 text-rose-500" /> 운명적 상성과 조언
                                 </h4>
                                 <div className="report-card p-10">
-                                    <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap italic">
+                                    <p className="text-slate-800 leading-relaxed text-md whitespace-pre-wrap italic">
                                         "{result.desc}"
                                     </p>
                                 </div>
@@ -291,7 +291,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                 </button>
                                 <button
                                     onClick={() => resetFields()}
-                                    className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
+                                    className="text-slate-500 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
                                 >
                                     다른 사람과 궁합 보기
                                 </button>
