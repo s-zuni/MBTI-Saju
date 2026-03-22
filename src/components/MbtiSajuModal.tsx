@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
+import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
 interface MbtiSajuModalProps {
@@ -111,14 +112,15 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
     setIsRegenerating(true);
 
-    // Pre-check for 10 credits
-    if (credits !== undefined && credits < 10) {
+    const cost = SERVICE_COSTS.REGENERATE_MBTI_SAJU;
+    if (credits !== undefined && credits < cost) {
       setIsRegenerating(false);
-      alert("크레딧이 부족합니다. (재분석에는 10크레딧이 필요합니다)");
+      if (window.confirm(`크레딧이 부족합니다. (${SERVICE_NAMES.REGENERATE_MBTI_SAJU}에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
+        onNavigate('creditPurchase' as any);
+        onClose();
+      }
       return;
     }
-
-    // Deduction will happen after all promises resolve successfully
 
     try {
       let currentSession = initialSession;

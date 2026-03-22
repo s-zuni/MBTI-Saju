@@ -157,6 +157,14 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
     useEffect(() => {
         refreshCredits();
+
+        // Window focus listener to refresh credits (important for Safari/mobile coming back from background)
+        const handleFocus = () => {
+            console.log('Window focused, refreshing credits...');
+            refreshCredits();
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, [refreshCredits]);
 
     const getCost = useCallback((serviceType: ServiceType): number => {

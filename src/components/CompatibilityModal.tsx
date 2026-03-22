@@ -3,6 +3,7 @@ import { Heart, Loader2, User, Users, Sparkles } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { SERVICE_COSTS } from '../config/creditConfig';
 import { generatePDF } from '../utils/pdfGenerator';
 import { useRef } from 'react';
 
@@ -59,10 +60,14 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         setLoading(true);
         setError(null);
 
-        // Final check before starting
-        if (credits !== undefined && credits < 5) {
+        // 1. Credit check first
+        const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
+        if (credits !== undefined && credits < cost) {
             setLoading(false);
-            setError('크레딧이 부족합니다. 충전 후 이용해주세요.');
+            if (window.confirm(`크레딧이 부족합니다. (${cost}크레딧이 필요합니다. 충전 페이지로 이동하시겠습니까?)`)) {
+                onNavigate('creditPurchase' as any);
+                onClose();
+            }
             return;
         }
 

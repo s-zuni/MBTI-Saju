@@ -22,13 +22,23 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
     const [error, setError] = useState<string | null>(null);
 
     const fetchRecommendation = async () => {
+        // 1. Credit check first
+        const cost = 5; // SERVICE_COSTS.JOB (will use imported 5 for now or import CONFIG)
+        if (credits !== undefined && credits < cost) {
+            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+                onNavigate('creditPurchase' as any);
+                onClose();
+            }
+            return;
+        }
+
         setLoading(true);
         setError(null);
         
         // Failsafe timeout for Safari
         const timeoutId = setTimeout(() => {
             if (loading) setLoading(false);
-        }, 5000);
+        }, 8000); // 8s for slower AI response
 
         try {
             let currentSession = initialSession;
@@ -40,7 +50,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
 
             const user = currentSession.user.user_metadata;
             
-            // Validate required fields explicitly before calling API to give better error messages
+            // Validate required fields explicitly
             if (!user.birth_date || !user.mbti) {
                 throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다. 마이페이지에서 프로필을 완성해주세요.');
             }
@@ -52,10 +62,9 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                 birthTime: user.birth_time
             }, undefined, currentSession);
 
-            clearTimeout(timeoutId);
             setResult(resultData);
             
-            // Deduct credit only after success
+            // 2. Deduct credit after success
             if (onUseCredit) {
                 const creditSuccess = await onUseCredit();
                 if (!creditSuccess) {
@@ -64,9 +73,9 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
             }
 
         } catch (e: any) {
-            clearTimeout(timeoutId);
             setError(e.message);
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
     };

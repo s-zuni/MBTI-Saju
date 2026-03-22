@@ -77,7 +77,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
  
         **FORMATTING RULES**:
         - Use emojis (🌿, 🔥, 💧, ✨) sparingly to add atmosphere.
-        - **Keep it concise and focused**: 핵심 내용을 간결하게 전달하세요. 3~5문단 이내로 답변하세요. 불필요한 반복이나 과도한 설명은 피하세요.
+        - **핵심 중심의 짧은 답변**: 서론과 결론을 최소화하고, 사용자의 질문에 대한 핵심 분석을 가장 먼저, 간결하게 제시하세요. 문장 당 길이를 짧게 유지하고 불필요한 수식어를 제거하세요. (최대 3문단 이내)
         - **NO BOLDING**: Remember, absolutely no ** permitted.
         - **Language**: Korean Only.
         `;
@@ -111,7 +111,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         const chat = model.startChat({
             history: history,
             generationConfig: {
-                maxOutputTokens: 700,
+                maxOutputTokens: 500,
             },
         });
 

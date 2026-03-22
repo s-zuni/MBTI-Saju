@@ -130,11 +130,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
         }
     }, [messages, isTyping, shouldAutoScroll]);
 
-    // 스크롤 위치 감지: 하단 100px 이내면 자동 스크롤 활성화
+    // Smart Auto-scroll: Only scroll if the user was already at the bottom
     const handleScroll = () => {
         const container = messagesContainerRef.current;
         if (!container) return;
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        // Threshold of 150px to be considered "at bottom"
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
         setShouldAutoScroll(isNearBottom);
     };
 

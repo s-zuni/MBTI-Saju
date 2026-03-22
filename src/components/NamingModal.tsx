@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, Sparkles, PenTool, Calendar, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { useRef } from 'react';
@@ -64,10 +65,13 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
         setLoading(true);
         setError(null);
 
-        if (credits !== undefined && credits < 5) {
+        // 1. Credit check first
+        const cost = SERVICE_COSTS.NAMING;
+        if (credits !== undefined && credits < cost) {
             setLoading(false);
-            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+            if (window.confirm(`크레딧이 부족합니다. (${SERVICE_NAMES.NAMING}에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
                 onNavigate('creditPurchase' as any);
+                onClose();
             }
             return;
         }

@@ -4,6 +4,8 @@ import { TarotCard, TAROT_DECK } from '../../data/tarotDeck';
 import SpreadSelector, { SpreadType } from './SpreadSelector';
 import { Tier } from '../../hooks/useSubscription';
 import { supabase } from '../../supabaseClient';
+import { ServiceType } from '../ServiceNavigation';
+import { SERVICE_COSTS } from '../../config/creditConfig';
 
 interface TarotModalProps {
     isOpen: boolean;
@@ -11,10 +13,12 @@ interface TarotModalProps {
     tier: Tier;
     onUpgradeRequired: () => void;
     onUseCredit?: () => Promise<boolean>;
-    session: any; // Add session prop
+    onNavigate?: (service: ServiceType) => void;
+    credits?: number;
+    session: any;
 }
 
-const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit, session: initialSession }) => {
+const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit, onNavigate, credits, session: initialSession }) => {
     // New Steps: spread -> question -> shuffle -> select -> result
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
@@ -109,6 +113,16 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     };
 
     const fetchReading = async (cards: TarotCard[]) => {
+        // 1. Credit check first
+        const cost = 2; // SERVICE_COSTS.TAROT
+        if (credits !== undefined && credits < cost) {
+            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+                onNavigate ? onNavigate('creditPurchase' as any) : onUpgradeRequired();
+                onClose();
+            }
+            return;
+        }
+
         setStep('result');
         setLoading(true);
 

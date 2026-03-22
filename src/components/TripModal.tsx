@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plane, Loader2, MapPin, Calendar, Sparkles, Download, MessageSquare, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { SERVICE_COSTS } from '../config/creditConfig';
 import { generatePDF } from '../utils/pdfGenerator';
 import { useRef } from 'react';
 
@@ -84,19 +85,24 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
 
     const fetchRecommendation = async () => {
         if (!selectedRegion) return;
+        
+        // 1. Credit check first
+        const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
+        if (credits !== undefined && credits < cost) {
+            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
+                onNavigate('creditPurchase' as any);
+                onClose();
+            }
+            return;
+        }
+
         setLoading(true);
         setError(null);
         
-    // Final check before starting
-    if (credits !== undefined && credits < 5) {
-        setLoading(false);
-        if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
-            onNavigate('creditPurchase' as any);
-        }
-        return;
-    }
-
-        // Deduction will happen after success
+        // Failsafe timeout for Safari
+        const timeoutId = setTimeout(() => {
+            if (loading) setLoading(false);
+        }, 12000); // Trip analysis takes longer (12s)
 
         try {
             let currentSession = initialSession;

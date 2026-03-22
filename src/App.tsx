@@ -392,6 +392,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
+                credits={credits}
                 session={session}
               />
 
@@ -407,6 +408,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
+                credits={credits}
                 session={session}
               />
               <NamingModal
@@ -450,6 +452,12 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('TAROT');
                 }}
+                onNavigate={(service) => {
+                  closeAllModals();
+                  if (service === 'fortune') handleFetchFortune();
+                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
+                }}
+                credits={credits}
                 session={session}
               />
 
@@ -561,22 +569,27 @@ const AuthCallback = () => {
         }
       } catch (err: any) {
         isError = true;
+        
+        // Detailed logging for Safari debugging
+        console.error('Auth processing error:', err);
+        
         // If the error is specific to PKCE storage, try to check current session
         const isVerifierError = err.message?.includes('verifier not found') || 
                                err.message?.includes('Auth session missing') ||
-                               err.message?.includes('code_verifier');
+                               err.message?.includes('code_verifier') ||
+                               err.message?.includes('storage');
                                
         if (isVerifierError) {
           // Fallback: If verifier is lost (common in Safari ITP), try fetching session directly.
-          // This often succeeds if the user is actually logged in, or if it fails, just redirect.
           const { data } = await supabase.auth.getSession();
           if (data?.session) {
             navigate('/', { replace: true });
             return;
           }
           
+          // If still no session, wait briefly for the auth client to settle
           const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' || session) {
+            if (session) {
               authListener.subscription.unsubscribe();
               navigate('/', { replace: true });
             }
@@ -585,25 +598,19 @@ const AuthCallback = () => {
           setTimeout(() => {
             authListener.subscription.unsubscribe();
             navigate('/', { replace: true });
-          }, 2000);
+          }, 1500);
           return;
         }
         
-        console.error('Auth processing error:', err);
         setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
       } finally {
-        // Ultimate Failsafe: No matter what happens, do not leave the user stranded
-        // on the "Verifying authentication info..." screen forever.
-        // Wait 5 seconds to ensure redirects complete, otherwise force them back to home.
-        if (!isError) {
-          setTimeout(() => {
-            // If we are still on the callback page without any errors, forcefully go home.
-            if (window.location.pathname === '/auth/callback') {
-               console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
-               navigate('/', { replace: true });
-            }
-          }, 5000);
-        }
+        // Ultimate Failsafe: Redirection with shorter timeout (3s)
+        setTimeout(() => {
+          if (window.location.pathname === '/auth/callback' && !isError) {
+             console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
+             navigate('/', { replace: true });
+          }
+        }, 3000);
       }
     };
 
