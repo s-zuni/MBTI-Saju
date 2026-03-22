@@ -506,6 +506,8 @@ const AuthCallback = () => {
     const processAuth = async () => {
       // Prevent double execution
       if (hasExchanged.current) return;
+      
+      let isError = false;
 
       try {
         // 1. Handle PKCE code exchange if present
@@ -549,6 +551,7 @@ const AuthCallback = () => {
           navigate('/', { replace: true });
         }
       } catch (err: any) {
+        isError = true;
         // If the error is specific to PKCE storage, try to check current session
         const isVerifierError = err.message?.includes('verifier not found') || 
                                err.message?.includes('Auth session missing') ||
@@ -583,14 +586,15 @@ const AuthCallback = () => {
         // Ultimate Failsafe: No matter what happens, do not leave the user stranded
         // on the "Verifying authentication info..." screen forever.
         // Wait 5 seconds to ensure redirects complete, otherwise force them back to home.
-        setTimeout(() => {
-          // If we are still on the callback page and haven't displayed an error message
-          // (which means we're stuck in the loading state UI), then forcefully go home.
-          if (window.location.pathname === '/auth/callback' && !errorMsg) {
-             console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
-             navigate('/', { replace: true });
-          }
-        }, 5000);
+        if (!isError) {
+          setTimeout(() => {
+            // If we are still on the callback page without any errors, forcefully go home.
+            if (window.location.pathname === '/auth/callback') {
+               console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
+               navigate('/', { replace: true });
+            }
+          }, 5000);
+        }
       }
     };
 
