@@ -14,7 +14,9 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
 
     const fetchData = useCallback(async () => {
         setLoading(true);
-        const timeoutId = setTimeout(() => setLoading(false), 5000);
+        const timeoutId = setTimeout(() => {
+            if (loading) setLoading(false);
+        }, 5000);
 
         try {
             let currentSession = initialSession;
@@ -36,9 +38,10 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
         } catch (error) {
             console.error('Fetch error:', error);
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
-    }, []);
+    }, [initialSession, loading]);
 
     useEffect(() => {
         fetchData();

@@ -21,11 +21,46 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
+  const loadAnalysis = React.useCallback(async () => {
+    setLoading(true);
+    
+    // Failsafe timeout for Safari
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    try {
+      let currentSession = initialSession;
+      if (!currentSession) {
+        const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+        currentSession = fetchedSession;
+      }
+
+      if (currentSession?.user?.user_metadata) {
+        const metadata = currentSession.user.user_metadata;
+        if (metadata.analysis) {
+          setAnalysis({
+            ...metadata.analysis,
+            birth_date: metadata.birth_date,
+            full_name: metadata.full_name,
+            mbti: metadata.mbti,
+            gender: metadata.gender
+          });
+        }
+      }
+    } catch (err) {
+      console.error('MbtiSajuModal loadAnalysis error:', err);
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
+    }
+  }, [initialSession]);
+
   useEffect(() => {
     if (isOpen) {
       loadAnalysis();
     }
-  }, [isOpen]);
+  }, [isOpen, loadAnalysis]);
 
   const handleShare = async () => {
     setIsSharing(true);
@@ -68,41 +103,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       alert("리포트 저장 중 오류가 발생했습니다.");
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  const loadAnalysis = async () => {
-    setLoading(true);
-    
-    // Failsafe timeout for Safari
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-    }, 5000);
-
-    try {
-      let currentSession = initialSession;
-      if (!currentSession) {
-        const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-        currentSession = fetchedSession;
-      }
-
-      if (currentSession?.user?.user_metadata) {
-        const metadata = currentSession.user.user_metadata;
-        if (metadata.analysis) {
-          setAnalysis({
-            ...metadata.analysis,
-            birth_date: metadata.birth_date,
-            full_name: metadata.full_name,
-            mbti: metadata.mbti,
-            gender: metadata.gender
-          });
-        }
-      }
-    } catch (err) {
-      console.error('MbtiSajuModal loadAnalysis error:', err);
-    } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
     }
   };
 

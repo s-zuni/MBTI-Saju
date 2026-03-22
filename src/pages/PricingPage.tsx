@@ -20,21 +20,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
 
-    useEffect(() => {
-        fetchPlans();
-        checkUser();
-    }, []);
-
-    const checkUser = async () => {
+    const checkUser = React.useCallback(async () => {
         let currentSession = initialSession;
         if (!currentSession) {
             const { data: { session } } = await supabase.auth.getSession();
             currentSession = session;
         }
         setUser(currentSession?.user || null);
-    };
+    }, [initialSession]);
 
-    const fetchPlans = async () => {
+    const fetchPlans = React.useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('pricing_plans')
@@ -49,7 +44,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchPlans();
+        checkUser();
+    }, [fetchPlans, checkUser]);
 
     const getDiscountPercent = (plan: PricingPlan): number => {
         return Math.round((1 - plan.price / plan.original_price) * 100);

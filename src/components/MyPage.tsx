@@ -141,7 +141,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [navigate, initialSession]);
+  }, [navigate, initialSession, loading]);
 
   useEffect(() => {
     fetchProfileData();

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import { supabase } from '../../supabaseClient';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const AdminLayout: React.FC = () => {
@@ -50,7 +50,7 @@ const AdminLayout: React.FC = () => {
         };
 
         checkAdmin();
-    }, [navigate, session, isAuthLoading]);
+    }, [navigate, session, isAuthLoading, loading]);
 
     if (loading) {
         return (
