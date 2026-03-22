@@ -63,9 +63,10 @@ interface MyPageProps {
   onCloseMbtiSaju?: () => void;
   credits: number;
   refreshCredits: () => Promise<void>;
+  session: any; // Add session prop
 }
 
-const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCompatibility, credits, refreshCredits }) => {
+const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCompatibility, credits, refreshCredits, session: initialSession }) => {
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -85,24 +86,37 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     setLoading(true);
     setError(null);
 
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw sessionError;
+    // Failsafe timeout for Safari: If profile fetching hangs, stop after 5 seconds.
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn('MyPage profile fetch timeout reached. Releasing loading state.');
+        setLoading(false);
       }
-      if (!session) {
+    }, 5000);
+
+    try {
+      let currentSession = initialSession;
+
+      // Only fetch session if not provided by prop (fallback)
+      if (!currentSession) {
+        console.log('MyPage: Fetching session independently (no session prop found)');
+        const { data: { session: fetchedSession }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        currentSession = fetchedSession;
+      }
+
+      if (!currentSession) {
+        console.warn('MyPage: No session found, redirecting to home.');
         navigate('/');
         return;
       }
 
-      const user = session.user;
-      setSession(session);
+      const user = currentSession.user;
+      setSession(currentSession);
 
       const metadata = user.user_metadata || {};
       const { full_name, gender, mbti, birth_date, birth_time, analysis } = metadata;
 
-      // Make sure we at least set the profile so the UI can render
       setProfile({
         id: user.id,
         name: full_name || user.email?.split('@')[0] || '사용자',
@@ -124,9 +138,10 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
       console.error('Error fetching profile in MyPage:', err);
       setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, initialSession]);
 
   useEffect(() => {
     fetchProfileData();

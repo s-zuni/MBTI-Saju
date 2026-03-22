@@ -26,10 +26,14 @@ interface Post {
     comments_count?: number;
 }
 
-const CommunityPage: React.FC = () => {
+interface CommunityPageProps {
+    session?: any;
+}
+
+const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }) => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<any>(initialSession?.user || null);
     const [activeTag, setActiveTag] = useState('전체');
     const [searchQuery, setSearchQuery] = useState('');
     const [isPopularOnly, setIsPopularOnly] = useState(false);
@@ -50,8 +54,12 @@ const CommunityPage: React.FC = () => {
     const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
+        let currentSession = initialSession;
+        if (!currentSession) {
+            const { data: { session } } = await supabase.auth.getSession();
+            currentSession = session;
+        }
+        setUser(currentSession?.user || null);
     };
 
     const fetchPosts = React.useCallback(async () => {

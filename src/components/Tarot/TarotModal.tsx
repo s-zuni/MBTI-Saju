@@ -11,9 +11,10 @@ interface TarotModalProps {
     tier: Tier;
     onUpgradeRequired: () => void;
     onUseCredit?: () => Promise<boolean>;
+    session: any; // Add session prop
 }
 
-const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit }) => {
+const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit, session: initialSession }) => {
     // New Steps: spread -> question -> shuffle -> select -> result
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
@@ -26,14 +27,18 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
 
     useEffect(() => {
         const fetchUserContext = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.user_metadata) {
-                const { mbti, birth_date, full_name } = session.user.user_metadata;
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                currentSession = fetchedSession;
+            }
+            if (currentSession?.user?.user_metadata) {
+                const { mbti, birth_date, full_name } = currentSession.user.user_metadata;
                 setUserContext({ mbti, birthDate: birth_date, name: full_name });
             }
         };
         fetchUserContext();
-    }, []);
+    }, [initialSession]);
 
     const fisherYatesShuffle = (array: TarotCard[]): TarotCard[] => {
         const shuffled: TarotCard[] = [...array];

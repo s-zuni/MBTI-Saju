@@ -276,7 +276,7 @@ function App() {
                       </section>
                     </>
                   } />
-                  <Route path="/support" element={<SupportPage />} />
+                  <Route path="/support" element={<SupportPage session={session} />} />
                   <Route path="/mypage" element={
                     <MyPage
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
@@ -284,9 +284,10 @@ function App() {
                       onOpenCompatibility={() => openModal('compatibility')}
                       credits={credits}
                       refreshCredits={refreshCredits}
+                      session={session}
                     />
                   } />
-                  <Route path="/community" element={<CommunityPage />} />
+                  <Route path="/community" element={<CommunityPage session={session} />} />
                   <Route path="/fortune" element={
                     <FortunePage
                       onFortuneClick={handleFetchFortune}
@@ -303,6 +304,7 @@ function App() {
                   <Route path="/store" element={
                     <PricingPage
                       currentCredits={credits}
+                      session={session}
                       onPurchaseSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                         await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                       }}
@@ -311,6 +313,7 @@ function App() {
                   <Route path="/pricing" element={
                     <PricingPage
                       currentCredits={credits}
+                      session={session}
                       onPurchaseSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                         await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                       }}
@@ -318,10 +321,10 @@ function App() {
                   } />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
-                  <Route path="/usage-history" element={<UsageHistoryPage />} />
-                  <Route path="/room" element={<ChatPage />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                  <Route path="/relationship" element={<RelationshipPage />} />
+                   <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />
+                  <Route path="/room" element={<ChatPage session={session} />} />
+                  <Route path="/chat" element={<ChatPage session={session} />} />
+                  <Route path="/relationship" element={<RelationshipPage session={session} />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
@@ -369,6 +372,7 @@ function App() {
                   return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
                 }}
                 credits={credits}
+                session={session}
               />
 
               <RecommendationModal
@@ -388,6 +392,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
+                session={session}
               />
 
               <TripModal
@@ -402,6 +407,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
                 }}
+                session={session}
               />
               <NamingModal
                 isOpen={modals?.naming?.isOpen || false}
@@ -416,6 +422,7 @@ function App() {
                   return await consumeCredits('NAMING');
                 }}
                 credits={credits}
+                session={session}
               />
               <JobModal
                 isOpen={modals?.job?.isOpen || false}
@@ -430,6 +437,7 @@ function App() {
                   return await consumeCredits('JOB');
                 }}
                 credits={credits}
+                session={session}
               />
               <TarotModal
                 isOpen={modals?.tarot?.isOpen || false}
@@ -442,6 +450,7 @@ function App() {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('TAROT');
                 }}
+                session={session}
               />
 
               <CreditPurchaseModal

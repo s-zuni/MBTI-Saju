@@ -2,42 +2,55 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import { supabase } from '../../supabaseClient';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 const AdminLayout: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const navigate = useNavigate();
 
+    const { session, loading: isAuthLoading } = useAuth();
+
     useEffect(() => {
         const checkAdmin = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            // Failsafe timeout
+            const timeoutId = setTimeout(() => {
+                if (loading) setLoading(false);
+            }, 5000);
 
-            if (!session) {
-                navigate('/admin/login');
-                return;
-            }
+            try {
+                if (isAuthLoading) return;
 
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .single();
+                if (!session) {
+                    navigate('/admin/login');
+                    return;
+                }
 
-            if (error || profile?.role !== 'admin') {
-                setIsAdmin(false);
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (error || profile?.role !== 'admin') {
+                    setIsAdmin(false);
+                    alert('관리자 권한이 없습니다.');
+                    navigate('/');
+                    return;
+                }
+
+                setIsAdmin(true);
+            } catch (err) {
+                console.error("Admin check failed", err);
+            } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
-                alert('관리자 권한이 없습니다.');
-                navigate('/');
-                return;
             }
-
-            setIsAdmin(true);
-            setLoading(false);
         };
 
         checkAdmin();
-    }, [navigate]);
+    }, [navigate, session, isAuthLoading]);
 
     if (loading) {
         return (

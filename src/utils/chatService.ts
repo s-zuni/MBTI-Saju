@@ -149,7 +149,8 @@ export const sendMessage = async (
 export const getDetailedAnalysis = async (
     type: 'job' | 'compatibility',
     userProfile: any,
-    partnerProfile?: any
+    partnerProfile?: any,
+    session?: any
 ): Promise<any> => {
     // 1. Prepare Prompts based on Type (Logic moved to Backend)
     // We just pass the profile data to the API as is.
@@ -157,8 +158,12 @@ export const getDetailedAnalysis = async (
 
     // 2. Call Backend API for Analysis
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        let currentSession = session;
+        if (!currentSession) {
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            currentSession = fetchedSession;
+        }
+        const token = currentSession?.access_token;
         const url = type === 'job' ? '/api/job' : '/api/compatibility';
         const bodyPayload = type === 'job'
             ? { ...userProfile }

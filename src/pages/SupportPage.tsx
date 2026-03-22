@@ -38,7 +38,11 @@ interface Inquiry {
     linked_purchase_id: string | null;
 }
 
-const SupportPage: React.FC = () => {
+interface SupportPageProps {
+    session: any;
+}
+
+const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) => {
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'menu' | 'form' | 'list' | 'detail'>('menu');
@@ -59,17 +63,30 @@ const SupportPage: React.FC = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
 
     useEffect(() => {
-        const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setUserId(session.user.id);
-                fetchPurchases(session.user.id);
-                fetchInquiries(session.user.id);
+        const getSessionData = async () => {
+            const timeoutId = setTimeout(() => setLoading(false), 5000);
+            
+            try {
+                let currentSession = initialSession;
+                if (!currentSession) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    currentSession = session;
+                }
+                
+                if (currentSession) {
+                    setUserId(currentSession.user.id);
+                    fetchPurchases(currentSession.user.id);
+                    fetchInquiries(currentSession.user.id);
+                }
+            } catch (err) {
+                console.error("SupportPage getSession error", err);
+            } finally {
+                clearTimeout(timeoutId);
+                setLoading(false);
             }
-            setLoading(false);
         };
-        getSession();
-    }, []);
+        getSessionData();
+    }, [initialSession]);
 
     const fetchPurchases = async (uid: string) => {
         const { data } = await supabase

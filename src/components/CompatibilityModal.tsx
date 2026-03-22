@@ -19,9 +19,10 @@ interface CompatibilityModalProps {
     } | null;
     onUseCredit?: () => Promise<boolean>;
     credits?: number;
+    session: any; // Add session prop
 }
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData, onUseCredit, credits }) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, initialData, onUseCredit, credits, session: initialSession }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ score: number; desc: string; keywords: string } | null>(null);
@@ -68,10 +69,14 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
         // We will call onUseCredit after success
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('로그인이 필요합니다.');
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                currentSession = fetchedSession;
+            }
+            if (!currentSession) throw new Error('로그인이 필요합니다.');
 
-            const user = session.user.user_metadata;
+            const user = currentSession.user.user_metadata;
             const myProfile = {
                 name: user.full_name,
                 mbti: user.mbti,
@@ -87,7 +92,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 relationshipType
             };
 
-            const data = await getDetailedAnalysis('compatibility', myProfile, partnerProfile);
+            const data = await getDetailedAnalysis('compatibility', myProfile, partnerProfile, currentSession);
             setResult(data);
             
             // Deduct credit only after success

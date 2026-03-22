@@ -9,9 +9,10 @@ interface MbtiSajuModalProps {
   onNavigate: (service: ServiceType) => void;
   onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
   credits?: number;
+  session: any; // Add session prop
 }
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'soul'>('soul');
@@ -72,22 +73,37 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   const loadAnalysis = async () => {
     setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.user_metadata) {
-      const metadata = session.user.user_metadata;
+    
+    // Failsafe timeout for Safari
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
 
-      if (metadata.analysis) {
-        setAnalysis({
-          ...metadata.analysis,
-          birth_date: metadata.birth_date,
-          full_name: metadata.full_name,
-          mbti: metadata.mbti,
-          gender: metadata.gender
-        });
+    try {
+      let currentSession = initialSession;
+      if (!currentSession) {
+        const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+        currentSession = fetchedSession;
       }
 
+      if (currentSession?.user?.user_metadata) {
+        const metadata = currentSession.user.user_metadata;
+        if (metadata.analysis) {
+          setAnalysis({
+            ...metadata.analysis,
+            birth_date: metadata.birth_date,
+            full_name: metadata.full_name,
+            mbti: metadata.mbti,
+            gender: metadata.gender
+          });
+        }
+      }
+    } catch (err) {
+      console.error('MbtiSajuModal loadAnalysis error:', err);
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRegenerate = async () => {
@@ -105,10 +121,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     // Deduction will happen after all promises resolve successfully
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("로그인이 필요합니다.");
+      let currentSession = initialSession;
+      if (!currentSession) {
+        const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+        currentSession = fetchedSession;
+      }
+      if (!currentSession) throw new Error("로그인이 필요합니다.");
 
-      const metadata = session.user.user_metadata;
+      const metadata = currentSession.user.user_metadata;
       const requestPayload = {
         name: metadata.full_name,
         gender: metadata.gender,
@@ -119,7 +139,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
       const authHeader = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${currentSession.access_token}`,
       };
 
       // 1. Start core analysis (Nature, Persona, Integration)

@@ -15,7 +15,11 @@ interface RelationshipProfile {
     relation: string; // 'friend', 'lover', 'family', 'colleague'
 }
 
-const RelationshipPage: React.FC = () => {
+interface RelationshipPageProps {
+    session: any;
+}
+
+const RelationshipPage: React.FC<RelationshipPageProps> = ({ session: initialSession }) => {
     const navigate = useNavigate();
     const [profiles, setProfiles] = useState<RelationshipProfile[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -45,18 +49,26 @@ const RelationshipPage: React.FC = () => {
 
         // Fetch User Profile
         const fetchUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                setUserProfile({
-                    name: session.user.user_metadata.full_name || '나',
-                    birthDate: session.user.user_metadata.birth_date,
-                    mbti: session.user.user_metadata.mbti || 'INFJ' // Fallback
-                });
+            try {
+                let currentSession = initialSession;
+                if (!currentSession) {
+                    const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                    currentSession = fetchedSession;
+                }
+                
+                if (currentSession?.user) {
+                    setUserProfile({
+                        name: currentSession.user.user_metadata.full_name || '나',
+                        birthDate: currentSession.user.user_metadata.birth_date,
+                        mbti: currentSession.user.user_metadata.mbti || 'INFJ' // Fallback
+                    });
+                }
+            } catch (err) {
+                console.error("RelationshipPage fetchUser error", err);
             }
         };
         fetchUser();
-        // setLoading(false);
-    }, []);
+    }, [initialSession]);
 
     const saveProfiles = (newProfiles: RelationshipProfile[]) => {
         setProfiles(newProfiles);
@@ -341,6 +353,7 @@ const RelationshipPage: React.FC = () => {
                 onClose={() => setShowCompModal(false)}
                 onNavigate={handleNavigate}
                 initialData={selectedCompProfile}
+                session={initialSession}
             />
         </div>
     );

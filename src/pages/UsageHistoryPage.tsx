@@ -3,20 +3,30 @@ import { supabase } from '../supabaseClient';
 import { Loader2, RefreshCw, Receipt } from 'lucide-react';
 import { SERVICE_NAMES } from '../config/creditConfig';
 
-const UsageHistoryPage = () => {
+interface UsageHistoryPageProps {
+    session: any;
+}
+
+const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSession }) => {
     const [activeTab, setActiveTab] = useState<'purchases' | 'usages'>('purchases');
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<{ purchases: any[], usages: any[] }>({ purchases: [], usages: [] });
 
     const fetchData = useCallback(async () => {
         setLoading(true);
+        const timeoutId = setTimeout(() => setLoading(false), 5000);
+
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user?.id) return;
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session } } = await supabase.auth.getSession();
+                currentSession = session;
+            }
+            if (!currentSession?.user?.id) return;
 
             const [pRes, uRes] = await Promise.all([
-                supabase.from('credit_purchases').select('*').eq('user_id', session.user.id).order('purchased_at', { ascending: false }),
-                supabase.from('credit_usages').select('*').eq('user_id', session.user.id).order('used_at', { ascending: false })
+                supabase.from('credit_purchases').select('*').eq('user_id', currentSession.user.id).order('purchased_at', { ascending: false }),
+                supabase.from('credit_usages').select('*').eq('user_id', currentSession.user.id).order('used_at', { ascending: false })
             ]);
 
             setData({

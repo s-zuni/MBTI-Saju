@@ -9,9 +9,10 @@ import type { PricingPlan } from '../hooks/useCredits';
 interface PricingPageProps {
     onPurchaseSuccess?: (planId: string, pricePaid: number, credits: number, paymentId: string) => void;
     currentCredits?: number;
+    session: any;
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCredits = 0 }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCredits = 0, session: initialSession }) => {
     const navigate = useNavigate();
     const [plans, setPlans] = useState<PricingPlan[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,8 +26,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     }, []);
 
     const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
+        let currentSession = initialSession;
+        if (!currentSession) {
+            const { data: { session } } = await supabase.auth.getSession();
+            currentSession = session;
+        }
+        setUser(currentSession?.user || null);
     };
 
     const fetchPlans = async () => {

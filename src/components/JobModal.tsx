@@ -12,9 +12,10 @@ interface JobModalProps {
     onNavigate: (service: ServiceType) => void;
     onUseCredit?: () => Promise<boolean>;
     credits?: number;
+    session: any;
 }
 
-const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
+const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ jobs: string[], reason: string } | null>(null);
@@ -24,25 +25,20 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
         setLoading(true);
         setError(null);
         
-        // Final check before starting
-        if (credits !== undefined && credits < 5) {
-            setLoading(false);
-            if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
-                onNavigate('creditPurchase' as any);
-            }
-            return;
-        }
-
-        // Check if credits are sufficient before starting
-        // Since onUseCredit currently deducts, we need a way to check without deducting or change the flow.
-        // For now, we will proceed with the API call and only call onUseCredit if successful.
-        // But we should still warn the user if they have 0 credits.
+        // Failsafe timeout for Safari
+        const timeoutId = setTimeout(() => {
+            if (loading) setLoading(false);
+        }, 5000);
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('로그인이 필요합니다.');
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                currentSession = fetchedSession;
+            }
+            if (!currentSession) throw new Error('로그인이 필요합니다.');
 
-            const user = session.user.user_metadata;
+            const user = currentSession.user.user_metadata;
             
             // Validate required fields explicitly before calling API to give better error messages
             if (!user.birth_date || !user.mbti) {
@@ -54,8 +50,9 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                 mbti: user.mbti,
                 birthDate: user.birth_date,
                 birthTime: user.birth_time
-            });
+            }, undefined, currentSession);
 
+            clearTimeout(timeoutId);
             setResult(resultData);
             
             // Deduct credit only after success
@@ -67,6 +64,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
             }
 
         } catch (e: any) {
+            clearTimeout(timeoutId);
             setError(e.message);
         } finally {
             setLoading(false);

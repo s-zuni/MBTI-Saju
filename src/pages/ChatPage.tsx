@@ -9,7 +9,11 @@ import CreditPurchaseModal from '../components/CreditPurchaseModal';
 
 const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 크레딧 차감
 
-const ChatPage: React.FC = () => {
+interface ChatPageProps {
+    session: any;
+}
+
+const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
     const navigate = useNavigate();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
@@ -18,7 +22,7 @@ const ChatPage: React.FC = () => {
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [userContext, setUserContext] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [session, setSession] = useState<any>(null);
+    const [session, setSession] = useState<any>(initialSession);
 
     // 크레딧 시스템
     const { credits, useCredits: consumeCredits, purchaseCredits } = useCredits(session);
@@ -33,26 +37,31 @@ const ChatPage: React.FC = () => {
     // 1. Initial Load
     useEffect(() => {
         const init = async () => {
-            const { data: { session: authSession } } = await supabase.auth.getSession();
-            if (!authSession) {
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session: authSession } } = await supabase.auth.getSession();
+                currentSession = authSession;
+            }
+            
+            if (!currentSession) {
                 navigate('/');
                 return;
             }
 
-            setSession(authSession);
+            setSession(currentSession);
             setUserContext({
-                name: authSession.user.user_metadata.full_name || authSession.user.user_metadata.name,
-                mbti: authSession.user.user_metadata.mbti,
-                birthDate: authSession.user.user_metadata.birth_date,
-                birthTime: authSession.user.user_metadata.birth_time,
-                gender: authSession.user.user_metadata.gender,
-                email: authSession.user.email
+                name: currentSession.user.user_metadata.full_name || currentSession.user.user_metadata.name,
+                mbti: currentSession.user.user_metadata.mbti,
+                birthDate: currentSession.user.user_metadata.birth_date,
+                birthTime: currentSession.user.user_metadata.birth_time,
+                gender: currentSession.user.user_metadata.gender,
+                email: currentSession.user.email
             });
 
-            await loadLatestSession(authSession.user.id);
+            await loadLatestSession(currentSession.user.id);
         };
         init();
-    }, [navigate]);
+    }, [navigate, initialSession]);
 
     const loadLatestSession = async (userId: string) => {
         setIsLoadingHistory(true);

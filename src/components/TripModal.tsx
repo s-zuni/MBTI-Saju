@@ -11,6 +11,7 @@ interface TripModalProps {
     onNavigate: (service: ServiceType) => void;
     onUseCredit?: () => Promise<boolean>;
     credits?: number;
+    session: any;
 }
 
 const DOMESTIC_REGIONS = [
@@ -22,7 +23,7 @@ const OVERSEAS_REGIONS = [
     '아시아', '유럽', '북아메리카', '남아메리카', '오세아니아', '아프리카'
 ];
 
-const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits }) => {
+const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{
@@ -98,15 +99,19 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         // Deduction will happen after success
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('로그인이 필요합니다.');
+            let currentSession = initialSession;
+            if (!currentSession) {
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                currentSession = fetchedSession;
+            }
+            if (!currentSession) throw new Error('로그인이 필요합니다.');
 
-            const user = session.user.user_metadata;
+            const user = currentSession.user.user_metadata;
             const response = await fetch('/api/trip', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
+                    'Authorization': `Bearer ${currentSession.access_token}`
                 },
                 body: JSON.stringify({
                     birthDate: user.birth_date,
