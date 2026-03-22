@@ -101,13 +101,12 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     setLoading(true);
     setError(null);
 
-    // Failsafe timeout for Safari: If profile fetching hangs, stop after 5 seconds.
+    // Failsafe timeout for Safari/Network issues: If profile fetching hangs, stop after 10 seconds.
     const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.warn('MyPage profile fetch timeout reached. Releasing loading state.');
-        setLoading(false);
-      }
-    }, 5000);
+      console.warn('MyPage profile fetch timeout reached. Releasing loading state.');
+      setLoading(false);
+      setError('네트워크 지연으로 데이터를 모두 불러오지 못했습니다. 새로고침을 시도해 주세요.');
+    }, 10000);
 
     try {
       let currentSession = initialSession;
@@ -161,7 +160,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [navigate, initialSession, loading, refreshCredits]);
+  }, [navigate, initialSession, refreshCredits]);
 
   useEffect(() => {
     fetchProfileData();
