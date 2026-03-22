@@ -150,14 +150,16 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             const totalPurchaseCredits = activePurchases.reduce((sum, p) => sum + p.remaining_credits, 0);
 
             setPurchases(activePurchases);
-            // profileCredits를 합산하지 않음 - RPC가 profiles.credits와 credit_purchases 양쪽에
-            // 크레딧을 기록하므로 합산하면 이중 지급됨 (100구매→200표시 버그 원인)
-            setCredits(totalPurchaseCredits);
+            // profiles.credits 테이블이 전체 누적 크레딧(무료+결제)을 담고 있는 단일 소스이므로
+            // totalPurchaseCredits와 합산하지 않고, 오직 profile_credits 만을 기준으로 UI를 업데이트합니다.
+            // (만약 activePurchases.reduce를 사용하면 회원가입 시 지급된 25크레딧 등 무료 크레딧이 누락됩니다)
+            const actualTotalCredits = result.profile_credits ?? 0;
+            setCredits(actualTotalCredits);
 
             setDebugInfo({
                 phase: '4. 조회 완료(RPC)',
                 purchaseCount: activePurchases.length,
-                profileCredits: 0,
+                profileCredits: actualTotalCredits,
                 lastRefresh: new Date().toLocaleTimeString(),
                 host: window.location.host,
                 urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',
