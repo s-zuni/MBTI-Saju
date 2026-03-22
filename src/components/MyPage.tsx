@@ -77,6 +77,20 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 5000);
+    } else {
+      setLoadingTimeout(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const navigate = useNavigate();
   // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
   // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
@@ -305,9 +319,25 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-50">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-        <span className="ml-3 text-lg font-medium text-slate-700">마이페이지 불러오는 중...</span>
+      <div className="flex flex-col justify-center items-center h-screen bg-slate-50 p-6">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+        <span className="text-lg font-bold text-slate-700">마이페이지 정보를 불러오는 중입니다...</span>
+        
+        {loadingTimeout && (
+          <div className="mt-8 p-6 bg-rose-50 rounded-2xl border border-rose-100 max-w-sm animate-slide-up text-center">
+            <p className="text-rose-600 font-bold mb-2">로딩 시간이 길어지고 있습니다.</p>
+            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+              Safari 같은 환경에서는 쿠키 정책이나 네트워크 상태로 인해 정보 연동 및 크레딧 조회가 지연될 수 있습니다.<br />
+              <strong className="text-slate-800">빠르고 안정적인 이용을 위해 크롬(Chrome) 브라우저 사용을 권장합니다.</strong>
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-2.5 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 text-sm hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              새로고침 시도하기
+            </button>
+          </div>
+        )}
       </div>
     );
   }
