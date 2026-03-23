@@ -279,19 +279,22 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                         return (
                                             <div
                                                 key={idx}
-                                                className={`w-28 h-40 rounded-2xl border-2 flex items-center justify-center transition-all duration-500
+                                                className={`w-28 h-40 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 relative overflow-hidden
                                                     ${card
-                                                        ? 'bg-white border-indigo-500 shadow-[0_15px_40px_rgba(99,102,241,0.15)] scale-105'
+                                                        ? 'bg-white border-amber-200 shadow-[0_15px_40px_rgba(245,158,11,0.1)] scale-105'
                                                         : 'bg-slate-50 border-dashed border-slate-200'
                                                     }`}
                                             >
                                                 {card ? (
-                                                    <div className="text-center">
-                                                        <div className="text-3xl mb-2">🃏</div>
-                                                        <div className="text-[10px] text-slate-900 font-black px-2 text-center leading-tight">{card.name}</div>
+                                                    <div className="text-center relative z-10">
+                                                        <div className="text-3xl mb-2 drop-shadow-sm">🃏</div>
+                                                        <div className="text-[10px] text-slate-900 font-extrabold px-2 text-center leading-tight tracking-tighter">{card.name}</div>
                                                     </div>
                                                 ) : (
                                                     <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>
+                                                )}
+                                                {card && (
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-white pointer-events-none"></div>
                                                 )}
                                             </div>
                                         );
@@ -308,19 +311,27 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                     onClick={() => handleCardSelect(card)}
                                                     disabled={!!isSelected}
                                                     className={`
-                                                        aspect-[2/3] rounded-xl border border-slate-100 shadow-sm transition-all duration-500
-                                                        bg-white relative overflow-hidden group
+                                                        aspect-[2/3] rounded-xl border shadow-md transition-all duration-500
+                                                        relative overflow-hidden group
                                                         ${isSelected
                                                             ? 'opacity-0 pointer-events-none scale-50'
-                                                            : 'hover:-translate-y-3 hover:shadow-xl hover:z-50 hover:border-indigo-200 cursor-pointer lg:hover:scale-110'
+                                                            : 'hover:-translate-y-3 hover:shadow-2xl hover:z-50 hover:border-amber-300/50 cursor-pointer lg:hover:scale-110 active:scale-95'
                                                         }
+                                                        bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/50
                                                     `}
                                                 >
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-white opacity-40"></div>
-                                                    <div className="absolute inset-1.5 border border-slate-100 rounded-lg"></div>
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-indigo-300">
-                                                            <div className="w-1 h-1 rounded-full bg-slate-200 group-hover:bg-indigo-300"></div>
+                                                    {/* Mystical Pattern */}
+                                                    <div className="absolute inset-0 opacity-20 pointer-events-none">
+                                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-400/20 via-transparent to-transparent"></div>
+                                                    </div>
+                                                    
+                                                    {/* Gold Border Frame */}
+                                                    <div className="absolute inset-1.5 border border-amber-500/30 rounded-lg"></div>
+                                                    <div className="absolute inset-2 border border-amber-500/10 rounded-md"></div>
+                                                    
+                                                    <div className="w-full h-full flex items-center justify-center relative">
+                                                        <div className="w-7 h-7 rounded-full border border-amber-500/20 flex items-center justify-center group-hover:border-amber-400/40 transition-colors">
+                                                            <Moon className="w-3.5 h-3.5 text-amber-500/30 group-hover:text-amber-400/50 fill-amber-500/10 transition-colors" />
                                                         </div>
                                                     </div>
                                                 </button>
@@ -364,9 +375,10 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                             Position {idx + 1}
                                                         </div>
 
-                                                        <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex flex-col items-center justify-center relative overflow-hidden shadow-lg border border-slate-100 group-hover:scale-105 transition-transform duration-700">
-                                                            <div className="text-7xl mb-4 grayscale group-hover:grayscale-0 transition-all duration-700">🃏</div>
-                                                            <div className="absolute bottom-4 px-4 py-1 rounded-full bg-slate-900/10 backdrop-blur-md text-slate-900 font-black text-[10px]">
+                                                        <div className="w-full aspect-[2/3] bg-gradient-to-br from-slate-50 to-white rounded-2xl mb-8 flex flex-col items-center justify-center relative overflow-hidden shadow-xl border border-amber-100 group-hover:scale-105 transition-transform duration-700">
+                                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-amber-100/20 via-transparent to-transparent"></div>
+                                                            <div className="text-7xl mb-4 grayscale group-hover:grayscale-0 transition-all duration-700 drop-shadow-md">🃏</div>
+                                                            <div className="absolute bottom-4 px-4 py-1 rounded-full bg-amber-900/5 backdrop-blur-md text-amber-900 font-black text-[10px] border border-amber-900/10">
                                                                 {card.isReversed ? "역방향" : "정방향"}
                                                             </div>
                                                         </div>
