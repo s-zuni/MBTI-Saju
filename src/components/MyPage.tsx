@@ -74,62 +74,26 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const navigate = useNavigate();
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [session, setSession] = useState<any>(null);
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (loading) {
-      timer = setTimeout(() => {
-        setLoadingTimeout(true);
-      }, 5000);
-    } else {
-      setLoadingTimeout(false);
-    }
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  const navigate = useNavigate();
   // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
   // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
-  const creditHook = useCredits(session);
+  const creditHook = useCredits(initialSession);
   const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits, getCost } = creditHook;
 
   const fetchProfileData = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    // Failsafe timeout for Safari/Network issues: If profile fetching hangs, stop after 10 seconds.
-    const timeoutId = setTimeout(() => {
-      console.warn('MyPage profile fetch timeout reached. Releasing loading state.');
-      setLoading(false);
-      setError('네트워크 지연으로 데이터를 모두 불러오지 못했습니다. 새로고침을 시도해 주세요.');
-    }, 10000);
-
     try {
-      let currentSession = initialSession;
-
-      // Only fetch session if not provided by prop (fallback)
-      if (!currentSession) {
-        console.log('MyPage: Fetching session independently (no session prop found)');
-        const { data: { session: fetchedSession }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        currentSession = fetchedSession;
-      }
-
-      if (!currentSession) {
-        console.warn('MyPage: No session found, redirecting to home.');
+      if (!initialSession) {
+        setLoading(false);
         navigate('/');
         return;
       }
 
-      const user = currentSession.user;
-      setSession(currentSession);
-
+      const user = initialSession.user;
       const metadata = user.user_metadata || {};
-      const { full_name, gender, mbti, birth_date, birth_time, analysis } = metadata;
+      const { full_name, gender, mbti, birth_date, birth_time, analysis: metaAnalysis } = metadata;
 
       setProfile({
         id: user.id,
@@ -141,23 +105,18 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
         birth_time: birth_time || null
       });
 
-      if (analysis) {
-        setAnalysis(analysis);
+      if (metaAnalysis) {
+        setAnalysis(metaAnalysis);
       }
       
-      // Refresh credits to ensure synchronization
       if (refreshCredits) {
-        await refreshCredits();
+        refreshCredits().catch(console.error);
       }
 
-      if (!full_name || !mbti || !birth_date) {
-        setError('프로필 정보가 완전하지 않습니다. 앱을 원활하게 이용하시려면, 로그아웃 후 다시 회원가입하여 프로필 정보를 완성해주세요.');
-      }
     } catch (err: any) {
       console.error('Error fetching profile in MyPage:', err);
       setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [navigate, initialSession, refreshCredits]);
@@ -192,12 +151,20 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     setError(null);
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
+      if (!initialSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
       }
-
       if (!profile) throw new Error('프로필 정보가 없습니다.');
+
+      setIsNavigating(true);
+      // 재분석의 경우 선제적으로 크레딧 차감 시도
+      if (analysis) {
+        const spendSuccess = await spendCredits('REGENERATE_MBTI_SAJU');
+        if (!spendSuccess) {
+          setIsNavigating(false);
+          return;
+        }
+      }
 
       const requestPayload = {
         name: profile.name,
@@ -209,45 +176,34 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
       const authHeader = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${initialSession.access_token}`,
       };
 
       // 1. Core analysis (Nature, Persona, Keywords)
-      const coreData = await fetch('/api/analyze', {
+      const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify(requestPayload)
-      }).then(async res => {
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(`분석 실패: ${errData.error || errData.message || res.statusText}`);
-        }
-        return res.json();
       });
 
-      // For the first free analysis, we only save core data.
-      // Deep integration, Fortune, and Strategy are paid services in the modal.
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(`분석 실패: ${errData.error || errData.message || res.statusText}`);
+      }
+
+      const coreData = await res.json();
       const initialAnalysisData = { ...coreData };
       setAnalysis(initialAnalysisData);
 
-      // Save to Supabase metadata
+      // Save to Supabase metadata for persistence
       await supabase.auth.updateUser({
         data: { ...profile, analysis: initialAnalysisData }
       });
 
-      const isRegen = !!analysis;
-      // Deduct credit only if it's a regeneration
-      if (isRegen) {
-        try {
-          await spendCredits('REGENERATE_MBTI_SAJU');
-        } catch (creditErr) {
-          console.error('Credit deduction failed after regeneration:', creditErr);
-        }
-      }
-
     } catch (e: any) {
       setError(e.message);
     } finally {
+      setIsNavigating(false);
       setAnalysisLoading(false);
     }
   };
@@ -255,17 +211,13 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   const handleLogout = async () => {
     setLoading(true);
     try {
-      // Clear local cache/storage first to prevent ghost sessions on mobile
       localStorage.clear();
       sessionStorage.clear();
-      
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
-      // Use global signout (default) instead of scope:'local' for better cross-device consistency
       await Promise.race([supabase.auth.signOut(), timeoutPromise]);
     } catch (error: any) {
       console.error('Logout error:', error);
     } finally {
-      // Force direct navigation and reload to clean the state
       window.location.href = '/';
     }
   };
@@ -279,17 +231,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
     setLoading(true);
     try {
-      if (!session?.user?.id) throw new Error('유저 정보를 찾을 수 없습니다.');
+      if (!initialSession?.user?.id) throw new Error('유저 정보를 찾을 수 없습니다.');
 
-      // 1. Delete profile data
       const { error: deleteError } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', session.user.id);
+        .eq('id', initialSession.user.id);
 
       if (deleteError) throw deleteError;
 
-      // 2. Clear credentials and logout
       await handleLogout();
     } catch (err: any) {
       console.error('Withdrawal error:', err);
@@ -321,22 +271,6 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 p-6">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
         <span className="text-lg font-bold text-slate-700">마이페이지 정보를 불러오는 중입니다...</span>
-        
-        {loadingTimeout && (
-          <div className="mt-8 p-6 bg-rose-50 rounded-2xl border border-rose-100 max-w-sm animate-slide-up text-center">
-            <p className="text-rose-600 font-bold mb-2">로딩 시간이 길어지고 있습니다.</p>
-            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-              Safari 같은 환경에서는 쿠키 정책이나 네트워크 상태로 인해 정보 연동 및 크레딧 조회가 지연될 수 있습니다.<br />
-              <strong className="text-slate-800">빠르고 안정적인 이용을 위해 크롬(Chrome) 브라우저 사용을 권장합니다.</strong>
-            </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="w-full py-2.5 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 text-sm hover:bg-slate-50 transition-colors shadow-sm"
-            >
-              새로고침 시도하기
-            </button>
-          </div>
-        )}
       </div>
     );
   }

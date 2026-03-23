@@ -120,7 +120,11 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         let lastError;
         for (let attempt = 0; attempt <= 3; attempt++) {
             try {
-                result = await chat.sendMessage(message);
+                const timeoutMs = 45000;
+                result = await Promise.race([
+                    chat.sendMessage(message),
+                    new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))
+                ]);
                 break;
             } catch (err: any) {
                 lastError = err;

@@ -15,17 +15,21 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
     const fetchData = useCallback(async () => {
         setLoading(true);
         const timeoutId = setTimeout(() => {
-            if (loading) setLoading(false);
-        }, 5000);
+            setLoading(false);
+        }, 8000); // 8 seconds fallback
 
         try {
             let currentSession = initialSession;
             if (!currentSession) {
-                const { data: { session } } = await supabase.auth.getSession();
-                currentSession = session;
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                currentSession = fetchedSession;
             }
-            if (!currentSession?.user?.id) return;
+            if (!currentSession?.user?.id) {
+                setLoading(false);
+                return;
+            }
 
+            // fetch with individual error handling for robustness
             const [pRes, uRes] = await Promise.all([
                 supabase.from('credit_purchases').select('*').eq('user_id', currentSession.user.id).order('purchased_at', { ascending: false }),
                 supabase.from('credit_usages').select('*').eq('user_id', currentSession.user.id).order('used_at', { ascending: false })
@@ -41,7 +45,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
             clearTimeout(timeoutId);
             setLoading(false);
         }
-    }, [initialSession, loading]);
+    }, [initialSession]);
 
     useEffect(() => {
         fetchData();

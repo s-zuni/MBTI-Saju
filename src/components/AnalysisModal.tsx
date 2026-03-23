@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Provider } from '@supabase/supabase-js';
-import { isRestrictedBrowser } from '../utils/browserUtils';
 import { useNavigate } from 'react-router-dom';
 
 const MBTI_TYPES = [
@@ -50,12 +49,6 @@ const SocialLoginForm: React.FC<{
           </svg>
           Google로 계속하기
         </button>
-        {isRestrictedBrowser() && (
-          <p className="mt-2 text-[11px] text-rose-500 font-bold text-center leading-tight bg-rose-50 py-2 px-3 rounded-lg border border-rose-100">
-            ⚠️ 카카오톡/인스타 브라우저에서는 구글 로그인이 원활하지 않을 수 있습니다. 
-            <br />화면 우측 하단 <b>점 세 개(...)</b>를 눌러 <b>'다른 브라우저로 열기'</b>를 추천합니다.
-          </p>
-        )}
       </div>
 
       {/* 카카오 */}
@@ -420,23 +413,6 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
-
-  // Window focus listener to reset loading state
-  // This handles cases where the user returns from a cancelled social login popup/redirect
-  useEffect(() => {
-    const handleFocus = () => {
-      if (loading) {
-        // Wait a small delay to see if a session is actually being established
-        const timer = setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [loading]);
 
   useEffect(() => {
     if (isOpen) {

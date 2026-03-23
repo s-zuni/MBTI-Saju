@@ -54,20 +54,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
   
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-  // 15초 로딩 타임아웃 타이머
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isAuthLoading && !session) {
-      timer = setTimeout(() => {
-        setLoadingTimeout(true);
-      }, 15000);
-    } else {
-      setLoadingTimeout(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isAuthLoading, session]);
 
   // Apply inactivity logout
   useInactivityLogout(session);
@@ -190,34 +177,11 @@ function App() {
                     <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
                     <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
                   </div>
-                  <p className="text-slate-500 font-bold tracking-tight">당신의 운명을 불러오는 중...</p>
+                  <p className="text-slate-500 font-bold tracking-tight mb-4">당신의 운명을 불러오는 중...</p>
                   
-                  {loadingTimeout && (
-                    <div className="mt-8 p-6 bg-rose-50 rounded-2xl border border-rose-100 max-w-sm animate-slide-up">
-                      <p className="text-rose-600 font-bold mb-2">로딩 시간이 평소보다 길어지고 있습니다.</p>
-                      <p className="text-sm text-slate-600 mb-4 leading-relaxed text-left">
-                        모바일 환경(카카오톡, 인스타 등)에서는 소셜 로그인 처리가 지연될 수 있습니다. 
-                        문제가 지속되면 새로고침을 하거나 다시 시도해주세요.
-                      </p>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => window.location.reload()}
-                          className="flex-1 py-2.5 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 text-sm hover:bg-slate-50 transition-colors"
-                        >
-                          새로고침
-                        </button>
-                        <button 
-                          onClick={async () => {
-                            await supabase.auth.signOut();
-                            window.location.href = '/';
-                          }}
-                          className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 transition-colors"
-                        >
-                          다시 로그인
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg inline-block">
+                    💡 안정적인 서비스 이용을 위해 <b>Chrome 브라우저</b> 사용을 권장합니다.
+                  </p>
                 </div>
               ) : (
                 <Routes>
@@ -495,134 +459,44 @@ function App() {
 }
 
 const AuthCallback = () => {
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const hasExchanged = React.useRef(false);
   const navigate = useNavigate();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    // Check for error parameters in the URL first (common in OAuth failures)
+  useEffect(() => {
+    // Check for explicit error parameters
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const paramsError = params.get('error');
-    const paramsErrorDesc = params.get('error_description');
-
-    if (paramsError || paramsErrorDesc) {
-      console.error('OAuth URL Error:', paramsError, paramsErrorDesc);
-      setErrorMsg(paramsErrorDesc || paramsError || '인증 중 오류가 발생했습니다.');
-      return;
-    }
-
-    // Check hash fragments as well
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const hashError = hashParams.get('error') || hashParams.get('error_description');
-    if (hashError) {
-      setErrorMsg(hashError);
+    const isErrorParam = params.get('error') || params.get('error_description') || hashParams.get('error') || hashParams.get('error_description');
+
+    if (isErrorParam) {
+      console.error('OAuth Callback Error:', isErrorParam);
+      setErrorMsg(isErrorParam);
       return;
     }
 
-        const processAuth = async () => {
-            // Prevent double execution
-            if (hasExchanged.current) return;
-            
-            let isError = false;
-
-            try {
-                // Force a small delay for Safari storage to sync
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // 1. Handle PKCE code exchange if present
-                if (code) {
-                    hasExchanged.current = true;
-                    console.log('AuthCallback: Exchanging code for session');
-                    const { error } = await supabase.auth.exchangeCodeForSession(code);
-                    if (error) throw error;
-                    
-                    // Verify session was actually set
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session) {
-                        console.log('AuthCallback: Session established, navigating home');
-                        navigate('/', { replace: true });
-                        return;
-                    }
-                } 
-                
-                // 2. Check hash fragments for implicit flow
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const accessToken = hashParams.get('access_token');
-                
-                if (accessToken) {
-                    console.log('AuthCallback: Detected implicit flow access token');
-                    // Supabase handles the hash parsing automatically if configured, 
-                    // but we can help it by just checking getSession after a brief wait.
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session) {
-                        navigate('/', { replace: true });
-                        return;
-                    }
-                }
-
-                // 3. Last resort: just check if a session exists anyway (maybe already processed)
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                
-                if (session) {
-                    navigate('/', { replace: true });
-                } else {
-                    // One last wait for onAuthStateChange to fire
-                    supabase.auth.onAuthStateChange((event, session) => {
-                        if (session) navigate('/', { replace: true });
-                    });
-                }
-            } catch (err: any) {
-        isError = true;
+    const handleAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
         
-        // Detailed logging for Safari debugging
-        console.error('Auth processing error:', err);
-        
-        // If the error is specific to PKCE storage, try to check current session
-        const isVerifierError = err.message?.includes('verifier not found') || 
-                               err.message?.includes('Auth session missing') ||
-                               err.message?.includes('code_verifier') ||
-                               err.message?.includes('storage');
-                               
-        if (isVerifierError) {
-          // Fallback: If verifier is lost (common in Safari ITP), try fetching session directly.
-          const { data } = await supabase.auth.getSession();
-          if (data?.session) {
-            navigate('/', { replace: true });
-            return;
-          }
-          
-          // If still no session, wait briefly for the auth client to settle
+        if (session) {
+          navigate('/', { replace: true });
+        } else {
+          // If no session is found, rely on standard onAuthStateChange
           const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
-              authListener.subscription.unsubscribe();
               navigate('/', { replace: true });
             }
           });
-          
-          setTimeout(() => {
-            authListener.subscription.unsubscribe();
-            navigate('/', { replace: true });
-          }, 1500);
-          return;
         }
-        
-        setErrorMsg(err.message || '인증 처리 중 오류가 발생했습니다.');
-      } finally {
-        // Ultimate Failsafe: Redirection with shorter timeout (3s)
-        setTimeout(() => {
-          if (window.location.pathname === '/auth/callback' && !isError) {
-             console.warn('AuthCallback timeout reached, forcefully redirecting to home.');
-             navigate('/', { replace: true });
-          }
-        }, 3000);
+      } catch (err: any) {
+        console.error('AuthCallback error:', err);
+        setErrorMsg(err.message || '인증 중 예기치 않은 오류가 발생했습니다.');
       }
     };
 
-    processAuth();
-  }, [navigate, errorMsg]);
+    handleAuth();
+  }, [navigate]);
 
   if (errorMsg) {
     return (
@@ -650,9 +524,9 @@ const AuthCallback = () => {
     <div className="flex justify-center items-center h-screen bg-slate-50">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-slate-600 font-medium">인증 정보를 확인 중입니다...</p>
-        <p className="text-slate-400 text-sm mt-2 font-medium">
-          (Chrome 환경에서 작동하는 것을 추천드립니다.)
+        <p className="text-slate-600 font-medium tracking-tight mb-3">인증 처리 중입니다...</p>
+        <p className="text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg inline-block">
+          💡 안정적인 로그인 처리를 위해 <b>Chrome 브라우저</b> 사용을 권장합니다.
         </p>
       </div>
     </div>

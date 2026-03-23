@@ -24,27 +24,47 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
         const contentWidthMm = pdfPageWidth - MARGIN_MM * 2;
         const contentHeightMm = pdfPageHeight - MARGIN_MM * 2;
 
-        // Apply PDF-specific styles
+        // Apply PDF-specific styles to force readability
         element.classList.add('pdf-report-container');
+        const style = document.createElement('style');
+        style.id = 'pdf-report-print-style';
+        style.innerHTML = `
+            .pdf-report-container, .pdf-report-container * {
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                text-shadow: none !important;
+                box-shadow: none !important;
+                border-color: #eeeeee !important;
+                -webkit-print-color-adjust: exact;
+                letter-spacing: normal !important;
+            }
+            .pdf-report-container img {
+                background-color: transparent !important;
+            }
+        `;
+        document.head.appendChild(style);
         
-        // Wait briefly for style application
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Wait briefly for style application (Critical for mobile/Safari)
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        // 2. 전체 요소를 고해상도로 캡처
+        // 2. 고해상도 전체 요소 캡처
         const canvas = await html2canvas(element, {
-            scale: 2,            // 고해상도 (Retina)
+            scale: 3,            // 선명도 극대화를 위해 x3 (기존 x2에서 상향)
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            windowWidth: 820,     // Force width defined in CSS
-            // 전체 스크롤 높이로 캡처
+            windowWidth: 800,     // A4 가로 비율에 최적화된 고정폭
             height: element.scrollHeight,
             windowHeight: element.scrollHeight,
             scrollY: -window.scrollY,
         });
 
-        // Remove PDF-specific styles immediately after capture
+        // Remove PDF-specific styles immediately after capture to restore UI
         element.classList.remove('pdf-report-container');
+        const insertedStyle = document.getElementById('pdf-report-print-style');
+        if (insertedStyle) {
+            insertedStyle.remove();
+        }
 
         const ctxWidth = canvas.width;
         const ctxHeight = canvas.height;

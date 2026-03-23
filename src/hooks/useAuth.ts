@@ -24,7 +24,6 @@ const fetchOrCreateProfile = async (currentSession: Session) => {
     try {
         const { user } = currentSession;
 
-        // Optimization: If profile metadata already exists in the session, skip fetching
         if (user.user_metadata?.mbti && user.user_metadata?.birth_date) {
             return;
         }
@@ -56,7 +55,6 @@ const fetchOrCreateProfile = async (currentSession: Session) => {
         }
     } catch (error) {
         console.error('Profile init error:', error);
-        // Non-blocking error
     }
 };
 
@@ -64,31 +62,22 @@ export const useAuth = () => {
     const [state, setState] = useState({ session: globalSession, loading: globalLoading });
 
     useEffect(() => {
-        // Subscribe to global state changes
         listeners.push(setState);
 
         if (!isAuthInitialized) {
             isAuthInitialized = true;
 
             const initializeAuth = async () => {
-                // Safety timeout: If Supabase local storage is partitioned/hanging on Safari,
-                // forcefully release the loading state after 5 seconds.
-                const timeoutId = setTimeout(() => {
-                    console.warn('Auth initialization timeout triggered. Forcing loading to false.');
-                    setGlobalState(globalSession, false);
-                }, 5000);
-
                 try {
                     const { data: { session: currentSession } } = await supabase.auth.getSession();
-                    setGlobalState(currentSession, true); // Keep loading true while fetching profile
+                    setGlobalState(currentSession, true); // Loading visually until profile sync check
                     
                     if (currentSession) {
-                        fetchOrCreateProfile(currentSession).catch(err => console.error('Non-blocking profile fetch error:', err));
+                        await fetchOrCreateProfile(currentSession).catch(err => console.error(err));
                     }
                 } catch (error) {
                     console.error('Auth init error:', error);
                 } finally {
-                    clearTimeout(timeoutId);
                     setGlobalState(globalSession, false);
                 }
             };
@@ -96,18 +85,15 @@ export const useAuth = () => {
             initializeAuth();
 
             supabase.auth.onAuthStateChange(async (event, currentSession) => {
-                setGlobalState(currentSession, globalLoading); // Update session, maintain loading
-                
                 if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-                    fetchOrCreateProfile(currentSession).catch(err => console.error('Non-blocking profile sync error:', err));
+                    // Profile fetch might run in background
+                    fetchOrCreateProfile(currentSession).catch(err => console.error(err));
                 }
-                
-                setGlobalState(currentSession, false); // Ensure loading is false on any auth change
+                setGlobalState(currentSession, false);
             });
         }
 
         return () => {
-            // Unsubscribe on unmount
             listeners = listeners.filter((li) => li !== setState);
         };
     }, []);

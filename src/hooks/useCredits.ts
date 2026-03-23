@@ -219,12 +219,16 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 return false;
             }
 
-            // 3. 로컬 상태 업데이트
-            setCredits(prev => prev - cost);
+            // 3. 로컬 상태 업데이트 (Optimistic Update)
+            setCredits(prev => Math.max(0, prev - cost));
+            
+            // 4. 서버 데이터와 최종 동기화 (Force Refresh)
             await refreshCredits();
+            console.log('Credit deduction & refresh completed');
             return true;
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error using credits:', err);
+            alert(`크레딧 사용 중 오류가 발생했습니다: ${err.message || '네트워크 상태를 확인해주세요.'}`);
             return false;
         }
     }, [session, credits, getCost, refreshCredits]);

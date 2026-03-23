@@ -49,7 +49,11 @@ export async function generateContentWithRetry(
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const result = await model.generateContent(request);
+            const timeoutMs = 45000; // 45 seconds to prevent Vercel 504 Gateway Timeout (Hobby/Pro tier compat)
+            const result = await Promise.race([
+                model.generateContent(request),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))
+            ]);
             return result;
         } catch (error: any) {
             lastError = error;
