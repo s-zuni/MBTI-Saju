@@ -58,8 +58,13 @@ const BottomNav: React.FC<BottomNavProps> = () => {
                             >
                                 <div className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center transform active:scale-95 transition-all text-white">
                                     <MessagesSquare className="w-6 h-6" />
+                                    {/* HIT Badge */}
+                                    <div className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black px-1 py-0.5 rounded-sm shadow-sm scale-110">
+                                        HIT
+                                    </div>
                                 </div>
                                 <span className="text-xs font-bold text-indigo-900 mt-1">{item.label}</span>
+                                <span className="text-[8px] text-indigo-400 font-bold -mt-0.5">4,100+</span>
                             </button>
                         );
                     }

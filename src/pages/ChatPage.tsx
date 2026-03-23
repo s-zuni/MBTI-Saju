@@ -213,9 +213,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 `}
             >
                 <div className="p-4 flex flex-col h-full">
-                    <div className="flex items-center gap-2 mb-8 text-white font-bold text-xl px-2">
+                    <div className="flex items-center gap-2 mb-1 text-white font-bold text-xl px-2">
                         <Bot className="w-8 h-8 text-indigo-400" />
                         <span>운명 심층 상담</span>
+                    </div>
+                    <div className="px-2 mb-8 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">4,100+명이 상담 중</span>
                     </div>
 
                     <button

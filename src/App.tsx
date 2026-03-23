@@ -274,6 +274,7 @@ function App() {
                         if (session) openModal('mbtiSaju');
                         else openModal('analysis', 'login');
                       }}
+                      onTarotClick={() => openModal('tarot')}
                       onTripClick={() => openModal('trip')}
                       onNamingClick={() => openModal('naming')}
                       onJobClick={() => openModal('job')}
