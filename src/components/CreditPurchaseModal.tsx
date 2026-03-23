@@ -27,15 +27,26 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
+        let isMounted = true;
+        
         const fetchPlans = async () => {
-            setPlansLoading(true);
+            if (!isOpen) return;
             
-            // Timeout to prevent infinite loading in case of network/Supabase hanging
+            setPlansLoading(true);
+            console.log('[CreditPurchaseModal] Fetching plans started...');
+            
+            // Shorter timeout for better UX in Safari
             const timeoutId = setTimeout(() => {
-                setPlansLoading(false);
-            }, 8000);
+                if (isMounted) {
+                    console.warn('[CreditPurchaseModal] Fetching plans timed out (5s)');
+                    setPlansLoading(false);
+                }
+            }, 5000);
 
             try {
+                // Ensure we have a session or try to get it if initialSession is missing
+                const { data: { session } } = await supabase.auth.getSession();
+                
                 const { data, error } = await supabase
                     .from('pricing_plans')
                     .select('*')
@@ -43,19 +54,27 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                     .order('sort_order', { ascending: true });
 
                 if (error) throw error;
-                setPlans(data || []);
+                
+                if (isMounted) {
+                    console.log('[CreditPurchaseModal] Plans fetched successfully:', data?.length);
+                    setPlans(data || []);
+                }
             } catch (err) {
-                console.error('Error fetching plans:', err);
-                setPlans([]);
+                console.error('[CreditPurchaseModal] Error fetching plans:', err);
+                if (isMounted) setPlans([]);
             } finally {
                 clearTimeout(timeoutId);
-                setPlansLoading(false);
+                if (isMounted) setPlansLoading(false);
             }
         };
 
         if (isOpen) {
             fetchPlans();
         }
+
+        return () => {
+            isMounted = false;
+        };
     }, [isOpen]);
 
     if (!isOpen) return null;

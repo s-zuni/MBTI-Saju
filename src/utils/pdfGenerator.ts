@@ -37,6 +37,8 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
                 border-color: #eeeeee !important;
                 -webkit-print-color-adjust: exact;
                 letter-spacing: normal !important;
+                opacity: 1 !important;
+                visibility: visible !important;
             }
             .pdf-report-container img {
                 background-color: transparent !important;
@@ -45,11 +47,11 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
         document.head.appendChild(style);
         
         // Wait briefly for style application (Critical for mobile/Safari)
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 150));
 
         // 2. 고해상도 전체 요소 캡처
         const canvas = await html2canvas(element, {
-            scale: 3,            // 선명도 극대화를 위해 x3 (기존 x2에서 상향)
+            scale: 3,            // 선명도 극대화를 위해 x3
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
@@ -57,6 +59,7 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
             height: element.scrollHeight,
             windowHeight: element.scrollHeight,
             scrollY: -window.scrollY,
+            imageTimeout: 15000,
         });
 
         // Remove PDF-specific styles immediately after capture to restore UI
@@ -70,7 +73,6 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
         const ctxHeight = canvas.height;
 
         // 3. PDF 페이지 콘텐츠 영역 픽셀 높이 계산
-        // (mm -> pixel 비율: pdfWidthMm : ctxWidth = contentHeightMm : pageHeightInPx)
         const scaleRatio = contentWidthMm / ctxWidth;
         const contentHeightPx = contentHeightMm / scaleRatio;
 
@@ -93,6 +95,9 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
             sliceCanvas.height = sliceHeight;
             const ctx = sliceCanvas.getContext('2d');
             if (!ctx) break;
+            
+            // Critical for sharp text: Disable smoothing when copying from the high-res source
+            ctx.imageSmoothingEnabled = false;
 
             // 원본 canvas에서 해당 슬라이스 복사
             ctx.drawImage(
@@ -103,16 +108,20 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
                 ctxWidth, sliceHeight  // 대상 크기
             );
 
-            const sliceImgData = sliceCanvas.toDataURL('image/jpeg', 0.92);
+            // Use PNG for pixel-perfect text rendering (crisper than JPEG)
+            // If file size is an issue, 'image/jpeg' with quality 1.0 is the fallback.
+            const sliceImgData = sliceCanvas.toDataURL('image/png');
             const sliceHeightMm = sliceHeight * scaleRatio;
 
             pdf.addImage(
                 sliceImgData,
-                'JPEG',
+                'PNG',
                 MARGIN_MM,
                 MARGIN_MM,
                 contentWidthMm,
-                sliceHeightMm
+                sliceHeightMm,
+                undefined,
+                'FAST' // Speed up generation
             );
 
             // 페이지 번호 표시 (하단)
