@@ -23,8 +23,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     const checkUser = React.useCallback(async () => {
         let currentSession = initialSession;
         if (!currentSession) {
-            const { data: { session } } = await supabase.auth.getSession();
-            currentSession = session;
+            let retries = 0;
+            while (retries < 3) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    currentSession = session;
+                    break;
+                }
+                retries++;
+                if (retries < 3) await new Promise(resolve => setTimeout(resolve, 500));
+            }
         }
         setUser(currentSession?.user || null);
     }, [initialSession]);

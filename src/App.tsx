@@ -193,6 +193,8 @@ function App() {
                       <FeatureGrids />
                       <SocialProofToast />
 
+                      <ReviewsSection />
+                      
                       {/* Featured Analysis Section */}
                       <section className="py-24 bg-slate-50/50 relative">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
@@ -252,7 +254,6 @@ function App() {
                           </div>
                         </div>
                       </section>
-                      <ReviewsSection />
                     </>
                   } />
                   <Route path="/support" element={<SupportPage session={session} />} />

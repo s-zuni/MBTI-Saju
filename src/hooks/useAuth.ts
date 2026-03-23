@@ -69,7 +69,20 @@ export const useAuth = () => {
 
             const initializeAuth = async () => {
                 try {
-                    const { data: { session: currentSession } } = await supabase.auth.getSession();
+                    // Safari ITP Retry Logic: Sometimes storage takes a moment to be available
+                    let currentSession = null;
+                    let retries = 0;
+                    
+                    while (retries < 3) {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session) {
+                            currentSession = session;
+                            break;
+                        }
+                        retries++;
+                        if (retries < 3) await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+
                     setGlobalState(currentSession, true); // Loading visually until profile sync check
                     
                     if (currentSession) {

@@ -3,12 +3,14 @@ import { Home, Sparkles, MessagesSquare, ShoppingBag, Users } from 'lucide-react
 // Let's use: Home, Sparkles(Fortune), Brain(AI Center - using Sparkles or similar?), ShoppingBag(Store), Users(Community)
 // For AI Center let's use a special icon or button.
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useModalStore } from '../hooks/useModalStore';
 
 export interface BottomNavProps { }
 
 const BottomNav: React.FC<BottomNavProps> = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { openModal } = useModalStore();
 
     const navItems = [
         {
@@ -30,10 +32,10 @@ const BottomNav: React.FC<BottomNavProps> = () => {
             onClick: () => navigate('/chat')
         },
         {
-            icon: ShoppingBag,
-            label: '스토어',
-            path: '/store',
-            onClick: () => navigate('/store')
+            icon: Sparkles, // Using Sparkles for Tarot as well, or similar
+            label: '타로',
+            path: '/tarot', // Virtual path for active state highlighting if needed
+            onClick: () => openModal('tarot')
         },
         {
             icon: Users,
