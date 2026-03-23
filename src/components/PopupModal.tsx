@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, AlertTriangle, Monitor, Smartphone, Chrome } from 'lucide-react';
+import { X, AlertTriangle, Chrome } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const PopupModal: React.FC = () => {
@@ -23,7 +23,7 @@ const PopupModal: React.FC = () => {
             }
 
             try {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('site_settings')
                     .select('*')
                     .eq('id', 1)
@@ -39,7 +39,7 @@ const PopupModal: React.FC = () => {
         };
 
         fetchSettings();
-    }, []);
+    }, [location.pathname]);
 
     const handleClose = () => {
         if (dontShowToday) {
