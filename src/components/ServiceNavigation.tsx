@@ -10,7 +10,7 @@ interface ServiceNavigationProps {
 }
 
 const services = [
-    { id: 'fortune', label: '운세', icon: Sparkles, color: 'text-purple-500', userCount: '4,200+', isPopular: false },
+    { id: 'fortune', label: '운세', icon: Compass, color: 'text-purple-500', userCount: '4,200+', isPopular: false },
     { id: 'mbti', label: '융합분석', icon: Compass, color: 'text-indigo-500', userCount: '5,300+', isPopular: true },
     { id: 'trip', label: '여행', icon: Plane, color: 'text-sky-500', userCount: '800+', isPopular: false },
     { id: 'naming', label: '작명', icon: PenTool, color: 'text-teal-500', userCount: '1,200+', isPopular: false },

@@ -51,6 +51,7 @@ const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
+const PopupModal = lazy(() => import('./components/PopupModal'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -468,6 +469,7 @@ function App() {
                 onCheckPlans={() => openModal('creditPurchase')}
                 currentCredits={credits}
               />
+              <PopupModal />
             </div>
           } />
         </Routes>

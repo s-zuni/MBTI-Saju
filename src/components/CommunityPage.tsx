@@ -74,7 +74,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
         setLoading(true);
         let query = supabase
             .from('posts')
-            .select('*', { count: 'exact' })
+            .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
             .order('is_announcement', { ascending: false })
             .order('created_at', { ascending: false });
 

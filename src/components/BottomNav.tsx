@@ -1,7 +1,5 @@
 import React from 'react';
-import { Home, Compass, MessagesSquare, Sparkles, Users } from 'lucide-react'; // MessagesSquare for Community? Or Users? 
-// Let's use: Home, Sparkles(Fortune), Brain(AI Center - using Sparkles or similar?), ShoppingBag(Store), Users(Community)
-// For AI Center let's use a special icon or button.
+import { Home, Compass, MessagesSquare, Moon, Users } from 'lucide-react'; 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useModalStore } from '../hooks/useModalStore';
 
@@ -32,9 +30,9 @@ const BottomNav: React.FC<BottomNavProps> = () => {
             onClick: () => navigate('/chat')
         },
         {
-            icon: Sparkles, 
+            icon: Moon, 
             label: '타로',
-            path: '/tarot', // Virtual path for active state highlighting if needed
+            path: '/tarot',
             onClick: () => openModal('tarot')
         },
         {

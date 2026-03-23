@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Sparkles, X, Shuffle, ArrowRight } from 'lucide-react';
+import { Loader2, Sparkles, X, Shuffle, ArrowRight, Moon, Compass, Sun } from 'lucide-react';
 import { TarotCard, TAROT_DECK } from '../../data/tarotDeck';
 import SpreadSelector, { SpreadType } from './SpreadSelector';
 import { Tier } from '../../hooks/useSubscription';
@@ -19,7 +19,6 @@ interface TarotModalProps {
 }
 
 const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit, onNavigate, credits, session: initialSession }) => {
-    // New Steps: spread -> question -> shuffle -> select -> result
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
     const [question, setQuestion] = useState("");
@@ -62,34 +61,30 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             setSelectedCards([]);
             setReading(null);
             setSelectedSpread('daily');
-            // 모달이 열릴 때마다 덱을 랜덤으로 셔플
             setDeck(fisherYatesShuffle(TAROT_DECK));
         }
     }, [isOpen]);
 
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
-        setSelectedCards([]); // Reset cards when changing spread
-        setReading(null);     // Reset reading when changing spread
+        setSelectedCards([]);
+        setReading(null);
         setStep('question');
     };
 
     const handleStart = () => {
         if (!question.trim()) {
-            alert("질문을 입력해주세요!");
+            alert("무엇이 궁금하신지 질문을 입력해주세요!");
             return;
         }
-        // Shuffle Deck (Fisher-Yates)
         setDeck(fisherYatesShuffle(TAROT_DECK));
         setStep('shuffle');
 
-        // Auto proceed to selection after shuffle animation
         setTimeout(() => {
             setStep('select');
-        }, 2000);
+        }, 2200);
     };
 
-    // Determine how many cards to pick based on spread
     const getRequiredCardCount = () => {
         switch (selectedSpread) {
             case 'daily': return 1;
@@ -108,12 +103,11 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         setSelectedCards(newSelection);
 
         if (newSelection.length === requiredCount) {
-            setTimeout(() => fetchReading(newSelection), 500);
+            setTimeout(() => fetchReading(newSelection), 600);
         }
     };
 
     const fetchReading = async (cards: TarotCard[]) => {
-        // 1. Credit check first
         const cost = SERVICE_COSTS.TAROT;
         if (credits !== undefined && credits < cost) {
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
@@ -153,7 +147,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             const data = await response.json();
             setReading(data);
 
-            // Save to Supabase (History)
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 await supabase.from('tarot_readings').insert({
@@ -162,16 +155,14 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                     question: question,
                     selected_cards: cards,
                     reading_result: data
-                }).then(({ error }) => {
-                    if (error) console.error("Failed to save reading:", error);
                 });
             }
 
         } catch (error) {
             console.error(error);
-            alert("타로 해석 중 오류가 발생했습니다.");
+            alert("타로 해석 중 오류가 발생했습니다. 다시 시도해 주세요.");
             setStep('select');
-            setSelectedCards([]); // Reset selection on error
+            setSelectedCards([]);
         } finally {
             setLoading(false);
         }
@@ -180,247 +171,265 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
-            {/* Background Atmosphere */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 blur-[100px] rounded-full"></div>
-            </div>
-
-            <div className="relative w-full max-w-5xl h-[95vh] bg-slate-900/80 rounded-3xl border border-indigo-500/30 overflow-hidden flex flex-col shadow-2xl backdrop-blur-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in p-4 md:p-6">
+            <div className="relative w-full max-w-5xl h-[92vh] md:h-[88vh] bg-white rounded-[2.5rem] overflow-hidden flex flex-col shadow-[0_40px_100px_rgba(0,0,0,0.15)] border border-white/40">
+                {/* Mystical Background Decoration */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-50 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-50 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-indigo-500/20 bg-indigo-950/30 relative z-10">
-                    <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-indigo-200 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-purple-400" /> 타로 상담소
-                    </h3>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white">
+                <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 bg-white/80 backdrop-blur-md relative z-10 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                            <Moon className="w-5 h-5 text-white fill-white" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900">타로 오라클</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Secret Guidance</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors text-slate-400">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center relative z-10">
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar">
+                    <div className="p-8 flex flex-col items-center justify-center min-h-full">
 
-                    {/* Step 0: Spread Selection */}
-                    {step === 'spread' && (
-                        <SpreadSelector
-                            onSelect={handleSpreadSelect}
-                            tier={tier}
-                            onUpgradeRequired={onUpgradeRequired}
-                        />
-                    )}
-
-                    {/* Step 1: Question */}
-                    {step === 'question' && (
-                        <div className="w-full max-w-lg text-center animate-fade-up">
-                            <h2 className="text-3xl font-bold text-white mb-6">무엇이 궁금하신가요?</h2>
-                            <p className="text-indigo-200 mb-8 font-medium">
-                                {selectedSpread === 'daily' && "오늘 하루, 나에게 필요한 조언은?"}
-                                {selectedSpread === 'love' && "그 사람의 속마음이 궁금한가요?"}
-                                {selectedSpread === 'career' && "이직, 취업, 사업... 나의 성공 운은?"}
-                            </p>
-
-                            <input
-                                type="text"
-                                value={question}
-                                onChange={(e) => setQuestion(e.target.value)}
-                                placeholder="구체적으로 질문할수록 정확도가 높아집니다."
-                                className="w-full bg-white/5 border border-indigo-300/30 rounded-xl p-5 text-white placeholder-indigo-300/30 text-lg mb-8 focus:outline-none focus:border-indigo-400/80 focus:ring-1 focus:ring-indigo-400/80 transition-all"
-                                onKeyDown={(e) => e.key === 'Enter' && handleStart()}
+                        {step === 'spread' && (
+                            <SpreadSelector
+                                onSelect={handleSpreadSelect}
+                                tier={tier}
+                                onUpgradeRequired={onUpgradeRequired}
                             />
+                        )}
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setStep('spread')}
-                                    className="px-6 py-4 rounded-xl text-indigo-300 hover:bg-white/5 transition-colors"
-                                >
-                                    이전
-                                </button>
-                                <button
-                                    onClick={handleStart}
-                                    className="btn-primary flex-1 py-4 text-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30"
-                                >
-                                    카드 섞기 <Shuffle className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                        {step === 'question' && (
+                            <div className="w-full max-w-xl text-center animate-fade-up">
+                                <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-8 shadow-inner">
+                                    <Sparkles className="w-8 h-8 text-indigo-500 animate-pulse" />
+                                </div>
+                                <h2 className="text-3xl font-black text-slate-900 mb-4">현재 어떤 고민이 있나요?</h2>
+                                <p className="text-slate-400 mb-10 font-medium break-keep">
+                                    질문이 구체적일수록 별들이 더욱 명확한 메시지를 들려줍니다.<br/>
+                                    <span className="text-indigo-500 italic">"한 번에 한 가지 질문에만 집중해보세요."</span>
+                                </p>
 
-                    {/* Step 2: Shuffle Animation */}
-                    {step === 'shuffle' && (
-                        <div className="text-center animate-pulse">
-                            <div className="w-48 h-72 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl mx-auto mb-8 shadow-[0_0_50px_rgba(79,70,229,0.5)] rotate-12 transition-transform duration-500 relative group">
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30 mix-blend-overlay"></div>
-                                <div className="absolute inset-2 border border-white/20 rounded-lg"></div>
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <Sparkles className="w-12 h-12 text-white/50 animate-spin-slow" />
+                                <div className="relative mb-10 group">
+                                    <input
+                                        type="text"
+                                        value={question}
+                                        onChange={(e) => setQuestion(e.target.value)}
+                                        placeholder="예: 이번 이직이 저에게 좋은 기회일까요?"
+                                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[2rem] px-8 py-6 text-slate-900 placeholder-slate-300 text-lg outline-none focus:border-indigo-100 focus:bg-white focus:shadow-[0_10px_30px_rgba(99,102,241,0.06)] transition-all"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleStart()}
+                                    />
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-100 transition-opacity">
+                                        <Shuffle className="w-6 h-6 text-indigo-400" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setStep('spread')}
+                                        className="px-8 py-5 rounded-[1.5rem] text-slate-400 font-bold hover:bg-slate-50 transition-colors"
+                                    >
+                                        뒤로가기
+                                    </button>
+                                    <button
+                                        onClick={handleStart}
+                                        className="flex-1 bg-slate-900 py-5 rounded-[1.5rem] text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    >
+                                        운명의 카드 섞기 <ArrowRight className="w-5 h-5" />
+                                    </button>
                                 </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-indigo-200">운명을 섞는 중...</h2>
-                            <p className="text-indigo-400/60 mt-2">잠시만 기다려주세요</p>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Step 3: Select Cards */}
-                    {step === 'select' && (
-                        <div className="w-full h-full flex flex-col items-center">
-                            <h2 className="text-xl font-bold text-indigo-200 mb-8">
-                                신중하게 <span className="text-white">{getRequiredCardCount()}장</span>의 카드를 뽑아주세요
-                                ({selectedCards.length}/{getRequiredCardCount()})
-                            </h2>
-
-                            {/* Chosen Cards Preview */}
-                            <div className="flex gap-4 mb-12 min-h-[140px] items-center">
-                                {Array.from({ length: getRequiredCardCount() }).map((_, idx) => {
-                                    const card = selectedCards[idx];
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className={`w-24 h-36 rounded-lg border-2 flex items-center justify-center transition-all duration-300
-                                                ${card
-                                                    ? 'bg-indigo-600 border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]'
-                                                    : 'bg-white/5 border-dashed border-white/20'
-                                                }`}
-                                        >
-                                            {card ? (
-                                                <div className="text-center">
-                                                    <div className="text-2xl mb-1">🃏</div>
-                                                    <div className="text-[10px] text-white font-bold px-1 truncate max-w-[80px]">{card.name}</div>
-                                                </div>
-                                            ) : (
-                                                <span className="text-white/20 font-bold text-xl">{idx + 1}</span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                        {step === 'shuffle' && (
+                            <div className="text-center animate-fade-in py-10">
+                                <div className="relative w-48 h-72 mx-auto mb-12">
+                                    <div className="absolute inset-0 bg-indigo-600 rounded-2xl rotate-6 translate-x-4 shadow-xl"></div>
+                                    <div className="absolute inset-0 bg-purple-600 rounded-2xl -rotate-3 -translate-x-2 shadow-xl"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-2xl z-10">
+                                        <div className="absolute inset-2 border-2 border-white/20 rounded-xl"></div>
+                                        <Moon className="w-16 h-16 text-white/50 animate-pulse fill-white/10" />
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-black text-slate-900 animate-pulse">운명의 카드를 배치하는 중...</h3>
+                                <p className="text-slate-400 mt-4 font-bold tracking-widest uppercase text-xs">Mixing the future...</p>
                             </div>
+                        )}
 
-                            {/* Deck Spread - Grid pattern */}
-                            <div className="w-full max-w-5xl overflow-y-auto pb-12 custom-scrollbar px-4">
-                                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-2 sm:gap-4 pt-8 pb-4">
-                                    {deck.map((card, idx) => {
-                                        const isSelected = selectedCards.find(c => c.id === card.id);
+                        {step === 'select' && (
+                            <div className="w-full flex flex-col items-center animate-fade-in">
+                                <div className="text-center mb-12">
+                                    <h2 className="text-2xl font-black text-slate-900">
+                                        <span className="text-indigo-600">{getRequiredCardCount()}장</span>의 카드를 선택하세요
+                                    </h2>
+                                    <p className="text-slate-400 mt-2 font-medium">당신의 에너지가 강하게 느껴지는 카드를 뽑아주세요</p>
+                                </div>
+
+                                <div className="flex gap-4 mb-14 min-h-[160px] items-center">
+                                    {Array.from({ length: getRequiredCardCount() }).map((_, idx) => {
+                                        const card = selectedCards[idx];
                                         return (
-                                            <button
-                                                key={card.id}
-                                                onClick={() => handleCardSelect(card)}
-                                                disabled={!!isSelected}
-                                                className={`
-                                                    aspect-[2/3] rounded-lg border border-white/10 shadow-lg transition-all duration-300
-                                                    bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 relative group
-                                                    ${isSelected
-                                                        ? 'opacity-0 pointer-events-none scale-50'
-                                                        : 'hover:-translate-y-2 hover:shadow-[0_0_20px_rgba(139,92,246,0.6)] hover:z-50 hover:scale-110 cursor-pointer'
-                                                    }
-                                                `}
+                                            <div
+                                                key={idx}
+                                                className={`w-28 h-40 rounded-2xl border-2 flex items-center justify-center transition-all duration-500
+                                                    ${card
+                                                        ? 'bg-white border-indigo-500 shadow-[0_15px_40px_rgba(99,102,241,0.15)] scale-105'
+                                                        : 'bg-slate-50 border-dashed border-slate-200'
+                                                    }`}
                                             >
-                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay rounded-lg"></div>
-                                                <div className="absolute inset-1 border border-white/5 rounded-md"></div>
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <Sparkles className="w-4 h-4 text-indigo-300/30" />
-                                                </div>
-                                            </button>
+                                                {card ? (
+                                                    <div className="text-center">
+                                                        <div className="text-3xl mb-2">🃏</div>
+                                                        <div className="text-[10px] text-slate-900 font-black px-2 text-center leading-tight">{card.name}</div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>
+                                                )}
+                                            </div>
                                         );
                                     })}
                                 </div>
-                            </div>
-                        </div>
-                    )}
 
-                    {/* Step 4: Result */}
-                    {step === 'result' && (
-                        <div className="w-full h-full overflow-y-auto custom-scrollbar animate-fade-in">
-                            {loading ? (
-                                <div className="flex flex-col items-center justify-center h-full">
-                                    <div className="relative">
-                                        <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 animate-pulse"></div>
-                                        <Loader2 className="w-16 h-16 text-indigo-300 animate-spin relative z-10" />
-                                    </div>
-                                    <p className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200 mt-8 mb-2">
-                                        별들의 메시지를 해석하고 있습니다...
-                                    </p>
-                                    <p className="text-indigo-400/60 text-sm">잠시만 기다려주세요</p>
-                                </div>
-                            ) : reading && (
-                                <div className="max-w-4xl mx-auto pb-12">
-                                    <div className="text-center mb-12">
-                                        <div className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-200 text-sm font-bold mb-4">
-                                            {SPREADS.find(s => s.id === selectedSpread)?.title}
-                                        </div>
-                                        <h2 className="text-3xl font-bold text-white mb-2">"{question}"</h2>
-                                        <div className="h-1 w-20 bg-gradient-to-r from-transparent via-indigo-500 to-transparent mx-auto mt-6"></div>
-                                    </div>
-
-                                    {/* Cards Reveal */}
-                                    <div className={`grid gap-6 mb-12 ${selectedSpread === 'daily' ? 'grid-cols-1 max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-3'}`}>
-                                        {reading.cardReadings.map((card: any, idx: number) => (
-                                            <div key={idx} className="group relative perspective-1000">
-                                                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 transition-colors relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                                                    <div className="text-xs text-indigo-300 font-bold uppercase tracking-wider mb-3">
-                                                        {/* Fallback to index if spread specific labels aren't returned yet, though they should be in cardReadings usually or inferred */}
-                                                        CARD {idx + 1}
-                                                    </div>
-
-                                                    <div className="w-full aspect-[2/3] bg-black/40 rounded-xl mb-6 flex items-center justify-center relative overflow-hidden group-hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] transition-shadow">
-                                                        {/* Placeholder for Card Image - would use card.id to load asset */}
-                                                        <div className="text-6xl animate-float">🃏</div>
-                                                        <div className="absolute bottom-0 w-full p-2 bg-gradient-to-t from-black/80 to-transparent text-white font-bold text-sm">
-                                                            {card.isReversed ? "역방향" : "정방향"}
+                                <div className="w-full max-w-5xl px-4">
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-3">
+                                        {deck.map((card, idx) => {
+                                            const isSelected = selectedCards.find(c => c.id === card.id);
+                                            return (
+                                                <button
+                                                    key={card.id}
+                                                    onClick={() => handleCardSelect(card)}
+                                                    disabled={!!isSelected}
+                                                    className={`
+                                                        aspect-[2/3] rounded-xl border border-slate-100 shadow-sm transition-all duration-500
+                                                        bg-white relative overflow-hidden group
+                                                        ${isSelected
+                                                            ? 'opacity-0 pointer-events-none scale-50'
+                                                            : 'hover:-translate-y-3 hover:shadow-xl hover:z-50 hover:border-indigo-200 cursor-pointer lg:hover:scale-110'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-white opacity-40"></div>
+                                                    <div className="absolute inset-1.5 border border-slate-100 rounded-lg"></div>
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-indigo-300">
+                                                            <div className="w-1 h-1 rounded-full bg-slate-200 group-hover:bg-indigo-300"></div>
                                                         </div>
                                                     </div>
-
-                                                    <h3 className="text-lg font-bold text-white mb-2">{card.cardName}</h3>
-                                                    <p className="text-sm text-indigo-200/80 leading-relaxed">{card.interpretation}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Analysis */}
-                                    <div className="space-y-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-                                        <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900/40 p-8 rounded-3xl border border-indigo-500/30 shadow-xl">
-                                            <h3 className="text-xl font-bold text-indigo-100 mb-6 flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-500/20 rounded-lg">
-                                                    <Sparkles className="w-5 h-5 text-indigo-300" />
-                                                </div>
-                                                종합 해석
-                                            </h3>
-                                            <p className="text-indigo-100/90 leading-8 whitespace-pre-wrap">{reading.overallReading}</p>
-                                        </div>
-
-                                        <div className="bg-gradient-to-br from-purple-900/40 to-slate-900/40 p-8 rounded-3xl border border-purple-500/30 shadow-xl">
-                                            <h3 className="text-xl font-bold text-purple-100 mb-6 flex items-center gap-3">
-                                                <div className="p-2 bg-purple-500/20 rounded-lg">
-                                                    <ArrowRight className="w-5 h-5 text-purple-300" />
-                                                </div>
-                                                조언
-                                            </h3>
-                                            <p className="text-purple-100/90 leading-8 font-medium">{reading.advice}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-12 text-center flex gap-4 justify-center">
-                                        <button onClick={() => { setStep('question'); setQuestion(""); }} className="btn-secondary px-8 py-3 rounded-full border-white/10 hover:bg-white/10">
-                                            같은 스프레드로 다시
-                                        </button>
-                                        <button onClick={() => { setStep('spread'); }} className="btn-primary px-8 py-3 rounded-full shadow-lg shadow-indigo-500/20">
-                                            다른 스프레드 선택
-                                        </button>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </div>
+                        )}
+
+                        {step === 'result' && (
+                            <div className="w-full h-full animate-fade-in relative">
+                                {loading ? (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <div className="relative mb-12">
+                                            <div className="absolute inset-0 bg-indigo-600 blur-[40px] opacity-20 animate-pulse"></div>
+                                            <Loader2 className="w-16 h-16 text-indigo-600 animate-spin relative z-10" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3">메시지를 해석하는 중입니다</h3>
+                                        <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Divine Interpretation...</p>
+                                    </div>
+                                ) : reading && (
+                                    <div className="max-w-4xl mx-auto py-4">
+                                        <div className="text-center mb-16">
+                                            <span className="text-[10px] font-black tracking-[0.2em] text-indigo-500 uppercase py-2 px-6 rounded-full bg-indigo-50 border border-indigo-100 mb-6 inline-block">
+                                                {SPREADS.find(s => s.id === selectedSpread)?.title}
+                                            </span>
+                                            <h2 className="text-3xl font-black text-slate-900 mb-6 break-keep leading-tight px-4">"{question}"</h2>
+                                            <div className="flex items-center justify-center gap-2 text-slate-300">
+                                                <div className="w-3 h-px bg-slate-200"></div>
+                                                <Compass className="w-4 h-4" />
+                                                <div className="w-3 h-px bg-slate-200"></div>
+                                            </div>
+                                        </div>
+
+                                        <div className={`grid gap-8 mb-20 ${selectedSpread === 'daily' ? 'grid-cols-1 max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-3'}`}>
+                                            {reading.cardReadings.map((card: any, idx: number) => (
+                                                <div key={idx} className="group flex flex-col animate-fade-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+                                                    <div className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-white shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 relative overflow-hidden flex flex-col h-full">
+                                                        <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-6 border-b border-indigo-100 pb-2 inline-block">
+                                                            Position {idx + 1}
+                                                        </div>
+
+                                                        <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex flex-col items-center justify-center relative overflow-hidden shadow-lg border border-slate-100 group-hover:scale-105 transition-transform duration-700">
+                                                            <div className="text-7xl mb-4 grayscale group-hover:grayscale-0 transition-all duration-700">🃏</div>
+                                                            <div className="absolute bottom-4 px-4 py-1 rounded-full bg-slate-900/10 backdrop-blur-md text-slate-900 font-black text-[10px]">
+                                                                {card.isReversed ? "역방향" : "정방향"}
+                                                            </div>
+                                                        </div>
+
+                                                        <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
+                                                        <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep flex-1">{card.interpretation}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="space-y-10 mb-20">
+                                            <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden animate-fade-up">
+                                                {/* Decoration */}
+                                                <div className="absolute -top-20 -right-20 w-60 h-60 bg-indigo-500 blur-[100px] opacity-20"></div>
+                                                
+                                                <div className="relative z-10">
+                                                    <h4 className="text-2xl font-black mb-8 flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                                                            <Sparkles className="w-5 h-5 text-indigo-300" />
+                                                        </div>
+                                                        별들의 종합 조언
+                                                    </h4>
+                                                    <p className="text-lg leading-9 text-indigo-50/90 whitespace-pre-wrap font-medium">{reading.overallReading}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-10 rounded-[3rem] border-4 border-indigo-50 shadow-inner animate-fade-up">
+                                                <h4 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                                                        <Sun className="w-5 h-5 text-indigo-500" />
+                                                    </div>
+                                                    실천 가이드
+                                                </h4>
+                                                <p className="text-xl leading-9 text-slate-700 font-bold italic tracking-tight break-keep">"{reading.advice}"</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-4 justify-center pb-10">
+                                            <button 
+                                                onClick={() => { setStep('question'); setQuestion(""); }}
+                                                className="px-10 py-5 rounded-[1.8rem] bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all border border-slate-100"
+                                            >
+                                                다시 물어보기
+                                            </button>
+                                            <button 
+                                                onClick={() => setStep('spread')}
+                                                className="px-10 py-5 rounded-[1.8rem] bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 hover:scale-105 transition-all"
+                                            >
+                                                다른 주제 선택
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-// Helper for Spread Title Display in Result
 const SPREADS = [
     { id: 'daily', title: '오늘의 운세' },
     { id: 'love', title: '연애 고민' },

@@ -31,8 +31,14 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
 
             // fetch with individual error handling for robustness
             const [pRes, uRes] = await Promise.all([
-                supabase.from('credit_purchases').select('*').eq('user_id', currentSession.user.id).order('purchased_at', { ascending: false }),
-                supabase.from('credit_usages').select('*').eq('user_id', currentSession.user.id).order('used_at', { ascending: false })
+                supabase.from('credit_purchases')
+                    .select('id, purchased_credits, price_paid, purchased_at, status')
+                    .eq('user_id', currentSession.user.id)
+                    .order('purchased_at', { ascending: false }),
+                supabase.from('credit_usages')
+                    .select('id, service_type, used_at, credits_used')
+                    .eq('user_id', currentSession.user.id)
+                    .order('used_at', { ascending: false })
             ]);
 
             setData({
