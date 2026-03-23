@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, Users } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
 import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
