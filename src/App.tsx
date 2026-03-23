@@ -482,8 +482,7 @@ const AuthCallback = () => {
         if (session) {
           navigate('/', { replace: true });
         } else {
-          // If no session is found, rely on standard onAuthStateChange
-          const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+          supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
               navigate('/', { replace: true });
             }
