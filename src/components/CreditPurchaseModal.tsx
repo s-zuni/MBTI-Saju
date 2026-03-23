@@ -44,8 +44,8 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             }, 5000);
 
             try {
-                // Ensure we have a session or try to get it if initialSession is missing
-                const { data: { session } } = await supabase.auth.getSession();
+                // Ensure we have a session to ensure the auth state is ready for Safari
+                await supabase.auth.getSession();
                 
                 const { data, error } = await supabase
                     .from('pricing_plans')
