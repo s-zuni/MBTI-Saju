@@ -49,6 +49,8 @@ const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
+const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
+const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -189,6 +191,7 @@ function App() {
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} />
                       <FeatureGrids />
+                      <SocialProofToast />
 
                       {/* Featured Analysis Section */}
                       <section className="py-24 bg-slate-50/50 relative">
@@ -211,7 +214,11 @@ function App() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-brain w-7 h-7 text-indigo-600"><path d="M9 18a4 4 0 0 1-2-3.82 4 4 0 0 1-1-2.18V7l3-4 4 4" /><path d="M15 18a4 4 0 0 0 2-3.82 4 4 0 0 0 1-2.18V7l-3-4-4 4" /><path d="M12 2c-1.8 0-3.6.48-5.11 1.34A6 6 0 0 0 12 18V2z" /><path d="M12 2a6 6 0 0 0 5.11 1.34A6 6 0 0 1 12 18V2z" /><path d="M12 18h0" /></svg>
                               </div>
                               <h3 className="text-xl font-bold mb-3 group-hover:text-indigo-600 transition-colors">심도 있는 성격 매칭</h3>
-                              <p className="text-sm text-slate-500 leading-relaxed font-medium">당신의 무의식과 타고난 운명이 어떻게 연결되어 있는지 과학적으로 분석합니다.</p>
+                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">당신의 무의식과 타고난 운명이 어떻게 연결되어 있는지 과학적으로 분석합니다.</p>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">5,300+ 이용 중</span>
+                                <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md">인기</span>
+                              </div>
                             </button>
 
                             <button
@@ -222,7 +229,10 @@ function App() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-briefcase w-7 h-7 text-teal-600"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2" /><path d="M12 15h0" /></svg>
                               </div>
                               <h3 className="text-xl font-bold mb-3 group-hover:text-teal-600 transition-colors">커리어 컨설팅</h3>
-                              <p className="text-sm text-slate-500 leading-relaxed font-medium">나의 선천적 기운과 후천적 성향이 가장 잘 발휘될 수 있는 직업군을 제안합니다.</p>
+                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">나의 선천적 기운과 후천적 성향이 가장 잘 발휘될 수 있는 직업군을 제안합니다.</p>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-teal-50 text-teal-600 text-[10px] font-bold rounded-md">900+ 이용 중</span>
+                              </div>
                             </button>
 
                             <button
@@ -233,11 +243,16 @@ function App() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users w-7 h-7 text-purple-600"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                               </div>
                               <h3 className="text-xl font-bold mb-3 group-hover:text-purple-600 transition-colors">인간관계 솔루션</h3>
-                              <p className="text-sm text-slate-500 leading-relaxed font-medium">당신이 조심해야 할 운명과 시너지를 낼 수 있는 인연의 색깔을 알려드립니다.</p>
+                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">당신이 조심해야 할 운명과 시너지를 낼 수 있는 인연의 색깔을 알려드립니다.</p>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-purple-50 text-purple-600 text-[10px] font-bold rounded-md">3,300+ 이용 중</span>
+                                <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold rounded-md">만족도 99%</span>
+                              </div>
                             </button>
                           </div>
                         </div>
                       </section>
+                      <ReviewsSection />
                     </>
                   } />
                   <Route path="/support" element={<SupportPage session={session} />} />
@@ -296,6 +311,7 @@ function App() {
 
               <Footer />
               <BottomNav />
+              <SocialProofToast />
 
               {/* Modals are now lazy loaded and managed by openModal store */}
               <AnalysisModal

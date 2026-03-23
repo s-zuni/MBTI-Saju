@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, Users } from 'lucide-react';
 import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 
@@ -328,32 +328,69 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
             <Zap className="w-10 h-10 text-indigo-600 animate-pulse" />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2">심층 융합 분석이 필요합니다</h3>
-          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed">
+          <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">심층 융합 분석이 필요합니다</h3>
+          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">
             기본 성향 분석 외에 MBTI와 사주를 결합한 상세 융합 진단, 2026년 운세 흐름, 분야별 전략은 유료 서비스입니다.
           </p>
           
-          <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100">
+          <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100 shadow-inner">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-bold text-slate-600">서비스 비용</span>
               <span className="text-lg font-black text-indigo-600">{SERVICE_COSTS.MBTI_SAJU} 크레딧</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-slate-400">
+            <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
               <span>보유 크레딧</span>
               <span>{credits || 0} 크레딧</span>
             </div>
           </div>
 
-          <button
-            onClick={handleStartDeepAnalysis}
-            disabled={isPurchasingDeep}
-            className="w-full max-w-sm py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-black shadow-xl hover:shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
-          >
-            {isPurchasingDeep ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-            심층 분석 시작하기
-          </button>
+          <div className="relative mb-6">
+              <button
+                onClick={handleStartDeepAnalysis}
+                disabled={isPurchasingDeep}
+                className="w-full max-w-xs py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-black shadow-xl hover:shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
+              >
+                {isPurchasingDeep ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                심층 분석 시작하기
+              </button>
+              <div className="absolute -top-3 -right-3 bg-amber-400 text-slate-900 text-[9px] font-black px-2 py-1 rounded-lg border-2 border-white shadow-lg rotate-12">
+                HOT 🔥
+              </div>
+          </div>
+
+          <div className="flex items-center gap-2 mb-12">
+            <div className="flex -space-x-2">
+                {[1,2,3].map(i => (
+                    <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+                        <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="user" className="w-full h-full object-cover" />
+                    </div>
+                ))}
+            </div>
+            <span className="text-[10px] font-bold text-slate-400">방금 전 5,300+명이 이 분석을 선택했습니다.</span>
+          </div>
           
-          <p className="mt-4 text-[10px] text-slate-400">결제 시 즉시 분석이 시작되며 리포트가 완성됩니다.</p>
+          <div className="w-full relative overflow-hidden rounded-[32px] border border-slate-100 opacity-60 grayscale-[0.3] select-none pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white z-10 flex items-center justify-center">
+                <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-xl border border-white/20 transform -translate-y-12">
+                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Report Preview Restricted</p>
+                </div>
+            </div>
+            <div className="p-8 space-y-10 blur-[8px]">
+                <div className="space-y-4">
+                    <div className="h-4 w-32 bg-slate-200 rounded-full"></div>
+                    <div className="h-24 w-full bg-slate-100 rounded-2xl"></div>
+                </div>
+                <div className="space-y-4">
+                    <div className="h-4 w-48 bg-slate-200 rounded-full"></div>
+                    <div className="h-40 w-full bg-slate-900 rounded-2xl"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="h-32 bg-slate-100 rounded-2xl"></div>
+                    <div className="h-32 bg-slate-100 rounded-2xl"></div>
+                </div>
+            </div>
+          </div>
+          <p className="mt-8 text-[10px] text-slate-400">결제 시 즉시 분석이 시작되며 리포트가 완성됩니다.</p>
         </div>
       );
     }

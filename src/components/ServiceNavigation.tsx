@@ -10,12 +10,12 @@ interface ServiceNavigationProps {
 }
 
 const services = [
-    { id: 'fortune', label: '운세', icon: Sparkles, color: 'text-purple-500' },
-    { id: 'mbti', label: '분석', icon: Compass, color: 'text-indigo-500' },
-    { id: 'trip', label: '여행', icon: Plane, color: 'text-sky-500' },
-    { id: 'naming', label: '작명', icon: PenTool, color: 'text-teal-500' },
-    { id: 'job', label: '직업', icon: Ticket, color: 'text-orange-500' },
-    { id: 'compatibility', label: '궁합', icon: Heart, color: 'text-pink-500' },
+    { id: 'fortune', label: '운세', icon: Sparkles, color: 'text-purple-500', userCount: '4,200+', isPopular: false },
+    { id: 'mbti', label: '융합분석', icon: Compass, color: 'text-indigo-500', userCount: '5,300+', isPopular: true },
+    { id: 'trip', label: '여행', icon: Plane, color: 'text-sky-500', userCount: '800+', isPopular: false },
+    { id: 'naming', label: '작명', icon: PenTool, color: 'text-teal-500', userCount: '1,200+', isPopular: false },
+    { id: 'job', label: '직업', icon: Ticket, color: 'text-orange-500', userCount: '900+', isPopular: false },
+    { id: 'compatibility', label: '궁합', icon: Heart, color: 'text-pink-500', userCount: '3,300+', isPopular: true },
 ] as const;
 
 const ServiceNavigation: React.FC<ServiceNavigationProps> = ({ currentService, onNavigate, onClose }) => {
@@ -27,14 +27,24 @@ const ServiceNavigation: React.FC<ServiceNavigationProps> = ({ currentService, o
                         key={s.id}
                         onClick={() => s.id !== currentService && onNavigate(s.id as ServiceType)}
                         className={`
-                            flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all
+                            flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all relative
                             ${currentService === s.id
                                 ? 'bg-slate-900 text-white shadow-md transform scale-105'
                                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}
                         `}
                     >
-                        <s.icon className={`w-3.5 h-3.5 ${currentService === s.id ? 'text-white' : s.color}`} />
-                        {s.label}
+                        <s.icon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentService === s.id ? 'text-white' : s.color}`} />
+                        <span className="flex flex-col items-start leading-none">
+                            <span className="flex items-center gap-1">
+                                {s.label}
+                                {s.isPopular && (
+                                    <span className="bg-amber-400 text-white text-[8px] px-1 rounded-sm scale-90 origin-left">HIT</span>
+                                )}
+                            </span>
+                            <span className={`text-[8px] font-medium ${currentService === s.id ? 'text-slate-400' : 'text-slate-400'}`}>
+                                {s.userCount}
+                            </span>
+                        </span>
                     </button>
                 ))}
             </div>
