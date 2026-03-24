@@ -49,11 +49,20 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                         사주와 MBTI 전문가가 당신의 운명을 분석할 준비를 마쳤습니다.
                     </p>
 
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 mb-6">
-                        <p className="text-indigo-700 font-bold text-sm flex items-center gap-2">
-                            ✨ 크레딧을 충전하고 다양한 심층 분석을 경험해보세요!
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 mb-6 shadow-sm relative overflow-hidden">
+                        <div className="absolute -right-4 -top-4 w-12 h-12 bg-amber-200/30 rounded-full blur-xl"></div>
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-200">
+                                <span className="text-white font-black text-xs">25</span>
+                            </div>
+                            <p className="text-amber-800 font-black text-base">
+                                가입 축하 크레딧 지급!
+                            </p>
+                        </div>
+                        <p className="text-slate-700 font-bold text-sm">
+                            반가운 마음을 담아 <span className="text-orange-600 text-base font-black">25크레딧</span>을 선물로 드렸어요.
                         </p>
-                        <p className="text-indigo-600 text-xs mt-1">운세, 사주, 타로, 운명 심층 상담 등 다양한 서비스가 준비되어 있습니다.</p>
+                        <p className="text-slate-500 text-xs mt-2 font-semibold">분석 리포트, 사주 작명 등 원하는 서비스를 마음껏 이용해보세요.</p>
                     </div>
 
                     <div className="w-full space-y-3">
