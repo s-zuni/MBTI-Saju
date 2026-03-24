@@ -83,8 +83,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         `;
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const modelName = (process.env.GEMINI_MODEL || "gemini-3-flash-preview").trim();
         const model = genAI.getGenerativeModel({
-            model: "gemini-3.1-flash-lite-preview",
+            model: modelName,
             systemInstruction: systemPrompt
         });
 
@@ -98,7 +99,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 }));
 
                 // Gemini API requires the first message in history to be from 'user'
-                // Loop to remove messages from the front until we find a user message or empty the list
                 while (history.length > 0 && history[0]?.role !== 'user') {
                     history.shift();
                 }
@@ -108,19 +108,35 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             history = [];
         }
 
-        const chat = model.startChat({
+        let chat = model.startChat({
             history: history,
             generationConfig: {
                 maxOutputTokens: 500,
             },
         });
 
-        // Retry logic for sendMessage (handles 503/429 transient errors)
+        // Retry logic for sendMessage (handles 503/429 transient errors and model fallback)
         let result;
-        let lastError;
+        let lastError: any;
+        let currentModelName = modelName;
+
         for (let attempt = 0; attempt <= 3; attempt++) {
             try {
                 const timeoutMs = 45000;
+                
+                // If the previous attempt failed with a retryable error on the primary, switch to fallback
+                if (attempt > 0 && currentModelName !== "gemini-1.5-flash") {
+                    const msg = lastError?.message || lastError?.toString() || '';
+                    const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+                    
+                    if (isRetryable) {
+                        console.warn(`[Fallback] Switching to gemini-1.5-flash due to transient error on ${currentModelName}`);
+                        currentModelName = "gemini-1.5-flash";
+                        const fallbackModel = genAI.getGenerativeModel({ model: currentModelName, systemInstruction: systemPrompt });
+                        chat = fallbackModel.startChat({ history: history, generationConfig: { maxOutputTokens: 500 } });
+                    }
+                }
+
                 result = await Promise.race([
                     chat.sendMessage(message),
                     new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))

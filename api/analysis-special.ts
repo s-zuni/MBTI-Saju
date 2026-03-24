@@ -152,22 +152,47 @@ export default async function handler(req: any, res: any) {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         // Robust model selection: trim and strip potential quotes
         const modelNameFromEnv = (process.env.GEMINI_MODEL || "").trim().replace(/^["']|["']$/g, '');
-        // Use gemini-3.1-flash-lite-preview as fallback as it's the working model in this project
-        const modelName = (modelNameFromEnv && modelNameFromEnv.length > 5) ? modelNameFromEnv : "gemini-3.1-flash-lite-preview";
+        // Use gemini-3-flash-preview as primary
+        const modelName = (modelNameFromEnv && modelNameFromEnv.length > 5) ? modelNameFromEnv : "gemini-3-flash-preview";
+        let currentModelName = modelName;
         
-        const model = genAI.getGenerativeModel({ 
-            model: modelName, 
+        let model = genAI.getGenerativeModel({ 
+            model: currentModelName, 
             systemInstruction: systemPrompt
         });
         
-        console.log(`[Gemini Call] Model: ${modelName}, Type: ${type}`);
-        const result = await generateContentWithRetry(model, {
-            contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { 
-                responseMimeType: "application/json",
-                temperature: 0.8
+        console.log(`[Gemini Call] Model: ${currentModelName}, Type: ${type}`);
+        let result;
+        try {
+            result = await generateContentWithRetry(model, {
+                contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+                generationConfig: { 
+                    responseMimeType: "application/json",
+                    temperature: 0.8
+                }
+            });
+        } catch (error: any) {
+            // Fallback for 503/429
+            const msg = error.message || '';
+            const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+            if (isRetryable && currentModelName !== "gemini-1.5-flash") {
+                console.warn(`[Fallback] Switching to gemini-1.5-flash for special analysis: ${type}`);
+                currentModelName = "gemini-1.5-flash";
+                model = genAI.getGenerativeModel({ 
+                    model: currentModelName, 
+                    systemInstruction: systemPrompt
+                });
+                result = await generateContentWithRetry(model, {
+                    contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+                    generationConfig: { 
+                        responseMimeType: "application/json",
+                        temperature: 0.8
+                    }
+                });
+            } else {
+                throw error;
             }
-        });
+        }
         
         const responseText = result.response.text();
         console.log(`[Gemini Response] Type: ${type}, Success: ${!!responseText}, Length: ${responseText?.length || 0}`);

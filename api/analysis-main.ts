@@ -164,20 +164,46 @@ export default async function handler(req: any, res: any) {
 
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview").trim();
-        const model = genAI.getGenerativeModel({ 
-            model: modelName, 
+        const modelName = (process.env.GEMINI_MODEL || "gemini-3-flash-preview").trim();
+        let currentModelName = modelName;
+        let model = genAI.getGenerativeModel({ 
+            model: currentModelName, 
             systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
         });
         
-        const result = await generateContentWithRetry(model, {
-            contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { 
-                responseMimeType: "application/json",
-                temperature: 0.7,
-                maxOutputTokens: 4096
+        let result;
+        try {
+            result = await generateContentWithRetry(model, {
+                contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+                generationConfig: { 
+                    responseMimeType: "application/json",
+                    temperature: 0.7,
+                    maxOutputTokens: 4096
+                }
+            });
+        } catch (error: any) {
+            // Fallback for 503/429 on preview model
+            const msg = error.message || '';
+            const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+            if (isRetryable && currentModelName !== "gemini-1.5-flash") {
+                console.warn(`[Fallback] Switching to gemini-1.5-flash for ${part} analysis`);
+                currentModelName = "gemini-1.5-flash";
+                model = genAI.getGenerativeModel({ 
+                    model: currentModelName, 
+                    systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
+                });
+                result = await generateContentWithRetry(model, {
+                    contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+                    generationConfig: { 
+                        responseMimeType: "application/json",
+                        temperature: 0.7,
+                        maxOutputTokens: 4096
+                    }
+                });
+            } else {
+                throw error;
             }
-        });
+        }
         
         const responseText = result.response.text();
         if (!responseText) throw new Error("AI returned an empty response");
