@@ -4,8 +4,10 @@
 -- 1. profiles 테이블의 credits 컬럼 기본값을 25로 설정
 ALTER TABLE public.profiles ALTER COLUMN credits SET DEFAULT 25;
 
--- 2. 기존 가입자 중 크레딧이 0이거나 NULL인 경우 25크레딧 지급 (선택 사항)
--- UPDATE public.profiles SET credits = 25 WHERE credits = 0 OR credits IS NULL;
+-- 2. 기존 가입자 중 크레딧이 0이거나 NULL인 경우 25크레딧 소급 지급
+UPDATE public.profiles 
+SET credits = 25 
+WHERE credits = 0 OR credits IS NULL;
 
 -- 3. 트리거 함수 생성 (더 확실한 지급을 위해)
 CREATE OR REPLACE FUNCTION public.handle_new_user_credits()

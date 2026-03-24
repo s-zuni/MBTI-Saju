@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2 } from 'lucide-react';
+import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 // import { useNavigate } from 'react-router-dom';
 
@@ -48,6 +48,9 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPost, setEditingPost] = useState<Post | null>(null);
+
+    const [reportTarget, setReportTarget] = useState<{ type: 'post' | 'comment', id: string } | null>(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     // const navigate = useNavigate();
 
@@ -334,6 +337,23 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                         fetchPosts();
                     }}
                     onEdit={() => handleEditClick(selectedPost)}
+                    onReport={(type, id) => {
+                        setReportTarget({ type, id });
+                        setIsReportModalOpen(true);
+                    }}
+                />
+            )}
+
+            {/* Report Modal */}
+            {isReportModalOpen && reportTarget && (
+                <ReportModal
+                    onClose={() => {
+                        setIsReportModalOpen(false);
+                        setReportTarget(null);
+                    }}
+                    targetType={reportTarget.type}
+                    targetId={reportTarget.id}
+                    user={user}
                 />
             )}
         </div>
@@ -459,7 +479,7 @@ const WriteModal = ({ onClose, onSuccess, user, postToEdit }: { onClose: () => v
     );
 };
 
-const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post, onClose: () => void, user: any, onDelete?: () => void, onEdit?: () => void }) => {
+const PostDetailModal = ({ post, onClose, user, onDelete, onEdit, onReport }: { post: Post, onClose: () => void, user: any, onDelete?: () => void, onEdit?: () => void, onReport: (type: 'post' | 'comment', id: string) => void }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [replyTo, setReplyTo] = useState<string | null>(null); // ID of comment being replied to
@@ -558,6 +578,14 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                                             <Edit2 className="w-3 h-3" /> 수정
                                         </button>
                                     )}
+                                    {user && user.id !== post.user_id && (
+                                        <button
+                                            onClick={() => onReport('post', post.id)}
+                                            className="text-xs text-slate-400 hover:text-rose-500 flex items-center gap-0.5 ml-1"
+                                        >
+                                            <AlertTriangle className="w-3 h-3" /> 신고
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -583,12 +611,22 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                                             <span className="text-xs text-slate-400">{new Date(comment.created_at).toLocaleTimeString().slice(0, 5)}</span>
                                         </div>
                                         <p className="text-slate-600">{comment.content}</p>
-                                        <button
-                                            onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                                            className="text-xs text-indigo-500 hover:underline mt-1 font-medium"
-                                        >
-                                            답글 달기
-                                        </button>
+                                        <div className="flex gap-2 mt-1">
+                                            <button
+                                                onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
+                                                className="text-xs text-indigo-500 hover:underline font-medium"
+                                            >
+                                                답글 달기
+                                            </button>
+                                            {user && user.id !== comment.user_id && (
+                                                <button
+                                                    onClick={() => onReport('comment', comment.id)}
+                                                    className="text-xs text-slate-400 hover:text-rose-500 font-medium"
+                                                >
+                                                    신고
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Replies */}
@@ -597,6 +635,14 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                                             <div key={reply.id} className="bg-slate-50/50 p-2 rounded-lg">
                                                 <div className="flex justify-between items-start">
                                                     <span className="font-bold text-slate-600 text-xs">{reply.author_name}</span>
+                                                    {user && user.id !== reply.user_id && (
+                                                        <button
+                                                            onClick={() => onReport('comment', reply.id)}
+                                                            className="text-[10px] text-slate-400 hover:text-rose-500"
+                                                        >
+                                                            신고
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <p className="text-slate-500 text-xs">{reply.content}</p>
                                             </div>
@@ -645,6 +691,97 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit }: { post: Post
                         </button>
                     </div>
                     {replyTo && <p className="text-xs text-center text-slate-400 mt-2">답글 작성 중...</p>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ReportModal = ({ onClose, targetType, targetId, user }: { onClose: () => void, targetType: 'post' | 'comment', targetId: string, user: any }) => {
+    const [reason, setReason] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const reasons = [
+        '부적절한 홍보 게시물',
+        '음란물 또는 자극적인 내용',
+        '욕설, 비하, 차별적 발언',
+        '개인정보 노출',
+        '기타'
+    ];
+
+    const handleSubmit = async () => {
+        if (!user) {
+            alert('로그인이 필요한 서비스입니다.');
+            return;
+        }
+        if (!reason.trim()) {
+            alert('신고 사유를 선택하거나 입력해주세요.');
+            return;
+        }
+
+        setLoading(true);
+        const { error } = await supabase
+            .from('community_reports')
+            .insert({
+                reporter_id: user.id,
+                post_id: targetType === 'post' ? targetId : null,
+                comment_id: targetType === 'comment' ? targetId : null,
+                reason,
+                status: 'pending'
+            });
+
+        if (error) {
+            alert('신고 제출 실패: ' + error.message);
+        } else {
+            alert('신고가 접수되었습니다. 관리자 확인 후 조치하겠습니다.');
+            onClose();
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm p-6 animate-fade-up">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-rose-600">
+                        <AlertTriangle className="w-5 h-5" /> {targetType === 'post' ? '게시물' : '댓글'} 신고
+                    </h3>
+                    <button onClick={onClose}><X className="w-6 h-6 text-slate-400" /></button>
+                </div>
+                
+                <div className="space-y-3">
+                    <p className="text-sm text-slate-500 mb-2">신고 사유를 선택해주세요.</p>
+                    <div className="grid grid-cols-1 gap-2">
+                        {reasons.map(r => (
+                            <button
+                                key={r}
+                                onClick={() => setReason(r)}
+                                className={`px-4 py-3 rounded-xl text-sm text-left transition-all border ${
+                                    reason === r 
+                                    ? 'bg-rose-50 border-rose-200 text-rose-600 font-bold' 
+                                    : 'bg-slate-50 border-transparent text-slate-600'
+                                }`}
+                            >
+                                {r}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    <textarea
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-rose-200 transition-all outline-none h-24 resize-none mt-2"
+                        placeholder="상세 사유를 입력해주세요 (선택사항)"
+                        value={reason && !reasons.includes(reason) ? reason : ''}
+                        onChange={e => setReason(e.target.value)}
+                    ></textarea>
+
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="w-full py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 disabled:bg-slate-300 mt-4"
+                    >
+                        {loading ? '제출 중...' : '신고 제출하기'}
+                    </button>
+                    <p className="text-[10px] text-center text-slate-400 mt-2">허위 신고시 불이익을 받을 수 있습니다.</p>
                 </div>
             </div>
         </div>
