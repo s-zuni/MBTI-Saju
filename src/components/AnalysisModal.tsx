@@ -503,32 +503,16 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       // Update public.profiles table simultaneously
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const updateData: any = {
-          name: name,
-          gender: gender,
-          mbti: mbti,
-          birth_date: birthDate,
-          birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
-          email: user.email
-        };
-
-        // 신규 가입(프로필 완성) 시 25크레딧 지급
-        if (mode === 'complete_profile') {
-          // 기존 크레딧이 있는지 확인 후 없거나 0인 경우에만 지급 (중복 지급 방지)
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('credits')
-            .eq('id', user.id)
-            .single();
-          
-          if (!profile || !profile.credits || profile.credits === 0) {
-            updateData.credits = 25;
-          }
-        }
-
         await supabase
           .from('profiles')
-          .update(updateData)
+          .update({
+            name: name,
+            gender: gender,
+            mbti: mbti,
+            birth_date: birthDate,
+            birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
+            email: user.email
+          })
           .eq('id', user.id);
       }
 
