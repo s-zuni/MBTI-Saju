@@ -11,9 +11,7 @@ import {
     X,
     FileText,
     ShieldAlert,
-    CheckCircle,
     XCircle,
-    MessageSquare,
     User
 } from 'lucide-react';
 
