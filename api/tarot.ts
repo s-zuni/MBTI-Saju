@@ -108,12 +108,15 @@ export default async (req: any, res: any) => {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
             model: "gemini-3-flash-preview",
-            systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use plain text or bullet points for emphasis."
+            systemInstruction: systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다."
         });
 
         const result = await generateContentWithRetry(model, {
             contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { responseMimeType: "application/json" },
+            generationConfig: { 
+                responseMimeType: "application/json",
+                maxOutputTokens: 2048
+            },
             safetySettings: [
                 { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any },
                 { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },

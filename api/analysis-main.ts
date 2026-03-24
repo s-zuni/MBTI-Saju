@@ -190,7 +190,7 @@ export default async function handler(req: any, res: any) {
                 currentModelName = "gemini-1.5-flash";
                 model = genAI.getGenerativeModel({ 
                     model: currentModelName, 
-                    systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
+                    systemInstruction: systemPrompt + "\n절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(•), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다. 문단 간 공백을 활용하여 상세히 설명하세요."
                 });
                 result = await generateContentWithRetry(model, {
                     contents: [{ role: 'user', parts: [{ text: userQuery }] }],

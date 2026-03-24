@@ -49,7 +49,7 @@ export default async function handler(req: any, res: any) {
     2. 답변 내용을 단순한 줄글로 나열하지 말고, 반드시 '글머리표(-)'와 '문단 간 공백(줄바꿈)'을 사용하여 항목별로 깔끔하게 시각화하세요.
     3. 중요한 포인트나 상세 설명은 최소 3개 이상의 하위 항목(-)으로 나누어 설명하세요.
     4. 가독성을 위해 한 문단은 최대 3~4줄을 넘지 않도록 하고, 문단 사이에 반드시 빈 줄을 추가하세요.
-    5. ** (별표 두 개) 등 마크다운 강조 문법을 절대로 사용하지 마세요. (사용 금지 유지)
+    5. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다. (사용 금지 엄격 준수)
     6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (영어 사용 금지)
     7. 뻔한 조언 대신, 사용자 개인의 MBTI와 사주 기운이 반영된 독특하고 실질적인 인사이트를 제공하세요.`;
 
@@ -168,7 +168,8 @@ export default async function handler(req: any, res: any) {
                 contents: [{ role: 'user', parts: [{ text: userQuery }] }],
                 generationConfig: { 
                     responseMimeType: "application/json",
-                    temperature: 0.8
+                    temperature: 0.8,
+                    maxOutputTokens: 2048
                 }
             });
         } catch (error: any) {
@@ -209,7 +210,7 @@ export default async function handler(req: any, res: any) {
         res.status(500).json({ 
             error: getKoreanErrorMessage(error) || "분석 정보를 가져오는 중 오류가 발생했습니다.",
             details: errorMessage,
-            model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview"
+            model: process.env.GEMINI_MODEL || "gemini-3-flash-preview"
         });
     }
 }

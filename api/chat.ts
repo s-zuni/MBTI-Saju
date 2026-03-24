@@ -77,8 +77,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
  
         **FORMATTING RULES**:
         - Use emojis (🌿, 🔥, 💧, ✨) sparingly to add atmosphere.
-        - **핵심 중심의 짧은 답변**: 서론과 결론을 최소화하고, 사용자의 질문에 대한 핵심 분석을 가장 먼저, 간결하게 제시하세요. 문장 당 길이를 짧게 유지하고 불필요한 수식어를 제거하세요. (최대 3문단 이내)
-        - **NO BOLDING**: Remember, absolutely no ** permitted.
+        - **심층적이고 풍부한 분석**: 사용자의 질문에 대해 최소 3~4개의 명확한 관점이나 포인트(예: 1년차, 2년차 조언 등)를 포함하여 깊이 있게 분석하세요. 답변의 전체 분량은 공백 포함 약 600~800자 정도로 상세해야 합니다.
+        - **절대적 금지 사항 (CRITICAL)**: 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 대신 문단 구분, 줄바꿈, 이모지, 글머리 기호(1., 2., •) 등을 사용하여 가독성을 높이세요. ** 을 사용하면 시스템 오류가 발생하니 주의하세요.
         - **Language**: Korean Only.
         `;
 
@@ -111,7 +111,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         let chat = model.startChat({
             history: history,
             generationConfig: {
-                maxOutputTokens: 500,
+                maxOutputTokens: 2048,
             },
         });
 
@@ -133,7 +133,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                         console.warn(`[Fallback] Switching to gemini-1.5-flash due to transient error on ${currentModelName}`);
                         currentModelName = "gemini-1.5-flash";
                         const fallbackModel = genAI.getGenerativeModel({ model: currentModelName, systemInstruction: systemPrompt });
-                        chat = fallbackModel.startChat({ history: history, generationConfig: { maxOutputTokens: 500 } });
+                        chat = fallbackModel.startChat({ history: history, generationConfig: { maxOutputTokens: 2048 } });
                     }
                 }
 
@@ -166,7 +166,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         // Explicitly check for model availability or forbidden errors
         const errorMessage = getKoreanErrorMessage(error);
         if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-            console.error('Requested model not found. Check availability of gemini-3.1-flash-lite-preview');
+            console.error('Requested model not found. Check availability of gemini-3-flash-preview');
         }
 
         res.status(500).json({
