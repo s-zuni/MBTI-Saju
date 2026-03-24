@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { generatePDF } from '../utils/pdfGenerator';
+import { stripMarkdown } from '../utils/textUtils';
 import { useRef } from 'react';
 
 interface TripModalProps {
@@ -172,7 +173,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-2 text-sky-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <Plane className="w-4 h-4" /> Destination Guidance
+                                <Plane className="w-4 h-4" />
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
                                 운명 여행 플랜
@@ -224,7 +225,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                 </h4>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Departure</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">출발일</p>
                                         <input
                                             type="date"
                                             className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
@@ -233,7 +234,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Arrival</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">도착일</p>
                                         <input
                                             type="date"
                                             className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
@@ -283,9 +284,9 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                             {/* Summary Card */}
                             <div className="report-card bg-slate-900 text-white border-none p-10 relative overflow-hidden">
                                 <Sparkles className="absolute top-6 right-6 w-10 h-10 text-white/10" />
-                                <p className="text-sky-400 font-black mb-2 uppercase tracking-[0.3em] text-[10px]">Planner's Summary</p>
+                                <p className="text-sky-400 font-black mb-2 uppercase tracking-[0.3em] text-[10px]"></p>
                                 <p className="text-xl font-bold leading-relaxed italic text-slate-100">
-                                    "{result.summary}"
+                                    "{stripMarkdown(result.summary)}"
                                 </p>
                             </div>
 
@@ -301,7 +302,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                                 <h5 className="text-xl font-black text-slate-950">{place.name}</h5>
                                                 <span className="px-3 py-1 bg-sky-50 text-sky-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-sky-100">Must Visit</span>
                                             </div>
-                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{place.reason}</p>
+                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(place.reason)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -323,7 +324,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                                     {i !== result.itinerary!.length - 1 && <div className="w-[2px] grow bg-slate-100 mt-2"></div>}
                                                 </div>
                                                 <div className="report-card flex-1">
-                                                    <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{day.schedule}</p>
+                                                    <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(day.schedule)}</p>
                                                 </div>
                                             </div>
                                         ))}

@@ -6,6 +6,7 @@ import { Tier } from '../../hooks/useSubscription';
 import { supabase } from '../../supabaseClient';
 import { ServiceType } from '../ServiceNavigation';
 import { SERVICE_COSTS } from '../../config/creditConfig';
+import { stripMarkdown } from '../../utils/textUtils';
 
 interface TarotModalProps {
     isOpen: boolean;
@@ -187,7 +188,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-slate-900">타로 오라클</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Secret Guidance</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
                         </div>
                     </div>
                     <button onClick={onClose} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors text-slate-400">
@@ -260,7 +261,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                     </div>
                                 </div>
                                 <h3 className="text-2xl font-black text-slate-900 animate-pulse">운명의 카드를 배치하는 중...</h3>
-                                <p className="text-slate-400 mt-4 font-bold tracking-widest uppercase text-xs">Mixing the future...</p>
+                                <p className="text-slate-400 mt-4 font-bold tracking-widest uppercase text-xs">카드를 섞는 중...</p>
                             </div>
                         )}
 
@@ -351,7 +352,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                             <Loader2 className="w-16 h-16 text-indigo-600 animate-spin relative z-10" />
                                         </div>
                                         <h3 className="text-2xl font-black text-slate-900 mb-3">메시지를 해석하는 중입니다</h3>
-                                        <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Divine Interpretation...</p>
+                                        <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">메시지 해석 중...</p>
                                     </div>
                                 ) : reading && (
                                     <div className="max-w-4xl mx-auto py-4">
@@ -384,7 +385,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                         </div>
 
                                                         <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
-                                                        <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep flex-1">{card.interpretation}</p>
+                                                        <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep flex-1">{stripMarkdown(card.interpretation)}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -402,7 +403,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                         </div>
                                                         별들의 종합 조언
                                                     </h4>
-                                                    <p className="text-lg leading-9 text-indigo-50/90 whitespace-pre-wrap font-medium">{reading.overallReading}</p>
+                                                    <p className="text-lg leading-9 text-indigo-50/90 whitespace-pre-wrap font-medium">{stripMarkdown(reading.overallReading)}</p>
                                                 </div>
                                             </div>
 
@@ -413,7 +414,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                     </div>
                                                     실천 가이드
                                                 </h4>
-                                                <p className="text-xl leading-9 text-slate-700 font-bold italic tracking-tight break-keep">"{reading.advice}"</p>
+                                                <p className="text-xl leading-9 text-slate-700 font-bold italic tracking-tight break-keep">"{stripMarkdown(reading.advice)}"</p>
                                             </div>
                                         </div>
 

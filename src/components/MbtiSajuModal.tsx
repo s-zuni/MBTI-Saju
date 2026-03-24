@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
 import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { stripMarkdown } from '../utils/textUtils';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -402,7 +403,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="text-center mb-6 py-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border border-indigo-100">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2">나의 운명 별명</p>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3">
-              ✨ {analysis.fusionNickname} ✨
+              ✨ {stripMarkdown(analysis.fusionNickname)} ✨
             </h3>
             <p className="text-xs text-slate-500 mb-4">{analysis.mbti} × {analysis.saju?.dayMaster?.korean || '사주'} 융합</p>
             <button
@@ -420,7 +421,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         {analysis.reportTitle && (
           <div className="text-center mb-10 py-4 border-y border-slate-100 italic">
             <h3 className="text-xl font-bold text-slate-800">
-              "{analysis.reportTitle}"
+              "{stripMarkdown(analysis.reportTitle)}"
             </h3>
           </div>
         )}
@@ -435,13 +436,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               </h4>
               <div className="report-card">
                 <p className="text-slate-900 font-bold mb-4 text-md">
-                  {analysis.nature?.dayPillarSummary ? `"${analysis.nature.dayPillarSummary}"` : "사주 원국 분석"}
+                  {analysis.nature?.dayPillarSummary ? `"${stripMarkdown(analysis.nature.dayPillarSummary)}"` : "사주 원국 분석"}
                 </p>
                 <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
-                  {analysis.nature?.dayMasterAnalysis && <p className="whitespace-pre-wrap">• 일간: {analysis.nature.dayMasterAnalysis}</p>}
-                  {analysis.nature?.dayBranchAnalysis && <p className="whitespace-pre-wrap">• 일지: {analysis.nature.dayBranchAnalysis}</p>}
-                  {analysis.nature?.monthBranchAnalysis && <p className="whitespace-pre-wrap">• 월지: {analysis.nature.monthBranchAnalysis}</p>}
-                  {!analysis.nature && analysis.sajuReading && <p className="whitespace-pre-line">{analysis.sajuReading}</p>}
+                  {analysis.nature?.dayMasterAnalysis && <p className="whitespace-pre-wrap">• 일간: {stripMarkdown(analysis.nature.dayMasterAnalysis)}</p>}
+                  {analysis.nature?.dayBranchAnalysis && <p className="whitespace-pre-wrap">• 일지: {stripMarkdown(analysis.nature.dayBranchAnalysis)}</p>}
+                  {analysis.nature?.monthBranchAnalysis && <p className="whitespace-pre-wrap">• 월지: {stripMarkdown(analysis.nature.monthBranchAnalysis)}</p>}
+                  {!analysis.nature && analysis.sajuReading && <p className="whitespace-pre-line">{stripMarkdown(analysis.sajuReading)}</p>}
                 </div>
               </div>
             </section>
@@ -478,7 +479,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-3 sm:px-4 py-3 font-bold text-slate-900 whitespace-nowrap">{el.element}</td>
                           <td className="px-2 sm:px-4 py-3 text-center font-black text-indigo-600">{getElementCount(el.element)}</td>
-                          <td className="px-3 sm:px-4 py-3 text-[11px] sm:text-sm leading-relaxed">{el.interpretation}</td>
+                          <td className="px-3 sm:px-4 py-3 text-[11px] sm:text-sm leading-relaxed">{stripMarkdown(el.interpretation)}</td>
                         </tr>
                       );
                     })}
@@ -497,8 +498,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <div className="space-y-4">
                 {analysis.deepIntegration.integrationPoints?.map((p: any, i: number) => (
                   <div key={i} className="report-card">
-                    <h5 className="font-bold text-slate-900 mb-2">{p.subtitle}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{p.content}</p>
+                    <h5 className="font-bold text-slate-900 mb-2">{stripMarkdown(p.subtitle)}</h5>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(p.content)}</p>
                   </div>
                 ))}
               </div>
@@ -513,16 +514,16 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               </h4>
               <div className="report-card bg-slate-50 border-slate-200">
                 <h5 className="font-black text-slate-900 mb-4 text-lg">
-                  {analysis.persona.mbtiNickname || analysis.mbti}
+                  {stripMarkdown(analysis.persona.mbtiNickname) || analysis.mbti}
                 </h5>
                 <div className="space-y-6 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                   <div>
                     <strong className="text-slate-900 block mb-1">핵심 에너지 (주기능)</strong>
-                    {analysis.persona.dominantFunction}
+                    {stripMarkdown(analysis.persona.dominantFunction)}
                   </div>
                   <div>
                     <strong className="text-slate-900 block mb-1">사회적 상호작용 (부기능)</strong>
-                    {analysis.persona.auxiliaryFunction}
+                    {stripMarkdown(analysis.persona.auxiliaryFunction)}
                   </div>
                 </div>
               </div>
@@ -536,12 +537,12 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <Calendar className="w-5 h-5" /> 운세 흐름 가이드
               </h4>
               <div className="report-card bg-slate-900 text-white border-none p-6 sm:p-10">
-                <p className="text-indigo-400 font-bold mb-2 uppercase tracking-widest text-[10px]">Annual Theme</p>
+                <p className="text-indigo-400 font-bold mb-2 uppercase tracking-widest text-[10px]"></p>
                 <h5 className="text-xl sm:text-2xl font-black mb-6 italic leading-tight">
-                  {analysis.yearlyFortune?.theme ? `"${analysis.yearlyFortune.theme}"` : "2026년 대운세 흐름"}
+                  {analysis.yearlyFortune?.theme ? `"${stripMarkdown(analysis.yearlyFortune.theme)}"` : "2026년 대운세 흐름"}
                 </h5>
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                  {analysis.yearlyFortune?.overview || analysis.fortune2026}
+                  {stripMarkdown(analysis.yearlyFortune?.overview || analysis.fortune2026)}
                 </p>
               </div>
             </section>
@@ -555,14 +556,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <div className="space-y-4">
                 {analysis.warnings.watchOut && analysis.warnings.watchOut.map((w: any, i: number) => (
                   <div key={`watch-${i}`} className="report-card border-l-4 border-l-red-500">
-                    <h5 className="font-bold text-slate-900 mb-2">🚨 {w.title}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed">{w.description}</p>
+                    <h5 className="font-bold text-slate-900 mb-2">🚨 {stripMarkdown(w.title)}</h5>
+                    <p className="text-slate-600 text-sm leading-relaxed">{stripMarkdown(w.description)}</p>
                   </div>
                 ))}
                 {analysis.warnings.avoid && analysis.warnings.avoid.map((a: any, i: number) => (
                   <div key={`avoid-${i}`} className="report-card border-l-4 border-l-slate-800">
-                    <h5 className="font-bold text-slate-900 mb-2">🛑 {a.title}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed">{a.description}</p>
+                    <h5 className="font-bold text-slate-900 mb-2">🛑 {stripMarkdown(a.title)}</h5>
+                    <p className="text-slate-600 text-sm leading-relaxed">{stripMarkdown(a.description)}</p>
                   </div>
                 ))}
               </div>
@@ -579,25 +580,25 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {/* 직업운 */}
                 {analysis.fieldStrategies.career && (
                   <div className="report-card bg-teal-50/50 border-none">
-                    <h5 className="font-bold text-teal-900 mb-2 bg-teal-100/50 inline-block px-3 py-1 rounded-md text-xs">💼 {analysis.fieldStrategies.career.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.career.analysis}</p>
-                    <p className="text-teal-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.career.advice}</p>
+                    <h5 className="font-bold text-teal-900 mb-2 bg-teal-100/50 inline-block px-3 py-1 rounded-md text-xs">💼 {stripMarkdown(analysis.fieldStrategies.career.subtitle)}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{stripMarkdown(analysis.fieldStrategies.career.analysis)}</p>
+                    <p className="text-teal-700 text-sm leading-relaxed"><strong>조언:</strong> {stripMarkdown(analysis.fieldStrategies.career.advice)}</p>
                   </div>
                 )}
                 {/* 연애운 */}
                 {analysis.fieldStrategies.love && (
                   <div className="report-card bg-pink-50/50 border-none">
-                    <h5 className="font-bold text-pink-900 mb-2 bg-pink-100/50 inline-block px-3 py-1 rounded-md text-xs">💖 {analysis.fieldStrategies.love.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.love.analysis}</p>
-                    <p className="text-pink-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.love.advice}</p>
+                    <h5 className="font-bold text-pink-900 mb-2 bg-pink-100/50 inline-block px-3 py-1 rounded-md text-xs">💖 {stripMarkdown(analysis.fieldStrategies.love.subtitle)}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{stripMarkdown(analysis.fieldStrategies.love.analysis)}</p>
+                    <p className="text-pink-700 text-sm leading-relaxed"><strong>조언:</strong> {stripMarkdown(analysis.fieldStrategies.love.advice)}</p>
                   </div>
                 )}
                 {/* 재물운 */}
                 {analysis.fieldStrategies.wealth && (
                   <div className="report-card bg-amber-50/50 border-none">
-                    <h5 className="font-bold text-amber-900 mb-2 bg-amber-100/50 inline-block px-3 py-1 rounded-md text-xs">💰 {analysis.fieldStrategies.wealth.subtitle}</h5>
-                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{analysis.fieldStrategies.wealth.analysis}</p>
-                    <p className="text-amber-700 text-sm leading-relaxed"><strong>Advice:</strong> {analysis.fieldStrategies.wealth.advice}</p>
+                    <h5 className="font-bold text-amber-900 mb-2 bg-amber-100/50 inline-block px-3 py-1 rounded-md text-xs">💰 {stripMarkdown(analysis.fieldStrategies.wealth.subtitle)}</h5>
+                    <p className="text-slate-700 text-sm leading-relaxed font-medium mb-2 whitespace-pre-wrap">{stripMarkdown(analysis.fieldStrategies.wealth.analysis)}</p>
+                    <p className="text-amber-700 text-sm leading-relaxed"><strong>조언:</strong> {stripMarkdown(analysis.fieldStrategies.wealth.advice)}</p>
                   </div>
                 )}
               </div>
@@ -659,7 +660,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="flex justify-between items-end">
             <div>
               <div className="flex items-center gap-2 text-indigo-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                <Sparkles className="w-4 h-4" /> Comprehensive Analysis
+                <Sparkles className="w-4 h-4" />
               </div>
               <h3 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
                 운명 리포트

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Briefcase, Loader2, Sparkles, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
+import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { useRef } from 'react';
@@ -109,7 +110,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-2 text-orange-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <Briefcase className="w-4 h-4" /> Career Destiny
+                                <Briefcase className="w-4 h-4" />
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
                                 천직 분석 리포트
@@ -124,7 +125,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                     {loading ? (
                         <div className="flex flex-col justify-center items-center h-80">
                             <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
-                            <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">Decoding Professional Path...</p>
+                             <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">분석 중...</p>
                         </div>
                     ) : error ? (
                         <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
@@ -160,7 +161,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                                 </h4>
                                 <div className="report-card p-10 bg-slate-50 border-slate-100">
                                     <p className="text-slate-800 leading-relaxed text-md whitespace-pre-wrap">
-                                        {result.reason}
+                                        {stripMarkdown(result.reason)}
                                     </p>
                                 </div>
                             </section>

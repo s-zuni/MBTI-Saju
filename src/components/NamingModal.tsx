@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
+import { stripMarkdown } from '../utils/textUtils';
 import { useRef } from 'react';
 
 interface NamingModalProps {
@@ -148,7 +149,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-2 text-teal-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <PenTool className="w-4 h-4" /> Destiny Naming
+                                <PenTool className="w-4 h-4" />
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
                                 사주 작명소
@@ -238,7 +239,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                 <Sparkles className="absolute top-6 right-6 w-10 h-10 text-white/10" />
                                 <p className="text-teal-400 font-black mb-2 uppercase tracking-[0.3em] text-[10px]">사주 분석 요약</p>
                                 <p className="text-xl font-bold leading-relaxed text-teal-100 whitespace-pre-wrap">
-                                    {result.summary}
+                                    {stripMarkdown(result.summary)}
                                 </p>
                             </div>
 
@@ -264,11 +265,11 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                             <div className="space-y-3">
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-400 mb-1">이름의 뜻</p>
-                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{item.meaning}</p>
+                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(item.meaning)}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-400 mb-1">사주 적합도</p>
-                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{item.sajuFit}</p>
+                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(item.sajuFit)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -283,7 +284,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                                 </h4>
                                 <div className="report-card p-10 bg-slate-50 border-slate-100">
                                     <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap">
-                                        {result.analysis}
+                                        {stripMarkdown(result.analysis)}
                                     </p>
                                 </div>
                             </section>

@@ -38,7 +38,7 @@ const ServiceNavigation: React.FC<ServiceNavigationProps> = ({ currentService, o
                             <span className="flex items-center gap-1">
                                 {s.label}
                                 {s.isPopular && (
-                                    <span className="bg-amber-400 text-white text-[8px] px-1 rounded-sm scale-90 origin-left">HIT</span>
+                                    <span className="bg-amber-400 text-white text-[8px] px-1 rounded-sm scale-90 origin-left">인기</span>
                                 )}
                             </span>
                             <span className={`text-[8px] font-medium ${currentService === s.id ? 'text-slate-400' : 'text-slate-400'}`}>

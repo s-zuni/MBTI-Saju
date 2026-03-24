@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { stripMarkdown } from '../utils/textUtils';
 import { Coins, Lock } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -170,9 +171,9 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                     <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v8" /><path d="m4.93 10.93 1.41 1.41" /><path d="M2 18h2" /><path d="M20 18h2" /><path d="m19.07 10.93-1.41 1.41" /><path d="M22 22H2" /><path d="m8 22 4-10 4 10" /></svg>
                   </div>
                   <div className="relative z-10">
-                    <h4 className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Daily Ritual</h4>
+                    <h4 className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">오늘의 미션</h4>
                     <p className="text-lg font-bold leading-tight drop-shadow-sm">
-                      {activeData.mission}
+                      {stripMarkdown(activeData.mission)}
                     </p>
                   </div>
                 </div>
@@ -180,7 +181,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
               <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 mb-6">
                 <p className="text-slate-700 leading-relaxed font-medium whitespace-pre-line">
-                  {activeData.fortune}
+                  {stripMarkdown(activeData.fortune)}
                 </p>
               </div>
 

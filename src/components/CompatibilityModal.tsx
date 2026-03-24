@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { getDetailedAnalysis } from '../utils/chatService';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import { stripMarkdown } from '../utils/textUtils';
 import { generatePDF } from '../utils/pdfGenerator';
 import { useRef } from 'react';
 
@@ -277,7 +278,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                 </h4>
                                 <div className="report-card p-10">
                                     <p className="text-slate-800 leading-relaxed text-md whitespace-pre-wrap italic">
-                                        "{result.desc}"
+                                        "{stripMarkdown(result.desc)}"
                                     </p>
                                 </div>
                             </section>
@@ -295,7 +296,7 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                                 >
                                     다른 사람과 궁합 보기
                                 </button>
-                                <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Soul Insight Engine</p>
+                                 <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
                             </div>
                         </div>
                     )}
