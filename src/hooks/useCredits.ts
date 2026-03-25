@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { SERVICE_COSTS, ServiceType, REFUND_PERIOD_DAYS } from '../config/creditConfig';
+import { onTokenRefreshed } from './useAuth';
 
 export interface CreditPurchase {
     id: string;
@@ -66,14 +67,41 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
     const [debugInfo, setDebugInfo] = useState<UseCreditsReturn['debugInfo']>();
+    const isRefreshing = useRef(false);
+
+    // RPC 호출 함수 (재시도 로직 포함)
+    const fetchCreditsViaRPC = async (userId: string, retryCount = 0): Promise<any> => {
+        const { data, error } = await supabase.rpc('get_user_available_credits_v2', {
+            p_user_id: userId
+        });
+
+        if (error) {
+            // 인증 오류(JWT 만료 등)인 경우 토큰 갱신 후 1회 재시도
+            const isAuthError = error.message?.includes('JWT') || 
+                               error.message?.includes('token') ||
+                               error.message?.includes('401') ||
+                               error.code === 'PGRST301';
+            
+            if (isAuthError && retryCount < 1) {
+                console.log('[useCredits] RPC 인증 오류 감지, 토큰 갱신 후 재시도...');
+                const refreshedSession = await ensureValidSession();
+                if (refreshedSession) {
+                    return fetchCreditsViaRPC(userId, retryCount + 1);
+                }
+            }
+            throw error;
+        }
+        return data;
+    };
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
     const refreshCredits = useCallback(async () => {
-        let currentUserId = session?.user?.id;
+        // 중복 호출 방지
+        if (isRefreshing.current) return;
+        isRefreshing.current = true;
 
-        // 1. Initial State Trace
         setDebugInfo({
-            phase: '1. 세션 확인 시작',
+            phase: '1. 세션 검증 시작',
             purchaseCount: 0,
             profileCredits: 0,
             lastRefresh: new Date().toLocaleTimeString(),
@@ -82,76 +110,36 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             authStatus: session ? 'Session 존재 (Props)' : 'Session 없음 (Props)'
         });
 
-        // Double check session if not provided (important for mobile tab recovery)
-        if (!currentUserId) {
-            try {
-                // geUser() is more rigorous than getSession() as it verifies with the server
-                // We try getSession first as it's faster, then getUser as fallback.
-                const { data: { session: currentSession }, error: sessErr } = await supabase.auth.getSession();
-                if (sessErr) throw sessErr;
-                
-                if (currentSession) {
-                    currentUserId = currentSession.user.id;
-                    setDebugInfo(prev => ({ ...prev!, authStatus: 'getSession 성공' }));
-                } else {
-                    const { data: { user }, error: userErr } = await supabase.auth.getUser();
-                    if (userErr) throw userErr;
-                    currentUserId = user?.id;
-                    setDebugInfo(prev => ({ ...prev!, authStatus: currentUserId ? 'getUser 성공' : '유저 정보 없음' }));
-                }
-            } catch (authErr: any) {
-                setDebugInfo(prev => ({ ...prev!, phase: '에러: 세션 확인 실패', authStatus: '에러', error: authErr.message }));
-            }
-        } else {
-            // Even if we have ID, verify user state once for Safari context
-            supabase.auth.getSession().then(({ data }) => {
-                if (data.session) setDebugInfo(prev => ({ ...prev!, authStatus: '세션 유효성 확인됨' }));
-            }).catch(() => {});
-        }
+        try {
+            // ensureValidSession()으로 통합된 세션 검증
+            // getSession() 캐시 의존 대신 서버 사이드 검증 수행
+            const validSession = await ensureValidSession();
+            const currentUserId = validSession?.user?.id || session?.user?.id;
 
-        if (!currentUserId) {
-            // Safari ITP Fallback: If still no user, wait 1s and try one last time
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: { session: finalSession } } = await supabase.auth.getSession();
-            currentUserId = finalSession?.user?.id;
-            
             if (!currentUserId) {
                 setCredits(0);
                 setPurchases([]);
                 setLoading(false);
-                setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 최종 없음' }));
+                setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음', authStatus: '세션 없음' }));
+                isRefreshing.current = false;
                 return;
             }
-        }
 
-        try {
+            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중', authStatus: '세션 유효' }));
             setLoading(true);
-            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중 (Wait 30s...)' }));
-            
-            // Single RPC call to skip multiple round-trips (Critical for mobile)
-            const fetchSummary = async () => {
-                const { data, error } = await supabase.rpc('get_user_available_credits_v2', {
-                    p_user_id: currentUserId
-                });
-                if (error) throw error;
-                return data;
-            };
 
             // Increased timeout to 30s for slow mobile networks
             const queryTimeout = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (30초 초과)')), 30000)
             );
 
-            const result = await Promise.race([fetchSummary(), queryTimeout]) as any;
+            const result = await Promise.race([fetchCreditsViaRPC(currentUserId), queryTimeout]) as any;
 
             if (!result) throw new Error('조회 결과가 없습니다.');
 
             const activePurchases = (result.purchases || []) as CreditPurchase[];
 
             setPurchases(activePurchases);
-            // profiles.credits 테이블이 전체 누적 크레딧(무료+결제)을 담고 있는 단일 소스이므로
-            // totalPurchaseCredits와 합산하지 않고, 오직 profile_credits 만을 기준으로 UI를 업데이트합니다.
-            // (만약 activePurchases.reduce를 사용하면 회원가입 시 지급된 25크레딧 등 무료 크레딧이 누락됩니다)
             const actualTotalCredits = result.profile_credits ?? 0;
             setCredits(actualTotalCredits);
 
@@ -169,19 +157,32 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
         } finally {
             setLoading(false);
+            isRefreshing.current = false;
         }
     }, [session]);
 
     useEffect(() => {
         refreshCredits();
 
+        // TOKEN_REFRESHED 이벤트 구독: 토큰 갱신 시 자동 크레딧 재조회
+        const unsubscribeTokenRefresh = onTokenRefreshed(() => {
+            console.log('[useCredits] Token refreshed event received, re-fetching credits...');
+            isRefreshing.current = false; // 중복 방지 플래그 리셋
+            refreshCredits();
+        });
+
         // Window focus listener to refresh credits (important for Safari/mobile coming back from background)
         const handleFocus = () => {
             console.log('Window focused, refreshing credits...');
+            isRefreshing.current = false;
             refreshCredits();
         };
         window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            unsubscribeTokenRefresh();
+        };
     }, [refreshCredits]);
 
     const getCost = useCallback((serviceType: ServiceType): number => {

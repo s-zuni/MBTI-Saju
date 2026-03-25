@@ -10,6 +10,16 @@ let isAuthInitialized = false;
 // Listeners to notify hooks of changes
 let listeners: Array<(state: { session: Session | null; loading: boolean }) => void> = [];
 
+// Global callbacks for TOKEN_REFRESHED event (used by useCredits etc.)
+let tokenRefreshCallbacks: Array<() => void> = [];
+
+export const onTokenRefreshed = (callback: () => void) => {
+    tokenRefreshCallbacks.push(callback);
+    return () => {
+        tokenRefreshCallbacks = tokenRefreshCallbacks.filter((cb) => cb !== callback);
+    };
+};
+
 const notifyListeners = () => {
     listeners.forEach((listener) => listener({ session: globalSession, loading: globalLoading }));
 };
@@ -69,24 +79,31 @@ export const useAuth = () => {
 
             const initializeAuth = async () => {
                 try {
-                    // Safari ITP Retry Logic: Sometimes storage takes a moment to be available
-                    let currentSession = null;
-                    let retries = 0;
-                    
-                    while (retries < 3) {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        if (session) {
-                            currentSession = session;
-                            break;
-                        }
-                        retries++;
-                        if (retries < 3) await new Promise(resolve => setTimeout(resolve, 500));
-                    }
+                    // Step 1: Quick cache check
+                    const { data: { session: cachedSession } } = await supabase.auth.getSession();
 
-                    setGlobalState(currentSession, true); // Loading visually until profile sync check
-                    
-                    if (currentSession) {
-                        await fetchOrCreateProfile(currentSession).catch(err => console.error(err));
+                    if (cachedSession) {
+                        // Step 2: Validate token server-side with getUser()
+                        // This is critical for Safari ITP where cached tokens may be stale
+                        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+                        if (userError || !user) {
+                            // Token is invalid/expired → try refreshing
+                            console.log('[useAuth] Cached token invalid, attempting refresh...');
+                            const { data: refreshData } = await supabase.auth.refreshSession();
+                            setGlobalState(refreshData.session, true);
+
+                            if (refreshData.session) {
+                                await fetchOrCreateProfile(refreshData.session).catch(err => console.error(err));
+                            }
+                        } else {
+                            // Token is valid
+                            setGlobalState(cachedSession, true);
+                            await fetchOrCreateProfile(cachedSession).catch(err => console.error(err));
+                        }
+                    } else {
+                        // No cached session at all
+                        setGlobalState(null, true);
                     }
                 } catch (error) {
                     console.error('Auth init error:', error);
@@ -99,9 +116,17 @@ export const useAuth = () => {
 
             supabase.auth.onAuthStateChange(async (event, currentSession) => {
                 if (currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-                    // Profile fetch might run in background
                     fetchOrCreateProfile(currentSession).catch(err => console.error(err));
                 }
+
+                // TOKEN_REFRESHED event: notify other hooks to re-fetch data
+                if (event === 'TOKEN_REFRESHED') {
+                    console.log('[useAuth] Token refreshed, notifying data hooks...');
+                    tokenRefreshCallbacks.forEach(cb => {
+                        try { cb(); } catch (e) { console.error('Token refresh callback error:', e); }
+                    });
+                }
+
                 setGlobalState(currentSession, false);
             });
         }
@@ -113,3 +138,4 @@ export const useAuth = () => {
 
     return { session: state.session, loading: state.loading };
 };
+

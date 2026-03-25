@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
@@ -85,13 +85,17 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
   const fetchProfileData = React.useCallback(async () => {
     try {
-      if (!initialSession) {
+      // Safari ITP 대응: 세션 유효성 서버 사이드 검증
+      const validSession = await ensureValidSession();
+      const activeSession = validSession || initialSession;
+
+      if (!activeSession) {
         setLoading(false);
         navigate('/');
         return;
       }
 
-      const user = initialSession.user;
+      const user = activeSession.user;
       const metadata = user.user_metadata || {};
       const { full_name, gender, mbti, birth_date, birth_time, analysis: metaAnalysis } = metadata;
 
