@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase, ensureValidSession } from '../../supabaseClient';
 import {
     Plus,
     Edit3,
@@ -70,18 +70,37 @@ const PlanManagement: React.FC = () => {
 
         try {
             setLoading(true);
+
+            // RLS 오류 방지: 세션 유효성 강제 확인
+            const session = await ensureValidSession();
+            if (!session) {
+                alert('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+                return;
+            }
+
+            // 관리자 권한 확인
+            const userRole = session.user?.user_metadata?.role;
+            if (userRole !== 'admin') {
+                alert(`관리자 권한이 없습니다. (현재 역할: ${userRole || '일반유저'})`);
+                return;
+            }
+
             const { error } = await supabase
                 .from('pricing_plans')
                 .upsert(formData);
 
-            if (error) throw error;
+            if (error) {
+                console.error('RLS Error details:', error);
+                throw error;
+            }
 
             alert('요금제가 저장되었습니다.');
             setIsAdding(false);
             setEditingPlan(null);
             fetchPlans();
         } catch (err: any) {
-            alert(err.message);
+            console.error('Save failed:', err);
+            alert(`저장 실패: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -89,6 +108,12 @@ const PlanManagement: React.FC = () => {
 
     const toggleActive = async (id: string, currentStatus: boolean) => {
         try {
+            const session = await ensureValidSession();
+            if (!session || session.user?.user_metadata?.role !== 'admin') {
+                alert('관리자 권한이 필요합니다.');
+                return;
+            }
+
             const { error } = await supabase
                 .from('pricing_plans')
                 .update({ is_active: !currentStatus })

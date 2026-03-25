@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, AlertTriangle } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 // import { useNavigate } from 'react-router-dom';
 
 interface Comment {
@@ -57,20 +57,8 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = React.useCallback(async () => {
-        let currentSession = initialSession;
-        if (!currentSession) {
-            let retries = 0;
-            while (retries < 3) {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    currentSession = session;
-                    break;
-                }
-                retries++;
-                if (retries < 3) await new Promise(resolve => setTimeout(resolve, 500));
-            }
-        }
-        setUser(currentSession?.user || null);
+        const session = await ensureValidSession();
+        setUser(session?.user || initialSession?.user || null);
     }, [initialSession]);
 
     const fetchPosts = React.useCallback(async () => {
