@@ -12,11 +12,11 @@ const DebugOverlay: React.FC = () => {
         lastRefreshed: 'Never'
     });
 
-    const addLog = (msg: string) => {
+    const addLog = React.useCallback((msg: string) => {
         setLogs(prev => [new Date().toLocaleTimeString() + ': ' + msg, ...prev].slice(0, 50));
-    };
+    }, []);
 
-    const checkStatus = async () => {
+    const checkStatus = React.useCallback(async () => {
         addLog('Diagnostic started...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -35,7 +35,7 @@ const DebugOverlay: React.FC = () => {
         } catch (err: any) {
             addLog('DIAGNOSTIC ERROR: ' + err.message);
         }
-    };
+    }, [addLog]);
 
     const runFix = async () => {
         addLog('Attempting ensureValidSession()...');
@@ -50,7 +50,7 @@ const DebugOverlay: React.FC = () => {
 
     useEffect(() => {
         if (isOpen) checkStatus();
-    }, [isOpen]);
+    }, [isOpen, checkStatus]);
 
     if (!isOpen) {
         return (
