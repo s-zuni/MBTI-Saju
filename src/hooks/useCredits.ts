@@ -62,37 +62,37 @@ interface UseCreditsReturn {
     getUsageHistory: () => Promise<CreditUsage[]>;
 }
 
+// RPC 호출 함수 (재시도 로직 포함 - Hook 외부로 이동하여 의존성 경고 방지)
+const fetchCreditsViaRPC = async (userId: string, retryCount = 0): Promise<any> => {
+    const { data, error } = await supabase.rpc('get_user_available_credits_v2', {
+        p_user_id: userId
+    });
+
+    if (error) {
+        // 인증 오류(JWT 만료 등)인 경우 토큰 갱신 후 1회 재시도
+        const isAuthError = error.message?.includes('JWT') || 
+                           error.message?.includes('token') ||
+                           error.message?.includes('401') ||
+                           error.code === 'PGRST301';
+        
+        if (isAuthError && retryCount < 1) {
+            console.log('[useCredits] RPC 인증 오류 감지, 토큰 갱신 후 재시도...');
+            const refreshedSession = await ensureValidSession();
+            if (refreshedSession) {
+                return fetchCreditsViaRPC(userId, retryCount + 1);
+            }
+        }
+        throw error;
+    }
+    return data;
+};
+
 export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [credits, setCredits] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
     const [debugInfo, setDebugInfo] = useState<UseCreditsReturn['debugInfo']>();
     const isRefreshing = useRef(false);
-
-    // RPC 호출 함수 (재시도 로직 포함)
-    const fetchCreditsViaRPC = async (userId: string, retryCount = 0): Promise<any> => {
-        const { data, error } = await supabase.rpc('get_user_available_credits_v2', {
-            p_user_id: userId
-        });
-
-        if (error) {
-            // 인증 오류(JWT 만료 등)인 경우 토큰 갱신 후 1회 재시도
-            const isAuthError = error.message?.includes('JWT') || 
-                               error.message?.includes('token') ||
-                               error.message?.includes('401') ||
-                               error.code === 'PGRST301';
-            
-            if (isAuthError && retryCount < 1) {
-                console.log('[useCredits] RPC 인증 오류 감지, 토큰 갱신 후 재시도...');
-                const refreshedSession = await ensureValidSession();
-                if (refreshedSession) {
-                    return fetchCreditsViaRPC(userId, retryCount + 1);
-                }
-            }
-            throw error;
-        }
-        return data;
-    };
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
     const refreshCredits = useCallback(async () => {
