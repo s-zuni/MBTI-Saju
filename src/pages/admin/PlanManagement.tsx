@@ -78,10 +78,16 @@ const PlanManagement: React.FC = () => {
                 return;
             }
 
-            // 관리자 권한 확인
-            const userRole = session.user?.user_metadata?.role;
-            if (userRole !== 'admin') {
-                alert(`관리자 권한이 없습니다. (현재 역할: ${userRole || '일반유저'})`);
+            // 관리자 권한 확인 (DB profiles 테이블 직접 조회)
+            const { data: profile, error: roleError } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (roleError || profile?.role !== 'admin') {
+                console.error('Permission denied:', roleError);
+                alert(`관리자 권한이 없습니다. (현재 역할: ${profile?.role || '일반유저'})`);
                 return;
             }
 
@@ -109,7 +115,19 @@ const PlanManagement: React.FC = () => {
     const toggleActive = async (id: string, currentStatus: boolean) => {
         try {
             const session = await ensureValidSession();
-            if (!session || session.user?.user_metadata?.role !== 'admin') {
+            if (!session) {
+                alert('세션이 만료되었습니다.');
+                return;
+            }
+
+            // 관리자 권한 확인 (DB)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile?.role !== 'admin') {
                 alert('관리자 권한이 필요합니다.');
                 return;
             }
