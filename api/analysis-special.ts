@@ -134,6 +134,27 @@ export default async function handler(req: any, res: any) {
                 "tip": "여행 팁 (나열식)" 
             }`;
             userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti}, 사주 기운: ${saju.dayMaster.korean}, 선택 지역: ${region || '전국'}, 여행 타입: ${travelType}, 여행 기간: ${startDate} ~ ${endDate} (${durationDays}일간), 요청사항: ${requirements || '없음'}`;
+        } else if (type === 'cherry') {
+            if (!birthDate || !mbti || !saju) {
+                console.warn('[Cherry Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });
+                return res.status(400).json({ error: '벚꽃 명소 추천을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
+            }
+            
+            systemPrompt += `\n사용자의 MBTI와 사주 오행 기운을 분석하여, 올봄 가장 잘 어울리는 '국내 벚꽃 명소'를 추천하세요.
+            
+            [벚꽃 명소 추천 지침]
+            1. 반드시 '국내(대한민국)' 내 명소만 추천하세요. (전국구)
+            2. 알려진 유명 장소뿐만 아니라, 전국 곳곳의 숨겨진 보석 같은 장소(비밀 명소)를 2개 이상 포함하세요.
+            3. 각 장소를 추천하는 이유를 사용자의 MBTI 성격 특성과 사주(일간 기운, 필요한 오행 등)에 근거하여 논리적이고 감성적으로 설명하세요.
+            4. 전체 답변의 총 길이는 반드시 700자 이상으로 매우 풍부하고 상세하게 작성하세요.
+            5. 가독성을 위해 개괄식 구조와 글머리표(-)를 적극 활용하되, 절대로 마크다운 강조 기호(**)를 사용하지 마세요. (시스템 오류 방지)
+            
+            - 결과 형식 (JSON): { 
+                "places": [{ "name": "장소명", "reason": "MBTI와 사주에 근거한 상세 추천 이유 (글머리표 활용, 200자 내외로 상세히)" }], 
+                "summary": "이번 봄 당신의 운명적인 벚꽃 여행을 위한 총평 및 기운 분석 (300자 이상 상세히)", 
+                "tip": "벚꽃 여행 시 기운을 북돋아줄 수 있는 팁 (나열형)" 
+            }`;
+            userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti}, 사주 일간: ${saju.dayMaster.korean}, 오행분포: ${JSON.stringify(saju.elementRatio)}, 요청사항: ${requirements || '없음'}`;
         } else if (type === 'fortune') {
             if (!birthDate || !mbti) {
                 return res.status(400).json({ error: '운세 분석을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });

@@ -57,7 +57,7 @@ export const supabase = createClient(
     {
         auth: {
             // Safari ITP Hang 방지: Safari에서는 세션 유지를 비활성화하고 인메모리/이벤트 기반으로 동작 유도
-            persistSession: !isSafari,
+            persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
             flowType: 'pkce',

@@ -6,6 +6,7 @@
         { "source": "/api/naming", "destination": "/api/analysis-special?type=naming" },
         { "source": "/api/job", "destination": "/api/analysis-special?type=job" },
         { "source": "/api/trip", "destination": "/api/analysis-special?type=trip" },
+        { "source": "/api/cherry", "destination": "/api/analysis-special?type=cherry" },
         { "source": "/api/fortune", "destination": "/api/analysis-special?type=fortune" },
         { "source": "/api/analyze", "destination": "/api/analysis-main?part=core" },
         { "source": "/api/analyze_fortune", "destination": "/api/analysis-main?part=fortune" },

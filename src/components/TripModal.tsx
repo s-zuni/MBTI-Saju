@@ -35,6 +35,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
     } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const [tripMode, setTripMode] = useState<'general' | 'cherry'>('general');
     const [regionType, setRegionType] = useState<'domestic' | 'overseas'>('domestic');
     const [selectedRegion, setSelectedRegion] = useState('서울');
 
@@ -112,7 +113,8 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
             if (!currentSession) throw new Error('로그인이 필요합니다.');
 
             const user = currentSession.user.user_metadata;
-            const response = await fetch('/api/trip', {
+            const apiEndpoint = tripMode === 'cherry' ? '/api/cherry' : '/api/trip';
+            const response = await fetch(apiEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,11 +126,12 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                     mbti: user.mbti,
                     gender: user.gender,
                     name: user.full_name,
-                    region: selectedRegion,
-                    regionType: regionType,
+                    region: tripMode === 'cherry' ? '전국' : selectedRegion,
+                    regionType: tripMode === 'cherry' ? 'domestic' : regionType,
                     startDate,
                     endDate,
-                    requirements
+                    requirements,
+                    type: tripMode === 'cherry' ? 'cherry' : 'trip'
                 })
             });
 
@@ -192,30 +195,46 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                     <MapPin className="w-5 h-5" /> 여행 타입 및 목적지
                                 </h4>
                                 <div className="space-y-4">
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         <button
-                                            onClick={() => setRegionType('domestic')}
-                                            className={`flex-1 py-4 rounded-2xl text-sm font-black transition-all border-2 ${regionType === 'domestic' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+                                            onClick={() => { setTripMode('general'); setRegionType('domestic'); }}
+                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'general' && regionType === 'domestic' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
                                         >
                                             국내 여행
                                         </button>
                                         <button
-                                            onClick={() => setRegionType('overseas')}
-                                            className={`flex-1 py-4 rounded-2xl text-sm font-black transition-all border-2 ${regionType === 'overseas' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+                                            onClick={() => { setTripMode('general'); setRegionType('overseas'); }}
+                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'general' && regionType === 'overseas' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
                                         >
                                             해외 여행
                                         </button>
+                                        <button
+                                            onClick={() => setTripMode('cherry')}
+                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'cherry' ? 'bg-pink-500 text-white border-pink-500 shadow-xl' : 'bg-white text-pink-400 border-pink-50 hover:border-pink-100'}`}
+                                        >
+                                            🌸 벚꽃 명소
+                                        </button>
                                     </div>
-                                    <select
-                                        className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold text-lg focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
-                                        value={selectedRegion}
-                                        onChange={(e) => setSelectedRegion(e.target.value)}
-                                    >
-                                        {regionType === 'domestic'
-                                            ? DOMESTIC_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
-                                            : OVERSEAS_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
-                                        }
-                                    </select>
+                                    {tripMode === 'general' && (
+                                        <select
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold text-lg focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
+                                            value={selectedRegion}
+                                            onChange={(e) => setSelectedRegion(e.target.value)}
+                                        >
+                                            {regionType === 'domestic'
+                                                ? DOMESTIC_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
+                                                : OVERSEAS_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
+                                            }
+                                        </select>
+                                    )}
+                                    {tripMode === 'cherry' && (
+                                        <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100">
+                                            <p className="text-pink-600 text-sm font-bold flex items-center gap-2">
+                                                <Sparkles className="w-4 h-4" />
+                                                전국 벚꽃 숨은 명소를 운명에 맞춰 추천해 드립니다.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
 
