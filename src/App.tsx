@@ -52,7 +52,6 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
-const DebugOverlay = lazy(() => import('./components/DebugOverlay'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -471,7 +470,6 @@ function App() {
                 currentCredits={credits}
               />
               <PopupModal />
-              <DebugOverlay />
             </div>
           } />
         </Routes>

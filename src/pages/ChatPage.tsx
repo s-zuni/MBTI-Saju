@@ -279,6 +279,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                         <span className="font-bold ml-1 text-slate-800 text-lg">운명 심층 상담</span>
                     </div>
                     <div className="flex items-center gap-2">
+                        <button 
+                            onClick={handleNewSession} 
+                            className="p-2 text-indigo-600 hover:bg-slate-50 active:scale-95 transition-all rounded-full"
+                            title="새로운 상담 시작"
+                        >
+                            <Plus className="w-5 h-5" />
+                        </button>
                         <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
                             <Coins className="w-3 h-3" />
                             {credits}
@@ -356,7 +363,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-slate-100">
+                <div className="sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-20 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
                     <div className="max-w-3xl mx-auto">
                         <form onSubmit={handleSendMessage} className="relative">
                             <input
@@ -365,17 +372,17 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                                 onChange={(e) => setInputText(e.target.value)}
                                 placeholder="운세, 사주, 고민거리를 물어보세요..."
                                 disabled={isTyping}
-                                className="w-full pl-6 pr-14 py-4 bg-slate-100 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
+                                className="w-full pl-6 pr-14 py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
                             />
                             <button
                                 type="submit"
                                 disabled={!inputText.trim() || isTyping}
-                                className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all"
+                                className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200"
                             >
                                 <Send className="w-5 h-5" />
                             </button>
                         </form>
-                        <p className="text-center text-xs text-slate-400 mt-2">
+                        <p className="text-center text-[10px] md:text-xs text-slate-400 mt-2 font-medium">
                             분석 결과는 참고용이며, 10회 대화마다 25크레딧이 차감됩니다.
                         </p>
                     </div>
