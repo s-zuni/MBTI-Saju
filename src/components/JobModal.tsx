@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Briefcase, Loader2, Sparkles, Award, TrendingUp } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { Briefcase, Loader2, Award, TrendingUp } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';

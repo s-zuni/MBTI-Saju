@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Brain, ScrollText, Zap, Share2, Download, Award, MapPin, Compass, Plane, Calendar } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader2, MapPin, Compass, Plane, Calendar, Download } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';

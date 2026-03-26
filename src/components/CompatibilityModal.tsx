@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Brain, ScrollText, Zap, Share2, Download, Award, ChevronRight, Info, Heart } from 'lucide-react';
+import { Loader2, Zap, Download, Heart } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import { generatePDF } from '../utils/pdfGenerator';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
