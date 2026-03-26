@@ -27,7 +27,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     const [question, setQuestion] = useState("");
     const [deck, setDeck] = useState<TarotCard[]>([]);
     const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
-    const [error, setError] = useState<string | null>(null);
+
 
     // Streaming Hook
     const { object: reading, submit, isLoading } = useObject({
@@ -52,7 +52,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             setStep('spread');
             setQuestion("");
             setSelectedCards([]);
-            setError(null);
             setSelectedSpread('daily');
             setDeck(fisherYatesShuffle(TAROT_DECK));
         }
@@ -61,7 +60,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
         setSelectedCards([]);
-        setError(null);
         setStep('question');
     };
 
@@ -102,7 +100,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
 
     const handleAnalyze = async (cards: TarotCard[]) => {
         if (!question.trim()) {
-            setError('질문을 입력해주세요.');
             return;
         }
 
@@ -116,7 +113,6 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         }
 
         setStep('result');
-        setError(null);
 
         try {
             if (onUseCredit) {
