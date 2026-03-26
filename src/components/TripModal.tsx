@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plane, Loader2, Sparkles, MapPin, Calendar, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, Brain, ScrollText, Zap, Share2, Download, Award, MapPin, Compass, Plane, Calendar } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';

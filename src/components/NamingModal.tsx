@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Sparkles, UserPlus, Download, Share2 } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { Loader2, Brain, ScrollText, Zap, Download, Award, Languages, UserPlus, Sparkles } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';

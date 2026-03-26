@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, Sparkles, X, Shuffle, ArrowRight, Moon, Compass, Sun } from 'lucide-react';
 import { TarotCard, TAROT_DECK } from '../../data/tarotDeck';
 import SpreadSelector, { SpreadType } from './SpreadSelector';
