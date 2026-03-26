@@ -61,62 +61,73 @@ export const supabase = createClient(
     }
 );
 
+// 전역 세션 캐시 및 락 상태 관리
+let globalSessionCache: Session | null = null;
+let lastSessionFetchTime = 0;
+let isRefreshingSession = false;
+
 /**
  * Safari ITP 대응: API 호출 전 유효한 세션을 보장합니다.
- * 타임아웃 처리를 추가하여 Safari에서 getSession()이 무한 대기하는 현상을 방지합니다.
+ * 전역 캐시와 락(Lock)을 사용하여 Safari에서 다수 컴포넌트가 getSession()을
+ * 동시 호출할 때 발생하는 교착 상태(Deadlock)를 방지합니다.
  */
 export const ensureValidSession = async (): Promise<Session | null> => {
+    const now = Date.now();
+    
+    // 1. 최근 10초 이내에 확인된 세션이 있다면 즉시 반환 (Safari hang 방지)
+    if (globalSessionCache && (now - lastSessionFetchTime < 10000)) {
+        return globalSessionCache;
+    }
+
+    // 2. 이미 다른 곳에서 세션을 갱신 중이라면 현재 캐시(또는 null) 반환
+    if (isRefreshingSession) {
+        return globalSessionCache;
+    }
+
+    isRefreshingSession = true;
     const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), ms));
 
     try {
-        // 1) 캐시에서 세션 가져오기 (타임아웃 적용)
         console.log('[ensureValidSession] 세션 확인 시작...');
+        
+        // 3. getSession() 호출 (타임아웃 적용)
+        interface SessionResponse { data: { session: Session | null }; error: any }
         const sessionData = await Promise.race([
             supabase.auth.getSession(),
-            timeout(3000) // 3초 타임아웃
-        ]) as { data: { session: Session | null }, error: any };
+            timeout(2500) // 2.5초로 단축하여 빠른 응답 유도
+        ]) as SessionResponse;
 
         let session = sessionData.data.session;
 
+        // 세션 결과를 전역 캐시에 저장
+        globalSessionCache = session;
+        lastSessionFetchTime = Date.now();
+
         if (!session) {
-            console.log('[ensureValidSession] 세션 없음');
             return null;
         }
 
-        // 2) 토큰 만료 여부 확인 (만료 120초 전이면 미리 갱신)
+        // 4. 토큰 만료 5분 전이면 갱신 시도
         const expiresAt = session.expires_at ?? 0;
         const nowInSeconds = Math.floor(Date.now() / 1000);
-        const isExpiringSoon = expiresAt - nowInSeconds < 120;
+        const isExpiringSoon = expiresAt - nowInSeconds < 300;
 
         if (isExpiringSoon) {
             console.log('[ensureValidSession] 토큰 만료 임박, 갱신 시도');
             const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
             if (!refreshError && refreshData.session) {
+                globalSessionCache = refreshData.session;
                 return refreshData.session;
             }
         }
 
-        // 3) 서버 사이드 검증 (getUser) - 지연 방지를 위해 타임아웃 적용
-        try {
-            const userData = await Promise.race([
-                supabase.auth.getUser(),
-                timeout(3000)
-            ]) as { data: { user: any }, error: any };
-
-            if (userData.error || !userData.data.user) {
-                throw new Error('getUser failed');
-            }
-        } catch (e) {
-            console.warn('[ensureValidSession] getUser 실패/타임아웃, refresh 시도');
-            const { data: lastRefresh } = await supabase.auth.refreshSession();
-            return lastRefresh.session;
-        }
-
         return session;
     } catch (err: any) {
-        console.error('[ensureValidSession] 중대한 예외 또는 타임아웃 발생:', err.message);
-        // 타임아웃 발생 시, 현재 로컬에 저장된 세션이라도 반환해 보거나 null 반환
-        return null; 
+        console.warn('[ensureValidSession] 세션 확인 중 타임아웃/오류:', err.message);
+        // 타임아웃 시 현재 캐시를 믿고 반환 (없으면 null)
+        return globalSessionCache; 
+    } finally {
+        isRefreshingSession = false;
     }
 };
 

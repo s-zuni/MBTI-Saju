@@ -111,9 +111,17 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         });
 
         try {
-            // ensureValidSession()으로 통합된 세션 검증
-            // getSession() 캐시 의존 대신 서버 사이드 검증 수행
-            const validSession = await ensureValidSession();
+            // Safari ITP 대응: 이미 유효해 보이는 session이 있다면 getSession() 대기를 건너뜁니다.
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            let validSession: Session | null = null;
+            
+            if (isSafari && session?.access_token && session?.expires_at && session.expires_at > (Date.now() / 1000) + 60) {
+                console.log('[useCredits] Safari 감지: Props 세션 사용(대기 건너뜀)');
+                validSession = session;
+            } else {
+                validSession = await ensureValidSession();
+            }
+            
             const currentUserId = validSession?.user?.id || session?.user?.id;
 
             if (!currentUserId) {

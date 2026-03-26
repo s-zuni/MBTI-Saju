@@ -78,18 +78,28 @@ export const useAuth = () => {
             isAuthInitialized = true;
 
             const initializeAuth = async () => {
+                const timeoutThreshold = 2500; // 2.5초 타임아웃
+                
                 try {
-                    // Step 1: Quick cache check
-                    const { data: { session: cachedSession } } = await supabase.auth.getSession();
+                    // Step 1: Quick cache check with timeout
+                    const sessionResult = await Promise.race([
+                        supabase.auth.getSession(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Init Timeout')), timeoutThreshold))
+                    ]) as { data: { session: Session | null }, error: any };
+
+                    const cachedSession = sessionResult.data.session;
 
                     if (cachedSession) {
-                        // Step 2: Validate token server-side with getUser()
-                        // This is critical for Safari ITP where cached tokens may be stale
-                        const { data: { user }, error: userError } = await supabase.auth.getUser();
+                        // Step 2: Validate token server-side with getUser() (with shorter timeout)
+                        const userResult = await Promise.race([
+                            supabase.auth.getUser(),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('User Validate Timeout')), timeoutThreshold))
+                        ]) as { data: { user: any }, error: any };
+
+                        const { data: { user }, error: userError } = userResult;
 
                         if (userError || !user) {
-                            // Token is invalid/expired → try refreshing
-                            console.log('[useAuth] Cached token invalid, attempting refresh...');
+                            console.log('[useAuth] Cached token invalid or timeout, attempting refresh...');
                             const { data: refreshData } = await supabase.auth.refreshSession();
                             setGlobalState(refreshData.session, true);
 
@@ -97,16 +107,18 @@ export const useAuth = () => {
                                 await fetchOrCreateProfile(refreshData.session).catch(err => console.error(err));
                             }
                         } else {
-                            // Token is valid
                             setGlobalState(cachedSession, true);
                             await fetchOrCreateProfile(cachedSession).catch(err => console.error(err));
                         }
                     } else {
-                        // No cached session at all
                         setGlobalState(null, true);
                     }
-                } catch (error) {
-                    console.error('Auth init error:', error);
+                } catch (error: any) {
+                    console.error('[useAuth] Auth init error/timeout:', error.message);
+                    // 타임아웃 발생 시에도 로딩을 풀고 앱 진행 허용
+                    if (error.message.includes('Timeout')) {
+                        console.warn('[useAuth] Safari ITP detected, proceeding with null session');
+                    }
                 } finally {
                     setGlobalState(globalSession, false);
                 }

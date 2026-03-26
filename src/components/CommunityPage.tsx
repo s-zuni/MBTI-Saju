@@ -57,6 +57,15 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = React.useCallback(async () => {
+        // Safari ITP 대응: 이미 Props로 유효한 세션이 있다면 getSession() 대기를 건너뜁니다.
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        
+        if (isSafari && initialSession?.user) {
+            console.log('[CommunityPage] Safari 감지: Props 세션 우선 사용 (대기 건너뜀)');
+            setUser(initialSession.user);
+            return;
+        }
+
         const session = await ensureValidSession();
         setUser(session?.user || initialSession?.user || null);
     }, [initialSession]);
