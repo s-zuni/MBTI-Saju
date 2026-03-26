@@ -94,12 +94,8 @@ function App() {
     }
   }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen, modals?.onboarding?.isOpen]);
 
-  const handleCloseOnboarding = () => {
-    if (session?.user) {
-      localStorage.setItem(`hasSeenOnboarding_${session.user.id}`, 'true');
-    }
-    closeModal('onboarding');
-  };
+
+
   const handleFetchFortune = async () => {
     const cost = SERVICE_COSTS.FORTUNE_TODAY;
     if (credits < cost) {
