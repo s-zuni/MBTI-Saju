@@ -2,9 +2,8 @@
  * Retry utility for Gemini API calls.
  * Optimized for Vercel Hobby tier (10-second function limit).
  * 
- * Strategy: NO retries to stay within the 10-second limit.
- * If the first attempt fails, immediately fall back to the lite model
- * (handled by the caller in analysis-main.ts / analysis-special.ts).
+ * Strategy: NO retries for most cases to stay within the 10-second limit.
+ * All requests now exclusively use gemini-3-flash-preview without fallback.
  */
 
 interface RetryOptions {

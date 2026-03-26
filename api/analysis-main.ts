@@ -164,52 +164,20 @@ export default async function handler(req: any, res: any) {
 
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = (process.env.GEMINI_MODEL || "gemini-3-flash-preview").trim();
-        let currentModelName = modelName;
-        let model = genAI.getGenerativeModel({ 
-            model: currentModelName, 
+        const modelName = "gemini-3-flash-preview";
+        const model = genAI.getGenerativeModel({ 
+            model: modelName, 
             systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
         });
         
-        let result;
-        try {
-            result = await generateContentWithRetry(model, {
-                contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-                generationConfig: { 
-                    responseMimeType: "application/json",
-                    temperature: 0.7,
-                    maxOutputTokens: 3000  // Vercel Hobby 10s 제한 고려
-                }
-            });
-        } catch (error: any) {
-            const msg = error.message || '';
-            const isServerError = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-            
-            // 타임아웃 에러는 폴백 불가 (시간이 이미 소진됨)
-            if (msg.includes('AI_TIMEOUT') || msg.includes('시간이 너무')) {
-                throw error;
+        const result = await generateContentWithRetry(model, {
+            contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+            generationConfig: { 
+                responseMimeType: "application/json",
+                temperature: 0.7,
+                maxOutputTokens: 3000  // Vercel Hobby 10s 제한 고려
             }
-            
-            // 서버 에러일 때만 폴백 모델로 한 번 시도
-            if (isServerError && currentModelName !== "gemini-3.1-flash-lite-preview") {
-                console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for ${part} analysis`);
-                currentModelName = "gemini-3.1-flash-lite-preview";
-                model = genAI.getGenerativeModel({ 
-                    model: currentModelName, 
-                    systemInstruction: systemPrompt + "\n절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(•), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다. 문단 간 공백을 활용하여 상세히 설명하세요."
-                });
-                result = await generateContentWithRetry(model, {
-                    contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-                    generationConfig: { 
-                        responseMimeType: "application/json",
-                        temperature: 0.7,
-                        maxOutputTokens: 2500
-                    }
-                });
-            } else {
-                throw error;
-            }
-        }
+        });
         
         const responseText = result.response.text();
         if (!responseText) throw new Error("AI returned an empty response");

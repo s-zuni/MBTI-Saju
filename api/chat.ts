@@ -83,7 +83,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         `;
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = (process.env.GEMINI_MODEL || "gemini-3-flash-preview").trim();
+        const modelName = "gemini-3-flash-preview";
         const model = genAI.getGenerativeModel({
             model: modelName,
             systemInstruction: systemPrompt
@@ -108,35 +108,21 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             history = [];
         }
 
-        let chat = model.startChat({
+        const chat = model.startChat({
             history: history,
             generationConfig: {
                 maxOutputTokens: 2048,
             },
         });
 
-        // Retry logic for sendMessage (handles 503/429 transient errors and model fallback)
+        // Retry logic for sendMessage (handles 503/429 transient errors without model fallback)
         let result;
         let lastError: any;
-        let currentModelName = modelName;
 
         for (let attempt = 0; attempt <= 3; attempt++) {
             try {
                 const timeoutMs = 45000;
                 
-                // If the previous attempt failed with a retryable error on the primary, switch to fallback
-                if (attempt > 0 && currentModelName !== "gemini-3.1-flash-lite-preview") {
-                    const msg = lastError?.message || lastError?.toString() || '';
-                    const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-                    
-                    if (isRetryable) {
-                        console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview due to transient error on ${currentModelName}`);
-                        currentModelName = "gemini-3.1-flash-lite-preview";
-                        const fallbackModel = genAI.getGenerativeModel({ model: currentModelName, systemInstruction: systemPrompt });
-                        chat = fallbackModel.startChat({ history: history, generationConfig: { maxOutputTokens: 2048 } });
-                    }
-                }
-
                 result = await Promise.race([
                     chat.sendMessage(message),
                     new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))
