@@ -31,7 +31,8 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
     const [result, setResult] = useState<{
         places: { name: string, reason: string }[],
         itinerary?: { day: number, schedule: string }[],
-        summary: string
+        summary: string,
+        tip?: string | string[]
     } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -238,53 +239,59 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                 </div>
                             </section>
 
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <Calendar className="w-5 h-5" /> 여행 일정 계획
-                                </h4>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <div className="flex-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">출발일</p>
-                                        <input
-                                            type="date"
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                        />
+                            {tripMode === 'general' && (
+                                <section className="report-section">
+                                    <h4 className="report-section-title">
+                                        <Calendar className="w-5 h-5" /> 여행 일정 계획
+                                    </h4>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">출발일</p>
+                                            <input
+                                                type="date"
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">도착일</p>
+                                            <input
+                                                type="date"
+                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">도착일</p>
-                                        <input
-                                            type="date"
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            </section>
+                                </section>
+                            )}
 
                             <section className="report-section">
                                 <h4 className="report-section-title">
-                                    <MessageSquare className="w-5 h-5" /> 요구 사항
+                                    <MessageSquare className="w-5 h-5" /> 요구 사항 {tripMode === 'cherry' && '(선택)'}
                                 </h4>
                                 <textarea
                                     className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all resize-none"
                                     rows={3}
-                                    placeholder="예: 맛집 위주, 자연 탐방, 힐링 위주, 가족 여행 등"
+                                    placeholder={tripMode === 'cherry' ? "예: 조용한 곳, 산책하기 좋은 곳, 주차 편한 곳 등" : "예: 맛집 위주, 자연 탐방, 힐링 위주, 가족 여행 등"}
                                     value={requirements}
                                     onChange={(e) => setRequirements(e.target.value)}
                                 />
                             </section>
 
-                            {isTooLong && (
+                            {tripMode === 'general' && isTooLong && (
                                 <div className="flex items-center gap-2 p-4 bg-amber-50 text-amber-700 rounded-2xl text-sm font-bold border border-amber-200">
                                     <AlertTriangle className="w-5 h-5 shrink-0" />
                                     여행 기간은 최대 14일까지 설정할 수 있습니다.
                                 </div>
                             )}
 
-                            <p className="text-xs text-slate-400 text-center">여행 기간은 최대 14일까지 가능합니다. MBTI와 사주를 기반으로 맞춤 여행 계획을 구성합니다.</p>
+                            <p className="text-xs text-slate-400 text-center">
+                                {tripMode === 'cherry' 
+                                    ? 'MBTI와 사주를 기반으로 당신의 운명에 가장 잘 어울리는 벚꽃 명소 3곳을 엄선해 드립니다.' 
+                                    : '여행 기간은 최대 14일까지 가능합니다. MBTI와 사주를 기반으로 맞춤 여행 계획을 구성합니다.'}
+                            </p>
 
                             <button
                                 onClick={fetchRecommendation}
@@ -347,6 +354,28 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Tips Section */}
+                            {result.tip && (
+                                <section className="report-section">
+                                    <h4 className="report-section-title">
+                                        <Sparkles className="w-5 h-5 text-pink-500" /> 운명을 깨우는 벚꽃 여행 팁
+                                    </h4>
+                                    <div className="report-card bg-pink-50/50 border-pink-100 p-6 sm:p-8">
+                                        <div className="text-slate-700 text-sm leading-[1.8] whitespace-pre-wrap">
+                                            {Array.isArray(result.tip) 
+                                                ? result.tip.map((t, index) => (
+                                                    <div key={index} className="flex gap-2 mb-2">
+                                                        <span className="text-pink-400 font-bold">•</span> 
+                                                        <span>{stripMarkdown(t)}</span>
+                                                    </div>
+                                                  ))
+                                                : stripMarkdown(result.tip)
+                                            }
+                                        </div>
                                     </div>
                                 </section>
                             )}
