@@ -27,7 +27,6 @@ const RelationshipPage: React.FC<RelationshipPageProps> = ({ session: initialSes
 
     // Compatibility Modal State
     const [showCompModal, setShowCompModal] = useState(false);
-    const [selectedCompProfile, setSelectedCompProfile] = useState<RelationshipProfile | null>(null);
 
     // Form State
     const [newName, setNewName] = useState('');
@@ -177,7 +176,7 @@ const RelationshipPage: React.FC<RelationshipPageProps> = ({ session: initialSes
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button onClick={() => { setSelectedCompProfile(profile); setShowCompModal(true); }} className="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors flex items-center gap-1 mr-1"><Heart className="w-3 h-3 fill-rose-600" /> 상세 궁합</button>
+                                            <button onClick={() => setShowCompModal(true)} className="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors flex items-center gap-1 mr-1"><Heart className="w-3 h-3 fill-rose-600" /> 상세 궁합</button>
                                             <button onClick={() => handleDelete(profile.id)} className="text-slate-300 hover:text-red-500 p-2 transition-colors"><Trash2 className="w-5 h-5" /></button>
                                         </div>
                                     </div>

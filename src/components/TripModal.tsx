@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, MapPin, Compass, Plane, Calendar, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, MapPin, Plane, Calendar, Download } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
@@ -29,7 +29,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         }
     });
 
-    const fetchRecommendation = async () => {
+    const fetchRecommendation = useCallback(async () => {
         const cost = SERVICE_COSTS.TRIP;
         if (credits !== undefined && credits < cost) {
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
@@ -62,7 +62,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         } catch (e: any) {
             setError(e.message);
         }
-    };
+    }, [credits, onNavigate, onClose, session, submit, onUseCredit]);
 
     const handleDownloadPDF = async () => {
         if (!reportRef.current || !result) return;
@@ -77,7 +77,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         if (isOpen && !result && !isLoading) {
             fetchRecommendation();
         }
-    }, [isOpen]);
+    }, [isOpen, result, isLoading, fetchRecommendation]);
 
     if (!isOpen) return null;
 

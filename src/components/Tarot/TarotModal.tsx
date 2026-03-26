@@ -299,10 +299,4 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     );
 };
 
-const SPREADS = [
-    { id: 'daily', title: '오늘의 운세' },
-    { id: 'love', title: '연애 고민' },
-    { id: 'career', title: '취업/이직' }
-];
-
 export default TarotModal;
