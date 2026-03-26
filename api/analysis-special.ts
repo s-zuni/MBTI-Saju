@@ -176,9 +176,9 @@ export default async function handler(req: any, res: any) {
             // Fallback for 503/429
             const msg = error.message || '';
             const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-            if (isRetryable && currentModelName !== "gemini-1.5-flash") {
-                console.warn(`[Fallback] Switching to gemini-1.5-flash for special analysis: ${type}`);
-                currentModelName = "gemini-1.5-flash";
+            if (isRetryable && currentModelName !== "gemini-3.1-flash-lite-preview") {
+                console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for special analysis: ${type}`);
+                currentModelName = "gemini-3.1-flash-lite-preview";
                 model = genAI.getGenerativeModel({ 
                     model: currentModelName, 
                     systemInstruction: systemPrompt

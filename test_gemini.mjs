@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const API_KEY = "AIzaSyCHnto6h-UThCVTRQ9f7ctM1ECrnmnwRWU"; // From User Rules
 const MODELS = [
-    "gemini-1.5-flash"
+    "gemini-3-flash-preview",
+    "gemini-3.1-flash-lite-preview"
 ];
 
 async function testModel(modelName) {

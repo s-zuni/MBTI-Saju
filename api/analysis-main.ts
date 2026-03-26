@@ -185,9 +185,9 @@ export default async function handler(req: any, res: any) {
             // Fallback for 503/429 on preview model
             const msg = error.message || '';
             const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-            if (isRetryable && currentModelName !== "gemini-1.5-flash") {
-                console.warn(`[Fallback] Switching to gemini-1.5-flash for ${part} analysis`);
-                currentModelName = "gemini-1.5-flash";
+            if (isRetryable && currentModelName !== "gemini-3.1-flash-lite-preview") {
+                console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for ${part} analysis`);
+                currentModelName = "gemini-3.1-flash-lite-preview";
                 model = genAI.getGenerativeModel({ 
                     model: currentModelName, 
                     systemInstruction: systemPrompt + "\n절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(•), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다. 문단 간 공백을 활용하여 상세히 설명하세요."

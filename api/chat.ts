@@ -125,13 +125,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 const timeoutMs = 45000;
                 
                 // If the previous attempt failed with a retryable error on the primary, switch to fallback
-                if (attempt > 0 && currentModelName !== "gemini-1.5-flash") {
+                if (attempt > 0 && currentModelName !== "gemini-3.1-flash-lite-preview") {
                     const msg = lastError?.message || lastError?.toString() || '';
                     const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
                     
                     if (isRetryable) {
-                        console.warn(`[Fallback] Switching to gemini-1.5-flash due to transient error on ${currentModelName}`);
-                        currentModelName = "gemini-1.5-flash";
+                        console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview due to transient error on ${currentModelName}`);
+                        currentModelName = "gemini-3.1-flash-lite-preview";
                         const fallbackModel = genAI.getGenerativeModel({ model: currentModelName, systemInstruction: systemPrompt });
                         chat = fallbackModel.startChat({ history: history, generationConfig: { maxOutputTokens: 2048 } });
                     }
