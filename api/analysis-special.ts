@@ -190,16 +190,22 @@ export default async function handler(req: any, res: any) {
                 contents: [{ role: 'user', parts: [{ text: userQuery }] }],
                 generationConfig: { 
                     responseMimeType: "application/json",
-                    temperature: 0.8,
-                    maxOutputTokens: 2048
+                    temperature: 0.7,
+                    maxOutputTokens: 1500  // 응답 속도 최적화 (Vercel Hobby 10s 제한)
                 }
             });
         } catch (error: any) {
-            // Fallback for 503/429
             const msg = error.message || '';
-            const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-            if (isRetryable && currentModelName !== "gemini-3.1-flash-lite-preview") {
-                console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for special analysis: ${type}`);
+            const isServerError = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+            
+            // 타임아웃 에러는 폴백 불가 (시간이 이미 소진됨)
+            if (msg.includes('AI_TIMEOUT') || msg.includes('시간이 너무')) {
+                throw error;
+            }
+            
+            // 서버 에러일 때만 폴백 모델로 한 번 시도
+            if (isServerError && currentModelName !== "gemini-3.1-flash-lite-preview") {
+                console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for: ${type}`);
                 currentModelName = "gemini-3.1-flash-lite-preview";
                 model = genAI.getGenerativeModel({ 
                     model: currentModelName, 
@@ -209,7 +215,8 @@ export default async function handler(req: any, res: any) {
                     contents: [{ role: 'user', parts: [{ text: userQuery }] }],
                     generationConfig: { 
                         responseMimeType: "application/json",
-                        temperature: 0.8
+                        temperature: 0.7,
+                        maxOutputTokens: 1200
                     }
                 });
             } else {

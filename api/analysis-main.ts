@@ -178,14 +178,20 @@ export default async function handler(req: any, res: any) {
                 generationConfig: { 
                     responseMimeType: "application/json",
                     temperature: 0.7,
-                    maxOutputTokens: 4096
+                    maxOutputTokens: 3000  // Vercel Hobby 10s 제한 고려
                 }
             });
         } catch (error: any) {
-            // Fallback for 503/429 on preview model
             const msg = error.message || '';
-            const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-            if (isRetryable && currentModelName !== "gemini-3.1-flash-lite-preview") {
+            const isServerError = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
+            
+            // 타임아웃 에러는 폴백 불가 (시간이 이미 소진됨)
+            if (msg.includes('AI_TIMEOUT') || msg.includes('시간이 너무')) {
+                throw error;
+            }
+            
+            // 서버 에러일 때만 폴백 모델로 한 번 시도
+            if (isServerError && currentModelName !== "gemini-3.1-flash-lite-preview") {
                 console.warn(`[Fallback] Switching to gemini-3.1-flash-lite-preview for ${part} analysis`);
                 currentModelName = "gemini-3.1-flash-lite-preview";
                 model = genAI.getGenerativeModel({ 
@@ -197,7 +203,7 @@ export default async function handler(req: any, res: any) {
                     generationConfig: { 
                         responseMimeType: "application/json",
                         temperature: 0.7,
-                        maxOutputTokens: 4096
+                        maxOutputTokens: 2500
                     }
                 });
             } else {

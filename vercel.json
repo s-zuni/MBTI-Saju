@@ -1,5 +1,10 @@
 {
     "version": 2,
+    "functions": {
+        "api/**/*.ts": {
+            "maxDuration": 10
+        }
+    },
     "rewrites": [
         { "source": "/api/confirm-payment", "destination": "/api/payment?action=confirm" },
         { "source": "/api/cancel-payment", "destination": "/api/payment?action=cancel" },
