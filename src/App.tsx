@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -146,7 +146,45 @@ function App() {
   // 로딩 화면 표시 로직을 BrowserRouter 내부로 이동하여 /auth/callback 경로가 차단되지 않도록 함
   return (
     <BrowserRouter>
-      <Suspense fallback={
+      <AppContent 
+        session={session} 
+        isAuthLoading={isAuthLoading}
+        credits={credits}
+        refreshCredits={refreshCredits}
+        purchaseCredits={purchaseCredits}
+        consumeCredits={consumeCredits}
+        tier={tier}
+        fortune={fortune}
+        isFortuneLoading={isFortuneLoading}
+        handleFetchFortune={handleFetchFortune}
+        handleStart={handleStart}
+        showPremiumBanner={showPremiumBanner}
+        setShowPremiumBanner={setShowPremiumBanner}
+        modals={modals}
+        closeModal={closeModal}
+        closeAllModals={closeAllModals}
+        openModal={openModal}
+      />
+    </BrowserRouter>
+  );
+}
+
+function AppContent({ 
+  session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
+  tier, fortune, isFortuneLoading, handleFetchFortune, handleStart, 
+  showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
+}: any) {
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/room');
+  const handleCloseOnboarding = () => {
+    if (session?.user) {
+      localStorage.setItem(`hasSeenOnboarding_${session.user.id}`, 'true');
+    }
+    closeModal('onboarding');
+  };
+
+  return (
+    <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
           <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
         </div>
@@ -312,8 +350,8 @@ function App() {
                 </Routes>
               )}
 
-              <Footer />
-              <BottomNav />
+              {!isChatPage && <Footer />}
+              {!isChatPage && <BottomNav />}
               <SocialProofToast />
 
               {/* Modals are now lazy loaded and managed by openModal store */}
@@ -474,7 +512,6 @@ function App() {
           } />
         </Routes>
       </Suspense>
-    </BrowserRouter>
   );
 }
 

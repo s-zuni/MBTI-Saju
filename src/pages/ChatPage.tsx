@@ -32,7 +32,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
-    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+    const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
 
     // 1. Initial Load
     useEffect(() => {
@@ -129,6 +129,14 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, isTyping, shouldAutoScroll]);
+
+    // Enable auto-scroll once the user starts interacting or new messages arrive post-load
+    useEffect(() => {
+        if (messages.length > 0 && !isLoadingHistory) {
+            // History loaded, don't auto-scroll yet. 
+            // But if a NEW message is added (length increases), we can enable it if it's the assistant's response or user's input.
+        }
+    }, [messages.length, isLoadingHistory]);
 
     // Smart Auto-scroll: Only scroll if the user was already at the bottom
     const handleScroll = () => {
@@ -279,13 +287,6 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                         <span className="font-bold ml-1 text-slate-800 text-lg">운명 심층 상담</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button 
-                            onClick={handleNewSession} 
-                            className="p-2 text-indigo-600 hover:bg-slate-50 active:scale-95 transition-all rounded-full"
-                            title="새로운 상담 시작"
-                        >
-                            <Plus className="w-5 h-5" />
-                        </button>
                         <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
                             <Coins className="w-3 h-3" />
                             {credits}
@@ -365,17 +366,33 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 {/* Input Area */}
                 <div className="sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-20 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
                     <div className="max-w-3xl mx-auto">
+                        <div className="flex justify-between items-center mb-2 px-1">
+                            <button 
+                                onClick={handleNewSession}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold hover:bg-indigo-100 active:scale-95 transition-all mb-1 border border-indigo-100 shadow-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>새 상담 시작</span>
+                            </button>
+                            <div className="text-[10px] text-slate-400 font-medium">
+                                남은 무료: {remainingFreeMessages}회
+                            </div>
+                        </div>
                         <form onSubmit={handleSendMessage} className="relative">
                             <input
                                 type="text"
                                 value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
+                                onChange={(e) => {
+                                    setInputText(e.target.value);
+                                    setShouldAutoScroll(true); // User interaction enables auto-scroll
+                                }}
                                 placeholder="운세, 사주, 고민거리를 물어보세요..."
                                 disabled={isTyping}
                                 className="w-full pl-6 pr-14 py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
                             />
                             <button
                                 type="submit"
+                                onClick={() => setShouldAutoScroll(true)}
                                 disabled={!inputText.trim() || isTyping}
                                 className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200"
                             >
