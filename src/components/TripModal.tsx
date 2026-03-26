@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Plane, Loader2, MapPin, Calendar, Sparkles, Download, MessageSquare, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plane, Loader2, Sparkles, MapPin, Calendar, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import ServiceNavigation, { ServiceType } from './ServiceNavigation';
-import { SERVICE_COSTS } from '../config/creditConfig';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
-import { useRef } from 'react';
+import ServiceNavigation, { ServiceType } from './ServiceNavigation';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { tripSchema } from '../config/schemas';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 interface TripModalProps {
     isOpen: boolean;
@@ -16,81 +17,21 @@ interface TripModalProps {
     session: any;
 }
 
-const DOMESTIC_REGIONS = [
-    '서울', '경기', '인천', '강원', '대전', '세종', '충남', '충북',
-    '대구', '경북', '부산', '울산', '경남', '광주', '전남', '전북', '제주'
-];
-
-const OVERSEAS_REGIONS = [
-    '아시아', '유럽', '북아메리카', '남아메리카', '오세아니아', '아프리카'
-];
-
-const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
+const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
     const reportRef = useRef<HTMLDivElement>(null);
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<{
-        places: { name: string, reason: string }[],
-        itinerary?: { day: number, schedule: string }[],
-        summary: string,
-        tip?: string | string[]
-    } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const [tripMode, setTripMode] = useState<'general' | 'cherry'>('general');
-    const [regionType, setRegionType] = useState<'domestic' | 'overseas'>('domestic');
-    const [selectedRegion, setSelectedRegion] = useState('서울');
-
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
-    const [requirements, setRequirements] = useState<string>('');
-
-    useEffect(() => {
-        if (isOpen) {
-            setResult(null);
-            setError(null);
-            setRegionType('domestic');
-            setSelectedRegion('서울');
-
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            const threeDays = new Date(today);
-            threeDays.setDate(today.getDate() + 3);
-
-            const formatDate = (date: Date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-
-            setStartDate(formatDate(tomorrow));
-            setEndDate(formatDate(threeDays));
-            setRequirements('');
+    // Streaming Hook
+    const { object: result, submit, isLoading } = useObject({
+        api: '/api/analysis-special',
+        schema: tripSchema,
+        headers: {
+            'Authorization': `Bearer ${session?.access_token || ''}`
         }
-    }, [isOpen]);
-
-    // 14일 제한 체크
-    const getDaysDiff = () => {
-        if (!startDate || !endDate) return 0;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    };
-
-    const daysDiff = getDaysDiff();
-    const isTooLong = daysDiff > 14;
-
-    useEffect(() => {
-        if (regionType === 'domestic') setSelectedRegion(DOMESTIC_REGIONS[0] || '');
-        else setSelectedRegion(OVERSEAS_REGIONS[0] || '');
-    }, [regionType]);
+    });
 
     const fetchRecommendation = async () => {
-        if (!selectedRegion) return;
-        
-        // 1. Credit check first
-        const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
+        const cost = SERVICE_COSTS.TRIP;
         if (credits !== undefined && credits < cost) {
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
                 onNavigate('creditPurchase' as any);
@@ -99,313 +40,116 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
             return;
         }
 
-        setLoading(true);
-        setError(null);
-        
-        // Add a timeout for Safari compatibility
-        await new Promise(resolve => setTimeout(resolve, 800));
-
         try {
-            let currentSession = initialSession;
-            if (!currentSession) {
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                currentSession = fetchedSession;
+            const metadata = session?.user?.user_metadata;
+            if (!metadata) throw new Error('로그인이 필요합니다.');
+            if (!metadata.birth_date || !metadata.mbti) {
+                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');
             }
-            if (!currentSession) throw new Error('로그인이 필요합니다.');
 
-            const user = currentSession.user.user_metadata;
-            const apiEndpoint = tripMode === 'cherry' ? '/api/cherry' : '/api/trip';
-            const response = await fetch(apiEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentSession.access_token}`
-                },
-                body: JSON.stringify({
-                    birthDate: user.birth_date,
-                    birthTime: user.birth_time,
-                    mbti: user.mbti,
-                    gender: user.gender,
-                    name: user.full_name,
-                    region: tripMode === 'cherry' ? '전국' : selectedRegion,
-                    regionType: tripMode === 'cherry' ? 'domestic' : regionType,
-                    startDate,
-                    endDate,
-                    requirements,
-                    type: tripMode === 'cherry' ? 'cherry' : 'trip'
-                })
+            setError(null);
+            
+            submit({
+                type: 'trip',
+                name: metadata.full_name || '사용자',
+                mbti: metadata.mbti,
+                birthDate: metadata.birth_date,
+                birthTime: metadata.birth_time
             });
 
-            if (!response.ok) throw new Error('추천을 받아오지 못했습니다.');
-            const data = await response.json();
-            setResult(data);
-            
-            // Deduct credit only after success
             if (onUseCredit) {
-                const creditSuccess = await onUseCredit();
-                if (!creditSuccess) {
-                    console.error('Credit deduction failed after successful analysis');
-                }
+                await onUseCredit();
             }
-
         } catch (e: any) {
             setError(e.message);
-        } finally {
-            setLoading(false);
         }
     };
 
     const handleDownloadPDF = async () => {
         if (!reportRef.current || !result) return;
         try {
-            const fileName = `MBTIJU_Trip_Report_${new Date().getTime()}`;
-            await generatePDF(reportRef.current, fileName);
+            await generatePDF(reportRef.current, `MBTIJU_Trip_Report_${new Date().getTime()}`);
         } catch (err) {
             alert('PDF 생성 중 오류가 발생했습니다.');
         }
     };
 
+    useEffect(() => {
+        if (isOpen && !result && !isLoading) {
+            fetchRecommendation();
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
-            <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4 sm:p-6">
+            <div className="relative p-0 border-none w-full max-w-2xl shadow-2xl rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col">
                 <ServiceNavigation currentService="trip" onNavigate={onNavigate} onClose={onClose} />
 
-                {/* Professional Header */}
                 <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
                     <div className="flex justify-between items-end">
-                        <div>
-                            <div className="flex items-center gap-2 text-sky-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <Plane className="w-4 h-4" />
-                            </div>
-                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">
-                                운명 여행 플랜
-                            </h3>
+                        <div className="flex items-center gap-2 text-indigo-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
+                            <Plane className="w-4 h-4" /> Travel Destination
                         </div>
+                        <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">맞춤 여행지 분석</h3>
                     </div>
                     <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
                 </div>
 
                 <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
                     <div ref={reportRef} className="bg-white">
-                    {!result ? (
-                        <div className="space-y-10 animate-fade-up py-4">
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <MapPin className="w-5 h-5" /> 여행 타입 및 목적지
-                                </h4>
-                                <div className="space-y-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={() => { setTripMode('general'); setRegionType('domestic'); }}
-                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'general' && regionType === 'domestic' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-                                        >
-                                            국내 여행
-                                        </button>
-                                        <button
-                                            onClick={() => { setTripMode('general'); setRegionType('overseas'); }}
-                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'general' && regionType === 'overseas' ? 'bg-slate-950 text-white border-slate-950 shadow-xl' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-                                        >
-                                            해외 여행
-                                        </button>
-                                        <button
-                                            onClick={() => setTripMode('cherry')}
-                                            className={`flex-1 min-w-[100px] py-4 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${tripMode === 'cherry' ? 'bg-pink-500 text-white border-pink-500 shadow-xl' : 'bg-white text-pink-400 border-pink-50 hover:border-pink-100'}`}
-                                        >
-                                            🌸 벚꽃 명소
-                                        </button>
-                                    </div>
-                                    {tripMode === 'general' && (
-                                        <select
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold text-lg focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
-                                            value={selectedRegion}
-                                            onChange={(e) => setSelectedRegion(e.target.value)}
-                                        >
-                                            {regionType === 'domestic'
-                                                ? DOMESTIC_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
-                                                : OVERSEAS_REGIONS.map(r => <option key={r} value={r}>{r}</option>)
-                                            }
-                                        </select>
-                                    )}
-                                    {tripMode === 'cherry' && (
-                                        <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100">
-                                            <p className="text-pink-600 text-sm font-bold flex items-center gap-2">
-                                                <Sparkles className="w-4 h-4" />
-                                                전국 벚꽃 숨은 명소를 운명에 맞춰 추천해 드립니다.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </section>
-
-                            {tripMode === 'general' && (
-                                <section className="report-section">
-                                    <h4 className="report-section-title">
-                                        <Calendar className="w-5 h-5" /> 여행 일정 계획
-                                    </h4>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">출발일</p>
-                                            <input
-                                                type="date"
-                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">도착일</p>
-                                            <input
-                                                type="date"
-                                                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                </section>
-                            )}
-
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <MessageSquare className="w-5 h-5" /> 요구 사항 {tripMode === 'cherry' && '(선택)'}
-                                </h4>
-                                <textarea
-                                    className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all resize-none"
-                                    rows={3}
-                                    placeholder={tripMode === 'cherry' ? "예: 조용한 곳, 산책하기 좋은 곳, 주차 편한 곳 등" : "예: 맛집 위주, 자연 탐방, 힐링 위주, 가족 여행 등"}
-                                    value={requirements}
-                                    onChange={(e) => setRequirements(e.target.value)}
-                                />
-                            </section>
-
-                            {tripMode === 'general' && isTooLong && (
-                                <div className="flex items-center gap-2 p-4 bg-amber-50 text-amber-700 rounded-2xl text-sm font-bold border border-amber-200">
-                                    <AlertTriangle className="w-5 h-5 shrink-0" />
-                                    여행 기간은 최대 14일까지 설정할 수 있습니다.
-                                </div>
-                            )}
-
-                            <p className="text-xs text-slate-400 text-center">
-                                {tripMode === 'cherry' 
-                                    ? 'MBTI와 사주를 기반으로 당신의 운명에 가장 잘 어울리는 벚꽃 명소 3곳을 엄선해 드립니다.' 
-                                    : '여행 기간은 최대 14일까지 가능합니다. MBTI와 사주를 기반으로 맞춤 여행 계획을 구성합니다.'}
-                            </p>
-
-                            <button
-                                onClick={fetchRecommendation}
-                                disabled={loading || isTooLong}
-                                className="group relative w-full py-5 bg-slate-950 text-white rounded-full text-lg font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-4 overflow-hidden"
-                            >
-                                <div className="relative z-10 flex items-center justify-center gap-3">
-                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Plane className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
-                                    {loading ? '심층 분석 중...' : '맞춤 여행 플랜 확인하기'}
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            </button>
+                    {isLoading && !result ? (
+                        <div className="flex flex-col justify-center items-center h-80">
+                            <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6" />
+                            <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">분석 중...</p>
                         </div>
-                    ) : (
-                        <div className="space-y-12 animate-fade-up">
-                            {/* Summary Card */}
-                            <div className="report-card bg-slate-900 text-white border-none p-10 relative overflow-hidden">
-                                <Sparkles className="absolute top-6 right-6 w-10 h-10 text-white/10" />
-                                <p className="text-sky-400 font-black mb-2 uppercase tracking-[0.3em] text-[10px]"></p>
-                                <p className="text-xl font-bold leading-relaxed italic text-slate-100">
-                                    "{stripMarkdown(result.summary)}"
-                                </p>
-                            </div>
-
-                            {/* Recommended Places */}
+                    ) : error ? (
+                        <div className="text-center py-20 bg-red-50 rounded-[32px]">
+                            <p className="text-red-500 font-black mb-4">오류가 발생했습니다.</p>
+                            <button onClick={fetchRecommendation} className="px-8 py-3 bg-slate-950 text-white rounded-full">다시 시도</button>
+                        </div>
+                    ) : result ? (
+                        <div className="space-y-12 animate-fade-up py-4">
                             <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <MapPin className="w-5 h-5" /> 추천 여행지: {selectedRegion}
-                                </h4>
+                                <h4 className="report-section-title"><MapPin className="w-5 h-5 text-indigo-600" /> 추천 여행지 BEST 3</h4>
                                 <div className="grid gap-6">
-                                    {result.places.map((place, i) => (
-                                        <div key={i} className="report-card group hover:border-slate-300 transition-colors">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h5 className="text-xl font-black text-slate-950">{place.name}</h5>
-                                                <span className="px-3 py-1 bg-sky-50 text-sky-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-sky-100">Must Visit</span>
+                                    {result?.places?.map((place: any, i: number) => (
+                                        <div key={i} className="report-card">
+                                            <h5 className="text-xl font-black text-slate-950 mb-2">0{i+1}. {place.name}</h5>
+                                            <div className="space-y-3 text-sm leading-relaxed text-slate-600">
+                                                <p><strong className="text-slate-950">선정 이유:</strong> {stripMarkdown(place.reason)}</p>
+                                                <p><strong className="text-slate-950">추천 활동:</strong> {stripMarkdown(place.activity)}</p>
                                             </div>
-                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(place.reason)}</p>
                                         </div>
                                     ))}
                                 </div>
                             </section>
 
-                            {/* Itinerary */}
-                            {result.itinerary && result.itinerary.length > 0 && (
-                                <section className="report-section">
-                                    <h4 className="report-section-title">
-                                        <Calendar className="w-5 h-5" /> 심층 일정 가이드
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {result.itinerary.map((day, i) => (
-                                            <div key={i} className="flex gap-6 items-stretch">
-                                                <div className="flex flex-col items-center shrink-0">
-                                                    <div className="w-12 h-12 rounded-full border-2 border-slate-950 flex items-center justify-center text-xs font-black text-slate-950 bg-white">
-                                                        D-{day.day}
-                                                    </div>
-                                                    {i !== result.itinerary!.length - 1 && <div className="w-[2px] grow bg-slate-100 mt-2"></div>}
-                                                </div>
-                                                <div className="report-card flex-1">
-                                                    <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(day.schedule)}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            )}
-
-                            {/* Tips Section */}
-                            {result.tip && (
-                                <section className="report-section">
-                                    <h4 className="report-section-title">
-                                        <Sparkles className="w-5 h-5 text-pink-500" /> 운명을 깨우는 벚꽃 여행 팁
-                                    </h4>
-                                    <div className="report-card bg-pink-50/50 border-pink-100 p-6 sm:p-8">
-                                        <div className="text-slate-700 text-sm leading-[1.8] whitespace-pre-wrap">
-                                            {Array.isArray(result.tip) 
-                                                ? result.tip.map((t, index) => (
-                                                    <div key={index} className="flex gap-2 mb-2">
-                                                        <span className="text-pink-400 font-bold">•</span> 
-                                                        <span>{stripMarkdown(t)}</span>
-                                                    </div>
-                                                  ))
-                                                : stripMarkdown(result.tip)
-                                            }
+                            <section className="report-section">
+                                <h4 className="report-section-title"><Calendar className="w-5 h-5 text-indigo-600" /> 추천 일정 가이드</h4>
+                                <div className="space-y-4">
+                                    {result?.itinerary?.map((day: any, i: number) => (
+                                        <div key={i} className="report-card bg-slate-50">
+                                            <h5 className="font-bold text-indigo-600 mb-3">{day.day}</h5>
+                                            <ul className="space-y-2">
+                                                {day.schedule?.map((item: string, j: number) => (
+                                                    <li key={j} className="text-sm text-slate-600">• {stripMarkdown(item)}</li>
+                                                ))}
+                                            </ul>
                                         </div>
-                                    </div>
-                                </section>
-                            )}
+                                    ))}
+                                </div>
+                            </section>
 
-                            {/* Action Buttons */}
-                            <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col items-center">
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    className="group relative flex items-center justify-center gap-3 px-10 py-4 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95"
-                                >
-                                    <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                                    여행 계획표 다운로드
-                                </button>
-
-                                <button
-                                    onClick={() => setResult(null)}
-                                    className="mt-6 text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
-                                >
-                                    다른 목적지로 다시 검색하기
+                            <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
+                                <button onClick={handleDownloadPDF} className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3">
+                                    <Download className="w-5 h-5" /> PDF 결과서 다운로드
                                 </button>
                             </div>
                         </div>
-                    )}
+                    ) : null}
                     </div>
-
-                    {error && (
-                        <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100 animate-shake">
-                            {error}
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

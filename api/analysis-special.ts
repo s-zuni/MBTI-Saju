@@ -1,22 +1,90 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamObject } from 'ai';
+import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
-import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
-import { cleanAndParseJSON } from './_utils/json';
+
+// schema definitions
+const luckySchema = z.object({
+    color: z.string().describe("행운의 색상"),
+    number: z.string().describe("행운의 숫자"),
+    direction: z.string().describe("행운의 방향")
+});
+
+const fortuneItemSchema = z.object({
+    fortune: z.string().describe("상세 운세 분석 내용 (글머리표와 줄바꿈 활용)"),
+    lucky: luckySchema,
+    mission: z.string().optional().describe("오늘의 미션/조언")
+});
+
+const schemas: Record<string, any> = {
+    healing: z.object({
+        place: z.string(),
+        placeType: z.string(),
+        activity: z.string(),
+        reason: z.string(),
+        summary: z.string()
+    }),
+    naming: z.object({
+        summary: z.string().describe("핵심 사주 기운 요약"),
+        analysis: z.string().describe("사주 원국 분석 및 작명 방향성"),
+        names: z.array(z.object({
+            name: z.string(),
+            hanja: z.string(),
+            meaning: z.string(),
+            sajuFit: z.string()
+        }))
+    }),
+    job: z.object({
+        jobs: z.array(z.string()),
+        reason: z.string(),
+        summary: z.string()
+    }),
+    trip: z.object({
+        places: z.array(z.object({
+            name: z.string(),
+            reason: z.string()
+        })),
+        itinerary: z.array(z.object({
+            day: z.number(),
+            schedule: z.string().describe("오전/오후/저녁 일정을 상세히 기술")
+        })),
+        summary: z.string(),
+        bestTime: z.string(),
+        tip: z.string()
+    }),
+    cherry: z.object({
+        places: z.array(z.object({
+            name: z.string(),
+            reason: z.string()
+        })),
+        summary: z.string(),
+        tip: z.string()
+    }),
+    fortune: z.object({
+        today: fortuneItemSchema,
+        tomorrow: fortuneItemSchema
+    })
+};
+
+export const config = {
+    maxDuration: 60, // Vercel Pro/Enterprise 60s, Hobby is limited to 10s but streaming bypasses this UX limit
+};
 
 export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const { type } = req.query;
-    console.log(`[Special Analysis Requested] Type: ${type}`);
+    const currentSchema = schemas[type as string];
 
-    // Robust body parsing
+    if (!currentSchema) {
+        return res.status(400).json({ error: `Invalid analysis type: ${type}` });
+    }
+
+    console.log(`[Streaming Special Analysis] Type: ${type}`);
+
     let body = req.body;
     if (typeof body === 'string') {
-        try {
-            body = JSON.parse(body);
-        } catch (e) {
-            console.error('Failed to parse body string:', e);
-        }
+        try { body = JSON.parse(body); } catch (e) { console.error('Parse error:', e); }
     }
     body = body || {};
 
@@ -28,183 +96,56 @@ export default async function handler(req: any, res: any) {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        console.error('Missing GEMINI_API_KEY');
-        return res.status(500).json({ error: 'Special analysis configuration missing (API Key)' });
+        return res.status(500).json({ error: 'Missing API Key' });
     }
 
-    // Common analysis context (if provided)
     let saju: any = null;
     if (birthDate) {
-        try {
-            saju = calculateSaju(birthDate, birthTime);
-        } catch (e) {
-            console.error('Initial Saju calculation failed for birthDate:', birthDate, e);
-        }
+        try { saju = calculateSaju(birthDate, birthTime); } catch (e) { console.error('Saju error:', e); }
     }
 
     let systemPrompt = `당신은 20대 여성의 감성과 니즈를 완벽하게 파악하고 있는 '트렌디 웰니스 & 라이프 컨설턴트'입니다.
     
     [핵심 규칙]
-    1. 모든 답변은 20대 여성이 흥미를 느낄 수 있도록 친근하고 감각적인 어투(말투)를 사용하세요.
-    2. 답변 내용을 단순한 줄글로 나열하지 말고, 반드시 '글머리표(-)'와 '문단 간 공백(줄바꿈)'을 사용하여 항목별로 깔끔하게 시각화하세요.
-    3. 중요한 포인트나 상세 설명은 최소 3개 이상의 하위 항목(-)으로 나누어 설명하세요.
-    4. 가독성을 위해 한 문단은 최대 3~4줄을 넘지 않도록 하고, 문단 사이에 반드시 빈 줄을 추가하세요.
-    5. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다. (사용 금지 엄격 준수)
-    6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (영어 사용 금지)
-    7. 뻔한 조언 대신, 사용자 개인의 MBTI와 사주 기운이 반영된 독특하고 실질적인 인사이트를 제공하세요.`;
+    1. 모든 답변은 20대 여성이 흥미를 느낄 수 있도록 친근하고 감각적인 어투를 사용하세요.
+    2. 답변 내용을 단순한 줄글로 나열하지 말고, 반드시 '글머리표(-)'와 '문단 간 공백'을 사용하세요.
+    3. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요.
+    4. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.`;
 
     let userQuery = '';
 
+    if (type === 'healing') {
+        userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}, 선호 지역: ${region || '전국'}`;
+    } else if (type === 'naming') {
+        let targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
+        userQuery = `성별: ${targetGender}, 사주: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
+    } else if (type === 'job') {
+        userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
+    } else if (type === 'trip') {
+        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
+    } else if (type === 'cherry') {
+        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}, 요청사항: ${requirements}`;
+    } else if (type === 'fortune') {
+        const yearStr = birthDate.split('-')[0] || '1990';
+        const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
+        userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}`;
+    }
+
     try {
-        if (type === 'healing') {
-            if (!birthDate || !mbti || !saju) {
-                console.warn('[Healing Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });
-                return res.status(400).json({ error: '힐링 분석을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
-            }
-            systemPrompt += `\n사용자의 MBTI와 사주 오행 분포를 토대로 가장 적합한 '나를 위한 힐링 스팟'과 활동을 추천하세요.
-            - 결과 형식 (JSON): { 
-                "place": "장소 이름", 
-                "placeType": "장소 유형", 
-                "activity": "구체적인 힐링 활동 (글머리표 활용)", 
-                "reason": "항목별로 나열된 상세 추천 이유 (최소 3개 항목)", 
-                "summary": "3줄 이내의 핵심 요약" 
-            }`;
-            userQuery = `MBTI: ${mbti}, 일간(Day Master): ${saju.dayMaster.korean}, 오행분포: ${JSON.stringify(saju.elementRatio)}, 선호 지역: ${region || '전국'}`;
-        } else if (type === 'naming') {
-            if (!targetBirthDate) {
-                console.warn('[Naming Validation Failed] Missing targetBirthDate');
-                return res.status(400).json({ error: '작명 대상의 생년월일이 누락되었습니다. (Error: 400.1)' });
-            }
-            let targetSaju: any;
-            try {
-                targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
-            } catch (e) {
-                console.error('[Naming Saju Error]:', e);
-                return res.status(400).json({ error: '작명 대상의 생년월일 형식이 올바르지 않습니다. (Error: 400.2)' });
-            }
-            
-            systemPrompt = `당신은 정통 사주명리학에 정통한 최고의 현대 작명가입니다. 모든 답변은 진지하고 신뢰감 있는 전문가 어투를 사용하세요.
-            - 결과 형식 (JSON): { 
-                "summary": "핵심 사주 기운 요약", 
-                "analysis": "사주 원국 분석 및 작명 방향성 (항목별로 구분하여 상세 설명)", 
-                "names": [
-                    { "name": "이름 (한글)", "hanja": "이름 (한자)", "meaning": "이름의 뜻과 어원 (글머리표 활용)", "sajuFit": "사주적으로 좋은 이유 (항목별 나열)" }
-                ] 
-            }`;
-            userQuery = `작명 대상의 성별: ${targetGender === 'male' ? '남성' : '여성'}, 사주 기운: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 사용자의 특별 요청사항: ${requirements || '없음'}`;
-        } else if (type === 'job') {
-            if (!birthDate || !mbti || !saju) {
-                console.warn('[Job Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });
-                return res.status(400).json({ error: '직업 분석을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
-            }
-            systemPrompt += `\n사용자의 타고난 기질(사주)과 성격 패턴(MBTI)이 시너지를 낼 수 있는 '천직'을 제안하세요.
-            - 결과 형식 (JSON): { 
-                "jobs": ["직업1", "직업2", "직업3"], 
-                "reason": "해당 직업들이 추천되는 상세 이유 (직업별로 항목을 나누어 글머리표로 설명)", 
-                "summary": "3줄 이내 핵심 요약" 
-            }`;
-            userQuery = `MBTI: ${mbti}, 사주 일간: ${saju.dayMaster.korean} (${saju.dayMaster.description})`;
-        } else if (type === 'trip') {
-            if (!birthDate || !mbti || !saju) {
-                console.warn('[Trip Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });
-                return res.status(400).json({ error: '여행 분석을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
-            }
-            const travelType = body.regionType === 'overseas' ? '해외' : '국내';
-            
-            // Calculate trip duration
-            let durationDays = 1;
-            if (startDate && endDate) {
-                const s = new Date(startDate);
-                const e = new Date(endDate);
-                if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
-                    durationDays = Math.max(1, Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-                }
-            }
-
-            systemPrompt += `\n사용자의 기운을 북돋아줄 수 있는 '운명적 여행지'를 큐레이션 하세요.
-            - 여행 기간(${durationDays}일)에 맞춰 '심층 일정 가이드'를 매일매일 상세히 작성해야 합니다.
-            - 결과 형식 (JSON): { 
-                "places": [{ "name": "장소명", "reason": "간략한 추천 이유 (글머리표 활용)" }], 
-                "itinerary": [
-                    { "day": 1, "schedule": "오전/오후/저녁으로 나누어 글머리표(-)를 사용해 상세히 작성" }
-                    // 여행 기간(${durationDays}일)만큼 모든 날짜의 일정을 추가해야 함
-                ], 
-                "summary": "핵심 요약", 
-                "bestTime": "추천 시기", 
-                "tip": "여행 팁 (나열식)" 
-            }`;
-            userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti}, 사주 기운: ${saju.dayMaster.korean}, 선택 지역: ${region || '전국'}, 여행 타입: ${travelType}, 여행 기간: ${startDate} ~ ${endDate} (${durationDays}일간), 요청사항: ${requirements || '없음'}`;
-        } else if (type === 'cherry') {
-            if (!birthDate || !mbti || !saju) {
-                console.warn('[Cherry Validation Failed] Missing fields or saju', { birthDate, mbti, hasSaju: !!saju });
-                return res.status(400).json({ error: '벚꽃 명소 추천을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
-            }
-            
-            systemPrompt += `\n사용자의 MBTI와 사주 오행 기운을 분석하여, 올봄 가장 잘 어울리는 '국내 벚꽃 명소 3곳'을 엄선하여 추천하세요.
-            
-            [벚꽃 명소 추천 지침]
-            1. 반드시 '국내(대한민국)' 내 명소만 '정확히 3곳' 추천하세요.
-            2. 알려진 유명 장소뿐만 아니라, 전국 곳곳의 숨겨진 보석 같은 장소(비밀 명소)를 최소 1개 이상 포함하세요.
-            3. 각 장소를 추천하는 이유를 사용자의 MBTI 성격 특성과 사주(일간 기운 등)에 근거하여 간결하면서도 감성적으로 설명하세요.
-            4. 전체 답변의 총 길이는 마크다운 제외 순수 텍스트 기준 400자 내외로 핵심 위주로 상세히 작성하세요. (빠른 응답을 위함)
-            5. 중요: 가독성을 위해 개괄식 구조와 글머리표(-)를 적극 활용하되, 절대로 마크다운 강조 기호(**)를 사용하지 마세요. (사용 시 시스템 오류 발생)
-            
-            - 결과 형식 (JSON): { 
-                "places": [{ "name": "장소명", "reason": "MBTI와 사주에 근거한 상세 추천 이유 (글머리표 활용, 150자 내외로 상세히)" }], 
-                "itinerary": [], 
-                "summary": "이번 봄 당신의 운명적인 벚꽃 여행을 위한 총평 및 기운 분석 (200자 이상 상세히)", 
-                "tip": "벚꽃 여행 시 기운을 북돋아줄 수 있는 구체적인 팁 (나열형, 3개 이상)" 
-            }`;
-            userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti}, 사주 일간: ${saju.dayMaster.korean}, 오행분포: ${JSON.stringify(saju.elementRatio)}, 요청사항: ${requirements || '없음'}`;
-        } else if (type === 'fortune') {
-            if (!birthDate || !mbti) {
-                return res.status(400).json({ error: '운세 분석을 위한 필수 정보(생년월일, MBTI)가 누락되었습니다.' });
-            }
-            const yearStr = birthDate.split('-')[0] || '1990';
-            const animals = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"];
-            const zodiac = animals[(parseInt(yearStr) - 4) % 12];
-            
-            systemPrompt += `\n사용자의 띠(${zodiac})와 MBTI 성향을 종합하여 오늘과 내일의 운세를 분석합니다.
-            - 결과 형식 (JSON): { "today": { "fortune": "상세 분석", "lucky": { "color": "색상", "number": "숫자", "direction": "방향" } }, "tomorrow": { "fortune": "상세 분석", "lucky": { "color": "색상", "number": "숫자", "direction": "방향" } } }`;
-            userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}`;
-        } else {
-            return res.status(400).json({ error: `Invalid analysis type: ${type}` });
-        }
-
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = "gemini-2.5-flash";
-        
-        const model = genAI.getGenerativeModel({ 
-            model: modelName, 
-            systemInstruction: systemPrompt
+        const google = createGoogleGenerativeAI({
+            apiKey: GEMINI_API_KEY
         });
-        
-        console.log(`[Gemini Call] Model: ${modelName}, Type: ${type}`);
-        const result = await generateContentWithRetry(model, {
-            contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { 
-                responseMimeType: "application/json",
-                temperature: 0.7,
-                maxOutputTokens: 1500  // 응답 속도 최적화 (Vercel Hobby 10s 제한)
-            }
-        });
-        
-        const responseText = result.response.text();
-        console.log(`[Gemini Response] Type: ${type}, Success: ${!!responseText}, Length: ${responseText?.length || 0}`);
-        
-        if (!responseText) throw new Error("AI returned an empty response");
-        
-        const content = cleanAndParseJSON(responseText);
-        res.status(200).json(content);
 
+        const result = await streamObject({
+            model: google('gemini-2.5-flash'),
+            schema: currentSchema,
+            system: systemPrompt,
+            prompt: userQuery,
+        });
+
+        return result.toTextStreamResponse();
     } catch (error: any) {
-        console.error(`[Special Analysis Crash - ${type}]:`, error);
-        // Provide more detailed error info in the response if possible
-        const errorMessage = error.message || String(error);
-        res.status(500).json({ 
-            error: getKoreanErrorMessage(error) || "분석 정보를 가져오는 중 오류가 발생했습니다.",
-            details: errorMessage,
-            model: process.env.GEMINI_MODEL || "gemini-3-flash-preview"
-        });
+        console.error(`[Streaming Error - ${type}]:`, error);
+        res.status(500).json({ error: "분석 중 오류가 발생했습니다.", details: error.message });
     }
 }

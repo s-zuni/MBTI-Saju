@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Loader2, Sparkles, PenTool, Calendar, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader2, Sparkles, UserPlus, Download, Share2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
+import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
-import { stripMarkdown } from '../utils/textUtils';
-import { useRef } from 'react';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { namingSchema } from '../config/schemas';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 interface NamingModalProps {
     isOpen: boolean;
@@ -16,9 +17,8 @@ interface NamingModalProps {
     session: any;
 }
 
-const BIRTH_HOURS = [
-    { value: '', label: '모름' },
-    { value: '23:00-01:00', label: '자시 (23:00~01:00)' },
+const BIRTH_TIME_SLOTS = [
+    { value: 'unknown', label: '모름' },
     { value: '01:00-03:00', label: '축시 (01:00~03:00)' },
     { value: '03:00-05:00', label: '인시 (03:00~05:00)' },
     { value: '05:00-07:00', label: '묘시 (05:00~07:00)' },
@@ -32,45 +32,40 @@ const BIRTH_HOURS = [
     { value: '21:00-23:00', label: '해시 (21:00~23:00)' },
 ];
 
-const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
+const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
     const reportRef = useRef<HTMLDivElement>(null);
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<{
-        names: { name: string; hanja: string; meaning: string; sajuFit: string }[];
-        analysis: string;
-        summary: string;
-    } | null>(null);
     const [error, setError] = useState<string | null>(null);
-
     const [targetBirthDate, setTargetBirthDate] = useState('');
     const [targetBirthTime, setTargetBirthTime] = useState('');
     const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
-    const [requirements, setRequirements] = useState('');
+
+    // Streaming Hook
+    const { object: result, submit, isLoading } = useObject({
+        api: '/api/analysis-special',
+        schema: namingSchema,
+        headers: {
+            'Authorization': `Bearer ${session?.access_token || ''}`
+        }
+    });
 
     useEffect(() => {
         if (isOpen) {
-            setResult(null);
             setError(null);
             setTargetBirthDate('');
             setTargetBirthTime('');
-            setRequirements('');
         }
     }, [isOpen]);
 
-    const handleAnalyze = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!targetBirthDate) {
-            setError('작명 대상의 생년월일을 입력해주세요.');
+            alert('생년월일을 입력해주세요.');
             return;
         }
 
-        setLoading(true);
-        setError(null);
-
-        // 1. Credit check first
         const cost = SERVICE_COSTS.NAMING;
         if (credits !== undefined && credits < cost) {
-            setLoading(false);
-            if (window.confirm(`크레딧이 부족합니다. (${SERVICE_NAMES.NAMING}에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
+            if (window.confirm(`크레딧이 부족합니다. (작명 서비스는 ${cost}크레딧이 필요합니다.)`)) {
                 onNavigate('creditPurchase' as any);
                 onClose();
             }
@@ -78,60 +73,26 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
         }
 
         try {
-            let currentSession = initialSession;
-            if (!currentSession) {
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                currentSession = fetchedSession;
-            }
-            if (!currentSession) throw new Error('로그인이 필요합니다.');
-
-            const user = currentSession.user.user_metadata;
-            const response = await fetch('/api/naming', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentSession.access_token}`
-                },
-                body: JSON.stringify({
-                    birthDate: user.birth_date,
-                    birthTime: user.birth_time,
-                    mbti: user.mbti,
-                    gender: user.gender,
-                    name: user.full_name,
-                    targetBirthDate,
-                    targetBirthTime,
-                    targetGender,
-                    requirements,
-                })
+            setError(null);
+            submit({
+                type: 'naming',
+                gender: targetGender,
+                birthDate: targetBirthDate,
+                birthTime: targetBirthTime
             });
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                const detailMsg = errData.details ? ` (${errData.details})` : '';
-                throw new Error(`${errData.error || '작명 분석을 받아오지 못했습니다.'}${detailMsg}`);
-            }
-            const data = await response.json();
-            setResult(data);
-
             if (onUseCredit) {
-                const creditSuccess = await onUseCredit();
-                if (!creditSuccess) {
-                    console.error('Credit deduction failed after successful naming analysis');
-                }
+                await onUseCredit();
             }
-
         } catch (e: any) {
             setError(e.message);
-        } finally {
-            setLoading(false);
         }
     };
 
     const handleDownloadPDF = async () => {
         if (!reportRef.current || !result) return;
         try {
-            const fileName = `MBTIJU_Naming_Report_${new Date().getTime()}`;
-            await generatePDF(reportRef.current, fileName);
+            await generatePDF(reportRef.current, `MBTIJU_Naming_Report_${new Date().getTime()}`);
         } catch (err) {
             alert('PDF 생성 중 오류가 발생했습니다.');
         }
@@ -140,176 +101,90 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
-            <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4">
+            <div className="relative w-full max-w-2xl bg-white rounded-[48px] max-h-[94vh] overflow-hidden flex flex-col shadow-2xl">
                 <ServiceNavigation currentService="naming" onNavigate={onNavigate} onClose={onClose} />
 
-                {/* Header */}
-                <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
+                <div className="p-8 sm:p-12 pb-4 shrink-0 bg-white">
                     <div className="flex justify-between items-end">
                         <div>
-                            <div className="flex items-center gap-2 text-teal-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5">
-                                <PenTool className="w-4 h-4" />
+                            <div className="flex items-center gap-2 text-indigo-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
+                                <UserPlus className="w-4 h-4" /> Professional Naming
                             </div>
-                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none">
-                                사주 작명소
-                            </h3>
+                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter uppercase">명리학 작명</h3>
                         </div>
                     </div>
                     <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
                 </div>
 
-                <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
-                    <div ref={reportRef} className="bg-white">
-                    {!result ? (
-                        <div className="space-y-10 animate-fade-up py-4">
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <Calendar className="w-5 h-5 text-teal-600" /> 작명 대상 정보
-                                </h4>
-                                <p className="text-sm text-slate-500 mb-4">작명하고 싶은 분의 생년월일과 태어난 시간을 입력해주세요.</p>
-                                <div className="space-y-6">
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setTargetGender('male')}
-                                            className={`flex-1 py-4 rounded-2xl font-bold transition-all ${targetGender === 'male' ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                        >
-                                            남성
-                                        </button>
-                                        <button
-                                            onClick={() => setTargetGender('female')}
-                                            className={`flex-1 py-4 rounded-2xl font-bold transition-all ${targetGender === 'female' ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                        >
-                                            여성
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">생년월일</p>
-                                        <input
-                                            type="date"
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all"
-                                            value={targetBirthDate}
-                                            onChange={(e) => setTargetBirthDate(e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">태어난 시간</p>
-                                        <select
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all appearance-none"
-                                            value={targetBirthTime}
-                                            onChange={(e) => setTargetBirthTime(e.target.value)}
-                                        >
-                                            {BIRTH_HOURS.map(h => (
-                                                <option key={h.value} value={h.value}>{h.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <MessageSquare className="w-5 h-5 text-teal-600" /> 요청 사항
-                                </h4>
-                                <textarea
-                                    className="w-full p-4 rounded-2xl bg-slate-50 border-none text-slate-950 font-bold focus:ring-2 focus:ring-slate-200 transition-all resize-none"
-                                    rows={3}
-                                    placeholder="예: 순한 느낌의 이름, 장남에 맞는 이름, 특정 돌림자 포함 등"
-                                    value={requirements}
-                                    onChange={(e) => setRequirements(e.target.value)}
-                                />
-                            </section>
-
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={loading || !targetBirthDate}
-                                className="group relative w-full py-5 bg-slate-950 text-white rounded-full text-lg font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-4 overflow-hidden"
-                            >
-                                <div className="relative z-10 flex items-center justify-center gap-3">
-                                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <PenTool className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                                    {loading ? '사주 분석 및 작명 중...' : '사주 작명 시작하기'}
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-12 animate-fade-up">
-                            {/* Summary */}
-                            <div className="report-card bg-teal-950 text-white border-none p-10 relative overflow-hidden">
-                                <Sparkles className="absolute top-6 right-6 w-10 h-10 text-white/10" />
-                                <p className="text-teal-400 font-black mb-2 uppercase tracking-[0.3em] text-[10px]">사주 분석 요약</p>
-                                <p className="text-xl font-bold leading-relaxed text-teal-100 whitespace-pre-wrap">
-                                    {stripMarkdown(result.summary)}
-                                </p>
+                <div className="px-8 sm:p-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+                    {!result && !isLoading && (
+                        <form onSubmit={handleSubmit} className="space-y-8 animate-fade-up">
+                            <div className="grid grid-cols-2 gap-4">
+                                <button type="button" onClick={() => setTargetGender('male')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'male' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>남성</button>
+                                <button type="button" onClick={() => setTargetGender('female')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'female' ? 'bg-rose-500 border-rose-500 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>여성</button>
                             </div>
 
-                            {/* Recommended Names */}
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <PenTool className="w-5 h-5 text-teal-600" /> 추천 이름
-                                </h4>
-                                <div className="grid gap-6">
-                                    {result.names.map((item, i) => (
-                                        <div key={i} className="report-card group hover:border-teal-300 transition-colors">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <h5 className="text-2xl font-black text-slate-950">{item.name}</h5>
-                                                    {item.hanja && (
-                                                        <p className="text-sm text-teal-600 font-bold mt-1">{item.hanja}</p>
-                                                    )}
-                                                </div>
-                                                <span className="px-3 py-1 bg-teal-50 text-teal-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-teal-100">
-                                                    추천 {i + 1}
-                                                </span>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-400 mb-1">이름의 뜻</p>
-                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(item.meaning)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-400 mb-1">사주 적합도</p>
-                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(item.sajuFit)}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Detailed Saju Analysis */}
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <Sparkles className="w-5 h-5 text-teal-600" /> 사주 명리학 분석
-                                </h4>
-                                <div className="report-card p-10 bg-slate-50 border-slate-100">
-                                    <p className="text-slate-700 leading-relaxed text-md whitespace-pre-wrap">
-                                        {stripMarkdown(result.analysis)}
-                                    </p>
-                                </div>
-                            </section>
-
-                            <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
-                                >
-                                    <PenTool className="w-5 h-5 text-teal-400" /> PDF 결과서 다운로드
-                                </button>
-                                <button
-                                    onClick={() => setResult(null)}
-                                    className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
-                                >
-                                    다른 작명 요청하기
-                                </button>
+                            <div className="space-y-4">
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">대상자 생년월일</label>
+                                <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-600 transition-all" />
                             </div>
-                        </div>
+
+                            <div className="space-y-4">
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">태어난 시간 (선택)</label>
+                                <select value={targetBirthTime} onChange={(e) => setTargetBirthTime(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-600 appearance-none">
+                                    <option value="">태어난 시간 선택 (모름 가능)</option>
+                                    {BIRTH_TIME_SLOTS.map((slot) => (<option key={slot.value} value={slot.value}>{slot.label}</option>))}
+                                </select>
+                            </div>
+
+                            <button type="submit" className="w-full py-5 bg-slate-950 text-white rounded-full font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">작명 분석 시작하기 ({SERVICE_COSTS.NAMING} 크레딧)</button>
+                        </form>
                     )}
-                    </div>
 
-                    {error && (
-                        <div className="mt-8 p-6 bg-red-50 text-red-600 rounded-[24px] text-center text-sm font-bold border border-red-100 animate-shake">
-                            {error}
+                    {(isLoading || result) && (
+                        <div ref={reportRef} className="bg-white">
+                            {isLoading && !result ? (
+                                <div className="flex flex-col justify-center items-center h-80">
+                                    <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
+                                    <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">작명 분석 중입니다...</p>
+                                </div>
+                            ) : error ? (
+                                <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
+                                    <p className="text-red-500 font-black mb-4">분석 중 오류가 발생했습니다.</p>
+                                    <button onClick={handleSubmit} className="px-8 py-3 bg-slate-950 text-white rounded-full text-xs font-black">다시 시도</button>
+                                </div>
+                            ) : result ? (
+                                <div className="space-y-12 animate-fade-up">
+                                    <section className="report-section">
+                                        <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-indigo-600" /> 추천 이름 BEST 3</h4>
+                                        <div className="grid gap-6">
+                                            {result?.names?.map((name: any, i: number) => (
+                                                <div key={i} className="report-card !p-8 border-slate-100 hover:border-indigo-200 transition-all">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div>
+                                                            <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1 block">추천 작명 {i+1}</span>
+                                                            <h5 className="text-3xl font-black text-slate-950">{name.hangul} <span className="text-xl font-medium text-slate-400 ml-2">{name.hanja}</span></h5>
+                                                        </div>
+                                                        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-indigo-600"><Sparkles className="w-6 h-6" /></div>
+                                                    </div>
+                                                    <div className="space-y-4 text-sm leading-relaxed">
+                                                        <p className="text-slate-600"><strong className="text-slate-950 block mb-1">한자 의미</strong> {stripMarkdown(name.meaning)}</p>
+                                                        <p className="text-slate-600"><strong className="text-slate-950 block mb-1">사주 조화</strong> {stripMarkdown(name.saju_compatibility)}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
+                                        <button onClick={handleDownloadPDF} className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3">
+                                            <Download className="w-5 h-5" /> PDF 결과서 다운로드
+                                        </button>
+                                        <button onClick={() => { setError(null); }} className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4">새로운 정보로 다시 분석하기</button>
+                                    </div>
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </div>

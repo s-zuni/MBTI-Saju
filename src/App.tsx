@@ -35,6 +35,9 @@ import AdminCommunity from './pages/admin/AdminCommunity';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { fortuneSchema } from './config/schemas';
+import { z } from 'zod';
 
 // Lazy load modals for better initial performance
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
@@ -64,11 +67,17 @@ function App() {
 
   const { modals, openModal, closeModal, closeAllModals } = useModalStore();
 
-  const [fortune, setFortune] = useState<{
-    today: { fortune: string; lucky: { color: string; number: string; direction: string } };
-    tomorrow: { fortune: string; lucky: { color: string; number: string; direction: string } };
-  } | null>(null);
-  const [isFortuneLoading, setIsFortuneLoading] = useState(false);
+
+  // Streaming fortune
+  const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
+    api: '/api/fortune',
+    schema: fortuneSchema,
+    headers: {
+      'Authorization': `Bearer ${session?.access_token || ''}`,
+    },
+  });
+
+  // Syncing with legacy state if necessary, but recommended to use 'fortune' directly
 
   const { tier } = useSubscription(session);
   const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits } = useCredits(session);
@@ -103,29 +112,14 @@ function App() {
       return;
     }
 
-    setIsFortuneLoading(true);
-    setFortune(null);
+    if (!session) return;
+    
     openModal('fortune');
 
-    try {
-      if (!session) throw new Error("User not authenticated");
-      const birthDate = session.user.user_metadata.birth_date;
-      const response = await fetch('/api/fortune', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ birthDate, mbti: session.user.user_metadata.mbti })
-      });
-      if (!response.ok) throw new Error("Failed to fetch fortune.");
-      const data = await response.json();
-      setFortune(data);
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsFortuneLoading(false);
-    }
+    fetchFortune({ 
+      birthDate: session.user.user_metadata.birth_date, 
+      mbti: session.user.user_metadata.mbti 
+    });
   };
 
   // handleSwitchService and checkCreditsAndOpen removed as components now handle their own navigation and credit checks

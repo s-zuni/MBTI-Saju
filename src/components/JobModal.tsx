@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Briefcase, Loader2, Sparkles, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { getDetailedAnalysis } from '../utils/chatService';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
-import { useRef } from 'react';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { jobSchema } from '../config/schemas';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 interface JobModalProps {
     isOpen: boolean;
@@ -16,15 +17,21 @@ interface JobModalProps {
     session: any;
 }
 
-const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
+const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
     const reportRef = useRef<HTMLDivElement>(null);
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<{ jobs: string[], reason: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Streaming Hook
+    const { object: result, submit, isLoading } = useObject({
+        api: '/api/analysis-special',
+        schema: jobSchema,
+        headers: {
+            'Authorization': `Bearer ${session?.access_token || ''}`
+        }
+    });
+
     const fetchRecommendation = async () => {
-        // 1. Credit check first
-        const cost = 5; // SERVICE_COSTS.JOB (will use imported 5 for now or import CONFIG)
+        const cost = SERVICE_COSTS.JOB;
         if (credits !== undefined && credits < cost) {
             if (window.confirm('크레딧이 부족합니다. 충전 페이지로 이동하시겠습니까?')) {
                 onNavigate('creditPurchase' as any);
@@ -33,51 +40,28 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
             return;
         }
 
-        setLoading(true);
-        setError(null);
-        
-        // Failsafe timeout for Safari
-        const timeoutId = setTimeout(() => {
-            if (loading) setLoading(false);
-        }, 8000); // 8s for slower AI response
-
         try {
-            let currentSession = initialSession;
-            if (!currentSession) {
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                currentSession = fetchedSession;
-            }
-            if (!currentSession) throw new Error('로그인이 필요합니다.');
-
-            const user = currentSession.user.user_metadata;
-            
-            // Validate required fields explicitly
-            if (!user.birth_date || !user.mbti) {
-                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다. 마이페이지에서 프로필을 완성해주세요.');
+            const metadata = session?.user?.user_metadata;
+            if (!metadata) throw new Error('로그인이 필요합니다.');
+            if (!metadata.birth_date || !metadata.mbti) {
+                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');
             }
 
-            const resultData = await getDetailedAnalysis('job', {
-                name: user.full_name || '사용자',
-                mbti: user.mbti,
-                birthDate: user.birth_date,
-                birthTime: user.birth_time
-            }, undefined, currentSession);
-
-            setResult(resultData);
+            setError(null);
             
-            // 2. Deduct credit after success
+            submit({
+                type: 'job',
+                name: metadata.full_name || '사용자',
+                mbti: metadata.mbti,
+                birthDate: metadata.birth_date,
+                birthTime: metadata.birth_time
+            });
+
             if (onUseCredit) {
-                const creditSuccess = await onUseCredit();
-                if (!creditSuccess) {
-                    console.error('Credit deduction failed after successful analysis');
-                }
+                await onUseCredit();
             }
-
         } catch (e: any) {
             setError(e.message);
-        } finally {
-            clearTimeout(timeoutId);
-            setLoading(false);
         }
     };
 
@@ -92,7 +76,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
     };
 
     useEffect(() => {
-        if (isOpen && !result) {
+        if (isOpen && !result && !isLoading) {
             fetchRecommendation();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,7 +106,7 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
 
                 <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
                     <div ref={reportRef} className="bg-white">
-                    {loading ? (
+                    {isLoading && !result ? (
                         <div className="flex flex-col justify-center items-center h-80">
                             <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
                              <p className="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">분석 중...</p>
@@ -137,32 +121,25 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
                             {/* Best Matches */}
                             <section className="report-section">
                                 <h4 className="report-section-title">
-                                    <Award className="w-5 h-5 text-orange-500" /> 명리학적 천직 BEST 3
+                                    <Award className="w-5 h-5 text-orange-500" /> 명리학적 천직 분석
                                 </h4>
-                                <div className="grid gap-3">
-                                    {result.jobs.map((job, i) => (
-                                        <div key={i} className="report-card flex items-center gap-6 group hover:border-orange-200 transition-all py-6">
-                                            <div className="w-10 h-10 rounded-full bg-slate-950 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-lg">
-                                                0{i + 1}
+                                <div className="grid gap-4">
+                                    {result?.job_analysis?.map((item: any, i: number) => (
+                                        <div key={i} className="report-card mb-4">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-950 text-white flex items-center justify-center font-black text-sm shrink-0">
+                                                    0{i + 1}
+                                                </div>
+                                                <h5 className="text-xl font-black text-slate-900 tracking-tight">
+                                                    {item.job} <span className="text-sm font-bold text-indigo-600 ml-2">적합도: {item.compatibility}</span>
+                                                </h5>
                                             </div>
-                                            <div className="text-xl font-black text-slate-950 tracking-tight group-hover:translate-x-1 transition-transform">
-                                                {job}
+                                            <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
+                                                <p><strong className="text-slate-900">• 선정 이유:</strong> {stripMarkdown(item.reason)}</p>
+                                                <p><strong className="text-slate-900">• 성공 전략:</strong> {stripMarkdown(item.strategy)}</p>
                                             </div>
-                                            <TrendingUp className="ml-auto w-5 h-5 text-slate-200 group-hover:text-orange-400 transition-colors" />
                                         </div>
                                     ))}
-                                </div>
-                            </section>
-
-                            {/* Deep Insight */}
-                            <section className="report-section">
-                                <h4 className="report-section-title">
-                                    <Sparkles className="w-5 h-5 text-orange-500" /> 종합 커리어 분석
-                                </h4>
-                                <div className="report-card p-10 bg-slate-50 border-slate-100">
-                                    <p className="text-slate-800 leading-relaxed text-md whitespace-pre-wrap">
-                                        {stripMarkdown(result.reason)}
-                                    </p>
                                 </div>
                             </section>
 

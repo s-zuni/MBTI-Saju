@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { cleanAndParseJSON } from './_utils/json';
-import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamObject } from 'ai';
+import { z } from 'zod';
 
 export default async (req: any, res: any) => {
     // CORS configuration
@@ -105,47 +105,25 @@ export default async (req: any, res: any) => {
         ${cardsList}
         `;
 
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            systemInstruction: systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다."
+        const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
+        
+        const result = await streamObject({
+            model: google('gemini-2.5-flash'),
+            schema: z.object({
+                cardReadings: z.array(z.object({
+                    cardName: z.string(),
+                    interpretation: z.string()
+                })),
+                overallReading: z.string(),
+                advice: z.string()
+            }),
+            system: systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다.",
+            prompt: userQuery,
         });
 
-        const result = await generateContentWithRetry(model, {
-            contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-            generationConfig: { 
-                responseMimeType: "application/json",
-                maxOutputTokens: 2048
-            },
-            safetySettings: [
-                { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any },
-                { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
-                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
-                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
-            ]
-        });
-
-        let responseText = "";
-        if (result.response && typeof result.response.text === 'function') {
-            responseText = result.response.text();
-        } else {
-            console.error("No response text found. Result:", JSON.stringify(result, null, 2));
-            throw new Error("AI response was empty or blocked.");
-        }
-
-        let content;
-        try {
-            content = cleanAndParseJSON(responseText);
-        } catch (e) {
-            console.error("JSON Parse Error:", e);
-            console.error("Raw Text:", responseText); // Log raw text for debugging
-            throw new Error("Failed to parse AI response");
-        }
-
-        res.status(200).json(content);
-
+        return result.toTextStreamResponse();
     } catch (error: any) {
         console.error("Tarot API Error:", error);
-        res.status(500).json({ error: getKoreanErrorMessage(error) });
+        res.status(500).json({ error: error.message });
     }
 };

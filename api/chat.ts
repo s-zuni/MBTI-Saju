@@ -1,7 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamText, convertToModelMessages } from 'ai';
 import { calculateSaju } from './_utils/saju';
-import { getKoreanErrorMessage } from './_utils/retry';
 
 // Types
 type VercelRequest = any;
@@ -82,81 +81,24 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         - **Language**: Korean Only.
         `;
 
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = "gemini-2.5-flash";
-        const model = genAI.getGenerativeModel({
-            model: modelName,
-            systemInstruction: systemPrompt
-        });
-
-        // Convert previous messages to Gemini format (Limit to last 10 for context window)
-        let history: { role: string; parts: { text: string }[] }[] = [];
-        try {
-            if (Array.isArray(messages)) {
-                history = messages.slice(-10).map((msg: any) => ({
-                    role: (msg.role === 'user' || msg.sender === 'user') ? 'user' : 'model',
-                    parts: [{ text: msg.content || msg.text || '' }]
-                }));
-
-                // Gemini API requires the first message in history to be from 'user'
-                while (history.length > 0 && history[0]?.role !== 'user') {
-                    history.shift();
-                }
-            }
-        } catch (e) {
-            console.error("Failed to parse message history", e);
-            history = [];
+        const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
+        
+        const coreMessages = messages ? await convertToModelMessages(messages.slice(-10)) : [];
+        if (coreMessages.length === 0 || (coreMessages[coreMessages.length - 1] as any).role !== 'user') {
+            (coreMessages as any).push({ role: 'user', content: message });
         }
 
-        const chat = model.startChat({
-            history: history,
-            generationConfig: {
-                maxOutputTokens: 2048,
-            },
+        const result = await streamText({
+            model: google('gemini-2.5-flash'),
+            system: systemPrompt,
+            messages: coreMessages as any,
         });
 
-        // Retry logic for sendMessage (handles 503/429 transient errors without model fallback)
-        let result;
-        let lastError: any;
-
-        for (let attempt = 0; attempt <= 3; attempt++) {
-            try {
-                const timeoutMs = 45000;
-                
-                result = await Promise.race([
-                    chat.sendMessage(message),
-                    new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))
-                ]);
-                break;
-            } catch (err: any) {
-                lastError = err;
-                const msg = err?.message || '';
-                const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand');
-                if (attempt < 3 && isRetryable) {
-                    const delay = 1000 * Math.pow(2, attempt);
-                    console.warn(`[Chat Retry] Attempt ${attempt + 1}/3 failed. Waiting ${delay}ms...`);
-                    await new Promise(r => setTimeout(r, delay));
-                } else {
-                    throw err;
-                }
-            }
-        }
-        if (!result) throw lastError;
-        const responseText = result.response.text();
-
-        res.status(200).json({ reply: responseText });
-
+        return result.toTextStreamResponse();
     } catch (error: any) {
         console.error('ChatServer Error:', error);
-
-        // Explicitly check for model availability or forbidden errors
-        const errorMessage = getKoreanErrorMessage(error);
-        if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-            console.error('Requested model not found. Check availability of gemini-3-flash-preview');
-        }
-
         res.status(500).json({
-            error: errorMessage || "채팅 분석 중 오류가 발생했습니다."
+            error: error.message || "채팅 분석 중 오류가 발생했습니다."
         });
     }
 };

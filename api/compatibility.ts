@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamObject } from 'ai';
+import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
-import { generateContentWithRetry, getKoreanErrorMessage } from './_utils/retry';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -51,7 +52,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 return res.status(400).json({ error: 'Missing profile information.' });
             }
 
-            // Calculate Saju for both
             const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
             const partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
 
@@ -64,74 +64,35 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             };
             const relationshipStr = relationshipKoreanMap[relationshipType] || '연인';
 
-            const systemPrompt = `
-당신은 MBTI와 Saju(사주명리학)를 가장 매력적이고 전문적으로 융합하여 분석하는 최고의 '관계 컨설턴트(MBTIJU 소울 메이트 전문가)'입니다.
-분석 대상자 간의 관계는 "${relationshipStr}" 입니다.
-다음 규칙을 엄격하게 준수하여 응답하세요:
+            const systemPrompt = `당신은 MBTI와 Saju(사주명리학)를 결합하여 분석하는 '관계 컨설턴트'입니다.
+            규칙:
+            1. 한국어로 답변하세요.
+            2. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요.
+            3. 분석 내용은 매우 상세하게 작성하세요.`;
 
-[규칙]
-1. 언어: 반드시 **한국어(Korean)**로만 답변하세요. 영어는 MBTI 이니셜 등 불가피한 경우에만 사용하세요.
-2. 분량 및 구성: 결괏값의 "desc" 항목은 반드시 최소 800자에서 1200자 사이의 길고 상세한 분량이어야 합니다. 풍부한 분석을 제공하세요.
-3. 가독성: 문단을 읽기 좋게 나누고 줄공백을 넉넉히 사용하세요. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다.
-4. 내용의 깊이:
-   - 두 사람의 오행(생극제화)이 서로 어떻게 상호작용하는지 디테일하게 풀어주세요.
-   - 제공된 간지(GanZhi) 데이터를 바탕으로 '도화살(매력)', '홍염살(인기)', '역마살(역동성)', '화개살(예술성)' 등 흥미로운 신살(Shensha)이 발견된다면 이를 찾아내어 매력 포인트로 어필하세요. (단, 억지로 지어내진 마세요.)
-   - MBTI 성향의 차이(예: T와 F의 대화방식, J와 P의 라이프스타일)와 사주 기질의 차이가 만들어내는 긍정적 시너지와 부정적 마찰 지점을 구체적인 예시와 함께 서술하세요.
-   - 관계 개선을 위한 객관적이고 사실적인 분석과 함께, 희망적인 조언을 잊지 마세요.
-5. 이모지: 글의 생동감을 위해 💖, ⚡, 🍀, 🤝 등의 이모지를 적절히 섞어 사용하세요.
+            const userQuery = `관계: ${relationshipStr}
+            A: ${myProfile.name}, ${myProfile.mbti}, 사주 일간 ${mySaju.dayMaster.korean}
+            B: ${partnerProfile.name}, ${partnerProfile.mbti}, 사주 일간 ${partnerSaju.dayMaster.korean}`;
 
-응답은 반드시 아래 JSON 형식을 따라야 합니다:
-{
-  "score": 두 사람의 상성 점수 (1~100 사이의 숫자). 극단적인 악연이 아니라면 가급적 70점 이상으로 기분 좋게 부여하세요.,
-  "desc": "위에 명시된 700자 이상의 매우 상세하고 흥미로운 분석 내용 전체 (볼드체, 이모지, 줄바꿈 포함)",
-  "keywords": "상호보완, 도화살_매력, 티키타카_최고 등 두 사람의 관계를 요약할 수 있는 가장 힙하고 흥미로운 해시태그 키워드 3~4개 (쉼표로 구분)"
-}
-            `;
-
-            const userQuery = `
-            Person A (User):
-            - Name: ${myProfile.name}
-            - MBTI: ${myProfile.mbti}
-            - Saju GanZhi (사주 원국): Year ${mySaju.ganZhi.year}, Month ${mySaju.ganZhi.month}, Day ${mySaju.ganZhi.day}, Hour ${mySaju.ganZhi.hour}
-            - Saju Day Master: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})
-            - Elements: Wood ${mySaju.elementRatio.wood}%, Fire ${mySaju.elementRatio.fire}%, Earth ${mySaju.elementRatio.earth}%, Metal ${mySaju.elementRatio.metal}%, Water ${mySaju.elementRatio.water}%
-
-            Person B (Partner):
-            - Name: ${partnerProfile.name}
-            - MBTI: ${partnerProfile.mbti}
-            - Saju GanZhi (사주 원국): Year ${partnerSaju.ganZhi.year}, Month ${partnerSaju.ganZhi.month}, Day ${partnerSaju.ganZhi.day}, Hour ${partnerSaju.ganZhi.hour}
-            - Saju Day Master: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})
-            - Elements: Wood ${partnerSaju.elementRatio.wood}%, Fire ${partnerSaju.elementRatio.fire}%, Earth ${partnerSaju.elementRatio.earth}%, Metal ${partnerSaju.elementRatio.metal}%, Water ${partnerSaju.elementRatio.water}%
-
-            Analyze their compatibility as "${relationshipStr}" based on MBTI interaction and Saju elemental balance/harmony. Identify any notable Shensha (신살) like 도화살 or 홍염살 from their GanZhi to make the description more engaging.
-            `;
-
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
-                systemInstruction: systemPrompt
+            const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
+            
+            const result = await streamObject({
+                model: google('gemini-2.5-flash'),
+                schema: z.object({
+                    score: z.number().describe("상성 점수 (1-100)"),
+                    desc: z.string().describe("상세 분석 내용 (800자 이상)"),
+                    keywords: z.string().describe("해시태그 키워드 (쉼표 구분)")
+                }),
+                system: systemPrompt,
+                prompt: userQuery,
             });
 
-            const result = await generateContentWithRetry(model, {
-                contents: [
-                    { role: 'user', parts: [{ text: userQuery }] }
-                ],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    maxOutputTokens: 2048
-                }
-            });
-
-            const responseText = result.response.text();
-            const content = JSON.parse(responseText);
-
-            res.status(200).json(content);
+            return (result as any).pipeToResponse(res);
         } else {
             res.status(405).json({ error: 'Method Not Allowed' });
         }
-
     } catch (error: any) {
         console.error('Compatibility API Error:', error);
-        res.status(500).json({ error: getKoreanErrorMessage(error) });
+        res.status(500).json({ error: error.message });
     }
 };
