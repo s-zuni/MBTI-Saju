@@ -49,10 +49,11 @@ export async function generateContentWithRetry(
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const timeoutMs = 45000; // 45 seconds to prevent Vercel 504 Gateway Timeout (Hobby/Pro tier compat)
+            // Vercel Hobby tier는 10초 제한이 있으므로, 9초(9000ms)로 설정하여 504 에러 전 커스텀 대응 유도
+            const timeoutMs = 9000; 
             const result = await Promise.race([
                 model.generateContent(request),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Vercel Timeout Prevention: AI Request took too long')), timeoutMs))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('AI 응답 시간이 너무 깁니다. 잠시 후 다시 시도해 주세요. (Vercel Timeout Prevention)')), timeoutMs))
             ]);
             return result;
         } catch (error: any) {
@@ -65,7 +66,7 @@ export async function generateContentWithRetry(
                     `Waiting ${delay}ms before retry...`,
                     error.message || error
                 );
-                await sleep(delay);
+  await sleep(delay);
             } else {
                 // If max retries reached or error is not retryable, format it nicely
                 throw formatApiError(error);
