@@ -84,7 +84,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-3-flash-preview", 
+            model: "gemini-2.5-flash", 
             systemInstruction: systemPrompt + "\n절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. ** 을 사용하면 시스템 오류가 발생합니다. 문단 간 공백과 이모지를 활용하여 상세히 설명하세요." 
         });
 

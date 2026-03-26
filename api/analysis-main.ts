@@ -164,7 +164,7 @@ export default async function handler(req: any, res: any) {
 
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const modelName = "gemini-3-flash-preview";
+        const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ 
             model: modelName, 
             systemInstruction: systemPrompt + "\nCRITICAL: DO NOT use markdown bolding (**). Use clear line breaks (\\n), bullet points (•), and emojis. Ensure text is spaced out nicely for readability."
