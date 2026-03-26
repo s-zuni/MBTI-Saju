@@ -19,21 +19,50 @@ const DebugOverlay: React.FC = () => {
     const checkStatus = React.useCallback(async () => {
         addLog('Diagnostic started...');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const { data: { user } } = await supabase.auth.getUser();
+            // Step 1: Storage Test
+            addLog('STEP 1: Testing localStorage access...');
+            let storageStatus = 'Unknown';
+            try {
+                localStorage.setItem('__test_debug__', 'ok');
+                localStorage.removeItem('__test_debug__');
+                storageStatus = 'Available (LocalStorage)';
+            } catch (e) {
+                storageStatus = 'Blocked (Using Memory Fallback)';
+            }
+            addLog(`Storage check: ${storageStatus}`);
+
+            // Step 2: getSession
+            addLog('STEP 2: Calling supabase.auth.getSession()...');
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('getSession Timeout (5s)')), 5000)
+            );
+            
+            const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+            addLog('getSession() responded.');
+
+            // Step 3: getUser
+            addLog('STEP 3: Calling supabase.auth.getUser()...');
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError) {
+                addLog(`getUser() Error: ${userError.message}`);
+            } else {
+                addLog('getUser() responded.');
+            }
             
             setStatus({
                 session: session ? `Active (Exp: ${new Date(session.expires_at! * 1000).toLocaleTimeString()})` : 'No Session',
                 user: user ? `${user.email} (${user.user_metadata?.role || 'user'})` : 'No User',
-                storage: typeof localStorage !== 'undefined' ? 'Available' : 'Blocked',
+                storage: storageStatus,
                 lastRefreshed: new Date().toLocaleTimeString()
             });
 
-            if (!session) addLog('WARNING: No session found in localStorage.');
+            if (!session) addLog('WARNING: No session found.');
             if (session && !user) addLog('ERROR: Session exists but getUser failed (Stale token).');
             
         } catch (err: any) {
             addLog('DIAGNOSTIC ERROR: ' + err.message);
+            setStatus((prev: any) => ({ ...prev, session: 'Error', user: 'Error' }));
         }
     }, [addLog]);
 

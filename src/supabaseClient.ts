@@ -24,21 +24,24 @@ const safariSafeStorage = {
     getItem: (key: string): string | null => {
         try {
             return localStorage.getItem(key);
-        } catch {
+        } catch (e) {
+            console.info('[safariSafeStorage] getItem fallback to memory:', key);
             return memoryStorage[key] ?? null;
         }
     },
     setItem: (key: string, value: string): void => {
         try {
             localStorage.setItem(key, value);
-        } catch {
+        } catch (e) {
+            console.info('[safariSafeStorage] setItem fallback to memory:', key);
             memoryStorage[key] = value;
         }
     },
     removeItem: (key: string): void => {
         try {
             localStorage.removeItem(key);
-        } catch {
+        } catch (e) {
+            console.info('[safariSafeStorage] removeItem fallback to memory:', key);
             delete memoryStorage[key];
         }
     },
