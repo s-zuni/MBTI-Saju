@@ -17,9 +17,6 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
     }
 }
 
-// Safari browser detection
-const isSafari = typeof window !== 'undefined' && 
-    /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 // Safari-safe storage adapter: falls back to in-memory if localStorage is unavailable
 const memoryStorage: Record<string, string> = {};
@@ -56,7 +53,8 @@ export const supabase = createClient(
     supabaseAnonKey || 'placeholder',
     {
         auth: {
-            // Safari ITP Hang 방지: Safari에서는 세션 유지를 비활성화하고 인메모리/이벤트 기반으로 동작 유도
+            // 세션 유지 활세화: 사용자 편의를 위해 Safari에서도 persistSession을 true로 설정합니다.
+            // (ITP 관련 Hang 현상은 ensureValidSession과 useAuth의 타임아웃 로직으로 방어함)
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
