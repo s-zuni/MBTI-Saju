@@ -36,7 +36,7 @@ import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { fortuneSchema } from './config/schemas';
+import { dailyFortuneSchema as fortuneSchema } from './config/schemas';
 import { z } from 'zod';
 
 // Lazy load modals for better initial performance

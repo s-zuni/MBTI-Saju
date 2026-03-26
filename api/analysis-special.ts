@@ -3,7 +3,6 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 
-// schema definitions
 const luckySchema = z.object({
     color: z.string().describe("행운의 색상"),
     number: z.string().describe("행운의 숫자"),
@@ -25,28 +24,32 @@ const schemas: Record<string, any> = {
         summary: z.string()
     }),
     naming: z.object({
-        summary: z.string().describe("핵심 사주 기운 요약"),
-        analysis: z.string().describe("사주 원국 분석 및 작명 방향성"),
         names: z.array(z.object({
-            name: z.string(),
+            hangul: z.string(),
             hanja: z.string(),
             meaning: z.string(),
-            sajuFit: z.string()
-        }))
+            saju_compatibility: z.string()
+        })),
+        summary: z.string()
     }),
     job: z.object({
-        jobs: z.array(z.string()),
-        reason: z.string(),
+        job_analysis: z.array(z.object({
+            job: z.string(),
+            compatibility: z.string(),
+            reason: z.string(),
+            strategy: z.string()
+        })),
         summary: z.string()
     }),
     trip: z.object({
         places: z.array(z.object({
             name: z.string(),
-            reason: z.string()
+            reason: z.string(),
+            activity: z.string()
         })),
         itinerary: z.array(z.object({
-            day: z.number(),
-            schedule: z.string().describe("오전/오후/저녁 일정을 상세히 기술")
+            day: z.string(),
+            schedule: z.array(z.string())
         })),
         summary: z.string(),
         bestTime: z.string(),
@@ -67,7 +70,7 @@ const schemas: Record<string, any> = {
 };
 
 export const config = {
-    maxDuration: 60, // Vercel Pro/Enterprise 60s, Hobby is limited to 10s but streaming bypasses this UX limit
+    maxDuration: 60,
 };
 
 export default async function handler(req: any, res: any) {
@@ -79,8 +82,6 @@ export default async function handler(req: any, res: any) {
     if (!currentSchema) {
         return res.status(400).json({ error: `Invalid analysis type: ${type}` });
     }
-
-    console.log(`[Streaming Special Analysis] Type: ${type}`);
 
     let body = req.body;
     if (typeof body === 'string') {
@@ -94,7 +95,6 @@ export default async function handler(req: any, res: any) {
     } = body;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-
     if (!GEMINI_API_KEY) {
         return res.status(500).json({ error: 'Missing API Key' });
     }
@@ -132,10 +132,7 @@ export default async function handler(req: any, res: any) {
     }
 
     try {
-        const google = createGoogleGenerativeAI({
-            apiKey: GEMINI_API_KEY
-        });
-
+        const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
         const result = await streamObject({
             model: google('gemini-2.5-flash'),
             schema: currentSchema,

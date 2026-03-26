@@ -5,7 +5,7 @@ import { SERVICE_COSTS, SERVICE_NAMES } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { analysisSchema, fortuneSchema, strategySchema } from '../config/schemas';
+import { analysisSchema, yearlyFortuneSchema as fortuneSchema, strategySchema } from '../config/schemas';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;

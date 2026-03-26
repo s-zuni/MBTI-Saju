@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import CompatibilityModal from '../components/CompatibilityModal';
 import { ServiceType } from '../components/ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { z } from 'zod';
+import { relationshipSchema } from '../config/schemas';
 
 interface RelationshipProfile {
     id: string;
@@ -37,16 +37,9 @@ const RelationshipPage: React.FC<RelationshipPageProps> = ({ session: initialSes
 
     const [userProfile, setUserProfile] = useState<any>(null);
 
-    // Streaming Hook
     const { object: chemistryResult, submit: checkDaily, isLoading: chemistryLoading } = useObject({
         api: '/api/daily_relationship',
-        schema: z.object({
-            results: z.array(z.object({
-                id: z.string(),
-                score: z.number(),
-                msg: z.string()
-            }))
-        }),
+        schema: relationshipSchema,
         headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` }
     });
 
