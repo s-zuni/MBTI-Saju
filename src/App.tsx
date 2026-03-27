@@ -80,7 +80,8 @@ function App() {
   // Syncing with legacy state if necessary, but recommended to use 'fortune' directly
 
   const { tier } = useSubscription(session);
-  const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits, loading: isCreditsLoading } = useCredits(session);
+  const creditHook = useCredits(session);
+  const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits, loading: isCreditsLoading } = creditHook;
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   // Unified loading state for Safari (Session + Credits initial fetch)
@@ -166,6 +167,7 @@ function App() {
 
 function AppContent({ 
   session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
+  checkSufficientCredits, getCost,
   tier, fortune, isFortuneLoading, handleFetchFortune, handleStart, 
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {
@@ -296,9 +298,16 @@ function AppContent({
                     <MyPage
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
                       onOpenNaming={() => openModal('naming')}
+                    <MyPage
+                      onOpenMbtiSaju={() => openModal('mbtiSaju')}
+                      onOpenNaming={() => openModal('naming')}
                       onOpenCompatibility={() => openModal('compatibility')}
                       credits={credits}
                       refreshCredits={refreshCredits}
+                      purchaseCredits={purchaseCredits}
+                      spendCredits={consumeCredits}
+                      checkSufficientCredits={checkSufficientCredits}
+                      getCost={getCost}
                       session={session}
                     />
                   } />

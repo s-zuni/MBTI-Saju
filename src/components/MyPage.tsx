@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';
@@ -59,14 +59,27 @@ interface MyPageProps {
   onOpenMbtiSaju: () => void;
   onOpenNaming: () => void;
   onOpenCompatibility: () => void;
-  isMbtiSajuOpen?: boolean;
-  onCloseMbtiSaju?: () => void;
   credits: number;
-  refreshCredits: () => Promise<void>;
-  session: any; // Add session prop
+  refreshCredits: (force?: boolean, session?: any) => Promise<void>;
+  purchaseCredits: (planId: string, pricePaid: number, credits: number, paymentId?: string) => Promise<boolean>;
+  spendCredits: (serviceType: any) => Promise<boolean>;
+  checkSufficientCredits: (serviceType: any) => boolean;
+  getCost: (serviceType: any) => number;
+  session: any;
 }
 
-const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCompatibility, credits, refreshCredits, session: initialSession }) => {
+const MyPage: React.FC<MyPageProps> = ({ 
+  onOpenMbtiSaju, 
+  onOpenNaming, 
+  onOpenCompatibility, 
+  credits, 
+  refreshCredits, 
+  purchaseCredits,
+  spendCredits,
+  checkSufficientCredits,
+  getCost,
+  session: initialSession 
+}) => {
   const [loading, setLoading] = useState(true);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -78,16 +91,17 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // useCredits hook은 purchaseCredits/spendCredits/checkSufficientCredits에만 사용
-  // credits 표시는 props에서 전달받은 값 사용 (즉시 동기화)
-  const creditHook = useCredits(initialSession);
-  const { purchaseCredits, useCredits: spendCredits, checkSufficientCredits, getCost } = creditHook;
+  // ⭐️ Task 2: redundant useCredits 제거 (props 사용)
 
   const fetchProfileData = React.useCallback(async () => {
     try {
-      // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
-      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-      const activeSession = fetchedSession || initialSession;
+      // ⭐️ Task 2: Props 세션을 최우선 신뢰하고, 없을 때만 타임아웃 기반 탐색
+      let activeSession = initialSession;
+      
+      if (!activeSession) {
+          // Task 1: 타임아웃 보호 처리된 세션 조회유틸 사용
+          activeSession = await ensureValidSession();
+      }
 
       if (!activeSession) {
         setLoading(false);
@@ -114,13 +128,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
       }
       
       if (refreshCredits) {
-        refreshCredits().catch(console.error);
+        // ⭐️ Task 3: 이미 확보한 세션 데이터를 전달하여 내부 getSession 경합 방지
+        refreshCredits(true, activeSession).catch(console.error);
       }
 
     } catch (err: any) {
       console.error('Error fetching profile in MyPage:', err);
       setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
+      // ⭐️ 반드시 실행되어야 함
       setLoading(false);
     }
   }, [navigate, initialSession, refreshCredits]);
@@ -155,9 +171,8 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     setError(null);
 
     try {
-      // Safari 대응: 최신 세션 다시 한 번 확인
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const activeSession = currentSession || initialSession;
+      // ⭐️ Task 1: 세션 조회 시 타임아웃 적용
+      const activeSession = await ensureValidSession() || initialSession;
       
       if (!activeSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
@@ -239,8 +254,8 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
     setLoading(true);
     try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        const activeUserId = currentSession?.user?.id || initialSession?.user?.id;
+        const activeSession = await ensureValidSession() || initialSession;
+        const activeUserId = activeSession?.user?.id;
         
         if (!activeUserId) throw new Error('유저 정보를 찾을 수 없습니다.');
 

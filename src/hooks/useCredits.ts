@@ -97,7 +97,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
     const isRefreshing = useRef(false);
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
-    const refreshCredits = useCallback(async (force = false) => {
+    const refreshCredits = useCallback(async (force = false, passedSession: Session | null = null) => {
         // 초기화 전에는 호출 방지 (force가 true인 경우 제외)
         if (!isInitialized && !force) return;
         
@@ -112,24 +112,26 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             lastRefresh: new Date().toLocaleTimeString(),
             host: window.location.host,
             urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'missing').substring(0, 15) + '...',
-            authStatus: session ? 'Session 존재 (Props)' : 'Session 없음 (Props)'
+            authStatus: (passedSession || session) ? 'Session 존재 (Direct/Props)' : 'Session 없음'
         });
 
         try {
             setLoading(true);
             
-            // Safari ITP 대응: 
-            // Safari 환경에서는 페이지 마운트 직후 전역 상태의 session 토큰이 Supabase Client에 즉시 반영되지 않을 수 있습니다.
-            // 명시적으로 getSession()을 호출하여 최신 세션을 확보합니다.
-            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-            
-            // ⭐️ 핵심 수정: Props로 전달받은 세션보다 getSession()으로 가져온 최신 세션을 우선시하고 변수에 할당합니다.
-            const currentSession = fetchedSession || session;
+            // ⭐️ Task 2 & 3: 외부에서 주입된 세션이 있으면 스토리지 접근(getSession)을 생략합니다.
+            let currentSession = passedSession || session;
+
+            // 주입된 세션이 없을 때만 타임아웃이 내장된 ensureValidSession을 사용합니다.
+            if (!currentSession) {
+                setDebugInfo(prev => ({ ...prev!, phase: '1-1. 스토리지 세션 확인 (Timeout 보호)' }));
+                currentSession = await ensureValidSession();
+            }
+
             const currentUserId = currentSession?.user?.id;
 
             // 방어 로직: 유저 ID가 없으면 절대 RPC를 호출하지 말고 대기합니다.
             if (!currentUserId) {
-                console.warn("[useCredits] Safari 세션 지연 또는 로그아웃 상태: 유저 정보를 기다리는 중입니다.");
+                console.warn("[useCredits] 유저 정보를 기다리는 중입니다 (Safari 세션 지연 가능성)");
                 setCredits(0);
                 setPurchases([]);
                 setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음', authStatus: '세션 없음' }));
@@ -138,26 +140,23 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
             setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중', authStatus: '세션 유효' }));
 
-            // Increased timeout for slow mobile networks
+            // ⭐️ Task 1: RPC 호출에 강제 타임아웃 적용 (최대 15초)
             const queryTimeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (30초 초과)')), 30000)
+                setTimeout(() => reject(new Error('크레딧 조회 타임아웃 (15초)')), 15000)
             );
 
-            // RPC 호출 시 확실한 currentUserId를 사용합니다.
             const result = await Promise.race([fetchCreditsViaRPC(currentUserId), queryTimeout]) as any;
 
             if (!result) throw new Error('조회 결과가 없습니다.');
 
             const activePurchases = (result.purchases || []) as CreditPurchase[];
-
             setPurchases(activePurchases);
-            const actualTotalCredits = result.profile_credits ?? 0;
-            setCredits(actualTotalCredits);
+            setCredits(result.profile_credits ?? 0);
 
             setDebugInfo({
                 phase: '4. 조회 완료(RPC)',
                 purchaseCount: activePurchases.length,
-                profileCredits: actualTotalCredits,
+                profileCredits: result.profile_credits ?? 0,
                 lastRefresh: new Date().toLocaleTimeString(),
                 host: window.location.host,
                 urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',
@@ -166,6 +165,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         } catch (err: any) {
             console.error('[useCredits] Error fetching credits:', err);
             setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
+            // 에러 시에도 무한 스피너를 방지하기 위해 로딩 해제
         } finally {
             setLoading(false);
             isRefreshing.current = false;
