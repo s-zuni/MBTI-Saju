@@ -3,7 +3,7 @@ import { Flower2, Loader2, MapPin, Sparkles, TrendingUp } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
-import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { experimental_useObject as useObject } from '@ai-sdk/react'; // Stable version required alias in this environment
 import { cherrySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
@@ -17,7 +17,7 @@ interface CherryModalProps {
     session: any;
 }
 
-const CherryModal: React.FC<CherryModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
+const SeasonalCherryModal: React.FC<CherryModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -197,4 +197,4 @@ const CherryModal: React.FC<CherryModalProps> = ({ isOpen, onClose, onNavigate, 
     );
 };
 
-export default CherryModal;
+export default SeasonalCherryModal;

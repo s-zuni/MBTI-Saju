@@ -60,39 +60,48 @@ export const ensureValidSession = async (): Promise<Session | null> => {
 
     // 갱신 시작
     refreshPromise = (async () => {
-        try {
-            const sessionData = await Promise.race([
-                supabase.auth.getSession(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 5000))
-            ]) as { data: { session: Session | null }; error: any };
+        let attempts = 0;
+        const maxAttempts = 2; // 타임아웃 시 최대 2회 시도
 
-            const session = sessionData.data.session;
-            
-            if (!session) {
+        while (attempts < maxAttempts) {
+            try {
+                const sessionData = await Promise.race([
+                    supabase.auth.getSession(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 3000))
+                ]) as { data: { session: Session | null }; error: any };
+
+                const session = sessionData.data.session;
+                
+                if (session) {
+                    // 토큰 만료 5분 전 자동 갱신
+                    const expiresAt = session.expires_at ?? 0;
+                    if (expiresAt - Math.floor(Date.now() / 1000) < 300) {
+                        const { data, error } = await supabase.auth.refreshSession();
+                        if (!error && data.session) {
+                            globalSessionCache = data.session;
+                            lastSessionFetchTime = Date.now();
+                            return data.session;
+                        }
+                    }
+
+                    globalSessionCache = session;
+                    lastSessionFetchTime = Date.now();
+                    return session;
+                }
+                
+                // 세션이 없으면 루프 탈출
                 globalSessionCache = null;
                 return null;
+            } catch (err) {
+                attempts++;
+                console.warn(`[Supabase] Session refresh attempt ${attempts} failed:`, err);
+                if (attempts >= maxAttempts) break;
+                await new Promise(r => setTimeout(r, 500)); // 재시도 전 대기
             }
-
-            // 토큰 만료 5분 전 자동 갱신
-            const expiresAt = session.expires_at ?? 0;
-            if (expiresAt - Math.floor(Date.now() / 1000) < 300) {
-                const { data, error } = await supabase.auth.refreshSession();
-                if (!error && data.session) {
-                    globalSessionCache = data.session;
-                    lastSessionFetchTime = Date.now();
-                    return data.session;
-                }
-            }
-
-            globalSessionCache = session;
-            lastSessionFetchTime = Date.now();
-            return session;
-        } catch (err) {
-            console.warn('[Supabase] Session refresh warning:', err);
-            return globalSessionCache; // 타임아웃/에러 시 기존 캐시라도 반환
-        } finally {
-            refreshPromise = null;
         }
+        
+        refreshPromise = null;
+        return globalSessionCache; 
     })();
 
     return refreshPromise;

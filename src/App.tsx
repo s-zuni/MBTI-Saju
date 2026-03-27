@@ -47,7 +47,7 @@ const RecommendationModal = lazy(() => import('./components/RecommendationModal'
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const TripModal = lazy(() => import('./components/TripModal'));
 const NamingModal = lazy(() => import('./components/NamingModal'));
-const CherryModal = lazy(() => import('./components/CherryModal'));
+const SeasonalCherryModal = lazy(() => import('./components/SeasonalCherryModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
@@ -80,8 +80,11 @@ function App() {
   // Syncing with legacy state if necessary, but recommended to use 'fortune' directly
 
   const { tier } = useSubscription(session);
-  const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits } = useCredits(session);
+  const { credits, refreshCredits, purchaseCredits, useCredits: consumeCredits, loading: isCreditsLoading } = useCredits(session);
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
+
+  // Unified loading state for Safari (Session + Credits initial fetch)
+  const isAppInitializing = isAuthLoading || (isCreditsLoading && !!session);
 
   // Check if profile needs completion
   useEffect(() => {
@@ -140,7 +143,7 @@ function App() {
     <BrowserRouter>
       <AppContent 
         session={session} 
-        isAuthLoading={isAuthLoading}
+        isAuthLoading={isAppInitializing}
         credits={credits}
         refreshCredits={refreshCredits}
         purchaseCredits={purchaseCredits}
@@ -440,7 +443,7 @@ function AppContent({
                 credits={credits}
                 session={session}
               />
-              <CherryModal
+              <SeasonalCherryModal
                 isOpen={modals?.cherry?.isOpen || false}
                 onClose={() => closeModal('cherry')}
                 onNavigate={(service: any) => {

@@ -8,7 +8,7 @@ export type ModalType =
     | 'compatibility'
     | 'trip'
     | 'naming'
-    | 'job'
+    | 'cherry'
     | 'tarot'
     | 'creditPurchase'
     | 'onboarding';
