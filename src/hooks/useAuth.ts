@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
 // Global state outside the hook to act as a singleton
@@ -78,16 +78,11 @@ export const useAuth = () => {
             isAuthInitialized = true;
 
             const initializeAuth = async () => {
-                const timeoutThreshold = 2500; // 2.5초 타임아웃
+                const timeoutThreshold = 5000; // 5초 타임아웃
                 
                 try {
-                    // Step 1: Quick cache check with timeout
-                    const sessionResult = await Promise.race([
-                        supabase.auth.getSession(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Init Timeout')), timeoutThreshold))
-                    ]) as { data: { session: Session | null }, error: any };
-
-                    const cachedSession = sessionResult.data.session;
+                    // Step 1: Unified session check via ensureValidSession
+                    const cachedSession = await ensureValidSession();
 
                     if (cachedSession) {
                         // Step 2: Validate token server-side with getUser() (with shorter timeout)
