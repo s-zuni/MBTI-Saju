@@ -61,6 +61,10 @@ const AdminCommunity: React.FC = () => {
     const fetchPosts = useCallback(async () => {
         try {
             setLoading(true);
+            
+            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
+            await supabase.auth.getSession();
+
             let query = supabase
                 .from('posts')
                 .select('*', { count: 'exact' })
@@ -96,6 +100,10 @@ const AdminCommunity: React.FC = () => {
     const fetchReports = useCallback(async () => {
         try {
             setLoading(true);
+            
+            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
+            await supabase.auth.getSession();
+
             const from = (currentPage - 1) * postsPerPage;
             const to = from + postsPerPage - 1;
 

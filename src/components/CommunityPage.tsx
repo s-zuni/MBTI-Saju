@@ -57,58 +57,68 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = React.useCallback(async () => {
-        // Safari ITP 대응: 이미 Props로 유효한 세션이 있다면 getSession() 대기를 건너뜁니다.
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        
-        if (isSafari && initialSession?.user) {
-            console.log('[CommunityPage] Safari 감지: Props 세션 우선 사용 (대기 건너뜀)');
-            setUser(initialSession.user);
-            return;
+        try {
+            // Safari ITP 대응: 
+            // Safari에서는 페이지 마운트 직후 전역 세션이 반영되지 않을 수 있으므로 명시적으로 세션을 가져옵니다.
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            
+            // Props로 전달받은 세션보다 직접 가져온 세션을 우선 시도합니다.
+            const validUser = currentSession?.user || initialSession?.user || null;
+            setUser(validUser);
+        } catch (err) {
+            console.error('[CommunityPage] checkUser error:', err);
+            setUser(initialSession?.user || null);
         }
-
-        const session = await ensureValidSession();
-        setUser(session?.user || initialSession?.user || null);
     }, [initialSession]);
 
     const fetchPosts = React.useCallback(async () => {
         setLoading(true);
-        let query = supabase
-            .from('posts')
-            .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
-            .order('is_announcement', { ascending: false })
-            .order('created_at', { ascending: false });
+        try {
+            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
+            await supabase.auth.getSession();
 
-        if (activeTag !== '전체') {
-            query = query.eq('tag', activeTag);
-        }
+            let query = supabase
+                .from('posts')
+                .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
+                .order('is_announcement', { ascending: false })
+                .order('created_at', { ascending: false });
 
-        if (isPopularOnly) {
-            query = query.gte('likes', 5); // 좋아요 5개 이상을 인기 게시물로 간주
-        }
+            if (activeTag !== '전체') {
+                query = query.eq('tag', activeTag);
+            }
 
-        if (searchQuery) {
-            query = query.ilike('title', `%${searchQuery}%`);
-        }
+            if (isPopularOnly) {
+                query = query.gte('likes', 5);
+            }
 
-        // Pagination
-        const from = (currentPage - 1) * postsPerPage;
-        const to = from + postsPerPage - 1;
-        query = query.range(from, to);
+            if (searchQuery) {
+                query = query.ilike('title', `%${searchQuery}%`);
+            }
 
-        const { data, count, error } = await query;
+            // Pagination
+            const from = (currentPage - 1) * postsPerPage;
+            const to = from + postsPerPage - 1;
+            query = query.range(from, to);
 
-        if (error) console.error('Error fetching posts:', error);
-        else {
+            const { data, count, error } = await query;
+
+            if (error) throw error;
+            
             setPosts(data || []);
             setTotalPosts(count || 0);
+        } catch (err: any) {
+            console.error('[CommunityPage] Error fetching posts:', err);
+            // Safari 등에서 무한 로딩 방지: 에러 발생 시 사용자 피드백 제공
+            // alert('게시글을 불러오는 도중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }, [activeTag, searchQuery, isPopularOnly, currentPage]);
 
     useEffect(() => {
         fetchPosts();
         checkUser();
-    }, [fetchPosts, checkUser]); // Refetch when fetchPosts or checkUser changes
+    }, [fetchPosts, checkUser]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

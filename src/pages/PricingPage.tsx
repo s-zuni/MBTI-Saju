@@ -21,24 +21,22 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     const [user, setUser] = useState<any>(null);
 
     const checkUser = React.useCallback(async () => {
-        let currentSession = initialSession;
-        if (!currentSession) {
-            let retries = 0;
-            while (retries < 3) {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    currentSession = session;
-                    break;
-                }
-                retries++;
-                if (retries < 3) await new Promise(resolve => setTimeout(resolve, 500));
-            }
+        try {
+            // Safari ITP 대응: 명시적으로 세션을 가져와 검증
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            setUser(currentSession?.user || initialSession?.user || null);
+        } catch (err) {
+            console.error('[PricingPage] checkUser error:', err);
+            setUser(initialSession?.user || null);
         }
-        setUser(currentSession?.user || null);
     }, [initialSession]);
 
     const fetchPlans = React.useCallback(async () => {
+        setLoading(true);
         try {
+            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
+            await supabase.auth.getSession();
+
             const { data, error } = await supabase
                 .from('pricing_plans')
                 .select('*')
@@ -48,7 +46,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
             if (error) throw error;
             setPlans(data || []);
         } catch (err) {
-            console.error('Error fetching plans:', err);
+            console.error('[PricingPage] Error fetching plans:', err);
         } finally {
             setLoading(false);
         }

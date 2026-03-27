@@ -48,14 +48,21 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
             amount: config.amount,
         });
 
-        const tossPayments = await loadTossPayments(CLIENT_KEY);
+        // Safari 대응: 로딩 타임아웃 추가
+        const loadPromise = loadTossPayments(CLIENT_KEY);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('결제 모듈을 불러오는 데 실패했습니다(타임아웃).')), 15000)
+        );
+
+        const tossPayments = await Promise.race([loadPromise, timeoutPromise]) as any;
 
         // V2 SDK 인스턴스 생성
         const payment = tossPayments.payment({
-            customerKey: config.customerKey || 'ANONYMOUS', // 필드 유실 대비 폴백
+            customerKey: config.customerKey || 'ANONYMOUS',
         });
 
         // 결제 요청 (v2 규격)
+        // Safari 특성상 팝업 차단이 발생할 수 있으므로, 비동기 호출 전 에러 핸들링 준비
         await payment.requestPayment({
             method: "CARD",
             amount: {
@@ -85,11 +92,11 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
             errorMessage = error.message;
         }
         
-        // 토스 전용 에러 코드 포함
         if (error.code) {
             errorMessage = `[${error.code}] ${errorMessage}`;
         }
 
+        // 구체적인 에러 메시지 반환하여 무한 로딩 방지 UI 트리거
         return {
             success: false,
             error_msg: errorMessage

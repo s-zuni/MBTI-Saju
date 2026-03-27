@@ -35,16 +35,16 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             setPlansLoading(true);
             console.log('[CreditPurchaseModal] Fetching plans started...');
             
-            // Shorter timeout for better UX in Safari
+            // Safari 대응: 타임아웃 넉넉히 설정 (모바일 네트워크 고려)
             const timeoutId = setTimeout(() => {
                 if (isMounted) {
-                    console.warn('[CreditPurchaseModal] Fetching plans timed out (5s)');
+                    console.warn('[CreditPurchaseModal] Fetching plans timed out (10s)');
                     setPlansLoading(false);
                 }
-            }, 5000);
+            }, 10000);
 
             try {
-                // Ensure we have a session to ensure the auth state is ready for Safari
+                // Safari ITP 대응: RLS 필터링 오류 방지를 위해 세션을 명시적으로 가져옴
                 await supabase.auth.getSession();
                 
                 const { data, error } = await supabase
@@ -56,7 +56,6 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 if (error) throw error;
                 
                 if (isMounted) {
-                    console.log('[CreditPurchaseModal] Plans fetched successfully:', data?.length);
                     setPlans(data || []);
                 }
             } catch (err) {
