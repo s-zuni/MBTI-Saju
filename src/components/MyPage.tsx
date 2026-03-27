@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, ensureValidSession } from '../supabaseClient';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
 import AnalysisModal from './AnalysisModal';

@@ -75,16 +75,6 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const fetchPosts = React.useCallback(async () => {
         setLoading(true);
         try {
-            // Safari 대응: 세션 상태 동기화를 시도하되, 최신 세션 데이터를 직접 변수에 할당하여 사용합니다.
-            let currentUserId = null;
-            try {
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                currentUserId = fetchedSession?.user?.id || initialSession?.user?.id;
-            } catch (authErr) {
-                console.warn('[CommunityPage] Auth session check failed, proceeding as anon:', authErr);
-                currentUserId = initialSession?.user?.id;
-            }
-
             const fetchTimeout = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('게시글 불러오기 타임아웃 (15초)')), 15000)
             );
