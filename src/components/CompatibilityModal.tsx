@@ -6,6 +6,7 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface CompatibilityModalProps {
     isOpen: boolean;
@@ -64,6 +65,9 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
             const metadata = session?.user?.user_metadata;
             if (!metadata) throw new Error('로그인이 필요합니다.');
 
+            const userSajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
+            const targetSajuData = calculateSaju(targetBirthDate, targetBirthTime);
+
             submit({
                 targetName,
                 targetBirthDate,
@@ -73,7 +77,9 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                 userBirthDate: metadata.birth_date,
                 userBirthTime: metadata.birth_time,
                 userMbti: metadata.mbti,
-                userGender: metadata.gender
+                userGender: metadata.gender,
+                sajuData: userSajuData,
+                targetSajuData: targetSajuData
             });
 
             if (onUseCredit) {

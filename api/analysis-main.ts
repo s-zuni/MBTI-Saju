@@ -70,7 +70,7 @@ export default async function handler(req: any, res: any) {
 
     const { part } = req.query;
     const body = req.body || {};
-    const { mbti, birthDate, birthTime, gender, name } = body;
+    const { mbti, birthDate, birthTime, gender, name, sajuData } = body;
     const currentSchema = schemas[part as string];
 
     if (!currentSchema) {
@@ -83,8 +83,13 @@ export default async function handler(req: any, res: any) {
         return res.status(500).json({ error: 'Missing API Key' });
     }
 
-    const sajuResult = calculateSaju(birthDate, birthTime);
-    const sajuContext = `사주 원국: ${sajuResult.ganZhi.year} ${sajuResult.ganZhi.month} ${sajuResult.ganZhi.day} ${sajuResult.ganZhi.hour} (일간: ${sajuResult.dayMaster.korean} / 성질: ${sajuResult.dayMaster.description})`;
+    // Use client-provided sajuData or calculate on server as fallback
+    let finalSaju = sajuData;
+    if (!finalSaju) {
+        finalSaju = calculateSaju(birthDate, birthTime);
+    }
+
+    const sajuContext = `사주 원국: ${finalSaju.ganZhi.year} ${finalSaju.ganZhi.month} ${finalSaju.ganZhi.day} ${finalSaju.ganZhi.hour} (일간: ${finalSaju.dayMaster.korean} / 성질: ${finalSaju.dayMaster.description})`;
 
     let systemPrompt = `당신은 세계 최고의 '소울 융합 분석가'입니다. 사용자의 MBTI 성향과 사주 명리학의 깊은 원리를 결합하여, 단순한 정보를 넘어선 '인생의 지도'를 그려줍니다.
     

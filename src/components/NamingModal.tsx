@@ -6,6 +6,7 @@ import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { namingSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface NamingModalProps {
     isOpen: boolean;
@@ -73,11 +74,13 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
 
         try {
             setError(null);
+            const sajuData = calculateSaju(targetBirthDate, targetBirthTime);
             submit({
                 type: 'naming',
                 gender: targetGender,
                 birthDate: targetBirthDate,
-                birthTime: targetBirthTime
+                birthTime: targetBirthTime,
+                sajuData
             });
 
             if (onUseCredit) {

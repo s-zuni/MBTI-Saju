@@ -91,7 +91,8 @@ export default async function handler(req: any, res: any) {
 
     const { 
         birthDate, birthTime, mbti, region, gender, name, 
-        startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements 
+        startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements,
+        sajuData, targetSajuData
     } = body;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -99,8 +100,8 @@ export default async function handler(req: any, res: any) {
         return res.status(500).json({ error: 'Missing API Key' });
     }
 
-    let saju: any = null;
-    if (birthDate) {
+    let saju = sajuData;
+    if (!saju && birthDate) {
         try { saju = calculateSaju(birthDate, birthTime); } catch (e) { console.error('Saju error:', e); }
     }
 
@@ -117,8 +118,11 @@ export default async function handler(req: any, res: any) {
     if (type === 'healing') {
         userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}, 선호 지역: ${region || '전국'}`;
     } else if (type === 'naming') {
-        let targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
-        userQuery = `성별: ${targetGender}, 사주: 일간 ${targetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(targetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
+        let finalTargetSaju = targetSajuData;
+        if (!finalTargetSaju) {
+            finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
+        }
+        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(finalTargetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
     } else if (type === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
     } else if (type === 'trip') {
@@ -126,9 +130,9 @@ export default async function handler(req: any, res: any) {
     } else if (type === 'cherry') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}, 요청사항: ${requirements}`;
     } else if (type === 'fortune') {
-        const yearStr = birthDate.split('-')[0] || '1990';
+        const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
-        userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}`;
+        userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
     }
 
     try {

@@ -6,6 +6,7 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tripSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface TripModalProps {
     isOpen: boolean;
@@ -48,12 +49,14 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
 
             setError(null);
             
+            const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
             submit({
                 type: 'trip',
                 name: metadata.full_name || '사용자',
                 mbti: metadata.mbti,
                 birthDate: metadata.birth_date,
-                birthTime: metadata.birth_time
+                birthTime: metadata.birth_time,
+                sajuData
             });
 
             if (onUseCredit) {

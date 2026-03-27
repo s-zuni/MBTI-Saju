@@ -6,6 +6,7 @@ import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jobSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface JobModalProps {
     isOpen: boolean;
@@ -48,12 +49,14 @@ const JobModal: React.FC<JobModalProps> = ({ isOpen, onClose, onNavigate, onUseC
 
             setError(null);
             
+            const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
             submit({
                 type: 'job',
                 name: metadata.full_name || '사용자',
                 mbti: metadata.mbti,
                 birthDate: metadata.birth_date,
-                birthTime: metadata.birth_time
+                birthTime: metadata.birth_time,
+                sajuData
             });
 
             if (onUseCredit) {

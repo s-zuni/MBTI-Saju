@@ -46,14 +46,36 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
 
         if (req.method === 'POST') {
-            const { myProfile, partnerProfile, relationshipType = 'lover' } = req.body;
+            const body = req.body;
+            // Handle both flat and nested structures
+            const myProfile = body.myProfile || {
+                name: body.userName,
+                birthDate: body.userBirthDate,
+                birthTime: body.userBirthTime,
+                mbti: body.userMbti,
+                gender: body.userGender
+            };
+            const partnerProfile = body.partnerProfile || {
+                name: body.targetName,
+                birthDate: body.targetBirthDate,
+                birthTime: body.targetBirthTime,
+                mbti: body.targetMbti
+            };
+            const relationshipType = body.relationshipType || 'lover';
 
-            if (!myProfile || !partnerProfile) {
+            if (!myProfile.birthDate || !partnerProfile.birthDate) {
                 return res.status(400).json({ error: 'Missing profile information.' });
             }
 
-            const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
-            const partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
+            // Use provided sajuData or calculate
+            let mySaju = body.mySajuData || body.sajuData;
+            if (!mySaju) {
+                mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
+            }
+            let partnerSaju = body.partnerSajuData || body.targetSajuData;
+            if (!partnerSaju) {
+                partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
+            }
 
             const relationshipKoreanMap: { [key: string]: string } = {
                 lover: '연인 (Lover)',

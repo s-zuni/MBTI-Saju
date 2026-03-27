@@ -6,6 +6,7 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { analysisSchema, yearlyFortuneSchema as fortuneSchema, strategySchema } from '../config/schemas';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -149,12 +150,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     try {
       const metadata = initialSession?.user?.user_metadata;
       if (!metadata) throw new Error("로그인이 필요합니다.");
+      const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
       const payload = {
         name: metadata.full_name,
         gender: metadata.gender,
         birthDate: metadata.birth_date,
         birthTime: metadata.birth_time,
         mbti: metadata.mbti,
+        sajuData,
       };
       setAnalysis(null);
       submitCore(payload);
@@ -182,12 +185,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     setIsRegenerating(true);
     try {
       const metadata = initialSession?.user?.user_metadata;
+      const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
       const payload = {
         name: metadata.full_name,
         gender: metadata.gender,
         birthDate: metadata.birth_date,
-        birthTime: metadata.birth_time,
+        birthTime: metadata.birth_date,
         mbti: metadata.mbti,
+        sajuData,
       };
       setAnalysis(null);
       submitCore(payload);
