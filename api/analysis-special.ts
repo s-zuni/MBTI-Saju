@@ -90,7 +90,7 @@ export default async function handler(req: any, res: any) {
     body = body || {};
 
     const { 
-        birthDate, birthTime, mbti, region, gender, name, 
+        birthDate, birthTime, mbti, region, name, 
         startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements,
         sajuData, targetSajuData
     } = body;
