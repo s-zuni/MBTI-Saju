@@ -86,13 +86,28 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                 setTimeout(() => reject(new Error('게시글 불러오기 타임아웃 (15초)')), 15000)
             );
 
+            let query = supabase
+                .from('posts')
+                .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' });
+
+            // 필터링 적용
+            if (activeTag !== '전체') {
+                query = query.eq('tag', activeTag);
+            }
+            if (searchQuery) {
+                query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
+            }
+            if (isPopularOnly) {
+                query = query.order('likes', { ascending: false });
+            }
+
+            query = query
+                .order('is_announcement', { ascending: false })
+                .order('created_at', { ascending: false })
+                .range((currentPage - 1) * postsPerPage, currentPage * postsPerPage - 1);
+
             const { data, count, error } = await Promise.race([
-                supabase
-                    .from('posts')
-                    .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
-                    .order('is_announcement', { ascending: false })
-                    .order('created_at', { ascending: false })
-                    .range((currentPage - 1) * postsPerPage, currentPage * postsPerPage - 1),
+                query,
                 fetchTimeout
             ]) as any;
 
@@ -103,7 +118,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
         } catch (err: any) {
             console.error('[CommunityPage] Error fetching posts:', err);
             // Safari 등에서 무한 로딩 방지: 에러 발생 시 사용자에게 빈 목록이라도 보여주어 스피너 제거
-            if (posts.length === 0) setPosts([]);
+            setPosts(prev => prev.length === 0 ? [] : prev);
         } finally {
             setLoading(false);
         }
