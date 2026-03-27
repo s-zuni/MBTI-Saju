@@ -32,15 +32,6 @@ const schemas: Record<string, any> = {
         })),
         summary: z.string()
     }),
-    job: z.object({
-        job_analysis: z.array(z.object({
-            job: z.string(),
-            compatibility: z.string(),
-            reason: z.string(),
-            strategy: z.string()
-        })),
-        summary: z.string()
-    }),
     trip: z.object({
         places: z.array(z.object({
             name: z.string(),
@@ -57,11 +48,14 @@ const schemas: Record<string, any> = {
     }),
     cherry: z.object({
         places: z.array(z.object({
-            name: z.string(),
-            reason: z.string()
-        })),
-        summary: z.string(),
-        tip: z.string()
+            name: z.string().describe("장소 이름 (잘 알려진 곳 또는 숨겨진 명소)"),
+            reason: z.string().describe("이 장소를 추천하는 이유 (사용자의 사주 오행/MBTI 특성과 연결)"),
+            activity: z.string().describe("장소에서 즐길 수 있는 특별한 활동"),
+            address: z.string().describe("장소의 대략적인 위치"),
+            isHiddenGem: z.boolean().describe("잘 알려지지 않은 숨겨진 명소인지 여부")
+        })).length(3),
+        summary: z.string().describe("사용자의 올해 벚꽃 기운과 장소들에 대한 총괄 요약"),
+        tip: z.string().describe("방문 시 꿀팁 (준비물, 시간대 등)")
     }),
     fortune: z.object({
         today: fortuneItemSchema,
@@ -126,7 +120,8 @@ export default async function handler(req: Request) {
     } else if (type === 'trip') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'cherry') {
-        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}, 요청사항: ${requirements}`;
+        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}, 선호/요청사항: ${requirements || '없음'}. 
+        **반드시 잘 알려진 유명 명소와 잘 알려지지 않은 숨겨진 명소를 골고루 섞어 정확히 3곳을 추천하세요.**`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];

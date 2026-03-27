@@ -28,7 +28,7 @@ let globalModals: Record<string, ModalState> = {
     compatibility: { isOpen: false },
     trip: { isOpen: false },
     naming: { isOpen: false },
-    job: { isOpen: false },
+    cherry: { isOpen: false },
     tarot: { isOpen: false },
     creditPurchase: { isOpen: false },
     onboarding: { isOpen: false },

@@ -47,7 +47,7 @@ const RecommendationModal = lazy(() => import('./components/RecommendationModal'
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const TripModal = lazy(() => import('./components/TripModal'));
 const NamingModal = lazy(() => import('./components/NamingModal'));
-const JobModal = lazy(() => import('./components/JobModal'));
+const CherryModal = lazy(() => import('./components/CherryModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
@@ -255,16 +255,17 @@ function AppContent({
                             </button>
 
                             <button
-                              onClick={() => openModal('job')}
+                              onClick={() => openModal('cherry')}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
-                              <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-100 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-briefcase w-7 h-7 text-teal-600"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2" /><path d="M12 15h0" /></svg>
+                              <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-pink-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flower2 w-7 h-7 text-pink-500"><path d="M12 2v8"/><path d="m4.93 4.93 7.07 7.07"/><path d="M2 12h8"/><path d="m4.93 19.07 7.07-7.07"/><path d="M12 22v-8"/><path d="m19.07 19.07-7.07-7.07"/><path d="M22 12h-8"/><path d="m19.07 4.93-7.07 7.07"/></svg>
                               </div>
-                              <h3 className="text-xl font-bold mb-3 group-hover:text-teal-600 transition-colors">커리어 컨설팅</h3>
-                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">나의 선천적 기운과 후천적 성향이 가장 잘 발휘될 수 있는 직업군을 제안합니다.</p>
+                              <h3 className="text-xl font-bold mb-3 group-hover:text-pink-600 transition-colors">벚꽃 명소 선정</h3>
+                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">나의 사주와 성향에 꼭 맞는 올해의 벚꽃 스팟을 추천해 드립니다.</p>
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-1 bg-teal-50 text-teal-600 text-[10px] font-bold rounded-md">900+ 이용 중</span>
+                                <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold rounded-md">1,200+ 이용 중</span>
+                                <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">NEW</span>
                               </div>
                             </button>
 
@@ -309,7 +310,7 @@ function AppContent({
                       onTarotClick={() => openModal('tarot')}
                       onTripClick={() => openModal('trip')}
                       onNamingClick={() => openModal('naming')}
-                      onJobClick={() => openModal('job')}
+                      onCherryClick={() => openModal('cherry')}
                       onCompatibilityClick={() => openModal('compatibility')}
                     />
                   } />
@@ -396,7 +397,7 @@ function AppContent({
               <CompatibilityModal
                 isOpen={modals?.compatibility?.isOpen || false}
                 onClose={() => closeModal('compatibility')}
-                onNavigate={(service) => {
+                onNavigate={(service: any) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
@@ -412,7 +413,7 @@ function AppContent({
               <TripModal
                 isOpen={modals?.trip?.isOpen || false}
                 onClose={() => closeModal('trip')}
-                onNavigate={(service) => {
+                onNavigate={(service: any) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
@@ -439,17 +440,17 @@ function AppContent({
                 credits={credits}
                 session={session}
               />
-              <JobModal
-                isOpen={modals?.job?.isOpen || false}
-                onClose={() => closeModal('job')}
-                onNavigate={(service) => {
+              <CherryModal
+                isOpen={modals?.cherry?.isOpen || false}
+                onClose={() => closeModal('cherry')}
+                onNavigate={(service: any) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
-                  return await consumeCredits('JOB');
+                  return await consumeCredits('CHERRY');
                 }}
                 credits={credits}
                 session={session}
@@ -465,7 +466,7 @@ function AppContent({
                   if (!session?.user?.id) return false;
                   return await consumeCredits('TAROT');
                 }}
-                onNavigate={(service) => {
+                onNavigate={(service: any) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);

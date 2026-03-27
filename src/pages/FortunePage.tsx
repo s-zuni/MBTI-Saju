@@ -11,7 +11,7 @@ const subCategories = [
     { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true },
     { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false },
     { id: 'naming', img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '행운의 이름 찾기', cost: SERVICE_COSTS.NAMING, userCount: '1,200+', isPopular: false },
-    { id: 'job', img: '/assets/icons/3d_job.png', label: '직업', sub: '나의 숨겨진 천직', cost: SERVICE_COSTS.JOB, userCount: '900+', isPopular: false },
+    { id: 'cherry', img: '/assets/icons/3d_cherry.png', label: '벚꽃 명소', sub: '나만의 행운 스팟', cost: SERVICE_COSTS.CHERRY, userCount: '1,200+', isPopular: true, isNew: true },
     { id: 'relationship', img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', cost: SERVICE_COSTS.RELATIONSHIP_ADD, userCount: '3,300+', isPopular: true },
 ];
 
@@ -21,7 +21,7 @@ interface FortunePageProps {
     onTarotClick: () => void;
     onTripClick: () => void;
     onNamingClick: () => void;
-    onJobClick: () => void;
+    onCherryClick: () => void;
     onCompatibilityClick: () => void;
 }
 
@@ -31,7 +31,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
     onTarotClick,
     onTripClick,
     onNamingClick,
-    onJobClick,
+    onCherryClick,
     onCompatibilityClick,
 }) => {
     const navigate = useNavigate();
@@ -42,7 +42,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
         else if (cat.id === 'tarot') onTarotClick();
         else if (cat.id === 'trip') onTripClick();
         else if (cat.id === 'naming') onNamingClick();
-        else if (cat.id === 'job') onJobClick();
+        else if (cat.id === 'cherry') onCherryClick();
         else if (cat.id === 'relationship') navigate('/relationship');
     };
 

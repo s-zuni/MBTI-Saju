@@ -99,18 +99,20 @@ export const tripSchema = z.object({
     tip: z.string()
 });
 
-// Special Analysis: Job
-export const jobSchema = z.object({
-    job_analysis: z.array(z.object({
-        job: z.string(),
-        compatibility: z.string(),
+// Special Analysis: Cherry Blossom
+export const cherrySchema = z.object({
+    places: z.array(z.object({
+        name: z.string(),
         reason: z.string(),
-        strategy: z.string()
+        activity: z.string(),
+        address: z.string(),
+        isHiddenGem: z.boolean()
     })),
-    summary: z.string()
+    summary: z.string(),
+    tip: z.string()
 });
 
-// Special Analysis: Naming
+// Special Analysis: Trip
 export const namingSchema = z.object({
     names: z.array(z.object({
         hangul: z.string(),
