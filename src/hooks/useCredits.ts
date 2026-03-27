@@ -105,71 +105,83 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         if (isRefreshing.current) return;
         isRefreshing.current = true;
 
-        setDebugInfo({
-            phase: '1. 세션 검증 시작',
-            purchaseCount: 0,
-            profileCredits: 0,
-            lastRefresh: new Date().toLocaleTimeString(),
-            host: window.location.host,
-            urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'missing').substring(0, 15) + '...',
-            authStatus: (passedSession || session) ? 'Session 존재 (Direct/Props)' : 'Session 없음'
-        });
+        const maxRetries = 3;
+        let attempt = 0;
+        let success = false;
 
-        try {
-            setLoading(true);
-            
-            // ⭐️ Task 2 & 3: 외부에서 주입된 세션이 있으면 스토리지 접근(getSession)을 생략합니다.
-            let currentSession = passedSession || session;
+        setLoading(true);
 
-            // 주입된 세션이 없을 때만 타임아웃이 내장된 ensureValidSession을 사용합니다.
-            if (!currentSession) {
-                setDebugInfo(prev => ({ ...prev!, phase: '1-1. 스토리지 세션 확인 (Timeout 보호)' }));
-                currentSession = await ensureValidSession();
+        while (attempt < maxRetries && !success) {
+            try {
+                attempt++;
+                setDebugInfo({
+                    phase: `시도 ${attempt}/${maxRetries}: 세션 검증`,
+                    purchaseCount: 0,
+                    profileCredits: 0,
+                    lastRefresh: new Date().toLocaleTimeString(),
+                    host: window.location.host,
+                    urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'missing').substring(0, 15) + '...',
+                    authStatus: (passedSession || session) ? 'Session 존재' : 'Session 확인 중'
+                });
+
+                // ⭐️ Task 2: 외부 주입 세션 우선, 없으면 타임아웃 보호된 ensureValidSession 사용
+                let currentSession = passedSession || session;
+                if (!currentSession) {
+                    currentSession = await ensureValidSession();
+                }
+
+                const currentUserId = currentSession?.user?.id;
+
+                // ⭐️ Task 2: 유저 ID가 없으면 0으로 덮어쓰지 말고 재시도하거나 대기합니다.
+                if (!currentUserId) {
+                    if (attempt < maxRetries) {
+                        setDebugInfo(prev => ({ ...prev!, phase: `시도 ${attempt} 실패: 세션 대기 중...` }));
+                        await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5초 대기 후 재시도
+                        continue;
+                    }
+                    console.warn("[useCredits] 최종 시도 실패: 세션을 찾을 수 없습니다.");
+                    setDebugInfo(prev => ({ ...prev!, phase: '종료: 세션 유실', authStatus: '실패' }));
+                    break;
+                }
+
+                setDebugInfo(prev => ({ ...prev!, phase: '정보 조회 중 (RPC)', authStatus: '세션 유효' }));
+
+                const queryTimeout = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('조회 타임아웃')), 10000)
+                );
+
+                const result = await Promise.race([fetchCreditsViaRPC(currentUserId), queryTimeout]) as any;
+
+                if (!result) throw new Error('조회 결과 없음');
+
+                const activePurchases = (result.purchases || []) as CreditPurchase[];
+                setPurchases(activePurchases);
+                setCredits(result.profile_credits ?? 0);
+
+                setDebugInfo({
+                    phase: '조회 완료',
+                    purchaseCount: activePurchases.length,
+                    profileCredits: result.profile_credits ?? 0,
+                    lastRefresh: new Date().toLocaleTimeString(),
+                    host: window.location.host,
+                    urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',
+                    authStatus: '성공'
+                });
+                
+                success = true;
+            } catch (err: any) {
+                console.error(`[useCredits] Attempt ${attempt} failed:`, err);
+                if (attempt < maxRetries) {
+                    setDebugInfo(prev => ({ ...prev!, phase: `시도 ${attempt} 에러: 재시도 준비...`, error: err.message }));
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // 에러 발생 시 2초 대기
+                } else {
+                    setDebugInfo(prev => ({ ...prev!, phase: '최종 실패', error: err.message }));
+                }
             }
-
-            const currentUserId = currentSession?.user?.id;
-
-            // 방어 로직: 유저 ID가 없으면 절대 RPC를 호출하지 말고 대기합니다.
-            if (!currentUserId) {
-                console.warn("[useCredits] 유저 정보를 기다리는 중입니다 (Safari 세션 지연 가능성)");
-                setCredits(0);
-                setPurchases([]);
-                setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음', authStatus: '세션 없음' }));
-                return;
-            }
-
-            setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중', authStatus: '세션 유효' }));
-
-            // ⭐️ Task 1: RPC 호출에 강제 타임아웃 적용 (최대 15초)
-            const queryTimeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('크레딧 조회 타임아웃 (15초)')), 15000)
-            );
-
-            const result = await Promise.race([fetchCreditsViaRPC(currentUserId), queryTimeout]) as any;
-
-            if (!result) throw new Error('조회 결과가 없습니다.');
-
-            const activePurchases = (result.purchases || []) as CreditPurchase[];
-            setPurchases(activePurchases);
-            setCredits(result.profile_credits ?? 0);
-
-            setDebugInfo({
-                phase: '4. 조회 완료(RPC)',
-                purchaseCount: activePurchases.length,
-                profileCredits: result.profile_credits ?? 0,
-                lastRefresh: new Date().toLocaleTimeString(),
-                host: window.location.host,
-                urlStatus: (process.env.REACT_APP_SUPABASE_URL || 'N/A').substring(0, 15) + '...',
-                authStatus: '성공'
-            });
-        } catch (err: any) {
-            console.error('[useCredits] Error fetching credits:', err);
-            setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
-            // 에러 시에도 무한 스피너를 방지하기 위해 로딩 해제
-        } finally {
-            setLoading(false);
-            isRefreshing.current = false;
         }
+
+        setLoading(false);
+        isRefreshing.current = false;
     }, [session, isInitialized]);
 
     useEffect(() => {

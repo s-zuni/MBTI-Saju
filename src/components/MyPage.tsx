@@ -93,50 +93,67 @@ const MyPage: React.FC<MyPageProps> = ({
   // ⭐️ Task 2: redundant useCredits 제거 (props 사용)
 
   const fetchProfileData = React.useCallback(async () => {
-    try {
-      // ⭐️ Task 2: Props 세션을 최우선 신뢰하고, 없을 때만 타임아웃 기반 탐색
-      let activeSession = initialSession;
-      
-      if (!activeSession) {
-          // Task 1: 타임아웃 보호 처리된 세션 조회유틸 사용
-          activeSession = await ensureValidSession();
+    let attempts = 0;
+    const maxProfileRetries = 3;
+    let success = false;
+
+    while (attempts < maxProfileRetries && !success) {
+      try {
+        attempts++;
+        // ⭐️ Task 2: Props 세션을 최우선 신뢰하고, 없을 때만 타임아웃 기반 탐색
+        let activeSession = initialSession;
+        
+        if (!activeSession) {
+            // Task 1: 타임아웃 보호 처리된 세션 조회유틸 사용
+            activeSession = await ensureValidSession();
+        }
+
+        if (!activeSession) {
+          if (attempts < maxProfileRetries) {
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+          setLoading(false);
+          navigate('/');
+          return;
+        }
+
+        const user = activeSession.user;
+        const metadata = user.user_metadata || {};
+        const { full_name, gender, mbti, birth_date, birth_time, analysis: metaAnalysis } = metadata;
+
+        setProfile({
+          id: user.id,
+          name: full_name || user.email?.split('@')[0] || '사용자',
+          email: user.email,
+          gender: gender || '',
+          mbti: mbti || '',
+          birth_date: birth_date || '',
+          birth_time: birth_date && birth_time ? birth_time : null
+        });
+
+        if (metaAnalysis) {
+          setAnalysis(metaAnalysis);
+        }
+        
+        if (refreshCredits) {
+          // ⭐️ Task 3: 이미 확보한 세션 데이터를 전달하여 내부 getSession 경합 방지
+          refreshCredits(true, activeSession).catch(console.error);
+        }
+
+        success = true;
+      } catch (err: any) {
+        console.error(`Profile fetch attempt ${attempts} failed:`, err);
+        if (attempts >= maxProfileRetries) {
+          setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
+        } else {
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      } finally {
+        if (success || attempts >= maxProfileRetries) {
+          setLoading(false);
+        }
       }
-
-      if (!activeSession) {
-        setLoading(false);
-        navigate('/');
-        return;
-      }
-
-      const user = activeSession.user;
-      const metadata = user.user_metadata || {};
-      const { full_name, gender, mbti, birth_date, birth_time, analysis: metaAnalysis } = metadata;
-
-      setProfile({
-        id: user.id,
-        name: full_name || user.email?.split('@')[0] || '사용자',
-        email: user.email,
-        gender: gender || '',
-        mbti: mbti || '',
-        birth_date: birth_date || '',
-        birth_time: birth_time || null
-      });
-
-      if (metaAnalysis) {
-        setAnalysis(metaAnalysis);
-      }
-      
-      if (refreshCredits) {
-        // ⭐️ Task 3: 이미 확보한 세션 데이터를 전달하여 내부 getSession 경합 방지
-        refreshCredits(true, activeSession).catch(console.error);
-      }
-
-    } catch (err: any) {
-      console.error('Error fetching profile in MyPage:', err);
-      setError(err.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      // ⭐️ 반드시 실행되어야 함
-      setLoading(false);
     }
   }, [navigate, initialSession, refreshCredits]);
 
