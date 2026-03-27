@@ -69,15 +69,17 @@ const schemas: Record<string, any> = {
     })
 };
 
-export const runtime = 'edge';
+export const config = {
+    runtime: 'edge',
+};
 
 export default async function handler(req: Request) {
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type');
+    const url = new URL(req.url, 'http://localhost');
+    const type = url.searchParams.get('type');
     const currentSchema = schemas[type as string];
 
     if (!currentSchema) {

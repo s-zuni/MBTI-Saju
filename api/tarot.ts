@@ -2,7 +2,9 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 
-export const runtime = 'edge';
+export const config = {
+    runtime: 'edge',
+};
 
 export default async (req: Request) => {
     const corsHeaders = {

@@ -2,7 +2,9 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, convertToModelMessages } from 'ai';
 import { calculateSaju } from './_utils/saju';
 
-export const runtime = 'edge';
+export const config = {
+    runtime: 'edge',
+};
 
 export default async (req: Request) => {
     const corsHeaders = {

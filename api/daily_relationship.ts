@@ -3,7 +3,9 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 
-export const runtime = 'edge';
+export const config = {
+    runtime: 'edge',
+};
 
 export default async (req: Request) => {
     if (req.method !== 'POST') {
