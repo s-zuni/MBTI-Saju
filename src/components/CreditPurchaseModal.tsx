@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Coins, Sparkles, Check, Zap, Loader2 } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { requestPayment } from '../utils/paymentHandlers';
 import type { PricingPlan } from '../hooks/useCredits';
 import { COIN_PACKAGES } from '../config/creditConfig';
@@ -36,22 +36,38 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             setPlansLoading(true);
             console.log('[CreditPurchaseModal] Fetching plans started...');
             
-            // Safari 대응: 타임아웃 넉넉히 설정 (모바일 네트워크 고려)
+            // ⭐️ Task 1: 폴백 함수 정의 (중복 제거)
+            const applyFallback = () => {
+                const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
+                    id: pkg.id,
+                    name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
+                    description: `${pkg.credits} 크레딧 충전 (로컬 폴백)`,
+                    credits: pkg.credits,
+                    price: pkg.price,
+                    original_price: pkg.originalPrice,
+                    is_active: true,
+                    is_popular: pkg.credits === 50,
+                    sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                    created_at: new Date().toISOString()
+                }));
+                if (isMounted) setPlans(fallbackPlans);
+            };
+
+            // Safari 대응: 타임아웃 넉넉히 설정 (10초 후에는 무조건 폴백 적용)
             const timeoutId = setTimeout(() => {
-                if (isMounted) {
-                    console.warn('[CreditPurchaseModal] Fetching plans timed out (10s)');
+                if (isMounted && plans.length === 0) {
+                    console.warn('[CreditPurchaseModal] Fetching plans timed out (10s), applying fallback');
+                    applyFallback();
                     setPlansLoading(false);
                 }
             }, 10000);
 
             try {
-                // Safari ITP 대응: 세션 상태를 가져오되, 실패해도 데이터 패칭은 계속 진행 (Public 데이터)
-                try {
-                    await supabase.auth.getSession();
-                } catch (authErr) {
-                    console.warn('[CreditPurchaseModal] Auth session check failed, proceeding as anon:', authErr);
-                }
+                // ⭐️ Task 1: 세션 체크를 비동기로 별도 실행하여 요금제 조회를 방해하지 않게 함
+                // auth.getSession()이 Safari에서 무한 Pending 되더라도 나머지 로직은 진행됩니다.
+                ensureValidSession().catch(() => {});
                 
+                // 요금제 조회 (Public)
                 const { data, error } = await supabase
                     .from('pricing_plans')
                     .select('*')
@@ -61,43 +77,17 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 if (error) throw error;
                 
                 if (isMounted) {
-                    // DB 데이터가 있는 경우 우선 사용, 없으면 로컬 설정(COIN_PACKAGES)을 폴백으로 사용
                     if (data && data.length > 0) {
                         setPlans(data);
                     } else {
-                        console.log('[CreditPurchaseModal] DB plans empty, using local config fallback');
-                        const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
-                            id: pkg.id,
-                            name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
-                            description: `${pkg.credits} 크레딧을 즉시 충전합니다.`,
-                            credits: pkg.credits,
-                            price: pkg.price,
-                            original_price: pkg.originalPrice,
-                            is_active: true,
-                            is_popular: pkg.credits === 50,
-                            sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
-                            created_at: new Date().toISOString()
-                        }));
-                        setPlans(fallbackPlans);
+                        console.log('[CreditPurchaseModal] DB plans empty, applying fallback');
+                        applyFallback();
                     }
                 }
             } catch (err) {
                 console.error('[CreditPurchaseModal] Error fetching plans:', err);
                 if (isMounted) {
-                    // 에러 발생 시에도 로컬 설정으로 폴백 시도하여 무한 로딩 방지
-                    const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
-                        id: pkg.id,
-                        name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
-                        description: `${pkg.credits} 크레딧 충전 (로컬 폴백)`,
-                        credits: pkg.credits,
-                        price: pkg.price,
-                        original_price: pkg.originalPrice,
-                        is_active: true,
-                        is_popular: pkg.credits === 50,
-                        sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
-                        created_at: new Date().toISOString()
-                    }));
-                    setPlans(fallbackPlans);
+                    applyFallback();
                 }
             } finally {
                 clearTimeout(timeoutId);

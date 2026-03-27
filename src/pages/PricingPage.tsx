@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
@@ -34,48 +34,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
     const fetchPlans = React.useCallback(async () => {
         setLoading(true);
-        try {
-            // Safari 대응: 세션 상태 동기화를 시도하되, 실패해도 데이터 패칭은 중단하지 않음
-            try {
-                await supabase.auth.getSession();
-            } catch (authErr) {
-                console.warn('[PricingPage] Auth session check failed, proceeding as anon:', authErr);
-            }
-
-            const { data, error } = await supabase
-                .from('pricing_plans')
-                .select('*')
-                .eq('is_active', true)
-                .order('sort_order', { ascending: true });
-
-            if (error) throw error;
-            
-            // 데이터가 있는 경우 우선 사용, 없으면 로컬 설정으로 폴백
-            if (data && data.length > 0) {
-                setPlans(data);
-            } else {
-                console.log('[PricingPage] No plans in DB, using fallback');
-                const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
-                    id: pkg.id,
-                    name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
-                    description: `${pkg.credits} 크레딧을 즉시 충전합니다.`,
-                    credits: pkg.credits,
-                    price: pkg.price,
-                    original_price: pkg.originalPrice,
-                    is_active: true,
-                    is_popular: pkg.credits === 50,
-                    sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
-                    created_at: new Date().toISOString()
-                }));
-                setPlans(fallbackPlans);
-            }
-        } catch (err) {
-            console.error('[PricingPage] Error fetching plans:', err);
-            // 에러 발생 시에도 로컬 폴백 적용하여 화면 깨짐 방지
+        
+        const applyFallback = () => {
             const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
                 id: pkg.id,
                 name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
-                description: `${pkg.credits} 크레딧 충전 (로컬 폴백)`,
+                description: `${pkg.credits} 크레딧을 즉시 충전합니다.`,
                 credits: pkg.credits,
                 price: pkg.price,
                 original_price: pkg.originalPrice,
@@ -85,10 +49,42 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                 created_at: new Date().toISOString()
             }));
             setPlans(fallbackPlans);
+        };
+
+        // 타임아웃 설정 (10초)
+        const timeoutId = setTimeout(() => {
+            if (loading && plans.length === 0) {
+                console.warn('[PricingPage] Plan fetch timed out, using fallback');
+                applyFallback();
+                setLoading(false);
+            }
+        }, 10000);
+
+        try {
+            // Safari 대응: 세션 상태 조회를 비동기로 실행(기다리지 않음)
+            ensureValidSession().catch(() => {});
+
+            const { data, error } = await supabase
+                .from('pricing_plans')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            
+            if (data && data.length > 0) {
+                setPlans(data);
+            } else {
+                applyFallback();
+            }
+        } catch (err) {
+            console.error('[PricingPage] Error fetching plans:', err);
+            applyFallback();
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
-    }, []);
+    }, [loading, plans.length]);
 
     useEffect(() => {
         fetchPlans();
