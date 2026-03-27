@@ -39,7 +39,7 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
         const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
 
-        const tossResponse = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
+        const tossResponse = await fetch(new URL('https://api.tosspayments.com/v1/payments/confirm'), {
             method: 'POST',
             body: JSON.stringify({ orderId, amount, paymentKey }),
             headers: {
@@ -133,7 +133,7 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
         const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
         const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
 
-        const tossResponse = await fetch(`https://api.tosspayments.com/v1/payments/${purchase.payment_id}/cancel`, {
+        const tossResponse = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${purchase.payment_id}/cancel`), {
             method: 'POST',
             body: JSON.stringify({ cancelReason: cancelReason || '관리자에 의한 환불' }),
             headers: {
