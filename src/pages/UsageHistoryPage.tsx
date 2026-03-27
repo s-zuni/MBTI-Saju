@@ -20,12 +20,13 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
         }, 8000); // 8 seconds fallback
 
         try {
-            let currentSession = initialSession;
-            if (!currentSession) {
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                currentSession = fetchedSession;
-            }
-            if (!currentSession?.user?.id) {
+            // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const currentSession = fetchedSession || initialSession;
+            const currentUserId = currentSession?.user?.id;
+
+            if (!currentUserId) {
+                console.warn('[UsageHistoryPage] 유저 ID를 찾을 수 없어 조회를 중단합니다.');
                 setLoading(false);
                 return;
             }

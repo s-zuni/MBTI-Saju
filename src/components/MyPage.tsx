@@ -85,9 +85,9 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
   const fetchProfileData = React.useCallback(async () => {
     try {
-      // Safari ITP 대응: 세션 유효성 서버 사이드 검증
-      const validSession = await ensureValidSession();
-      const activeSession = validSession || initialSession;
+      // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
+      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+      const activeSession = fetchedSession || initialSession;
 
       if (!activeSession) {
         setLoading(false);
@@ -155,7 +155,11 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
     setError(null);
 
     try {
-      if (!initialSession) {
+      // Safari 대응: 최신 세션 다시 한 번 확인
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const activeSession = currentSession || initialSession;
+      
+      if (!activeSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
       }
       if (!profile) throw new Error('프로필 정보가 없습니다.');
@@ -180,7 +184,7 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
       const authHeader = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${initialSession.access_token}`,
+        'Authorization': `Bearer ${activeSession.access_token}`,
       };
 
       // 1. Core analysis (Nature, Persona, Keywords)
@@ -235,12 +239,15 @@ const MyPage: React.FC<MyPageProps> = ({ onOpenMbtiSaju, onOpenNaming, onOpenCom
 
     setLoading(true);
     try {
-      if (!initialSession?.user?.id) throw new Error('유저 정보를 찾을 수 없습니다.');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const activeUserId = currentSession?.user?.id || initialSession?.user?.id;
+        
+        if (!activeUserId) throw new Error('유저 정보를 찾을 수 없습니다.');
 
-      const { error: deleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', initialSession.user.id);
+        const { error: deleteError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', activeUserId);
 
       if (deleteError) throw deleteError;
 

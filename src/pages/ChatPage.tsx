@@ -37,11 +37,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
     // 1. Initial Load
     useEffect(() => {
         const init = async () => {
-            let currentSession = initialSession;
-            if (!currentSession) {
-                const { data: { session: authSession } } = await supabase.auth.getSession();
-                currentSession = authSession;
-            }
+            // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const currentSession = fetchedSession || initialSession;
             
             if (!currentSession) {
                 navigate('/');

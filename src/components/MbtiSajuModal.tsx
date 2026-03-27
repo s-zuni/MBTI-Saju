@@ -148,7 +148,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
     setIsPurchasingDeep(true);
     try {
-      const metadata = initialSession?.user?.user_metadata;
+      // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
+      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+      const activeSession = fetchedSession || initialSession;
+      
+      const metadata = activeSession?.user?.user_metadata;
       if (!metadata) throw new Error("로그인이 필요합니다.");
       const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
       const payload = {
@@ -184,7 +188,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
     setIsRegenerating(true);
     try {
-      const metadata = initialSession?.user?.user_metadata;
+      // Safari ITP 대응: 최신 세션 정보 확보
+      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+      const activeSession = fetchedSession || initialSession;
+      
+      const metadata = activeSession?.user?.user_metadata;
       const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
       const payload = {
         name: metadata.full_name,

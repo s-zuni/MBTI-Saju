@@ -125,7 +125,11 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                 }
             }
 
-            const user = session?.user?.user_metadata || {};
+            // Safari ITP 대응: 최신 세션 정보 확보
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const activeSession = fetchedSession || session;
+            
+            const user = activeSession?.user?.user_metadata || {};
             
             submit({
                 question,
@@ -139,9 +143,9 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             });
 
             // Save reading to Supabase (optional)
-            if (session) {
+            if (activeSession) {
                 await supabase.from('tarot_readings').insert({
-                    user_id: session.user.id,
+                    user_id: activeSession.user.id,
                     spread_type: selectedSpread,
                     question: question,
                     selected_cards: cards,

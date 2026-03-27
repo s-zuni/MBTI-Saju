@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabaseClient';
 import { Flower2, Loader2, MapPin, Sparkles, TrendingUp } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
@@ -41,7 +42,11 @@ const SeasonalCherryModal: React.FC<CherryModalProps> = ({ isOpen, onClose, onNa
         }
 
         try {
-            const metadata = session?.user?.user_metadata;
+            // Safari ITP 대응: 최신 세션 정보 확보
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const activeSession = fetchedSession || session;
+            
+            const metadata = activeSession?.user?.user_metadata;
             if (!metadata) throw new Error('로그인이 필요합니다.');
             if (!metadata.birth_date || !metadata.mbti) {
                 throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabaseClient';
 import { Loader2, Download, UserPlus, Sparkles } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
@@ -74,6 +75,12 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
 
         try {
             setError(null);
+            
+            // Safari ITP 대응: 최신 세션 정보 확보
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const activeSession = fetchedSession || session;
+            if (!activeSession) throw new Error("로그인이 필요합니다.");
+            
             const sajuData = calculateSaju(targetBirthDate, targetBirthTime);
             submit({
                 type: 'naming',

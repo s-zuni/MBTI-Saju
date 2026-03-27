@@ -68,11 +68,9 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
             const timeoutId = setTimeout(() => setLoading(false), 5000);
             
             try {
-                let currentSession = initialSession;
-                if (!currentSession) {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    currentSession = session;
-                }
+                // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                const currentSession = fetchedSession || initialSession;
                 
                 if (currentSession) {
                     setUserId(currentSession.user.id);

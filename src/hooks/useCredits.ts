@@ -121,13 +121,15 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             // Safari ITP 대응: 
             // Safari 환경에서는 페이지 마운트 직후 전역 상태의 session 토큰이 Supabase Client에 즉시 반영되지 않을 수 있습니다.
             // 명시적으로 getSession()을 호출하여 최신 세션을 확보합니다.
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
             
-            // Props로 전달받은 세션보다 getSession()으로 가져온 세션을 우선시합니다.
-            const validSession = currentSession || session;
-            const currentUserId = validSession?.user?.id;
+            // ⭐️ 핵심 수정: Props로 전달받은 세션보다 getSession()으로 가져온 최신 세션을 우선시하고 변수에 할당합니다.
+            const currentSession = fetchedSession || session;
+            const currentUserId = currentSession?.user?.id;
 
+            // 방어 로직: 유저 ID가 없으면 절대 RPC를 호출하지 말고 대기합니다.
             if (!currentUserId) {
+                console.warn("[useCredits] Safari 세션 지연 또는 로그아웃 상태: 유저 정보를 기다리는 중입니다.");
                 setCredits(0);
                 setPurchases([]);
                 setDebugInfo(prev => ({ ...prev!, phase: '종료: 유저 ID 없음', authStatus: '세션 없음' }));
@@ -136,11 +138,12 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
             setDebugInfo(prev => ({ ...prev!, phase: '2. 통합 정보(RPC) 조회 중', authStatus: '세션 유효' }));
 
-            // Increased timeout to 30s for slow mobile networks
+            // Increased timeout for slow mobile networks
             const queryTimeout = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('통합 정보 조회 타임아웃 (30초 초과)')), 30000)
             );
 
+            // RPC 호출 시 확실한 currentUserId를 사용합니다.
             const result = await Promise.race([fetchCreditsViaRPC(currentUserId), queryTimeout]) as any;
 
             if (!result) throw new Error('조회 결과가 없습니다.');
@@ -163,7 +166,6 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         } catch (err: any) {
             console.error('[useCredits] Error fetching credits:', err);
             setDebugInfo(prev => ({ ...prev!, phase: '에러: 조회 실패', error: err.message || JSON.stringify(err) }));
-            // Safari 등 환경에서 무한 로딩을 방지하기 위해 에러 발생 시에도 loading을 꺼야 함 (finally에서 처리됨)
         } finally {
             setLoading(false);
             isRefreshing.current = false;

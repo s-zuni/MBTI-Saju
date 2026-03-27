@@ -23,7 +23,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
     const checkUser = React.useCallback(async () => {
         try {
-            // Safari ITP 대응: 명시적으로 세션을 가져오되 에러 무시
+            // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
             const { data: { session: currentSession } } = await supabase.auth.getSession();
             setUser(currentSession?.user || initialSession?.user || null);
         } catch (err) {

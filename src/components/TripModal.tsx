@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { supabase } from '../supabaseClient';
 import { Loader2, MapPin, Plane, Calendar, Download } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
@@ -41,7 +42,11 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         }
 
         try {
-            const metadata = session?.user?.user_metadata;
+            // Safari ITP 대응: 최신 세션 정보 확보
+            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+            const activeSession = fetchedSession || session;
+            
+            const metadata = activeSession?.user?.user_metadata;
             if (!metadata) throw new Error('로그인이 필요합니다.');
             if (!metadata.birth_date || !metadata.mbti) {
                 throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');
