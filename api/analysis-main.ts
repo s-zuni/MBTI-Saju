@@ -71,8 +71,8 @@ export default async function handler(req: Request) {
     }
 
     const url = new URL(req.url, 'http://localhost');
-    const part = url.searchParams.get('part');
     const body = await req.json();
+    const part = url.searchParams.get('part') || body.part;
     const { mbti, birthDate, birthTime, gender, name, sajuData } = body;
     const currentSchema = schemas[part as string];
 

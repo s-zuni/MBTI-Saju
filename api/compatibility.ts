@@ -103,9 +103,15 @@ export default async (req: Request) => {
             const result = await streamObject({
                 model: google('gemini-2.5-flash'),
                 schema: z.object({
-                    score: z.number().describe("상성 점수 (1-100)"),
-                    desc: z.string().describe("상세 분석 내용 (800자 이상)"),
-                    keywords: z.string().describe("해시태그 키워드 (쉼표 구분)")
+                    score: z.number(),
+                    summary: z.string(),
+                    keywords: z.array(z.string()),
+                    details: z.object({
+                        mbti_harmony: z.string(),
+                        saju_harmony: z.string(),
+                        synergy: z.string(),
+                        advice: z.string()
+                    })
                 }),
                 system: systemPrompt,
                 prompt: userQuery,

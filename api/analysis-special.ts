@@ -79,14 +79,14 @@ export default async function handler(req: Request) {
     }
 
     const url = new URL(req.url, 'http://localhost');
-    const type = url.searchParams.get('type');
+    const body = await req.json();
+    const type = url.searchParams.get('type') || body.type;
     const currentSchema = schemas[type as string];
 
     if (!currentSchema) {
         return new Response(JSON.stringify({ error: `Invalid analysis type: ${type}` }), { status: 400 });
     }
 
-    const body = await req.json();
     const { 
         birthDate, birthTime, mbti, region, name, 
         startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements,
