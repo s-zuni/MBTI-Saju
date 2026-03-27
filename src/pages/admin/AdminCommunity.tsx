@@ -14,6 +14,7 @@ import {
     XCircle,
     User
 } from 'lucide-react';
+import { formatSafariDate } from '../../utils/textUtils';
 
 interface Post {
     id: string;
@@ -342,7 +343,7 @@ const AdminCommunity: React.FC = () => {
                                                 <span className="block text-xs font-black text-indigo-600 mb-1">{post.tag || '일반'}</span>
                                                 <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
                                                     <Calendar size={10} />
-                                                    {new Date(post.created_at).toLocaleDateString()}
+                                                    {new Date(formatSafariDate(post.created_at)).toLocaleDateString()}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 max-w-md">
@@ -421,7 +422,7 @@ const AdminCommunity: React.FC = () => {
                                                 </span>
                                                 <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
                                                     <Calendar size={10} />
-                                                    {new Date(report.created_at).toLocaleDateString()}
+                                                    {new Date(formatSafariDate(report.created_at)).toLocaleDateString()}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">

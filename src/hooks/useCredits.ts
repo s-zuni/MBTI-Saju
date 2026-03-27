@@ -3,6 +3,7 @@ import { supabase, ensureValidSession } from '../supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { SERVICE_COSTS, ServiceType, REFUND_PERIOD_DAYS } from '../config/creditConfig';
 import { onTokenRefreshed } from './useAuth';
+import { formatSafariDate } from '../utils/textUtils';
 
 export interface CreditPurchase {
     id: string;
@@ -298,7 +299,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 return { success: false, error: '이미 사용된 크레딧이 있어 환불이 불가능합니다.' };
             }
 
-            const purchasedAt = new Date(purchase.purchased_at);
+            const purchasedAt = new Date(formatSafariDate(purchase.purchased_at));
             const now = new Date();
             const daysSincePurchase = Math.floor((now.getTime() - purchasedAt.getTime()) / (1000 * 60 * 60 * 24));
 

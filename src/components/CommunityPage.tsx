@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { formatSafariDate } from '../utils/textUtils';
 // import { useNavigate } from 'react-router-dom';
 
 interface Comment {
@@ -250,7 +251,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                                             {post.tag || '일반'}
                                         </span>
                                         <span className="text-xs text-slate-400 font-medium">
-                                            {new Date(post.created_at).toLocaleDateString()}
+                                            {new Date(formatSafariDate(post.created_at)).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
@@ -555,7 +556,7 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit, onReport }: { 
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className="bg-white text-slate-600 border px-2 py-0.5 rounded text-xs font-bold">{post.tag}</span>
-                            <span className="text-xs text-slate-400">{new Date(post.created_at).toLocaleString()}</span>
+                            <span className="text-xs text-slate-400">{new Date(formatSafariDate(post.created_at)).toLocaleString()}</span>
                         </div>
                         <h2 className="text-xl font-bold text-slate-900">{post.title}</h2>
                         <div className="flex items-center gap-3 mt-1">
@@ -615,7 +616,7 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit, onReport }: { 
                                     <div className="bg-slate-50 p-3 rounded-xl">
                                         <div className="flex justify-between items-start mb-1">
                                             <span className="font-bold text-slate-700">{comment.author_name}</span>
-                                            <span className="text-xs text-slate-400">{new Date(comment.created_at).toLocaleTimeString().slice(0, 5)}</span>
+                                            <span className="text-xs text-slate-400">{new Date(formatSafariDate(comment.created_at)).toLocaleTimeString().slice(0, 5)}</span>
                                         </div>
                                         <p className="text-slate-600">{comment.content}</p>
                                         <div className="flex gap-2 mt-1">
