@@ -3,23 +3,24 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 
-export const config = {
-    maxDuration: 60,
-};
+export const runtime = 'edge';
 
-export default async (req: any, res: any) => {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+export default async (req: Request) => {
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+    }
 
     try {
-        const { myProfile, partners } = req.body;
+        const body = await req.json();
+        const { myProfile, partners } = body;
 
         if (!myProfile || !partners || !Array.isArray(partners)) {
-            return res.status(400).json({ error: 'Invalid input. myProfile and partners array are required.' });
+            return new Response(JSON.stringify({ error: 'Invalid input. myProfile and partners array are required.' }), { status: 400 });
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!GEMINI_API_KEY) {
-            return res.status(500).json({ error: 'Missing API Key' });
+            return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 500 });
         }
 
         const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
@@ -67,6 +68,6 @@ export default async (req: any, res: any) => {
         return result.toTextStreamResponse();
     } catch (error: any) {
         console.error('Daily Relationship API Error:', error);
-        res.status(500).json({ error: error.message });
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

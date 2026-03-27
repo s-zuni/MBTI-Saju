@@ -61,32 +61,37 @@ const schemas: Record<string, any> = {
     })
 };
 
-export const config = {
-    maxDuration: 60,
-};
+export const runtime = 'edge';
 
-export default async function handler(req: any, res: any) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+export default async function handler(req: Request) {
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+    }
 
-    const { part } = req.query;
-    const body = req.body || {};
+    const { searchParams } = new URL(req.url);
+    const part = searchParams.get('part');
+    const body = await req.json();
     const { mbti, birthDate, birthTime, gender, name, sajuData } = body;
     const currentSchema = schemas[part as string];
 
     if (!currentSchema) {
-        return res.status(400).json({ error: 'Invalid part' });
+        return new Response(JSON.stringify({ error: 'Invalid part' }), { status: 400 });
     }
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Missing API Key' });
+        return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 500 });
     }
 
     // Use client-provided sajuData or calculate on server as fallback
     let finalSaju = sajuData;
-    if (!finalSaju) {
+    if (!finalSaju && birthDate) {
         finalSaju = calculateSaju(birthDate, birthTime);
+    }
+
+    if (!finalSaju) {
+        return new Response(JSON.stringify({ error: 'Saju data missing' }), { status: 400 });
     }
 
     const sajuContext = `사주 원국: ${finalSaju.ganZhi.year} ${finalSaju.ganZhi.month} ${finalSaju.ganZhi.day} ${finalSaju.ganZhi.hour} (일간: ${finalSaju.dayMaster.korean} / 성질: ${finalSaju.dayMaster.description})`;
@@ -114,10 +119,9 @@ export default async function handler(req: any, res: any) {
             prompt: userQuery,
         });
 
-        // For 'core' part, we might want to include sajuResult as well.
         return result.toTextStreamResponse();
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);
-        res.status(500).json({ error: "분석 중 오류가 발생했습니다.", details: error.message });
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { status: 500 });
     }
 }

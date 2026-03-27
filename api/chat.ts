@@ -2,35 +2,31 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, convertToModelMessages } from 'ai';
 import { calculateSaju } from './_utils/saju';
 
-// Types
-type VercelRequest = any;
-type VercelResponse = any;
+export const runtime = 'edge';
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-    // CORS configuration
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-    );
+export default async (req: Request) => {
+    const corsHeaders = {
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
+        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+    };
 
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return new Response(null, { headers: corsHeaders });
     }
 
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders });
+    }
 
     try {
-        const { message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = req.body;
-        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const body = await req.json();
+        const { message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = body;
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
         if (!GEMINI_API_KEY) {
-            return res.status(500).json({ error: '서버 설정 오류: GEMINI_API_KEY가 누락되었습니다.' });
+            return new Response(JSON.stringify({ error: '서버 설정 오류: GEMINI_API_KEY가 누락되었습니다.' }), { status: 500, headers: corsHeaders });
         }
 
         // Calculate Saju
@@ -94,11 +90,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             messages: coreMessages as any,
         });
 
-        return result.toTextStreamResponse();
+        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error('ChatServer Error:', error);
-        res.status(500).json({
-            error: error.message || "채팅 분석 중 오류가 발생했습니다."
-        });
+        return new Response(JSON.stringify({ error: error.message || "채팅 분석 중 오류가 발생했습니다." }), { status: 500, headers: corsHeaders });
     }
 };

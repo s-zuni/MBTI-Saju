@@ -4,22 +4,18 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 
-type VercelRequest = any;
-type VercelResponse = any;
+export const runtime = 'edge';
 
-export default async (req: VercelRequest, res: VercelResponse) => {
-    // CORS configuration
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-    );
+export default async (req: Request) => {
+    const corsHeaders = {
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
+        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+    };
 
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return new Response(null, { headers: corsHeaders });
     }
 
     try {
@@ -34,19 +30,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         // Authenticate user
-        const authHeader = req.headers.authorization;
+        const authHeader = req.headers.get('authorization');
         if (!authHeader) {
-            return res.status(401).json({ error: 'Authorization header is missing.' });
+            return new Response(JSON.stringify({ error: 'Authorization header is missing.' }), { status: 401, headers: corsHeaders });
         }
         const token = authHeader.split(' ')[1]!;
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
         if (authError || !user) {
-            return res.status(401).json({ error: 'User not authenticated.' });
+            return new Response(JSON.stringify({ error: 'User not authenticated.' }), { status: 401, headers: corsHeaders });
         }
 
         if (req.method === 'POST') {
-            const body = req.body;
+            const body = await req.json();
             // Handle both flat and nested structures
             const myProfile = body.myProfile || {
                 name: body.userName,
@@ -64,17 +60,21 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             const relationshipType = body.relationshipType || 'lover';
 
             if (!myProfile.birthDate || !partnerProfile.birthDate) {
-                return res.status(400).json({ error: 'Missing profile information.' });
+                return new Response(JSON.stringify({ error: 'Missing profile information.' }), { status: 400, headers: corsHeaders });
             }
 
             // Use provided sajuData or calculate
             let mySaju = body.mySajuData || body.sajuData;
-            if (!mySaju) {
+            if (!mySaju && myProfile.birthDate) {
                 mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
             }
             let partnerSaju = body.partnerSajuData || body.targetSajuData;
-            if (!partnerSaju) {
+            if (!partnerSaju && partnerProfile.birthDate) {
                 partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
+            }
+
+            if (!mySaju || !partnerSaju) {
+                return new Response(JSON.stringify({ error: 'Saju data missing for analysis.' }), { status: 400, headers: corsHeaders });
             }
 
             const relationshipKoreanMap: { [key: string]: string } = {
@@ -109,12 +109,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
                 prompt: userQuery,
             });
 
-            return (result as any).pipeToResponse(res);
+            return result.toTextStreamResponse({ headers: corsHeaders });
         } else {
-            res.status(405).json({ error: 'Method Not Allowed' });
+            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders });
         }
     } catch (error: any) {
         console.error('Compatibility API Error:', error);
-        res.status(500).json({ error: error.message });
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
     }
 };

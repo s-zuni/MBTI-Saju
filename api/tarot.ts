@@ -2,32 +2,32 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 
-export default async (req: any, res: any) => {
-    // CORS configuration
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-    );
+export const runtime = 'edge';
+
+export default async (req: Request) => {
+    const corsHeaders = {
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
+        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+    };
 
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return new Response(null, { headers: corsHeaders });
     }
 
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders });
+    }
 
     try {
-        const { question, selectedCards, spreadType, userContext } = req.body;
-        // spreadType: 'daily' | 'love' | 'career' | 'celtic'
-        // userContext: { mbti?: string, birthDate?: string, name?: string }
-
+        const body = await req.json();
+        const { question, selectedCards, spreadType, userContext } = body;
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        
         if (!GEMINI_API_KEY) {
             console.error('[Tarot API] Missing GEMINI_API_KEY');
-            return res.status(500).json({ error: '서버 설정 오류: API 키가 누락되었습니다.' });
+            return new Response(JSON.stringify({ error: '서버 설정 오류: API 키가 누락되었습니다.' }), { status: 500, headers: corsHeaders });
         }
 
         let spreadContext = "";
@@ -121,9 +121,9 @@ export default async (req: any, res: any) => {
             prompt: userQuery,
         });
 
-        return result.toTextStreamResponse();
+        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error("Tarot API Error:", error);
-        res.status(500).json({ error: error.message });
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
     }
 };

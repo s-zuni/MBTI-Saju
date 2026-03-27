@@ -69,26 +69,22 @@ const schemas: Record<string, any> = {
     })
 };
 
-export const config = {
-    maxDuration: 60,
-};
+export const runtime = 'edge';
 
-export default async function handler(req: any, res: any) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+export default async function handler(req: Request) {
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+    }
 
-    const { type } = req.query;
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get('type');
     const currentSchema = schemas[type as string];
 
     if (!currentSchema) {
-        return res.status(400).json({ error: `Invalid analysis type: ${type}` });
+        return new Response(JSON.stringify({ error: `Invalid analysis type: ${type}` }), { status: 400 });
     }
 
-    let body = req.body;
-    if (typeof body === 'string') {
-        try { body = JSON.parse(body); } catch (e) { console.error('Parse error:', e); }
-    }
-    body = body || {};
-
+    const body = await req.json();
     const { 
         birthDate, birthTime, mbti, region, name, 
         startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements,
@@ -97,7 +93,7 @@ export default async function handler(req: any, res: any) {
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Missing API Key' });
+        return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 500 });
     }
 
     let saju = sajuData;
@@ -119,10 +115,10 @@ export default async function handler(req: any, res: any) {
         userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}, 선호 지역: ${region || '전국'}`;
     } else if (type === 'naming') {
         let finalTargetSaju = targetSajuData;
-        if (!finalTargetSaju) {
+        if (!finalTargetSaju && targetBirthDate) {
             finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
         }
-        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju.dayMaster.korean}, 오행분포 ${JSON.stringify(finalTargetSaju.elementRatio)}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
+        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(finalTargetSaju?.elementRatio || {})}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
     } else if (type === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
     } else if (type === 'trip') {
@@ -147,6 +143,6 @@ export default async function handler(req: any, res: any) {
         return result.toTextStreamResponse();
     } catch (error: any) {
         console.error(`[Streaming Error - ${type}]:`, error);
-        res.status(500).json({ error: "분석 중 오류가 발생했습니다.", details: error.message });
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { status: 500 });
     }
 }
