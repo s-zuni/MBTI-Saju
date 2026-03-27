@@ -75,8 +75,12 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const fetchPosts = React.useCallback(async () => {
         setLoading(true);
         try {
-            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
-            await supabase.auth.getSession();
+            // Safari 대응: 세션 상태 동기화를 시도하되, 실패해도 게시글 목록 패칭은 중단하지 않음 (Public 데이터)
+            try {
+                await supabase.auth.getSession();
+            } catch (authErr) {
+                console.warn('[CommunityPage] Auth session check failed, proceeding as anon:', authErr);
+            }
 
             let query = supabase
                 .from('posts')

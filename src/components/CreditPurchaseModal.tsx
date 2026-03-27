@@ -3,6 +3,7 @@ import { X, Coins, Sparkles, Check, Zap, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { requestPayment } from '../utils/paymentHandlers';
 import type { PricingPlan } from '../hooks/useCredits';
+import { COIN_PACKAGES } from '../config/creditConfig';
 
 interface CreditPurchaseModalProps {
     isOpen: boolean;
@@ -44,8 +45,12 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             }, 10000);
 
             try {
-                // Safari ITP 대응: RLS 필터링 오류 방지를 위해 세션을 명시적으로 가져옴
-                await supabase.auth.getSession();
+                // Safari ITP 대응: 세션 상태를 가져오되, 실패해도 데이터 패칭은 계속 진행 (Public 데이터)
+                try {
+                    await supabase.auth.getSession();
+                } catch (authErr) {
+                    console.warn('[CreditPurchaseModal] Auth session check failed, proceeding as anon:', authErr);
+                }
                 
                 const { data, error } = await supabase
                     .from('pricing_plans')
@@ -56,11 +61,44 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 if (error) throw error;
                 
                 if (isMounted) {
-                    setPlans(data || []);
+                    // DB 데이터가 있는 경우 우선 사용, 없으면 로컬 설정(COIN_PACKAGES)을 폴백으로 사용
+                    if (data && data.length > 0) {
+                        setPlans(data);
+                    } else {
+                        console.log('[CreditPurchaseModal] DB plans empty, using local config fallback');
+                        const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
+                            id: pkg.id,
+                            name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
+                            description: `${pkg.credits} 크레딧을 즉시 충전합니다.`,
+                            credits: pkg.credits,
+                            price: pkg.price,
+                            original_price: pkg.originalPrice,
+                            is_active: true,
+                            is_popular: pkg.credits === 50,
+                            sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                            created_at: new Date().toISOString()
+                        }));
+                        setPlans(fallbackPlans);
+                    }
                 }
             } catch (err) {
                 console.error('[CreditPurchaseModal] Error fetching plans:', err);
-                if (isMounted) setPlans([]);
+                if (isMounted) {
+                    // 에러 발생 시에도 로컬 설정으로 폴백 시도하여 무한 로딩 방지
+                    const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
+                        id: pkg.id,
+                        name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
+                        description: `${pkg.credits} 크레딧 충전 (로컬 폴백)`,
+                        credits: pkg.credits,
+                        price: pkg.price,
+                        original_price: pkg.originalPrice,
+                        is_active: true,
+                        is_popular: pkg.credits === 50,
+                        sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                        created_at: new Date().toISOString()
+                    }));
+                    setPlans(fallbackPlans);
+                }
             } finally {
                 clearTimeout(timeoutId);
                 if (isMounted) setPlansLoading(false);

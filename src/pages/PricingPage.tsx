@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
+import { COIN_PACKAGES } from '../config/creditConfig';
 
 import type { PricingPlan } from '../hooks/useCredits';
 
@@ -22,11 +23,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
     const checkUser = React.useCallback(async () => {
         try {
-            // Safari ITP 대응: 명시적으로 세션을 가져와 검증
+            // Safari ITP 대응: 명시적으로 세션을 가져오되 에러 무시
             const { data: { session: currentSession } } = await supabase.auth.getSession();
             setUser(currentSession?.user || initialSession?.user || null);
         } catch (err) {
-            console.error('[PricingPage] checkUser error:', err);
+            console.warn('[PricingPage] checkUser error:', err);
             setUser(initialSession?.user || null);
         }
     }, [initialSession]);
@@ -34,8 +35,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     const fetchPlans = React.useCallback(async () => {
         setLoading(true);
         try {
-            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
-            await supabase.auth.getSession();
+            // Safari 대응: 세션 상태 동기화를 시도하되, 실패해도 데이터 패칭은 중단하지 않음
+            try {
+                await supabase.auth.getSession();
+            } catch (authErr) {
+                console.warn('[PricingPage] Auth session check failed, proceeding as anon:', authErr);
+            }
 
             const { data, error } = await supabase
                 .from('pricing_plans')
@@ -44,9 +49,42 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                 .order('sort_order', { ascending: true });
 
             if (error) throw error;
-            setPlans(data || []);
+            
+            // 데이터가 있는 경우 우선 사용, 없으면 로컬 설정으로 폴백
+            if (data && data.length > 0) {
+                setPlans(data);
+            } else {
+                console.log('[PricingPage] No plans in DB, using fallback');
+                const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
+                    id: pkg.id,
+                    name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
+                    description: `${pkg.credits} 크레딧을 즉시 충전합니다.`,
+                    credits: pkg.credits,
+                    price: pkg.price,
+                    original_price: pkg.originalPrice,
+                    is_active: true,
+                    is_popular: pkg.credits === 50,
+                    sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                    created_at: new Date().toISOString()
+                }));
+                setPlans(fallbackPlans);
+            }
         } catch (err) {
             console.error('[PricingPage] Error fetching plans:', err);
+            // 에러 발생 시에도 로컬 폴백 적용하여 화면 깨짐 방지
+            const fallbackPlans: PricingPlan[] = COIN_PACKAGES.map(pkg => ({
+                id: pkg.id,
+                name: pkg.credits === 100 ? '프리미엄 팩' : pkg.credits === 50 ? '베이직 팩' : '스타터 팩',
+                description: `${pkg.credits} 크레딧 충전 (로컬 폴백)`,
+                credits: pkg.credits,
+                price: pkg.price,
+                original_price: pkg.originalPrice,
+                is_active: true,
+                is_popular: pkg.credits === 50,
+                sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                created_at: new Date().toISOString()
+            }));
+            setPlans(fallbackPlans);
         } finally {
             setLoading(false);
         }

@@ -63,8 +63,12 @@ const AdminCommunity: React.FC = () => {
         try {
             setLoading(true);
             
-            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
-            await supabase.auth.getSession();
+            // Safari 대응: 세션 상태 동기화를 시도하되, 실패해도 패칭 시도는 계속함 (RLS에 의해 필터링될 수 있음)
+            try {
+                await supabase.auth.getSession();
+            } catch (authErr) {
+                console.warn('[AdminCommunity] Auth session check failed:', authErr);
+            }
 
             let query = supabase
                 .from('posts')
@@ -102,8 +106,12 @@ const AdminCommunity: React.FC = () => {
         try {
             setLoading(true);
             
-            // Safari 대응: RLS 정책 통과를 위해 세션을 명시적으로 확인
-            await supabase.auth.getSession();
+            // Safari 대응: 세션 상태 동기화를 시도
+            try {
+                await supabase.auth.getSession();
+            } catch (authErr) {
+                console.warn('[AdminCommunity] Auth session check failed:', authErr);
+            }
 
             const from = (currentPage - 1) * postsPerPage;
             const to = from + postsPerPage - 1;
