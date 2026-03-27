@@ -112,10 +112,12 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         setLoading(true);
 
         while (attempt < maxRetries && !success) {
+            const currentAttempt = attempt + 1;
+            attempt = currentAttempt;
+
             try {
-                attempt++;
                 setDebugInfo({
-                    phase: `시도 ${attempt}/${maxRetries}: 세션 검증`,
+                    phase: `시도 ${currentAttempt}/${maxRetries}: 세션 검증`,
                     purchaseCount: 0,
                     profileCredits: 0,
                     lastRefresh: new Date().toLocaleTimeString(),
@@ -134,8 +136,8 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
 
                 // ⭐️ Task 2: 유저 ID가 없으면 0으로 덮어쓰지 말고 재시도하거나 대기합니다.
                 if (!currentUserId) {
-                    if (attempt < maxRetries) {
-                        setDebugInfo(prev => ({ ...prev!, phase: `시도 ${attempt} 실패: 세션 대기 중...` }));
+                    if (currentAttempt < maxRetries) {
+                        setDebugInfo(prev => ({ ...prev!, phase: `시도 ${currentAttempt} 실패: 세션 대기 중...` }));
                         await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5초 대기 후 재시도
                         continue;
                     }
@@ -170,9 +172,10 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 
                 success = true;
             } catch (err: any) {
-                console.error(`[useCredits] Attempt ${attempt} failed:`, err);
-                if (attempt < maxRetries) {
-                    setDebugInfo(prev => ({ ...prev!, phase: `시도 ${attempt} 에러: 재시도 준비...`, error: err.message }));
+                console.error(`[useCredits] Attempt ${currentAttempt} failed:`, err);
+                if (currentAttempt < maxRetries) {
+                    const errMsg = err.message;
+                    setDebugInfo(prev => ({ ...prev!, phase: `시도 ${currentAttempt} 에러: 재시도 준비...`, error: errMsg }));
                     await new Promise(resolve => setTimeout(resolve, 2000)); // 에러 발생 시 2초 대기
                 } else {
                     setDebugInfo(prev => ({ ...prev!, phase: '최종 실패', error: err.message }));

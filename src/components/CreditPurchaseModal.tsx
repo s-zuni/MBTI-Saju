@@ -23,6 +23,13 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     currentCredits = 0,
 }) => {
     const [plans, setPlans] = useState<PricingPlan[]>([]);
+    const plansRef = React.useRef<PricingPlan[]>([]);
+    
+    // plans state가 변경될 때마다 ref 업데이트
+    useEffect(() => {
+        plansRef.current = plans;
+    }, [plans]);
+
     const [plansLoading, setPlansLoading] = useState(true);
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -55,7 +62,8 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
             // Safari 대응: 타임아웃 넉넉히 설정 (10초 후에는 무조건 폴백 적용)
             const timeoutId = setTimeout(() => {
-                if (isMounted && plans.length === 0) {
+                // Dependency Array 관련 ESLint 에러 방지를 위해 ref 사용
+                if (isMounted && plansRef.current.length === 0) {
                     console.warn('[CreditPurchaseModal] Fetching plans timed out (10s), applying fallback');
                     applyFallback();
                     setPlansLoading(false);
