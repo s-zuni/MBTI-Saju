@@ -9,6 +9,7 @@ import {
     CheckCircle2,
     Clock
 } from 'lucide-react';
+import { formatSafariDate } from '../../utils/textUtils';
 
 interface Message {
     id: string;
@@ -177,7 +178,7 @@ const AdminInquiries: React.FC = () => {
                                             {msg.content}
                                         </div>
                                         <span className="text-[10px] text-slate-400 mt-1.5 px-1 font-bold">
-                                            {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(msg.created_at).toLocaleString([], {month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                                            {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(formatSafariDate(msg.created_at)).toLocaleString([], {month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
                                         </span>
                                     </div>
                                 ))
@@ -256,7 +257,7 @@ const AdminInquiries: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 max-w-sm">
                                             <div className="font-bold text-slate-800 truncate">{i.title}</div>
-                                            <div className="text-[10px] text-slate-400 font-medium">{new Date(i.created_at).toLocaleDateString()}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{new Date(formatSafariDate(i.created_at)).toLocaleDateString()}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className={`flex items-center gap-1.5 text-[10px] font-black ${

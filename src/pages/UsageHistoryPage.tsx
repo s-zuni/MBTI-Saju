@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, RefreshCw, Receipt } from 'lucide-react';
 import { SERVICE_NAMES } from '../config/creditConfig';
+import { formatSafariDate } from '../utils/textUtils';
 
 interface UsageHistoryPageProps {
     session: any;
@@ -58,7 +59,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
     }, [fetchData]);
 
     const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('ko-KR', {
+        return new Date(formatSafariDate(date)).toLocaleDateString('ko-KR', {
             year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
         });
     };

@@ -82,30 +82,19 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                 console.warn('[CommunityPage] Auth session check failed, proceeding as anon:', authErr);
             }
 
-            let query = supabase
-                .from('posts')
-                .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
-                .order('is_announcement', { ascending: false })
-                .order('created_at', { ascending: false });
+            const fetchTimeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('게시글 불러오기 타임아웃 (15초)')), 15000)
+            );
 
-            if (activeTag !== '전체') {
-                query = query.eq('tag', activeTag);
-            }
-
-            if (isPopularOnly) {
-                query = query.gte('likes', 5);
-            }
-
-            if (searchQuery) {
-                query = query.ilike('title', `%${searchQuery}%`);
-            }
-
-            // Pagination
-            const from = (currentPage - 1) * postsPerPage;
-            const to = from + postsPerPage - 1;
-            query = query.range(from, to);
-
-            const { data, count, error } = await query;
+            const { data, count, error } = await Promise.race([
+                supabase
+                    .from('posts')
+                    .select('id, title, content, author_name, user_id, created_at, likes, tag, is_announcement', { count: 'exact' })
+                    .order('is_announcement', { ascending: false })
+                    .order('created_at', { ascending: false })
+                    .range((currentPage - 1) * postsPerPage, currentPage * postsPerPage - 1),
+                fetchTimeout
+            ]) as any;
 
             if (error) throw error;
             
@@ -113,8 +102,8 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
             setTotalPosts(count || 0);
         } catch (err: any) {
             console.error('[CommunityPage] Error fetching posts:', err);
-            // Safari 등에서 무한 로딩 방지: 에러 발생 시 사용자 피드백 제공
-            // alert('게시글을 불러오는 도중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            // Safari 등에서 무한 로딩 방지: 에러 발생 시 사용자에게 빈 목록이라도 보여주어 스피너 제거
+            if (posts.length === 0) setPosts([]);
         } finally {
             setLoading(false);
         }
@@ -509,16 +498,19 @@ const PostDetailModal = ({ post, onClose, user, onDelete, onEdit, onReport }: { 
     }, []);
 
     const fetchComments = async () => {
-        const { data } = await supabase
-            .from('comments')
-            .select('*')
-            .eq('post_id', post.id)
-            .order('created_at', { ascending: true });
+        try {
+            const { data, error } = await supabase
+                .from('comments')
+                .select('*')
+                .eq('post_id', post.id)
+                .order('created_at', { ascending: true });
 
-        if (data) {
-            // Organize into nested structure not strictly needed for 1 level deep, but good for UI
-            // For simplicity, let's just show flat or filtered list in UI
-            setComments(data);
+            if (error) throw error;
+            if (data) setComments(data);
+        } catch (err) {
+            console.error('[CommunityPage] fetchComments error:', err);
+        } finally {
+            // No global loading here, but could add local comment loading if needed
         }
     };
 

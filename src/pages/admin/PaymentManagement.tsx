@@ -9,6 +9,7 @@ import {
     AlertCircle,
     RotateCcw
 } from 'lucide-react';
+import { formatSafariDate } from '../../utils/textUtils';
 
 interface Payment {
     id: string;
@@ -191,7 +192,7 @@ const PaymentManagement: React.FC = () => {
                                             {getStatusBadge(p)}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
-                                            {new Date(p.purchased_at).toLocaleString()}
+                                            {new Date(formatSafariDate(p.purchased_at)).toLocaleString()}
                                         </td>
                                     </tr>
                                 ))

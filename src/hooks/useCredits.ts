@@ -93,10 +93,14 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
     const [loading, setLoading] = useState(true);
     const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
     const [debugInfo, setDebugInfo] = useState<UseCreditsReturn['debugInfo']>();
+    const [isInitialized, setIsInitialized] = useState(false);
     const isRefreshing = useRef(false);
 
     // 사용 가능한 크레딧 합계 조회 (active 상태 구매건만)
-    const refreshCredits = useCallback(async () => {
+    const refreshCredits = useCallback(async (force = false) => {
+        // 초기화 전에는 호출 방지 (force가 true인 경우 제외)
+        if (!isInitialized && !force) return;
+        
         // 중복 호출 방지
         if (isRefreshing.current) return;
         isRefreshing.current = true;
@@ -164,23 +168,44 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             setLoading(false);
             isRefreshing.current = false;
         }
-    }, [session]);
+    }, [session, isInitialized]);
 
     useEffect(() => {
-        refreshCredits();
+        // Safari 대응: 세션 복원 대기 로직
+        // onAuthStateChange의 INITIAL_SESSION 이벤트를 기다려 세션 복원 완료를 확인합니다.
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+            console.log(`[useCredits] Auth Event: ${event}`);
+            
+            if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                setIsInitialized(true);
+                // 세션이 확정된 후 크레딧 정보 패칭 (force=true로 호출)
+                // useCredits(session)의 session prop이 갱신되기 전일 수 있으므로 
+                // 내부에서 getSession()을 다시 한 번 수행하는 refreshCredits를 호출합니다.
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (isInitialized) {
+            refreshCredits(true);
+        }
 
         // TOKEN_REFRESHED 이벤트 구독: 토큰 갱신 시 자동 크레딧 재조회
         const unsubscribeTokenRefresh = onTokenRefreshed(() => {
             console.log('[useCredits] Token refreshed event received, re-fetching credits...');
             isRefreshing.current = false; // 중복 방지 플래그 리셋
-            refreshCredits();
+            refreshCredits(true);
         });
 
         // Window focus listener to refresh credits (important for Safari/mobile coming back from background)
         const handleFocus = () => {
             console.log('Window focused, refreshing credits...');
             isRefreshing.current = false;
-            refreshCredits();
+            refreshCredits(true);
         };
         window.addEventListener('focus', handleFocus);
 
@@ -188,7 +213,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             window.removeEventListener('focus', handleFocus);
             unsubscribeTokenRefresh();
         };
-    }, [refreshCredits]);
+    }, [isInitialized, refreshCredits]);
 
     const getCost = useCallback((serviceType: ServiceType): number => {
         return SERVICE_COSTS[serviceType];

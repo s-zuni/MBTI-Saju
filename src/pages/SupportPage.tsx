@@ -12,6 +12,7 @@ import {
     User,
     CheckCircle2
 } from 'lucide-react';
+import { formatSafariDate } from '../utils/textUtils';
 
 interface PurchaseRecord {
     id: string;
@@ -341,7 +342,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                                 >
                                                     <div>
                                                         <p className="text-sm font-black text-slate-800">{p.purchased_credits} 크레딧 충전</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold">{new Date(p.purchased_at).toLocaleDateString()} • {p.price_paid.toLocaleString()}원</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold">{new Date(formatSafariDate(p.purchased_at)).toLocaleDateString()} • {p.price_paid.toLocaleString()}원</p>
                                                     </div>
                                                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPurchaseId === p.id ? 'border-indigo-600 bg-indigo-600' : 'border-slate-200'}`}>
                                                         {selectedPurchaseId === p.id && <div className="w-2 h-2 bg-white rounded-full" />}
@@ -419,7 +420,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                                 }`}>
                                                     {i.category === 'refund' ? '환불' : i.category === 'bug' ? '버그' : '문의'}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 font-bold">{new Date(i.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold">{new Date(formatSafariDate(i.created_at)).toLocaleDateString()}</span>
                                             </div>
                                             <h4 className="font-black text-slate-800 truncate">{i.title}</h4>
                                         </div>
@@ -459,7 +460,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                         <div className="flex items-center gap-1 mt-1.5 px-1">
                                             {msg.sender_role === 'admin' && <CheckCircle2 size={10} className="text-indigo-500" />}
                                             <span className="text-[10px] text-slate-400 font-bold">
-                                                {msg.sender_role === 'admin' ? '운영진 답변' : '나의 메시지'} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                {msg.sender_role === 'admin' ? '운영진 답변' : '나의 메시지'} • {new Date(formatSafariDate(msg.created_at)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </span>
                                         </div>
                                     </div>

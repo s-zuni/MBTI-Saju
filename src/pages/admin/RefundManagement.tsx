@@ -11,6 +11,7 @@ import {
     ShieldAlert,
     Send
 } from 'lucide-react';
+import { formatSafariDate } from '../../utils/textUtils';
 
 interface Message {
     id: string;
@@ -183,7 +184,7 @@ const RefundManagement: React.FC = () => {
         const p = inquiry.linked_purchase;
         if (!p) return { is7Days: false, isUnused: false, allOk: false };
         
-        const purchasedAt = new Date(p.purchased_at);
+        const purchasedAt = new Date(formatSafariDate(p.purchased_at));
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - purchasedAt.getTime()) / (1000 * 60 * 60 * 24));
         
@@ -224,7 +225,7 @@ const RefundManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-slate-900">{selectedInquiry.profiles?.name} ({selectedInquiry.profiles?.email})</p>
-                                        <p className="text-[10px] text-slate-400">요청일: {new Date(selectedInquiry.created_at).toLocaleString()}</p>
+                                        <p className="text-[10px] text-slate-400">요청일: {new Date(formatSafariDate(selectedInquiry.created_at)).toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -245,7 +246,7 @@ const RefundManagement: React.FC = () => {
                                                         {msg.content}
                                                     </div>
                                                     <span className="text-[9px] text-slate-400 mt-1 px-1">
-                                                        {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                        {msg.sender_role === 'admin' ? '운영진' : '사용자'} • {new Date(formatSafariDate(msg.created_at)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                     </span>
                                                 </div>
                                             ))
@@ -279,7 +280,7 @@ const RefundManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-slate-400 font-bold uppercase">결제일</p>
-                                        <p className="font-bold text-slate-700">{new Date(selectedInquiry.linked_purchase.purchased_at).toLocaleDateString()}</p>
+                                        <p className="font-bold text-slate-700">{new Date(formatSafariDate(selectedInquiry.linked_purchase.purchased_at)).toLocaleDateString()}</p>
                                     </div>
                                 </div>
 
@@ -377,7 +378,7 @@ const RefundManagement: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 max-w-xs">
                                             <div className="font-bold text-slate-800 truncate">{si.title}</div>
-                                            <div className="text-[10px] text-slate-400 font-medium">{new Date(si.created_at).toLocaleDateString()} 요참</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{new Date(formatSafariDate(si.created_at)).toLocaleDateString()} 요참</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-slate-900 font-black">{si.linked_purchase?.price_paid?.toLocaleString()}원</div>

@@ -10,6 +10,7 @@ import {
     Check,
     Trash2
 } from 'lucide-react';
+import { formatSafariDate } from '../../utils/textUtils';
 
 interface Profile {
     id: string;
@@ -169,7 +170,7 @@ const UserManagement: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                                            {new Date(user.created_at).toLocaleDateString()}
+                                            {new Date(formatSafariDate(user.created_at)).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">

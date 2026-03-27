@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { formatSafariDate } from './textUtils';
 
 
 export interface ChatMessage {
@@ -51,7 +52,7 @@ export const loadMessages = async (sessionId: string): Promise<ChatMessage[]> =>
             id: msg.id,
             role: msg.role,
             content: msg.content,
-            createdAt: new Date(msg.created_at)
+            createdAt: new Date(formatSafariDate(msg.created_at))
         }));
     } catch (error) {
         console.error("Failed to load messages", error);
