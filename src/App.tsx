@@ -149,6 +149,8 @@ function App() {
         refreshCredits={refreshCredits}
         purchaseCredits={purchaseCredits}
         consumeCredits={consumeCredits}
+        checkSufficientCredits={creditHook.checkSufficientCredits}
+        getCost={creditHook.getCost}
         tier={tier}
         fortune={fortune}
         isFortuneLoading={isFortuneLoading}
@@ -295,9 +297,6 @@ function AppContent({
                   } />
                   <Route path="/support" element={<SupportPage session={session} />} />
                   <Route path="/mypage" element={
-                    <MyPage
-                      onOpenMbtiSaju={() => openModal('mbtiSaju')}
-                      onOpenNaming={() => openModal('naming')}
                     <MyPage
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
                       onOpenNaming={() => openModal('naming')}
