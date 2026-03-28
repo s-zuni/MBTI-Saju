@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, AlertTriangle, Chrome } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const PopupModal: React.FC = () => {
@@ -77,16 +77,6 @@ const PopupModal: React.FC = () => {
                         {settings.popup_content}
                     </div>
 
-                    {/* Recommendation Row */}
-                    <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-8">
-                        <div className="flex-shrink-0 w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                            <Chrome size={20} className="text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-blue-900">Chrome 브라우저 권장</p>
-                            <p className="text-xs text-blue-700">가장 안정적인 최적의 환경을 제공합니다.</p>
-                        </div>
-                    </div>
 
                     {/* Footer Actions */}
                     <div className="space-y-3">

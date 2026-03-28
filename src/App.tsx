@@ -220,22 +220,6 @@ function AppContent({
                   </div>
                   <p className="text-slate-500 font-bold tracking-tight mb-4">당신의 운명을 불러오는 중...</p>
                   
-                  {debugInfo?.error && (
-                    <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl max-w-sm animate-fade-in">
-                      <div className="flex items-center gap-2 mb-2 text-rose-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span className="text-sm font-bold">네트워크 오류 감지</span>
-                      </div>
-                      <p className="text-xs text-rose-500 leading-relaxed font-medium">
-                        에러: {debugInfo.error}<br/>
-                        사파리 ITP나 캐시 문제일 가능성이 높습니다. 설정에서 '모든 쿠키 차단'을 끄거나 Chrome 브라우저를 사용해 보세요.
-                      </p>
-                    </div>
-                  )}
-
-                  <p className="text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg inline-block">
-                    💡 안정적인 서비스 이용을 위해 <b>Chrome 브라우저</b> 사용을 권장합니다.
-                  </p>
                 </div>
               ) : (
                 <Routes>
@@ -599,9 +583,6 @@ const AuthCallback = () => {
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-slate-600 font-medium tracking-tight mb-3">인증 처리 중입니다...</p>
-        <p className="text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg inline-block">
-          💡 안정적인 로그인 처리를 위해 <b>Chrome 브라우저</b> 사용을 권장합니다.
-        </p>
       </div>
     </div>
   );

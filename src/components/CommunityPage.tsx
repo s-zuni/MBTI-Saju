@@ -191,10 +191,6 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                         <div className="mb-6 animate-fade-in">
                             <p className="text-sm font-bold text-rose-600 flex items-center gap-2">
                                 <AlertTriangle className="w-4 h-4" />
-                                통신 에러 발생: {fetchError}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1 ml-6 leading-relaxed">
-                                사파리 환경에서 타임아웃이 발생한다면 브라우저 설정(CORS/캐시)을 확인해주세요.
                             </p>
                         </div>
                     )}
