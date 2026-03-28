@@ -8,11 +8,24 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
 }
 
 /**
+ * Safari 전용 캐시 무효화 Fetch Wrapper
+ */
+const safariCustomFetch = async (url: string | URL | Request, options?: RequestInit) => {
+    const modifiedOptions: RequestInit = {
+        ...options,
+        cache: 'no-store',
+        headers: {
+            ...options?.headers,
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Expires': '0'
+        }
+    };
+    return fetch(url, modifiedOptions);
+};
+
+/**
  * 표준 Supabase 클라이언트 설정 (React SPA 전용)
- * 
- * - Backend가 api.mbtiju.com으로 설정되어 1st-party 커스텀 도메인을 사용하므로 
- *   별도의 쿠키 스토리지 없이 기본 localStorage만으로도 Safari ITP 이슈가 해결됩니다.
- * - 과도한 세션 정보를 쿠키에 담지 않아 4KB 제한 문제를 방지합니다.
  */
 export const supabase = createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
@@ -24,6 +37,9 @@ export const supabase = createClient(
             detectSessionInUrl: true,
             flowType: 'pkce',
             storageKey: 'sb-mbtiju-auth-v2' 
+        },
+        global: {
+            fetch: safariCustomFetch
         }
     }
 );

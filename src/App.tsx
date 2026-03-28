@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
@@ -151,6 +151,7 @@ function App() {
         consumeCredits={consumeCredits}
         checkSufficientCredits={creditHook.checkSufficientCredits}
         getCost={creditHook.getCost}
+        debugInfo={creditHook.debugInfo}
         tier={tier}
         fortune={fortune}
         isFortuneLoading={isFortuneLoading}
@@ -169,7 +170,7 @@ function App() {
 
 function AppContent({ 
   session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
-  checkSufficientCredits, getCost,
+  checkSufficientCredits, getCost, debugInfo,
   tier, fortune, isFortuneLoading, handleFetchFortune, handleStart, 
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {
@@ -219,6 +220,19 @@ function AppContent({
                   </div>
                   <p className="text-slate-500 font-bold tracking-tight mb-4">당신의 운명을 불러오는 중...</p>
                   
+                  {debugInfo?.error && (
+                    <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl max-w-sm animate-fade-in">
+                      <div className="flex items-center gap-2 mb-2 text-rose-600">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span className="text-sm font-bold">네트워크 오류 감지</span>
+                      </div>
+                      <p className="text-xs text-rose-500 leading-relaxed font-medium">
+                        에러: {debugInfo.error}<br/>
+                        사파리 ITP나 캐시 문제일 가능성이 높습니다. 설정에서 '모든 쿠키 차단'을 끄거나 Chrome 브라우저를 사용해 보세요.
+                      </p>
+                    </div>
+                  )}
+
                   <p className="text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg inline-block">
                     💡 안정적인 서비스 이용을 위해 <b>Chrome 브라우저</b> 사용을 권장합니다.
                   </p>

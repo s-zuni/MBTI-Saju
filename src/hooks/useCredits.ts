@@ -172,13 +172,22 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
                 
                 success = true;
             } catch (err: any) {
-                console.error(`[useCredits] Attempt ${currentAttempt} failed:`, err);
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                console.error(`[useCredits] Attempt ${currentAttempt} failed:`, errorMessage);
+                
                 if (currentAttempt < maxRetries) {
-                    const errMsg = err.message;
-                    setDebugInfo(prev => ({ ...prev!, phase: `시도 ${currentAttempt} 에러: 재시도 준비...`, error: errMsg }));
+                    setDebugInfo(prev => ({ 
+                        ...prev!, 
+                        phase: `시도 ${currentAttempt} 에러: 재시도 준비...`, 
+                        error: `[${currentAttempt}/${maxRetries}] ${errorMessage}` 
+                    }));
                     await new Promise(resolve => setTimeout(resolve, 2000)); // 에러 발생 시 2초 대기
                 } else {
-                    setDebugInfo(prev => ({ ...prev!, phase: '최종 실패', error: err.message }));
+                    setDebugInfo(prev => ({ 
+                        ...prev!, 
+                        phase: '최종 실패 (모바일 Safari 캐시나 ITP 확인 필요)', 
+                        error: `최종 에러: ${errorMessage}` 
+                    }));
                 }
             }
         }
