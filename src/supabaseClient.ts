@@ -1,28 +1,22 @@
 import { createClient, Session } from '@supabase/supabase-js'
 
-const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL || '').trim();
-const supabaseAnonKey = (process.env.REACT_APP_SUPABASE_ANON_KEY || '').trim();
-
-if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-    console.warn('[Supabase] 환경 변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
-}
+// Vercel Reverse Proxy를 통한 Supabase 연결 (Safari CORS & AdBlock 우회)
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://www.mbtiju.com/backend';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
 /**
- * 표준 Supabase 클라이언트 설정 (React SPA 전용)
+ * 표준 Supabase 클라이언트 설정
+ * 브라우저 통신 시 전용 프록시 경로(/backend)를 사용하여 광고 차단기 필터링을 회피합니다.
  */
-export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder',
-    {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            flowType: 'pkce',
-            storageKey: 'sb-mbtiju-auth-v2' 
-        }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        storageKey: 'sb-mbtiju-auth-v2' 
     }
-);
+});
 
 // 세션 관리 및 갱신 최적화를 위한 내부 상태
 let globalSessionCache: Session | null = null;

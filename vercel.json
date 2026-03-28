@@ -17,11 +17,11 @@
         { "source": "/api/analyze_fortune", "destination": "/api/analysis-main?part=fortune" },
         { "source": "/api/analyze_strategy", "destination": "/api/analysis-main?part=strategy" },
         {
-            "source": "/api/:path*",
-            "destination": "/api/:path*"
+            "source": "/backend/:path*",
+            "destination": "https://tffvsyarxfujmvbqlutr.supabase.co/:path*"
         },
         {
-            "source": "/((?!api|static|favicon.ico|logo.*|manifest.json|robots.txt).*)",
+            "source": "/((?!backend|api|static|favicon.ico|logo.*|manifest.json|robots.txt).*)",
             "destination": "/index.html"
         }
     ]
