@@ -23,7 +23,7 @@ export const supabase = createClient(
             autoRefreshToken: true,
             detectSessionInUrl: true,
             flowType: 'pkce',
-            storageKey: 'sb-mbtiju-auth'
+            storageKey: 'sb-mbtiju-auth-v2' 
         }
     }
 );
