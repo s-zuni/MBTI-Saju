@@ -8,23 +8,6 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
 }
 
 /**
- * Safari 전용 캐시 무효화 Fetch Wrapper
- */
-const safariCustomFetch = async (url: string | URL | Request, options?: RequestInit) => {
-    const modifiedOptions: RequestInit = {
-        ...options,
-        cache: 'no-store',
-        headers: {
-            ...options?.headers,
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Expires': '0'
-        }
-    };
-    return fetch(url, modifiedOptions);
-};
-
-/**
  * 표준 Supabase 클라이언트 설정 (React SPA 전용)
  */
 export const supabase = createClient(
@@ -37,9 +20,6 @@ export const supabase = createClient(
             detectSessionInUrl: true,
             flowType: 'pkce',
             storageKey: 'sb-mbtiju-auth-v2' 
-        },
-        global: {
-            fetch: safariCustomFetch
         }
     }
 );

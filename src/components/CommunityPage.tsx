@@ -182,18 +182,20 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
         <div className="min-h-screen bg-slate-50 pb-20 pt-20">
             <div className="max-w-2xl mx-auto px-4">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-6">커뮤니티</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 mb-2">커뮤니티</h1>
+                    <div className="text-[10px] text-slate-400 mb-6 font-mono">
+                        PRD_URL: {process.env.REACT_APP_SUPABASE_URL || 'undefined'}
+                    </div>
                     
                     {fetchError && (
-                        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-fade-in">
-                            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <div>
-                                <h3 className="text-sm font-bold text-rose-800 mb-1">데이터를 불러오지 못했습니다</h3>
-                                <p className="text-xs text-rose-600 leading-relaxed font-medium">
-                                    에러: {fetchError}<br/>
-                                    사파리 환경에서 ITP나 캐싱 이슈일 수 있습니다. 크롬 브라우저 사용을 권장합니다.
-                                </p>
-                            </div>
+                        <div className="mb-6 animate-fade-in">
+                            <p className="text-sm font-bold text-rose-600 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                통신 에러 발생: {fetchError}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1 ml-6 leading-relaxed">
+                                사파리 환경에서 타임아웃이 발생한다면 브라우저 설정(CORS/캐시)을 확인해주세요.
+                            </p>
                         </div>
                     )}
 
