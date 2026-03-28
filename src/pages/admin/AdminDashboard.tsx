@@ -78,7 +78,7 @@ const AdminDashboard: React.FC = () => {
                     popup_enabled: siteSettings.popup_enabled,
                     popup_title: siteSettings.popup_title,
                     popup_content: siteSettings.popup_content,
-                    updated_at: new Promise(resolve => resolve(new Date().toISOString())) // supabase will handle this but for sync
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', 1);
 
