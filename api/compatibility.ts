@@ -3,22 +3,15 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
+import { corsHeaders, handleCors } from './_utils/cors';
 
 export const config = {
     runtime: 'edge',
 };
 
 export default async (req: Request) => {
-    const corsHeaders = {
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
-        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
-    };
-
-    if (req.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
 
     try {
         const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -34,13 +27,19 @@ export default async (req: Request) => {
         // Authenticate user
         const authHeader = req.headers.get('authorization');
         if (!authHeader) {
-            return new Response(JSON.stringify({ error: 'Authorization header is missing.' }), { status: 401, headers: corsHeaders });
+            return new Response(JSON.stringify({ error: 'Authorization header is missing.' }), { 
+                status: 401, 
+                headers: corsHeaders 
+            });
         }
         const token = authHeader.split(' ')[1]!;
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
         if (authError || !user) {
-            return new Response(JSON.stringify({ error: 'User not authenticated.' }), { status: 401, headers: corsHeaders });
+            return new Response(JSON.stringify({ error: 'User not authenticated.' }), { 
+                status: 401, 
+                headers: corsHeaders 
+            });
         }
 
         if (req.method === 'POST') {
@@ -62,7 +61,10 @@ export default async (req: Request) => {
             const relationshipType = body.relationshipType || 'lover';
 
             if (!myProfile.birthDate || !partnerProfile.birthDate) {
-                return new Response(JSON.stringify({ error: 'Missing profile information.' }), { status: 400, headers: corsHeaders });
+                return new Response(JSON.stringify({ error: 'Missing profile information.' }), { 
+                    status: 400, 
+                    headers: corsHeaders 
+                });
             }
 
             // Use provided sajuData or calculate
@@ -76,7 +78,10 @@ export default async (req: Request) => {
             }
 
             if (!mySaju || !partnerSaju) {
-                return new Response(JSON.stringify({ error: 'Saju data missing for analysis.' }), { status: 400, headers: corsHeaders });
+                return new Response(JSON.stringify({ error: 'Saju data missing for analysis.' }), { 
+                    status: 400, 
+                    headers: corsHeaders 
+                });
             }
 
             const relationshipKoreanMap: { [key: string]: string } = {
@@ -119,10 +124,16 @@ export default async (req: Request) => {
 
             return result.toTextStreamResponse({ headers: corsHeaders });
         } else {
-            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders });
+            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+                status: 405, 
+                headers: corsHeaders 
+            });
         }
     } catch (error: any) {
         console.error('Compatibility API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500, 
+            headers: corsHeaders 
+        });
     }
 };

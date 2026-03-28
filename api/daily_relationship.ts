@@ -2,14 +2,21 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
+import { corsHeaders, handleCors } from './_utils/cors';
 
 export const config = {
     runtime: 'edge',
 };
 
 export default async (req: Request) => {
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
+
     if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: corsHeaders 
+        });
     }
 
     try {
@@ -17,12 +24,18 @@ export default async (req: Request) => {
         const { myProfile, partners } = body;
 
         if (!myProfile || !partners || !Array.isArray(partners)) {
-            return new Response(JSON.stringify({ error: 'Invalid input. myProfile and partners array are required.' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Invalid input. myProfile and partners array are required.' }), { 
+                status: 400, 
+                headers: corsHeaders 
+            });
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!GEMINI_API_KEY) {
-            return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 500 });
+            return new Response(JSON.stringify({ error: 'Missing API Key' }), { 
+                status: 500, 
+                headers: corsHeaders 
+            });
         }
 
         const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
@@ -67,9 +80,12 @@ export default async (req: Request) => {
             prompt: userQuery,
         });
 
-        return result.toTextStreamResponse();
+        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error('Daily Relationship API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500, 
+            headers: corsHeaders 
+        });
     }
 };

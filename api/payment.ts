@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { setNodeCorsHeaders } from './_utils/cors';
 
 type VercelRequest = any;
 type VercelResponse = any;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    setNodeCorsHeaders(res);
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }

@@ -1,25 +1,21 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
+import { corsHeaders, handleCors } from './_utils/cors';
 
 export const config = {
     runtime: 'edge',
 };
 
 export default async (req: Request) => {
-    const corsHeaders = {
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
-        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
-    };
-
-    if (req.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
 
     if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: corsHeaders 
+        });
     }
 
     try {
@@ -29,7 +25,10 @@ export default async (req: Request) => {
         
         if (!GEMINI_API_KEY) {
             console.error('[Tarot API] Missing GEMINI_API_KEY');
-            return new Response(JSON.stringify({ error: '서버 설정 오류: API 키가 누락되었습니다.' }), { status: 500, headers: corsHeaders });
+            return new Response(JSON.stringify({ error: '서버 설정 오류: API 키가 누락되었습니다.' }), { 
+                status: 500, 
+                headers: corsHeaders 
+            });
         }
 
         let spreadContext = "";
@@ -126,6 +125,9 @@ export default async (req: Request) => {
         return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error("Tarot API Error:", error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500, 
+            headers: corsHeaders 
+        });
     }
 };

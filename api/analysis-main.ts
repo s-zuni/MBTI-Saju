@@ -2,6 +2,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
+import { corsHeaders, handleCors } from './_utils/cors';
 
 const schemas: Record<string, any> = {
     core: z.object({
@@ -66,8 +67,14 @@ export const config = {
 };
 
 export default async function handler(req: Request) {
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
+
     if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: corsHeaders 
+        });
     }
 
     const url = new URL(req.url, 'http://localhost');
@@ -77,13 +84,19 @@ export default async function handler(req: Request) {
     const currentSchema = schemas[part as string];
 
     if (!currentSchema) {
-        return new Response(JSON.stringify({ error: 'Invalid part' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Invalid part' }), { 
+            status: 400, 
+            headers: corsHeaders 
+        });
     }
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        return new Response(JSON.stringify({ error: 'Missing API Key' }), { status: 500 });
+        return new Response(JSON.stringify({ error: 'Missing API Key' }), { 
+            status: 500, 
+            headers: corsHeaders 
+        });
     }
 
     // Use client-provided sajuData or calculate on server as fallback
@@ -93,7 +106,10 @@ export default async function handler(req: Request) {
     }
 
     if (!finalSaju) {
-        return new Response(JSON.stringify({ error: 'Saju data missing' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Saju data missing' }), { 
+            status: 400, 
+            headers: corsHeaders 
+        });
     }
 
     const sajuContext = `사주 원국: ${finalSaju.ganZhi.year} ${finalSaju.ganZhi.month} ${finalSaju.ganZhi.day} ${finalSaju.ganZhi.hour} (일간: ${finalSaju.dayMaster.korean} / 성질: ${finalSaju.dayMaster.description})`;
@@ -121,9 +137,12 @@ export default async function handler(req: Request) {
             prompt: userQuery,
         });
 
-        return result.toTextStreamResponse();
+        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);
-        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 
+            status: 500, 
+            headers: corsHeaders 
+        });
     }
 }
