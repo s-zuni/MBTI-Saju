@@ -1,7 +1,7 @@
 import { createClient, Session } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL as string
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY as string
+const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL || '').trim();
+const supabaseAnonKey = (process.env.REACT_APP_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
     console.warn('[Supabase] 환경 변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
