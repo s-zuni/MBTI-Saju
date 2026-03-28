@@ -4,144 +4,103 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL as string
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-    console.error('CRITICAL: Supabase 환경 변수가 설정되지 않았습니다.');
+    console.warn('[Supabase] 환경 변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
 }
 
-// Safari-safe storage: localStorage 접근 불가 시 메모리 폴백
-const memoryStorage: Record<string, string> = {};
-
-// Safari 및 크로스 도메인 공유를 위한 고도화된 스토리지
-const safariSafeStorage = {
-    getItem: (key: string): string | null => {
-        if (typeof document === 'undefined') return null;
-        
-        // 1. 쿠키에서 먼저 시도 (.mbtiju.com 도메인 공유 세션용)
-        const name = key + "=";
-        const currentCookie = (typeof document !== 'undefined' && document) ? document.cookie : "";
-        const ca = decodeURIComponent(currentCookie).split(';');
-        for (const cookie of ca) {
-            const c = cookie.trim();
-            if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
-        }
-
-        // 2. 로컬 스토리지 시도 (기존 세션 유지용)
-        try { return localStorage.getItem(key); }
-        catch { return memoryStorage[key] ?? null; }
-    },
-    setItem: (key: string, value: string): void => {
-        if (typeof document === 'undefined') return;
-
-        // 1. 쿠키 설정 (.mbtiju.com 모든 서브도메인이 공유 가능하게 함)
-        const expires = new Date();
-        expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
-        
-        // Safari ITP 대응: .mbtiju.com 도메인을 명시적으로 지정하여 서브도메인 간 쿠키 공유 보장
-        const domainSuffix = (typeof window !== 'undefined' && window.location.hostname.includes('mbtiju.com')) 
-            ? ';domain=.mbtiju.com' 
-            : '';
-            
-        document.cookie = `${key}=${value};expires=${expires.toUTCString()};path=/${domainSuffix};SameSite=Lax;Secure`;
-
-        // 2. 로컬 스토리지/메모리에도 동기화 (최종 백업)
-        try { localStorage.setItem(key, value); }
-        catch { memoryStorage[key] = value; }
-    },
-    removeItem: (key: string): void => {
-        if (typeof document === 'undefined') return;
-        
-        // 1. 쿠키 삭제 (동일한 도메인 옵션 필수)
-        const domainSuffix = (typeof window !== 'undefined' && window.location.hostname.includes('mbtiju.com')) 
-            ? ';domain=.mbtiju.com' 
-            : '';
-        document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/${domainSuffix}`;
-        
-        // 2. 로컬 스토리지/메모리 삭제
-        try { localStorage.removeItem(key); }
-        catch { delete memoryStorage[key]; }
-    },
-};
-
+/**
+ * 표준 Supabase 클라이언트 설정 (React SPA 전용)
+ * 
+ * - Backend가 api.mbtiju.com으로 설정되어 1st-party 커스텀 도메인을 사용하므로 
+ *   별도의 쿠키 스토리지 없이 기본 localStorage만으로도 Safari ITP 이슈가 해결됩니다.
+ * - 과도한 세션 정보를 쿠키에 담지 않아 4KB 제한 문제를 방지합니다.
+ */
 export const supabase = createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
     supabaseAnonKey || 'placeholder',
     {
         auth: {
-            storage: safariSafeStorage,
-            storageKey: 'sb-mbtiju-auth',
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
             flowType: 'pkce',
-            // 💡 cookieOptions는 @supabase/ssr 전용이므로 제거하고
-            // safariSafeStorage 내부에서 쿠키 도메인을 직접 관리합니다.
+            storageKey: 'sb-mbtiju-auth'
         }
     }
 );
 
-// 세션 캐시 및 갱신 큐 (Safari ITP 대응)
+// 세션 관리 및 갱신 최적화를 위한 내부 상태
 let globalSessionCache: Session | null = null;
 let lastSessionFetchTime = 0;
 let refreshPromise: Promise<Session | null> | null = null;
 
 /**
- * API 호출 전 유효한 세션을 보장합니다.
- * 전역 프로미스를 사용하여 동시 호출 시 단 한 번만 갱신을 수행합니다.
+ * API 호출 전 유효한 세션을 보장하는 안전 장치입니다.
+ * 
+ * 1. 최근 10초 내 조회한 세션이 있다면 캐시를 반환합니다.
+ * 2. 동시 다발적인 세션 확인 요청 시 단 한 번의 네트워크 요청만 발생하도록 프로미스를 공유합니다.
+ * 3. 만료가 임박(5분 미만)한 경우 자동으로 토큰을 갱신합니다.
  */
 export const ensureValidSession = async (): Promise<Session | null> => {
     const now = Date.now();
     
-    // 10초 이내 캐시 히트 (현재 갱신 중이 아닐 때만)
+    // 1. 캐시 히트: 10초 이내에 조회된 유효한 세션이 있는 경우
     if (!refreshPromise && globalSessionCache && (now - lastSessionFetchTime < 10000)) {
         return globalSessionCache;
     }
 
-    // 이미 갱신 중이면 해당 프로미스를 반환하여 대기
+    // 2. 이미 갱신 중인 요청이 있다면 해당 프로미스 공유
     if (refreshPromise) return refreshPromise;
 
-    // 갱신 시작
+    // 3. 신규 세션 로드 및 검증 시작
     refreshPromise = (async () => {
         let attempts = 0;
-        const maxAttempts = 2; // 타임아웃 시 최대 2회 시도
+        const maxAttempts = 2;
 
-        while (attempts < maxAttempts) {
-            try {
-                const sessionData = await Promise.race([
-                    supabase.auth.getSession(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 3000))
-                ]) as { data: { session: Session | null }; error: any };
+        try {
+            while (attempts < maxAttempts) {
+                try {
+                    // 세션 조회를 타임아웃(3초)으로 보호
+                    const { data: { session }, error } = await Promise.race([
+                        supabase.auth.getSession(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 3000))
+                    ]) as { data: { session: Session | null }; error: any };
 
-                const session = sessionData.data.session;
-                
-                if (session) {
-                    // 토큰 만료 5분 전 자동 갱신
-                    const expiresAt = session.expires_at ?? 0;
-                    if (expiresAt - Math.floor(Date.now() / 1000) < 300) {
-                        const { data, error } = await supabase.auth.refreshSession();
-                        if (!error && data.session) {
-                            globalSessionCache = data.session;
-                            lastSessionFetchTime = Date.now();
-                            return data.session;
+                    if (error) throw error;
+
+                    if (session) {
+                        // 세션 만료 5분 전이면 즉시 강제 갱신
+                        const expiresAt = session.expires_at ?? 0;
+                        const isExpiringSoon = expiresAt - Math.floor(Date.now() / 1000) < 300;
+
+                        if (isExpiringSoon) {
+                            const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+                            if (!refreshError && refreshed.session) {
+                                globalSessionCache = refreshed.session;
+                                lastSessionFetchTime = Date.now();
+                                return refreshed.session;
+                            }
                         }
-                    }
 
-                    globalSessionCache = session;
-                    lastSessionFetchTime = Date.now();
-                    return session;
+                        globalSessionCache = session;
+                        lastSessionFetchTime = Date.now();
+                        return session;
+                    }
+                    
+                    globalSessionCache = null;
+                    return null;
+                } catch (err) {
+                    attempts++;
+                    if (attempts >= maxAttempts) throw err;
+                    await new Promise(r => setTimeout(r, 500)); // 재시도 전 짧은 대기
                 }
-                
-                // 세션이 없으면 루프 탈출
-                globalSessionCache = null;
-                return null;
-            } catch (err) {
-                attempts++;
-                console.warn(`[Supabase] Session refresh attempt ${attempts} failed:`, err);
-                if (attempts >= maxAttempts) break;
-                await new Promise(r => setTimeout(r, 500)); // 재시도 전 대기
             }
+        } catch (err) {
+            console.error('[Supabase] 세션 유효성 검사 최종 실패:', err);
+            return globalSessionCache; // 에러 발생 시 최후의 수단으로 마지막 캐시 반환 시도
+        } finally {
+            refreshPromise = null;
         }
-        
-        refreshPromise = null;
-        return globalSessionCache; 
+        return null;
     })();
 
     return refreshPromise;
