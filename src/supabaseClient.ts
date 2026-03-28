@@ -35,7 +35,7 @@ const safariSafeStorage = {
         const expires = new Date();
         expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
         
-        // mbtiju.com 환경에서만 도메인 설정 적용 (로컬 환경 호환성 유지)
+        // Safari ITP 대응: .mbtiju.com 도메인을 명시적으로 지정하여 서브도메인 간 쿠키 공유 보장
         const domainSuffix = (typeof window !== 'undefined' && window.location.hostname.includes('mbtiju.com')) 
             ? ';domain=.mbtiju.com' 
             : '';
@@ -49,7 +49,7 @@ const safariSafeStorage = {
     removeItem: (key: string): void => {
         if (typeof document === 'undefined') return;
         
-        // 1. 쿠키 삭제 (도메인 옵션 포함)
+        // 1. 쿠키 삭제 (동일한 도메인 옵션 필수)
         const domainSuffix = (typeof window !== 'undefined' && window.location.hostname.includes('mbtiju.com')) 
             ? ';domain=.mbtiju.com' 
             : '';
