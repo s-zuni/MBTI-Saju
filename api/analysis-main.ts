@@ -179,17 +179,30 @@ export default async function handler(req: Request) {
 
     let userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
 
-    try {
-        const google = createGoogleGenerativeAI({
-            apiKey: GEMINI_API_KEY
-        });
+    const google = createGoogleGenerativeAI({
+        apiKey: GEMINI_API_KEY
+    });
 
-        const result = await streamObject({
-            model: google('gemini-3.1-flash-lite-preview'),
-            schema: currentSchema,
-            system: systemPrompt,
-            prompt: userQuery,
-        });
+    try {
+        let result;
+        try {
+            // Primary: 3.1 Flash Lite
+            result = await streamObject({
+                model: google('gemini-3.1-flash-lite-preview'),
+                schema: currentSchema,
+                system: systemPrompt,
+                prompt: userQuery,
+            });
+        } catch (error) {
+            console.warn(`Primary model failed for part ${part}, falling back to gemini-2.5-flash:`, error);
+            // Fallback: 2.5 Flash
+            result = await streamObject({
+                model: google('gemini-2.5-flash'),
+                schema: currentSchema,
+                system: systemPrompt,
+                prompt: userQuery,
+            });
+        }
 
         return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {

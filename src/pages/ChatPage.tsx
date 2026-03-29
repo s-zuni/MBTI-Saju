@@ -7,7 +7,7 @@ import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 
-const MESSAGES_PER_COIN_CHARGE = 10; // 10회 대화당 크레딧 차감
+const MESSAGES_PER_COIN_CHARGE = 5; // 5회 대화당 크레딧 차감
 
 interface ChatPageProps {
     session: any;
@@ -152,7 +152,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
 
         // 10회마다 크레딧 체크 (0, 10, 20... 회차 대화 시작 시)
         if (messageCount % MESSAGES_PER_COIN_CHARGE === 0) {
-            if (credits < SERVICE_COSTS.AI_CHAT_10) {
+            if (credits < SERVICE_COSTS.AI_CHAT_5) {
                 setShowCreditModal(true);
                 return;
             }
@@ -189,7 +189,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
 
             // 10회 도달 시 크레딧 차감
             if ((messageCount) % MESSAGES_PER_COIN_CHARGE === 0) {
-                const success = await consumeCredits('AI_CHAT_10');
+                const success = await consumeCredits('AI_CHAT_5');
                 if (!success) {
                     console.error('Failed to spend credits for professional chat');
                 }
@@ -246,7 +246,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                             </div>
                         </div>
                         <div className="text-xs text-slate-500 mt-1">
-                            10회 대화 = 25크레딧
+                            5회 대화 = 20크레딧
                         </div>
                     </div>
 
@@ -299,7 +299,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 {showCreditWarning && (
                     <div className="absolute top-14 md:top-0 left-0 right-0 bg-amber-500 text-white p-3 flex items-center justify-center gap-2 z-10 animate-fade-in">
                         <AlertCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">다음 메시지 후 25크레딧이 차감됩니다 (현재: {credits}크레딧)</span>
+                        <span className="text-sm font-medium">다음 메시지 후 20크레딧이 차감됩니다 (현재: {credits}크레딧)</span>
                     </div>
                 )}
 
@@ -398,7 +398,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                             </button>
                         </form>
                         <p className="text-center text-[10px] md:text-xs text-slate-400 mt-2 font-medium">
-                            분석 결과는 참고용이며, 10회 대화마다 25크레딧이 차감됩니다.
+                            분석 결과는 참고용이며, 5회 대화마다 20크레딧이 차감됩니다.
                         </p>
                     </div>
                 </div>
@@ -410,7 +410,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 onClose={() => setShowCreditModal(false)}
                 userEmail={session?.user?.email}
                 currentCredits={credits}
-                requiredCredits={SERVICE_COSTS.AI_CHAT_10}
+                requiredCredits={SERVICE_COSTS.AI_CHAT_5}
                 onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                     await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                     setShowCreditModal(false);

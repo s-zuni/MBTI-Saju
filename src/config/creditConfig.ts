@@ -24,7 +24,7 @@ export const SERVICE_COSTS = {
   NAMING: 5,
   CHERRY: 5,
   RELATIONSHIP_ADD: 5,
-  AI_CHAT_10: 25,
+  AI_CHAT_5: 20,
   TAROT: 2,
   REGENERATE_MBTI_SAJU: 10
 } as const;
@@ -57,7 +57,7 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   NAMING: '사주 작명',
   CHERRY: '벚꽃 명소',
   RELATIONSHIP_ADD: '인연 추가',
-  AI_CHAT_10: '운명 심층 상담 (10회)',
+  AI_CHAT_5: '운명 심층 상담 (5회)',
   TAROT: '신비타로',
   REGENERATE_MBTI_SAJU: 'MBTI & 사주 재분석'
 };

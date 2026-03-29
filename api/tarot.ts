@@ -108,19 +108,35 @@ export default async (req: Request) => {
 
         const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
         
-        const result = await streamObject({
-            model: google('gemini-3.1-flash-lite-preview'),
-            schema: z.object({
-                cardReadings: z.array(z.object({
-                    cardName: z.string(),
-                    interpretation: z.string()
-                })),
-                overallReading: z.string(),
-                advice: z.string()
-            }),
-            system: systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다.",
-            prompt: userQuery,
+        let result;
+        const schema = z.object({
+            cardReadings: z.array(z.object({
+                cardName: z.string(),
+                interpretation: z.string()
+            })),
+            overallReading: z.string(),
+            advice: z.string()
         });
+        const fullSystemPrompt = systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다.";
+
+        try {
+            // Primary: 3.1 Flash Lite
+            result = await streamObject({
+                model: google('gemini-3.1-flash-lite-preview'),
+                schema,
+                system: fullSystemPrompt,
+                prompt: userQuery,
+            });
+        } catch (error) {
+            console.warn('Primary model failed for tarot, falling back to gemini-2.5-flash:', error);
+            // Fallback: 2.5 Flash
+            result = await streamObject({
+                model: google('gemini-2.5-flash'),
+                schema,
+                system: fullSystemPrompt,
+                prompt: userQuery,
+            });
+        }
 
         return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {

@@ -67,18 +67,37 @@ export default async (req: Request) => {
 
         const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
         
-        const result = await streamObject({
-            model: google('gemini-3.1-flash-lite-preview'),
-            schema: z.object({
-                results: z.array(z.object({
-                    id: z.string(),
-                    score: z.number(),
-                    msg: z.string()
-                }))
-            }),
-            system: systemPrompt,
-            prompt: userQuery,
-        });
+        let result;
+        try {
+            // Primary: 3.1 Flash Lite
+            result = await streamObject({
+                model: google('gemini-3.1-flash-lite-preview'),
+                schema: z.object({
+                    results: z.array(z.object({
+                        id: z.string(),
+                        score: z.number(),
+                        msg: z.string()
+                    }))
+                }),
+                system: systemPrompt,
+                prompt: userQuery,
+            });
+        } catch (error) {
+            console.warn('Primary model failed for daily relationship, falling back to gemini-2.5-flash:', error);
+            // Fallback: 2.5 Flash
+            result = await streamObject({
+                model: google('gemini-2.5-flash'),
+                schema: z.object({
+                    results: z.array(z.object({
+                        id: z.string(),
+                        score: z.number(),
+                        msg: z.string()
+                    }))
+                }),
+                system: systemPrompt,
+                prompt: userQuery,
+            });
+        }
 
         return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {

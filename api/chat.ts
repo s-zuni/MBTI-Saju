@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText, convertToModelMessages } from 'ai';
+import { generateText, convertToModelMessages } from 'ai';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
 
@@ -82,13 +82,27 @@ export default async (req: Request) => {
             (coreMessages as any).push({ role: 'user', content: message });
         }
 
-        const result = await streamText({
-            model: google('gemini-3.1-flash-lite-preview'),
-            system: systemPrompt,
-            messages: coreMessages as any,
-        });
+        let result;
+        try {
+            // Primary: 3.1 Flash Lite
+            result = await generateText({
+                model: google('gemini-3.1-flash-lite-preview'),
+                system: systemPrompt,
+                messages: coreMessages as any,
+            });
+        } catch (error) {
+            console.warn('Primary model failed, falling back to gemini-2.5-flash:', error);
+            // Fallback: 2.5 Flash
+            result = await generateText({
+                model: google('gemini-2.5-flash'),
+                system: systemPrompt,
+                messages: coreMessages as any,
+            });
+        }
 
-        return result.toTextStreamResponse({ headers: corsHeaders });
+        return new Response(JSON.stringify({ reply: result.text }), { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
     } catch (error: any) {
         console.error('ChatServer Error:', error);
         return new Response(JSON.stringify({ error: error.message || "채팅 분석 중 오류가 발생했습니다." }), { status: 500, headers: corsHeaders });
