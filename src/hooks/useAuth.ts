@@ -58,7 +58,7 @@ const fetchOrCreateProfile = async (currentSession: Session) => {
                     birth_date: user.user_metadata.birth_date || null,
                     birth_time: user.user_metadata.birth_time || null,
                     tier: 'free',
-                    credits: 0,
+                    credits: 20,
                     updated_at: new Date().toISOString(),
                 });
             if (upsertError) throw upsertError;

@@ -53,14 +53,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                         <div className="absolute -right-4 -top-4 w-12 h-12 bg-amber-200/30 rounded-full blur-xl"></div>
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-200">
-                                <span className="text-white font-black text-xs">25</span>
+                                <span className="text-white font-black text-xs">20</span>
                             </div>
                             <p className="text-amber-800 font-black text-base">
                                 가입 축하 크레딧 지급!
                             </p>
                         </div>
                         <p className="text-slate-700 font-bold text-sm">
-                            반가운 마음을 담아 <span className="text-orange-600 text-base font-black">25크레딧</span>을 선물로 드렸어요.
+                            반가운 마음을 담아 <span className="text-orange-600 text-base font-black">20크레딧</span>을 선물로 드렸어요.
                         </p>
                         <p className="text-slate-500 text-xs mt-2 font-semibold">분석 리포트, 사주 작명 등 원하는 서비스를 마음껏 이용해보세요.</p>
                     </div>

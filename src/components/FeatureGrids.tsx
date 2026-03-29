@@ -44,10 +44,10 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
                     openModal('analysis', 'login');
                     return;
                 }
-                if (credits >= SERVICE_COSTS.AI_CHAT_10) {
+                if (credits >= SERVICE_COSTS.AI_CHAT_5) {
                     navigate('/chat');
                 } else {
-                    openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_10 });
+                    openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_5 });
                 }
             },
         },
