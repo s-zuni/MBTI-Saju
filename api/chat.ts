@@ -83,7 +83,7 @@ export default async (req: Request) => {
         }
 
         const result = await streamText({
-            model: google('gemini-2.5-flash'),
+            model: google('gemini-3.1-flash-lite-preview'),
             system: systemPrompt,
             messages: coreMessages as any,
         });

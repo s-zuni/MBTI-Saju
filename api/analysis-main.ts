@@ -59,6 +59,60 @@ const schemas: Record<string, any> = {
             avoid: z.array(z.object({ title: z.string(), description: z.string() }))
         }),
         solution: z.string()
+    }),
+    full: z.object({
+        // Core Part
+        reportTitle: z.string(),
+        keywords: z.string(),
+        fusionNickname: z.string(),
+        nature: z.object({
+            dayPillarSummary: z.string(),
+            dayMasterAnalysis: z.string(),
+            dayBranchAnalysis: z.string(),
+            monthBranchAnalysis: z.string()
+        }),
+        fiveElements: z.object({
+            elements: z.array(z.object({
+                element: z.string(),
+                count: z.number(),
+                interpretation: z.string()
+            }))
+        }),
+        persona: z.object({
+            mbtiNickname: z.string(),
+            dominantFunction: z.string(),
+            auxiliaryFunction: z.string()
+        }),
+        deepIntegration: z.object({
+            integrationPoints: z.array(z.object({
+                subtitle: z.string(),
+                content: z.string()
+            }))
+        }),
+        // Fortune Part
+        yearlyFortune: z.object({
+            theme: z.string(),
+            overview: z.string(),
+            keywords: z.array(z.string())
+        }),
+        monthlyFortune: z.object({
+            months: z.array(z.object({
+                period: z.string(),
+                energy: z.string(),
+                guide: z.string()
+            }))
+        }),
+        // Strategy Part
+        fieldStrategies: z.object({
+            career: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
+            love: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
+            wealth: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() })
+        }),
+        warnings: z.object({
+            watchOut: z.array(z.object({ title: z.string(), description: z.string() })),
+            avoid: z.array(z.object({ title: z.string(), description: z.string() }))
+        }),
+        solution: z.string()
     })
 };
 
@@ -131,7 +185,7 @@ export default async function handler(req: Request) {
         });
 
         const result = await streamObject({
-            model: google('gemini-2.5-flash'),
+            model: google('gemini-3.1-flash-lite-preview'),
             schema: currentSchema,
             system: systemPrompt,
             prompt: userQuery,

@@ -16,6 +16,7 @@
         { "source": "/api/analyze", "destination": "/api/analysis-main?part=core" },
         { "source": "/api/analyze_fortune", "destination": "/api/analysis-main?part=fortune" },
         { "source": "/api/analyze_strategy", "destination": "/api/analysis-main?part=strategy" },
+        { "source": "/api/analyze_full", "destination": "/api/analysis-main?part=full" },
         {
             "source": "/backend/:path*",
             "destination": "https://tffvsyarxfujmvbqlutr.supabase.co/:path*"

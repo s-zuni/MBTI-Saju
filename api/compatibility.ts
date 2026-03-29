@@ -106,7 +106,7 @@ export default async (req: Request) => {
             const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
             
             const result = await streamObject({
-                model: google('gemini-2.5-flash'),
+                model: google('gemini-3.1-flash-lite-preview'),
                 schema: z.object({
                     score: z.number(),
                     summary: z.string(),

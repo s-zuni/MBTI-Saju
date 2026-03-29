@@ -5,7 +5,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { analysisSchema, yearlyFortuneSchema as fortuneSchema, strategySchema } from '../config/schemas';
+import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 
 interface MbtiSajuModalProps {
@@ -26,54 +26,40 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isPurchasingDeep, setIsPurchasingDeep] = useState(false);
 
-  // Streaming Hooks
-  const { object: coreObj, submit: submitCore, isLoading: isCoreLoading } = useObject({
-    api: '/api/analyze',
+  // Streaming Hook
+  const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading } = useObject({
+    api: '/api/analyze_full',
     schema: analysisSchema,
-    headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
-  });
-  const { object: fortuneObj, submit: submitFortune, isLoading: isFortuneLoading } = useObject({
-    api: '/api/analyze_fortune',
-    schema: fortuneSchema,
-    headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
-  });
-  const { object: strategyObj, submit: submitStrategy, isLoading: isStrategyLoading } = useObject({
-    api: '/api/analyze_strategy',
-    schema: strategySchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
   });
 
   // Sync partial results
   useEffect(() => {
-    if (coreObj || fortuneObj || strategyObj) {
+    if (fullObj) {
       setAnalysis((prev: any) => ({
         ...(prev || {}),
-        ...coreObj,
-        ...fortuneObj,
-        ...strategyObj,
+        ...fullObj,
         full_name: initialSession?.user?.user_metadata?.full_name || prev?.full_name,
         mbti: initialSession?.user?.user_metadata?.mbti || prev?.mbti,
         birth_date: initialSession?.user?.user_metadata?.birth_date || prev?.birth_date,
       }));
     }
-  }, [coreObj, fortuneObj, strategyObj, initialSession]);
+  }, [fullObj, initialSession]);
 
   // Loading state consolidation
   useEffect(() => {
-    const isAnyStreaming = isCoreLoading || isFortuneLoading || isStrategyLoading;
-    if (isAnyStreaming) {
+    if (isAnalysisLoading) {
       setLoading(true);
-    } else if (coreObj && fortuneObj && strategyObj) {
+    } else if (fullObj) {
       setLoading(false);
       const finalizeSave = async () => {
-        const mergedAnalysis = { ...coreObj, ...fortuneObj, ...strategyObj };
         await supabase.auth.updateUser({
-          data: { ...initialSession?.user?.user_metadata, analysis: mergedAnalysis }
+          data: { ...initialSession?.user?.user_metadata, analysis: fullObj }
         });
       };
       finalizeSave();
     }
-  }, [isCoreLoading, isFortuneLoading, isStrategyLoading, coreObj, fortuneObj, strategyObj, initialSession]);
+  }, [isAnalysisLoading, fullObj, initialSession]);
 
   const loadAnalysis = React.useCallback(async () => {
     setLoading(true);
@@ -164,9 +150,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         sajuData,
       };
       setAnalysis(null);
-      submitCore(payload);
-      submitFortune(payload);
-      submitStrategy(payload);
+      submitFull(payload);
       if (onUseCredit) await onUseCredit(false);
     } catch (error: any) {
       console.error("Deep Analysis Error:", error);
@@ -203,9 +187,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         sajuData,
       };
       setAnalysis(null);
-      submitCore(payload);
-      submitFortune(payload);
-      submitStrategy(payload);
+      submitFull(payload);
       if (onUseCredit) await onUseCredit(true);
     } catch (error: any) {
       console.error("Regenerate Error:", error);

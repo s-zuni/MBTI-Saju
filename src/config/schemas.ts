@@ -61,6 +61,12 @@ export const strategySchema = z.object({
     solution: z.string()
 });
 
+// Full Consolidated Analysis
+export const fullAnalysisSchema = z.intersection(
+    z.intersection(analysisSchema, yearlyFortuneSchema),
+    strategySchema
+);
+
 // Quick Fortune (Daily/Tomorrow)
 export const dailyFortuneSchema = z.object({
     today: z.object({

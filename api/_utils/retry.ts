@@ -3,7 +3,7 @@
  * Optimized for Vercel Hobby tier (10-second function limit).
  * 
  * Strategy: NO retries for most cases to stay within the 10-second limit.
- * All requests now exclusively use gemini-2.5-flash without fallback.
+ * All requests now exclusively use gemini-3.1-flash-lite-preview without fallback.
  */
 
 interface RetryOptions {
