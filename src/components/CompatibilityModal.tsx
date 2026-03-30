@@ -53,10 +53,8 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
 
         const cost = SERVICE_COSTS.COMPATIBILITY;
         if (credits !== undefined && credits < cost) {
-            if (window.confirm('크레딧이 부족합니다. 충전하시겠습니까?')) {
-                onNavigate('creditPurchase' as any);
-                onClose();
-            }
+            onNavigate('creditPurchase' as any);
+            onClose();
             return;
         }
 

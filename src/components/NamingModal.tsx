@@ -66,10 +66,8 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
 
         const cost = SERVICE_COSTS.NAMING;
         if (credits !== undefined && credits < cost) {
-            if (window.confirm(`크레딧이 부족합니다. (작명 서비스는 ${cost}크레딧이 필요합니다.)`)) {
-                onNavigate('creditPurchase' as any);
-                onClose();
-            }
+            onNavigate('creditPurchase' as any);
+            onClose();
             return;
         }
 

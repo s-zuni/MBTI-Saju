@@ -126,10 +126,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const handleStartDeepAnalysis = async () => {
     const cost = SERVICE_COSTS.MBTI_SAJU;
     if (credits !== undefined && credits < cost) {
-      if (window.confirm(`크레딧이 부족합니다. (심층 분석에는 ${cost}크레딧이 필요합니다. 충전하시겠습니까?)`)) {
-        onNavigate('creditPurchase' as any);
-        onClose();
-      }
+      onNavigate('creditPurchase' as any);
+      onClose();
       return;
     }
     setIsPurchasingDeep(true);
@@ -164,10 +162,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     if (!window.confirm("기존 결과는 보존되지 않으며, 크레딧이 10회 차감됩니다. 계속하시겠습니까?")) return;
     const cost = SERVICE_COSTS.REGENERATE_MBTI_SAJU;
     if (credits !== undefined && credits < cost) {
-      if (window.confirm(`크레딧이 부족합니다.`)) {
-        onNavigate('creditPurchase' as any);
-        onClose();
-      }
+      onNavigate('creditPurchase' as any);
+      onClose();
       return;
     }
     setIsRegenerating(true);
