@@ -84,10 +84,10 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
             addCredits = planData.credits;
         } else {
             // Fallback
-            if (amount === 9900) addCredits = 100;
-            else if (amount === 5900) addCredits = 50;
-            else if (amount === 2900) addCredits = 10;
-            else addCredits = Math.floor(amount / 10);
+            if (amount === 4900) addCredits = 100;
+            else if (amount === 2900) addCredits = 50;
+            else if (amount === 900) addCredits = 10;
+            else addCredits = Math.floor(amount / 49); // Default approximation
         }
 
         const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('add_credits_after_payment', {

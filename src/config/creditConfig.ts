@@ -9,9 +9,9 @@ export interface CreditPackage {
 }
 
 export const COIN_PACKAGES: CreditPackage[] = [
-  { id: 'credit_100', credits: 100, originalPrice: 29000, price: 9900, isDiscount: true },
-  { id: 'credit_50', credits: 50, originalPrice: 13900, price: 5900, isDiscount: true },
-  { id: 'credit_10', credits: 10, originalPrice: 3900, price: 2900, isDiscount: true }
+  { id: 'credit_100', credits: 100, originalPrice: 15000, price: 4900, isDiscount: true },
+  { id: 'credit_50', credits: 50, originalPrice: 10000, price: 2900, isDiscount: true },
+  { id: 'credit_10', credits: 10, originalPrice: 3000, price: 900, isDiscount: true }
 ];
 
 export const SERVICE_COSTS = {
