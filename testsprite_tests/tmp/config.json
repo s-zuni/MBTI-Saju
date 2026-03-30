@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "MBTI-Saju",
+    "projectPath": "c:\\Users\\zxzx7\\Desktop\\MBTI-Saju",
+    "testIds": [],
+    "additionalInstruction": "모바일 기기(아이폰 SE, 갤럭시 S20 등)에서의 UX/UI 점검에 집중하세요. \n주요 점검 사항:\n1. 콘텐츠가 화면 너비를 초과하여 가로 스크롤이 발생하는지 확인.\n2. 버튼이나 링크의 클릭 영역이 충분한지(최소 44x44px).\n3. 모달 창이 모바일 화면에 꽉 차게 표시되는지, 내부 스크롤이 원활한지.\n4. 하단 네비게이션(BottomNav)이 주요 콘텐츠를 가리지 않는지.\n5. 텍스트 크기가 모바일에서 가독성이 좋은지.\n\n테스트 계정 UUID: 6985e004-2f37-4e73-b7b5-a23910444d9e",
+    "serverMode": "production",
+    "envs": {
+      "API_KEY": "sk-user-1PERtQ1OMbX6vlRy7yUsrQLmNmzz4uJ4lk7VUGyVpBEgKbAtZwPW_jfQQxIqfvm-loa_OBwQrA7nENpEkc5BmqH4CwWfO2cMpgE7fJFzu2XP1pzNwnZxs2iC5ZMPx1DB-QY"
+    }
+  },
+  "serverPort": 53073,
+  "proxy": "http://c9883037-e256-4db1-9935-f8cfea8ac814:XWIqOhWdxkecHTxgfQwLCqajGsFWs6BZ@tun.testsprite.com:8080"
+}

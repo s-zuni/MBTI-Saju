@@ -26,7 +26,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 text-center text-white">
 
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight animate-fade-up drop-shadow-xl">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1] animate-fade-up drop-shadow-xl break-keep">
           {user ? (
             <>
               <span className="text-indigo-200">{user.user_metadata?.full_name || '회원'}</span>님,<br />

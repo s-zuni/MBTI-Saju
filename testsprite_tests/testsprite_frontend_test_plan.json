@@ -1,0 +1,878 @@
+[
+  {
+    "id": "TC001",
+    "title": "MBTI & Saju Analysis: Submit valid inputs and view results",
+    "description": "Verifies an authenticated user can submit birth date and MBTI info from the landing flow and see analysis results.",
+    "category": "MBTI & Saju Analysis",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the MBTI & Saju analysis start flow"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid birth date into the birth date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid MBTI option"
+      },
+      {
+        "type": "action",
+        "description": "Submit the analysis request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify analyzed results are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "MBTI & Saju Analysis: Invalid or incomplete birth date shows validation guidance",
+    "description": "Verifies the analysis form blocks submission and shows a validation error when birth date is incomplete or invalid.",
+    "category": "MBTI & Saju Analysis",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the MBTI & Saju analysis start flow"
+      },
+      {
+        "type": "action",
+        "description": "Fill an incomplete or invalid value into the birth date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid MBTI option"
+      },
+      {
+        "type": "action",
+        "description": "Submit the analysis request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a birth date validation error and guidance is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "MBTI & Saju Analysis: Results modal can be dismissed and user returns to landing flow",
+    "description": "Verifies users can close the analysis results view and continue using the landing page.",
+    "category": "MBTI & Saju Analysis",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the MBTI & Saju analysis start flow"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid birth date into the birth date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid MBTI option"
+      },
+      {
+        "type": "action",
+        "description": "Submit the analysis request"
+      },
+      {
+        "type": "action",
+        "description": "Close the analysis results view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the landing page primary content is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "MBTI & Saju Analysis: Prevent submission when MBTI is not selected",
+    "description": "Verifies the form prevents submission and indicates a validation issue when MBTI is missing.",
+    "category": "MBTI & Saju Analysis",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the MBTI & Saju analysis start flow"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid birth date into the birth date field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the analysis request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an MBTI selection validation error is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "MBTI & Saju Analysis: Form inputs can be edited before submission",
+    "description": "Verifies users can change birth date and MBTI inputs prior to submitting analysis.",
+    "category": "MBTI & Saju Analysis",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the MBTI & Saju analysis start flow"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid birth date into the birth date field"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid MBTI option"
+      },
+      {
+        "type": "action",
+        "description": "Change the birth date to another valid value"
+      },
+      {
+        "type": "action",
+        "description": "Change the MBTI selection to another valid option"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated birth date and MBTI selections are reflected in the form"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Community Interaction: Browse, search, tag filter, and like a post",
+    "description": "Verifies users can scroll posts, filter by search and tag, then like a post and see acknowledgment.",
+    "category": "Community Interaction",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /community"
+      },
+      {
+        "type": "action",
+        "description": "Scroll through the post list"
+      },
+      {
+        "type": "action",
+        "description": "Fill a short query into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Click a tag to filter posts by topic"
+      },
+      {
+        "type": "action",
+        "description": "Like a post from the filtered list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the like is acknowledged for the post"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Community Interaction: Attempt to create a new post prompts sign-in guidance",
+    "description": "Verifies creating a post from the community page triggers authentication-required guidance when not signed in.",
+    "category": "Community Interaction",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /community"
+      },
+      {
+        "type": "action",
+        "description": "Open the create-new-post flow from the community page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication required prompt or sign-in guidance is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Community Interaction: Community page loads primary post list content",
+    "description": "Verifies the community page loads and displays the primary post list without requiring authentication.",
+    "category": "Community Interaction",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /community"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a list of community posts is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Community Interaction: Clear search to return to broader post list",
+    "description": "Verifies removing the search query returns the user to a broader set of posts.",
+    "category": "Community Interaction",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /community"
+      },
+      {
+        "type": "action",
+        "description": "Fill a short query into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Clear the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the post list is no longer restricted by the prior search query"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Community Interaction: Toggle like on a post",
+    "description": "Verifies a user can like and then unlike the same post, with UI acknowledgment updating accordingly.",
+    "category": "Community Interaction",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /community"
+      },
+      {
+        "type": "action",
+        "description": "Like a post"
+      },
+      {
+        "type": "action",
+        "description": "Like the same post again to toggle the state"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the post returns to the unliked state"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Deep Counseling Chat: Select theme, send message, receive AI response, continue conversation",
+    "description": "Verifies an authenticated user can start a chat by selecting a theme, send a message, receive a response, and continue the conversation.",
+    "category": "Deep Counseling Chat",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a counseling theme"
+      },
+      {
+        "type": "action",
+        "description": "Fill a message into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the AI response to appear"
+      },
+      {
+        "type": "action",
+        "description": "Fill a follow-up message into the chat input"
+      },
+      {
+        "type": "action",
+        "description": "Send the follow-up message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify both user messages and at least one AI response are displayed in the conversation"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Deep Counseling Chat: Chat page loads and allows theme selection",
+    "description": "Verifies the authenticated chat page loads its primary UI and allows selecting a counseling theme.",
+    "category": "Deep Counseling Chat",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a counseling theme"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the chat interface is ready for message input"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Deep Counseling Chat: Prevent sending an empty message",
+    "description": "Verifies the chat UI blocks sending when the message input is empty.",
+    "category": "Deep Counseling Chat",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a counseling theme"
+      },
+      {
+        "type": "action",
+        "description": "Ensure the chat input is empty"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the message is not added to the conversation"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Deep Counseling Chat: Change counseling theme before sending message",
+    "description": "Verifies a user can change the selected theme before sending messages and the UI reflects the latest selection.",
+    "category": "Deep Counseling Chat",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a counseling theme"
+      },
+      {
+        "type": "action",
+        "description": "Select a different counseling theme"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the currently selected counseling theme is updated"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Request and view today's daily fortune card",
+    "description": "Verifies an unauthenticated user can request and view today's fortune results on the fortune page.",
+    "category": "Daily Fortune & Service Portal",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a daily fortune card is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fortune details are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Daily fortune result remains readable on mobile after request",
+    "description": "Verifies the fortune result layout remains readable without content overflow after requesting today's fortune.",
+    "category": "Daily Fortune & Service Portal",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "action",
+        "description": "Scroll through the fortune result content"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the fortune result content remains readable without overlapping or clipped sections"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the daily fortune card and details remain accessible while scrolling"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Request daily fortune multiple times in the same session",
+    "description": "Verifies requesting today's fortune again updates or re-renders the displayed fortune result without breaking the UI.",
+    "category": "Daily Fortune & Service Portal",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune again"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a daily fortune card is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fortune details are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Fortune page loads primary content",
+    "description": "Verifies the fortune page loads and presents the primary entry point to request a daily fortune.",
+    "category": "Daily Fortune & Service Portal",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /fortune"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the daily fortune request entry point is available"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Daily fortune page remains usable after rapid repeated requests",
+    "description": "Verifies the UI stays responsive and continues to show a fortune result after repeated requests.",
+    "category": "Daily Fortune & Service Portal",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "action",
+        "description": "Request today's fortune"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a daily fortune card is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fortune details are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Login and view profile summary on MyPage",
+    "description": "Verifies an authenticated user can log in and see their profile summary on MyPage.",
+    "category": "Profile & Usage (MyPage)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the MyPage area"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the profile summary is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Login and view usage history entries from MyPage",
+    "description": "Verifies an authenticated user can navigate to MyPage and view usage history information.",
+    "category": "Profile & Usage (MyPage)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the MyPage area"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the usage history section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage history entries are displayed or an empty state message is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "MyPage handles empty or unavailable history state",
+    "description": "Verifies MyPage shows a clear empty state when usage history data is not available in the UI.",
+    "category": "Profile & Usage (MyPage)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the MyPage area"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the usage history section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty history message is visible or usage history entries are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Login and open full Usage History page from MyPage",
+    "description": "Verifies an authenticated user can navigate from MyPage to the Usage History page and see history content.",
+    "category": "Profile & Usage (MyPage)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the MyPage area"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to view detailed usage history"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify credit usage and purchase logs are displayed or an empty state message is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "MyPage basic scroll and interaction on mobile-sized layout",
+    "description": "Verifies MyPage remains navigable and content sections are accessible via scrolling without layout breakage.",
+    "category": "Profile & Usage (MyPage)",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the MyPage area"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the bottom of the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify key profile and history sections remain readable and accessible while scrolling"
+      }
+    ]
+  }
+]

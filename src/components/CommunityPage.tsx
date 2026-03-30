@@ -93,12 +93,16 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
             if (searchQuery) {
                 query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
             }
+            // 1. 공지사항 우선 (Always top)
+            query = query.order('is_announcement', { ascending: false });
+
+            // 2. 인기순 필터가 켜져 있으면 좋아요순
             if (isPopularOnly) {
                 query = query.order('likes', { ascending: false });
             }
 
+            // 3. 마지막으로 최신순
             query = query
-                .order('is_announcement', { ascending: false })
                 .order('created_at', { ascending: false })
                 .range((currentPage - 1) * postsPerPage, currentPage * postsPerPage - 1);
 
@@ -182,10 +186,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
         <div className="min-h-screen bg-slate-50 pb-20 pt-20">
             <div className="max-w-2xl mx-auto px-4">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">커뮤니티</h1>
-                    <div className="text-[10px] text-slate-400 mb-6 font-mono">
-                        PRD_URL: {process.env.REACT_APP_SUPABASE_URL || 'undefined'}
-                    </div>
+                    <h1 className="text-3xl font-bold text-slate-900 mb-6">커뮤니티</h1>
                     
                     {fetchError && (
                         <div className="mb-6 animate-fade-in">

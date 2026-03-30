@@ -1,0 +1,29 @@
+Mobile UX/UI Optimization and TestSprite Inspection
+This plan outlines the systematic approach to identifying and resolving mobile UX/UI issues using both manual expert review and TestSprite automated testing.
+
+User Review Required
+IMPORTANT
+
+TestSprite will run on the local development server (port 3000). Please ensure no other critical processes are using this port.
+Automated tests may generate dummy data in the community section; these will be cleaned up if possible.
+Proposed Strategy
+1. Research and Analysis (Current Phase)
+Manual UX Audit: Review key components (Navbar, BottomNav, HeroSection, CommunityPage, ChatPage, Modals) for:
+Fixed widths causing horizontal scrolling.
+Small touch targets (buttons < 44x44px).
+Inconsistent padding on small screens.
+Text overflow issues.
+TestSprite Setup:
+Bootstrap TestSprite for the frontend.
+Generate a Frontend Test Plan specifically targeting mobile user flows.
+Execute the test suite to catch runtime layout shifts or interaction failures.
+2. Proposed Changes (Categorized)
+[COMPONENT] Layout and Navigation
+Navbar & BottomNav: Ensure "Safe Area" padding for notches and home indicators.
+HeroSection: Adjust font sizes and spatial distribution for narrow viewports.
+[COMPONENT] Community and Content
+CommunityPage: Fix post list item truncation and responsive tag layout.
+Modals: Implement max-w-full on mobile and ensure internal scrolling for long content.
+[COMPONENT] Interactive Features
+ChatPage: Optimize the chat input area for mobile keyboard overlay.
+Fortune/Relationship: Ensure cards and results are readable without zooming.
