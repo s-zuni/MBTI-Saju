@@ -65,6 +65,10 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
       return;
     }
 
+    if (!window.confirm(`내일의 운세를 확인하시겠습니까? ${tomorrowCost}크레딧이 차감됩니다.`)) {
+      return;
+    }
+
     setIsUnlocking(true);
     const success = await onUseCredit('FORTUNE_TOMORROW');
     setIsUnlocking(false);

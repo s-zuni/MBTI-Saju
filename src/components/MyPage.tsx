@@ -164,23 +164,27 @@ const MyPage: React.FC<MyPageProps> = ({
   // Handle re-analysis manually
   const handleReAnalyze = () => {
     const isFirstTime = !analysis;
+    if (isFirstTime) {
+      handleGenerateAnalysis();
+      return;
+    }
+    
     const cost = getCost('REGENERATE_MBTI_SAJU');
-    const confirmMsg = isFirstTime
-      ? '처음 분석은 무료입니다. 분석을 시작하시겠습니까?'
-      : `기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 ${cost}코인이 차감됩니다. 계속하시겠습니까?`;
+    const confirmMsg = `기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 ${cost}코인이 차감됩니다. 계속하시겠습니까?`;
     if (window.confirm(confirmMsg)) {
       handleGenerateAnalysis();
     }
   };
 
   const handleGenerateAnalysis = async () => {
-    // 크레딧 확인 (재분석의 경우)
-    if (analysis) {
-      if (!checkSufficientCredits('REGENERATE_MBTI_SAJU')) {
-        setError(`크레딧이 부족합니다. (재분석 비용: ${getCost('REGENERATE_MBTI_SAJU')} 크레딧)`);
-        setIsCreditModalOpen(true);
-        return;
-      }
+    const isFirstTime = !analysis;
+    const serviceType = isFirstTime ? 'MBTI_SAJU' : 'REGENERATE_MBTI_SAJU';
+    
+    // 크레딧 확인 (첫 분석은 무료, 재분석만 체크)
+    if (!isFirstTime && !checkSufficientCredits(serviceType)) {
+      setError(`크레딧이 부족합니다. (재분석 비용: ${getCost(serviceType)} 크레딧)`);
+      setIsCreditModalOpen(true);
+      return;
     }
 
     setAnalysisLoading(true);
@@ -196,9 +200,10 @@ const MyPage: React.FC<MyPageProps> = ({
       if (!profile) throw new Error('프로필 정보가 없습니다.');
 
       setIsNavigating(true);
-      // 재분석의 경우 선제적으로 크레딧 차감 시도
-      if (analysis) {
-        const spendSuccess = await spendCredits('REGENERATE_MBTI_SAJU');
+      
+      // 크레딧 차감 시도 (첫 분석은 무료이므로 skip)
+      if (!isFirstTime) {
+        const spendSuccess = await spendCredits(serviceType);
         if (!spendSuccess) {
           setIsNavigating(false);
           return;
@@ -562,7 +567,9 @@ const MyPage: React.FC<MyPageProps> = ({
                   <span>분석 중입니다...</span>
                 </>
               ) : (
-                "내 운명 분석 시작"
+                analysis 
+                  ? `내 운명 재분석 하기 (${getCost('REGENERATE_MBTI_SAJU')} 크레딧)`
+                  : "내 운명 분석 시작 (무료)"
               )}
             </button>
           </div>
