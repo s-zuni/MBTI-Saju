@@ -441,7 +441,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       // complete_profile 모드에서는 Escape 키를 차단
-      if (e.key === 'Escape' && mode !== 'complete_profile') onClose();
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -515,18 +515,15 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           />
         )}
 
-        {/* 닫기 버튼 (complete_profile에서는 숨김 — 필수 입력) */}
-        {mode !== 'complete_profile' && (
-          <button
-            className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
-            onClick={onClose}
-          >
-            <span className="sr-only">닫기</span>
-            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        )}
+        <button
+          className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+          onClick={onClose}
+        >
+          <span className="sr-only">닫기</span>
+          <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
     </div>
   );

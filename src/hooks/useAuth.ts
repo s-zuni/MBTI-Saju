@@ -46,8 +46,9 @@ const fetchOrCreateProfile = async (currentSession: Session) => {
 
         if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-        if (!profile) {
-            const { error: upsertError } = await supabase
+        let currentProfile = profile;
+        if (!currentProfile) {
+            const { data: newProfile, error: upsertError } = await supabase
                 .from('profiles')
                 .upsert({
                     id: user.id,
@@ -60,8 +61,18 @@ const fetchOrCreateProfile = async (currentSession: Session) => {
                     tier: 'free',
                     credits: 10,
                     updated_at: new Date().toISOString(),
-                });
+                })
+                .select()
+                .single();
             if (upsertError) throw upsertError;
+            currentProfile = newProfile;
+        } else if (currentProfile.credits === 0 && !currentProfile.birth_date && !currentProfile.mbti) {
+            // Case where a trigger might have created a shell profile with 0 credits
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ credits: 10 })
+                .eq('id', user.id);
+            if (updateError) console.warn('Welcome credit update skipped:', updateError);
         }
     } catch (error) {
         console.error('Profile init error:', error);
