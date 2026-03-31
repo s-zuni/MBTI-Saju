@@ -178,7 +178,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
         name: metadata.full_name,
         gender: metadata.gender,
         birthDate: metadata.birth_date,
-        birthTime: metadata.birth_date,
+        birthTime: metadata.birth_time,
         mbti: metadata.mbti,
         sajuData,
       };

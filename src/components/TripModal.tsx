@@ -29,7 +29,16 @@ const INTERNATIONAL_REGIONS = [
     '남유럽 (이탈리아/스페인 등)', '오세아니아 (호주/뉴질랜드)', '기타 (중남미/아프리카 등)'
 ];
 
-const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
+interface TripContentProps {
+    onUseCredit?: (() => Promise<boolean>) | undefined;
+    credits?: number | undefined;
+    session: any;
+    onReset: () => void;
+    onNavigate: (service: ServiceType) => void;
+    onClose: () => void;
+}
+
+const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, session, onReset, onNavigate, onClose }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -43,16 +52,6 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
     useEffect(() => {
         setSelectedRegion(tripType === 'domestic' ? DOMESTIC_REGIONS[16] : INTERNATIONAL_REGIONS[0]);
     }, [tripType]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setIsFormSubmitted(false);
-            setTripType('domestic');
-            setDuration(3);
-            setRequirements('');
-            setError(null);
-        }
-    }, [isOpen]);
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
@@ -119,12 +118,158 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
         }
     };
 
-    if (!isOpen) return null;
+    return (
+        <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+            {!isFormSubmitted ? (
+                <div className="space-y-8 animate-fade-in py-4">
+                    {/* Form Input Section */}
+                    <section className="space-y-4">
+                        <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
+                            <Globe className="w-4 h-4 text-indigo-600" /> 대상 지역
+                        </label>
+                        <div className="flex bg-slate-100 p-1 rounded-2xl w-full mb-4">
+                            <button
+                                onClick={() => setTripType('domestic')}
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'domestic' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                국내여행
+                            </button>
+                            <button
+                                onClick={() => setTripType('international')}
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'international' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                해외여행
+                            </button>
+                        </div>
+                        <select 
+                            value={selectedRegion}
+                            onChange={(e) => setSelectedRegion(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-950 text-base rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 block p-4 font-bold outline-none transition-all"
+                        >
+                            {(tripType === 'domestic' ? DOMESTIC_REGIONS : INTERNATIONAL_REGIONS).map(region => (
+                                <option key={region} value={region}>{region}</option>
+                            ))}
+                        </select>
+                    </section>
+
+                    <section className="space-y-4">
+                        <label className="flex flex-col gap-2">
+                            <span className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
+                                <CalendarDays className="w-4 h-4 text-indigo-600" /> 여행 일정 (최대 14일)
+                            </span>
+                        </label>
+                        <div className="flex items-center gap-4">
+                            <input 
+                                type="range" 
+                                min="1" 
+                                max="14" 
+                                value={duration} 
+                                onChange={(e) => setDuration(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
+                            <span className="shrink-0 w-16 text-center font-black text-indigo-600 text-lg bg-indigo-50 py-2 rounded-xl">
+                                {duration}일
+                            </span>
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
+                            <PenLine className="w-4 h-4 text-indigo-600" /> 추가 요청사항
+                        </label>
+                        <textarea
+                            rows={3}
+                            placeholder="예: 뚜벅이 여행입니다, 맛집 탐방을 좋아해요, 휴양 목적입니다 등"
+                            value={requirements}
+                            onChange={(e) => setRequirements(e.target.value)}
+                            className="block p-4 w-full text-base text-slate-950 bg-slate-50 rounded-2xl border border-slate-200 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+                        />
+                    </section>
+
+                    <div className="pt-6">
+                        <button 
+                            onClick={handleAnalyzeClick} 
+                            className="w-full sm:w-auto px-10 py-5 bg-slate-950 hover:bg-indigo-600 text-white rounded-full font-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all flex flex-col items-center justify-center gap-1 mx-auto"
+                        >
+                            <span className="text-lg">운명 맞춤 여행지 분석하기</span>
+                            <span className="text-[10px] text-slate-300 font-medium tracking-widest">{SERVICE_COSTS.TRIP} 크레딧 차감</span>
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div ref={reportRef} className="bg-white">
+                {isLoading && !result ? (
+                    <div className="flex flex-col justify-center items-center h-80 animate-fade-in">
+                        <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6" />
+                        <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">분석 중...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-20 bg-red-50 rounded-[32px] animate-fade-in">
+                        <p className="text-red-500 font-black mb-4">{error}</p>
+                        <button onClick={onReset} className="px-8 py-3 bg-slate-950 text-white rounded-full">다시 입력 설정하기</button>
+                    </div>
+                ) : result ? (
+                    <div className="space-y-12 animate-fade-up py-4">
+                        <section className="report-section">
+                            <h4 className="report-section-title"><MapPin className="w-5 h-5 text-indigo-600" /> 추천 여행지 BEST 3</h4>
+                            <div className="grid gap-6">
+                                {result?.places?.map((place: any, i: number) => (
+                                    <div key={i} className="report-card">
+                                        <h5 className="text-xl font-black text-slate-950 mb-2">0{i+1}. {place.name}</h5>
+                                        <div className="space-y-3 text-sm leading-relaxed text-slate-600">
+                                            <p><strong className="text-slate-950">선정 이유:</strong> {stripMarkdown(place.reason)}</p>
+                                            <p><strong className="text-slate-950">추천 활동:</strong> {stripMarkdown(place.activity)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="report-section">
+                            <h4 className="report-section-title"><Calendar className="w-5 h-5 text-indigo-600" /> 추천 일정 가이드</h4>
+                            <div className="space-y-4">
+                                {result?.itinerary?.map((day: any, i: number) => (
+                                    <div key={i} className="report-card bg-slate-50">
+                                        <h5 className="font-bold text-indigo-600 mb-3">{day.day}</h5>
+                                        <ul className="space-y-2">
+                                            {day.schedule?.map((item: string, j: number) => (
+                                                <li key={j} className="text-sm text-slate-600">• {stripMarkdown(item)}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
+                            <button onClick={handleDownloadPDF} className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3">
+                                <Download className="w-5 h-5" /> PDF 결과서 다운로드
+                            </button>
+                            <button onClick={onReset} className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4">새로운 설정으로 다시 분석하기</button>
+                        </div>
+                    </div>
+                ) : null}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const TripModal: React.FC<TripModalProps> = (props) => {
+    const [resetKey, setResetKey] = useState(0);
+
+    useEffect(() => {
+        if (props.isOpen) {
+            setResetKey(prev => prev + 1);
+        }
+    }, [props.isOpen]);
+
+    if (!props.isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4 sm:p-6">
             <div className="relative p-0 border-none w-full max-w-2xl shadow-2xl rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col">
-                <ServiceNavigation currentService="trip" onNavigate={onNavigate} onClose={onClose} />
+                <ServiceNavigation currentService="trip" onNavigate={props.onNavigate} onClose={props.onClose} />
 
                 <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
                     <div className="flex justify-between items-end">
@@ -136,138 +281,15 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
                     <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
                 </div>
 
-                <div className="px-8 sm:px-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
-                    {!isFormSubmitted ? (
-                        <div className="space-y-8 animate-fade-in py-4">
-                            {/* Form Input Section */}
-                            <section className="space-y-4">
-                                <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                                    <Globe className="w-4 h-4 text-indigo-600" /> 대상 지역
-                                </label>
-                                <div className="flex bg-slate-100 p-1 rounded-2xl w-full mb-4">
-                                    <button
-                                        onClick={() => setTripType('domestic')}
-                                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'domestic' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        국내여행
-                                    </button>
-                                    <button
-                                        onClick={() => setTripType('international')}
-                                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'international' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        해외여행
-                                    </button>
-                                </div>
-                                <select 
-                                    value={selectedRegion}
-                                    onChange={(e) => setSelectedRegion(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 text-slate-950 text-base rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 block p-4 font-bold outline-none transition-all"
-                                >
-                                    {(tripType === 'domestic' ? DOMESTIC_REGIONS : INTERNATIONAL_REGIONS).map(region => (
-                                        <option key={region} value={region}>{region}</option>
-                                    ))}
-                                </select>
-                            </section>
-
-                            <section className="space-y-4">
-                                <label className="flex flex-col gap-2">
-                                    <span className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                                        <CalendarDays className="w-4 h-4 text-indigo-600" /> 여행 일정 (최대 14일)
-                                    </span>
-                                </label>
-                                <div className="flex items-center gap-4">
-                                    <input 
-                                        type="range" 
-                                        min="1" 
-                                        max="14" 
-                                        value={duration} 
-                                        onChange={(e) => setDuration(Number(e.target.value))}
-                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                    />
-                                    <span className="shrink-0 w-16 text-center font-black text-indigo-600 text-lg bg-indigo-50 py-2 rounded-xl">
-                                        {duration}일
-                                    </span>
-                                </div>
-                            </section>
-
-                            <section className="space-y-4">
-                                <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                                    <PenLine className="w-4 h-4 text-indigo-600" /> 추가 요청사항
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="예: 뚜벅이 여행입니다, 맛집 탐방을 좋아해요, 휴양 목적입니다 등"
-                                    value={requirements}
-                                    onChange={(e) => setRequirements(e.target.value)}
-                                    className="block p-4 w-full text-base text-slate-950 bg-slate-50 rounded-2xl border border-slate-200 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
-                                />
-                            </section>
-
-                            <div className="pt-6">
-                                <button 
-                                    onClick={handleAnalyzeClick} 
-                                    className="w-full sm:w-auto px-10 py-5 bg-slate-950 hover:bg-indigo-600 text-white rounded-full font-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all flex flex-col items-center justify-center gap-1 mx-auto"
-                                >
-                                    <span className="text-lg">운명 맞춤 여행지 분석하기</span>
-                                    <span className="text-[10px] text-slate-300 font-medium tracking-widest">{SERVICE_COSTS.TRIP} 크레딧 차감</span>
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div ref={reportRef} className="bg-white">
-                        {isLoading && !result ? (
-                            <div className="flex flex-col justify-center items-center h-80 animate-fade-in">
-                                <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6" />
-                                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">분석 중...</p>
-                            </div>
-                        ) : error ? (
-                            <div className="text-center py-20 bg-red-50 rounded-[32px] animate-fade-in">
-                                <p className="text-red-500 font-black mb-4">{error}</p>
-                                <button onClick={() => setIsFormSubmitted(false)} className="px-8 py-3 bg-slate-950 text-white rounded-full">다시 입력 설정하기</button>
-                            </div>
-                        ) : result ? (
-                            <div className="space-y-12 animate-fade-up py-4">
-                                <section className="report-section">
-                                    <h4 className="report-section-title"><MapPin className="w-5 h-5 text-indigo-600" /> 추천 여행지 BEST 3</h4>
-                                    <div className="grid gap-6">
-                                        {result?.places?.map((place: any, i: number) => (
-                                            <div key={i} className="report-card">
-                                                <h5 className="text-xl font-black text-slate-950 mb-2">0{i+1}. {place.name}</h5>
-                                                <div className="space-y-3 text-sm leading-relaxed text-slate-600">
-                                                    <p><strong className="text-slate-950">선정 이유:</strong> {stripMarkdown(place.reason)}</p>
-                                                    <p><strong className="text-slate-950">추천 활동:</strong> {stripMarkdown(place.activity)}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-
-                                <section className="report-section">
-                                    <h4 className="report-section-title"><Calendar className="w-5 h-5 text-indigo-600" /> 추천 일정 가이드</h4>
-                                    <div className="space-y-4">
-                                        {result?.itinerary?.map((day: any, i: number) => (
-                                            <div key={i} className="report-card bg-slate-50">
-                                                <h5 className="font-bold text-indigo-600 mb-3">{day.day}</h5>
-                                                <ul className="space-y-2">
-                                                    {day.schedule?.map((item: string, j: number) => (
-                                                        <li key={j} className="text-sm text-slate-600">• {stripMarkdown(item)}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-
-                                <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
-                                    <button onClick={handleDownloadPDF} className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3">
-                                        <Download className="w-5 h-5" /> PDF 결과서 다운로드
-                                    </button>
-                                </div>
-                            </div>
-                        ) : null}
-                        </div>
-                    )}
-                </div>
+                <TripModalContent 
+                    key={resetKey}
+                    onReset={() => setResetKey(prev => prev + 1)}
+                    onUseCredit={props.onUseCredit}
+                    credits={props.credits}
+                    session={props.session}
+                    onNavigate={props.onNavigate}
+                    onClose={props.onClose}
+                />
             </div>
         </div>
     );
