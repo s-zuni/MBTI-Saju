@@ -70,10 +70,10 @@ const FortunePage: React.FC<FortunePageProps> = ({
                             {/* Tags Bagde */}
                             <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
                                 {cat.isPopular && (
-                                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-md uppercase tracking-tighter">HIT</span>
+                                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-md uppercase tracking-tighter">HIT</span>
                                 )}
                                 {cat.isNew && (
-                                    <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[8px] font-black rounded-md uppercase tracking-tighter">NEW</span>
+                                    <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[10px] font-black rounded-md uppercase tracking-tighter">NEW</span>
                                 )}
                             </div>
 

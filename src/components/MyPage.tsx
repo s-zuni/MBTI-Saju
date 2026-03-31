@@ -347,12 +347,12 @@ const MyPage: React.FC<MyPageProps> = ({
   const formattedGender = profile.gender === 'male' ? '남성' : '여성';
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50/50 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-xl rounded-2xl p-8 mb-10 border border-slate-100 relative">
           <div className='flex justify-between items-start mb-3'>
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-black text-slate-900">마이페이지</h1>
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900">마이페이지</h1>
             </div>
             <div className='flex gap-2 min-w-fit'>
               <button onClick={() => setIsEditModalOpen(true)} className="btn-secondary px-3 py-2 text-xs md:text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold">정보 수정</button>
@@ -469,7 +469,7 @@ const MyPage: React.FC<MyPageProps> = ({
                   {analysis.saju && analysis.saju.elements && (
                     <div className="mt-4">
                       <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">오행 분포 (Five Elements)</h4>
-                      <div className="grid grid-cols-5 gap-2 text-center">
+                      <div className="grid grid-cols-3 md:grid-cols-5 gap-2 text-center">
                         {[
                           { label: '목(木)', count: analysis.saju.elements.wood, color: 'bg-green-100 text-green-700 border-green-200' },
                           { label: '화(火)', count: analysis.saju.elements.fire, color: 'bg-red-100 text-red-700 border-red-200' },

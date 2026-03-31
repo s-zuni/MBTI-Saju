@@ -7,7 +7,8 @@ import {
     X,
     Loader2,
     Coins,
-    CreditCard
+    CreditCard,
+    Trash2
 } from 'lucide-react';
 
 interface PricingPlan {
@@ -144,6 +145,48 @@ const PlanManagement: React.FC = () => {
         }
     };
 
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`'${name}' 요금제를 정말 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const session = await ensureValidSession();
+            if (!session) {
+                alert('세션이 만료되었습니다.');
+                return;
+            }
+
+            // 관리자 권한 확인
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile?.role !== 'admin') {
+                alert('관리자 권한이 필요합니다.');
+                return;
+            }
+
+            const { error } = await supabase
+                .from('pricing_plans')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            
+            alert('요금제가 삭제되었습니다.');
+            fetchPlans();
+        } catch (err: any) {
+            console.error('Delete failed:', err);
+            alert(`삭제 실패: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-end">
@@ -191,8 +234,16 @@ const PlanManagement: React.FC = () => {
                                         setEditingPlan(plan);
                                     }}
                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                    title="수정"
                                 >
                                     <Edit3 size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(plan.id, plan.name)}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                    title="삭제"
+                                >
+                                    <Trash2 size={18} />
                                 </button>
                             </div>
                         </div>

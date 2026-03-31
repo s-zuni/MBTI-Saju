@@ -1,11 +1,11 @@
--- [중요] 기존 가입자의 크레딧은 절대로 수정하지 않으며, 신규 가입자에게만 0 크레딧을 부여하도록 설정합니다.
+-- [중요] 기존 가입자의 크레딧은 절대로 수정하지 않으며, 신규 가입자에게만 10 크레딧을 부여하도록 설정합니다.
 
--- 1. profiles 테이블의 credits 컬럼 기본값을 0으로 설정
+-- 1. profiles 테이블의 credits 컬럼 기본값을 10으로 설정
 ALTER TABLE public.profiles 
-ALTER COLUMN credits SET DEFAULT 0;
+ALTER COLUMN credits SET DEFAULT 10;
 
 -- 2. 회원가입 시 자동으로 프로필을 생성하는 트리거 함수(handle_new_user) 수정
--- 기존에 20이나 25로 설정되어 있던 부분을 0으로 강제합니다.
+-- 기존에 0이나 20으로 설정되어 있던 부분을 10으로 강제합니다.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -18,7 +18,7 @@ BEGIN
     new.raw_user_meta_data->>'mbti',
     new.raw_user_meta_data->>'birth_date',
     new.raw_user_meta_data->>'birth_time',
-    0 -- 신규 가입자 초기 크레딧을 0으로 설정
+    10 -- 신규 가입자 초기 크레딧을 10으로 설정
   );
   RETURN new;
 END;

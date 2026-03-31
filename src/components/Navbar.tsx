@@ -115,7 +115,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
             커뮤니티
           </button>
-          <button onClick={() => navigate('/pricing')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={() => openModal('creditPurchase')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
             요금제
           </button>
         </div>
@@ -180,7 +180,7 @@ const Navbar: React.FC<NavbarProps> = () => {
               <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운명 심층 상담</button>
               <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">타로</button>
               <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
-              <button onClick={() => { navigate('/pricing'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
+              <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
             </div>
 
             <div className="border-t border-slate-200 pt-4">

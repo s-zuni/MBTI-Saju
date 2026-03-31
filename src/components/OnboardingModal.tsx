@@ -55,7 +55,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCh
                             사주, MBTI 분석부터 신비타로까지<br />
                             당신만을 위한 맞춤 운세 브리핑이 제공됩니다.
                         </p>
-                        <p className="text-slate-500 text-xs mt-2 font-semibold">필요한 기능은 크레딧을 충전해 이용해보세요.</p>
+                        <p className="text-slate-500 text-xs mt-2 font-semibold">
+                            지금 가입 축하 <span className="text-indigo-600 font-bold">10 크레딧</span>이 지급되었습니다!<br />
+                            다양한 운세 서비스를 바로 이용해 보세요.
+                        </p>
                     </div>
 
                     <div className="w-full space-y-3">

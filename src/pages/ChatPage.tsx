@@ -386,7 +386,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                                 }}
                                 placeholder="운세, 사주, 고민거리를 물어보세요..."
                                 disabled={isTyping}
-                                className="w-full pl-6 pr-14 py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
+                                className="w-full pl-4 md:pl-6 pr-12 md:pr-14 py-3 md:py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
                             />
                             <button
                                 type="submit"
