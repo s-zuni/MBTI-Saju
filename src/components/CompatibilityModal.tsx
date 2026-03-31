@@ -17,6 +17,21 @@ interface CompatibilityModalProps {
     session: any;
 }
 
+const BIRTH_TIME_SLOTS = [
+    { value: 'unknown', label: '모름' },
+    { value: '01:00-03:00', label: '축시 (01:00~03:00)' },
+    { value: '03:00-05:00', label: '인시 (03:00~05:00)' },
+    { value: '05:00-07:00', label: '묘시 (05:00~07:00)' },
+    { value: '07:00-09:00', label: '진시 (07:00~09:00)' },
+    { value: '09:00-11:00', label: '사시 (09:00~11:00)' },
+    { value: '11:00-13:00', label: '오시 (11:00~13:00)' },
+    { value: '13:00-15:00', label: '미시 (13:00~15:00)' },
+    { value: '15:00-17:00', label: '신시 (15:00~17:00)' },
+    { value: '17:00-19:00', label: '유시 (17:00~19:00)' },
+    { value: '19:00-21:00', label: '술시 (19:00~21:00)' },
+    { value: '21:00-23:00', label: '해시 (21:00~23:00)' },
+];
+
 interface CompatibilityContentProps {
     onUseCredit?: (() => Promise<boolean>) | undefined;
     credits?: number | undefined;
@@ -107,9 +122,20 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
                             <input type="text" value={targetMbti} onChange={(e) => setTargetMbti(e.target.value.toUpperCase())} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" placeholder="예: ENFP" maxLength={4} />
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 생년월일</label>
-                        <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 생년월일</label>
+                            <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 태어난 시간</label>
+                            <select value={targetBirthTime} onChange={(e) => setTargetBirthTime(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold appearance-none">
+                                <option value="">시간 모름</option>
+                                {BIRTH_TIME_SLOTS.map((slot) => (
+                                    <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" className="w-full py-5 bg-slate-950 text-white rounded-full font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">궁합 분석 시작하기({SERVICE_COSTS.COMPATIBILITY} 크레딧)</button>
                 </form>
