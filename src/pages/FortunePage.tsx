@@ -47,77 +47,78 @@ const FortunePage: React.FC<FortunePageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 pt-14 md:pt-20 animate-fade-in">
-
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6 py-6 md:py-0">
-                <div className="mb-8 hidden md:block">
-                    <h1 className="text-2xl font-bold text-slate-900">운세 보기</h1>
-                    <p className="text-slate-500 text-sm mt-1">다양한 운세와 분석을 확인해보세요</p>
+        <div className="min-h-screen bg-slate-50 pb-32 pt-20 animate-fade-in">
+            <div className="max-w-7xl mx-auto px-6">
+                {/* Header Section */}
+                <div className="mb-12 text-center md:text-left">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">운명 서고</h1>
+                    <p className="text-slate-500 font-medium text-sm md:text-base">사주와 타로로 엿보는 당신의 무한한 미래</p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {subCategories.map((cat, i) => (
                         <button
                             key={i}
                             onClick={() => handleSubCategoryClick(cat)}
-                            className={`
-                                relative p-4 rounded-3xl transition-all duration-300 group
-                                bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1
-                                flex flex-col items-center gap-3 overflow-hidden text-center
-                            `}
+                            className="celestial-card group relative flex flex-col items-start gap-4 text-left"
                         >
-                            {/* Tags Bagde */}
-                            <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                            {/* Status Badges */}
+                            <div className="absolute top-6 right-6 flex flex-col gap-2 z-10">
                                 {cat.isPopular && (
-                                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-md uppercase tracking-tighter">HIT</span>
+                                    <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-rose-100">HOT</span>
                                 )}
                                 {cat.isNew && (
-                                    <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[10px] font-black rounded-md uppercase tracking-tighter">NEW</span>
+                                    <span className="px-2 py-0.5 bg-indigo-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-indigo-100">NEW</span>
                                 )}
                             </div>
 
-                            <div className={`
-                                w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center 
-                                flex-shrink-0 transition-transform group-hover:scale-105
-                            `}>
+                            {/* Icon Container */}
+                            <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center p-2 mb-2 group-hover:rotate-6 transition-transform duration-500">
                                 <img
                                     src={cat.img}
                                     alt={cat.label}
-                                    className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm"
+                                    className="w-full h-full object-contain drop-shadow-xl"
                                 />
                             </div>
-                            <div className="flex-1 min-w-0 w-full px-1">
-                                <h4 className="font-bold text-slate-900 text-sm md:text-base group-hover:text-indigo-600 transition-colors mb-0.5 truncate">
+
+                            <div className="w-full">
+                                <h4 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors mb-1">
                                     {cat.label}
                                 </h4>
-                                <p className="text-[10px] md:text-xs text-slate-400 font-medium mb-2 truncate">
+                                <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
                                     {cat.sub}
                                 </p>
                                 
-                                <div className="flex flex-col items-center gap-1.5">
-                                    {/* User Count */}
-                                    <div className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
-                                        {cat.userCount} 이용 
+                                <div className="flex justify-between items-center mt-auto">
+                                    <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                        {cat.userCount} USED
                                     </div>
                                     
-                                    {/* Cost */}
-                                    <span className={`
-                                        inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black
+                                    <div className={`
+                                        flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest
                                         ${cat.cost === 0
-                                            ? 'bg-green-50 text-green-600'
+                                            ? 'bg-emerald-50 text-emerald-600'
                                             : 'bg-indigo-50 text-indigo-600'
-                                        }
+                                        } transition-all group-hover:px-4
                                     `}>
                                         {cat.cost === 0 ? (
                                             'FREE'
                                         ) : (
                                             <>
-                                                <Coins className="w-2.5 h-2.5" />
+                                                <Coins className="w-3 h-3" />
                                                 {cat.cost}
                                             </>
                                         )}
-                                    </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Indicator */}
+                            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
+                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                                    </svg>
                                 </div>
                             </div>
                         </button>

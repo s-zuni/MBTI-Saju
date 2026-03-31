@@ -183,49 +183,44 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 pt-20">
-            <div className="max-w-2xl mx-auto px-4">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-6">커뮤니티</h1>
+        <div className="min-h-screen bg-slate-50 pb-32 pt-24">
+            <div className="max-w-3xl mx-auto px-6">
+                <div className="mb-10 text-center">
+                    <h1 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">커뮤니티</h1>
+                    <p className="text-slate-500 font-medium">사주와 MBTI로 소통하는 신비로운 공간</p>
                     
                     {fetchError && (
-                        <div className="mb-6 animate-fade-in">
-                            <p className="text-sm font-bold text-rose-600 flex items-center gap-2">
+                        <div className="mt-6 p-4 bg-rose-50 rounded-2xl border border-rose-100 animate-fade-in max-w-md mx-auto">
+                            <p className="text-sm font-bold text-rose-600 flex items-center justify-center gap-2">
                                 <AlertTriangle className="w-4 h-4" />
-                                통신 에러 발생: {fetchError}
+                                {fetchError}
                             </p>
                         </div>
                     )}
 
-                    {/* Search & Write */}
-                    <div className="flex gap-3 mb-6">
-                        <form onSubmit={handleSearch} className="flex-1 relative">
+                    {/* Search & Write (Desktop) */}
+                    <div className="flex gap-4 mb-8">
+                        <form onSubmit={handleSearch} className="flex-1 relative group">
                             <input
                                 type="text"
-                                placeholder="관심있는 내용을 검색해보세요"
-                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                                placeholder="무엇이 궁금하신가요?"
+                                className="input-field pl-14"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                         </form>
-                        <button
-                            onClick={handleWriteClick}
-                            className="btn-primary px-6 py-3 font-bold shadow-lg shadow-indigo-200 flex items-center gap-2 whitespace-nowrap"
-                        >
-                            <PenSquare className="w-5 h-5" /> 글쓰기
-                        </button>
                     </div>
 
                     {/* Tags */}
-                    <div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex gap-3 items-center overflow-x-auto pb-4 scrollbar-hide">
                         {tags.map(tag => (
                             <button
                                 key={tag}
                                 onClick={() => handleTagChange(tag)}
-                                className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeTag === tag
-                                    ? 'bg-slate-900 text-white shadow-md'
-                                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeTag === tag
+                                    ? 'bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-100'
+                                    : 'bg-white text-slate-500 border border-slate-100 hover:border-indigo-200 hover:text-indigo-600'
                                     }`}
                             >
                                 {tag}
@@ -237,12 +232,12 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                                 setIsPopularOnly(!isPopularOnly);
                                 setCurrentPage(1);
                             }}
-                            className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${isPopularOnly
-                                ? 'bg-rose-500 text-white shadow-md'
+                            className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${isPopularOnly
+                                ? 'bg-rose-500 text-white shadow-xl shadow-rose-100 ring-4 ring-rose-50'
                                 : 'bg-white text-rose-500 border border-rose-100 hover:bg-rose-50'
                                 }`}
                         >
-                            🔥 실시간 인기
+                            <span>🔥</span> 실시간 인기
                         </button>
                     </div>
                 </div>
@@ -258,44 +253,51 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                             <div
                                 key={post.id}
                                 onClick={() => setSelectedPost(post)}
-                                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group"
+                                className="celestial-card cursor-pointer group"
                             >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-2">
-                                        {post.is_announcement && (
-                                            <span className="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-xs font-black tracking-tighter">공지</span>
-                                        )}
-                                        <span className={`${post.is_announcement ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'} px-2.5 py-1 rounded-lg text-xs font-bold`}>
-                                            {post.tag || '일반'}
-                                        </span>
-                                        <span className="text-xs text-slate-400 font-medium">
-                                            {new Date(formatSafariDate(post.created_at)).toLocaleDateString()}
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase ${
+                                            post.is_announcement 
+                                            ? 'bg-slate-900 text-white' 
+                                            : post.tag === '사주' ? 'bg-amber-100 text-amber-700'
+                                            : post.tag === 'MBTI' ? 'bg-indigo-100 text-indigo-700'
+                                            : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            {post.is_announcement ? 'NOTICE' : (post.tag || 'GENERAL')}
+                                        </div>
+                                        <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                                            {Math.floor((new Date().getTime() - new Date(formatSafariDate(post.created_at)).getTime()) / (1000 * 60 * 60 * 24)) < 1 ? 'TODAY' : new Date(formatSafariDate(post.created_at)).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
 
-                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-1">{post.title}</h3>
-                                <p className="text-slate-500 text-sm line-clamp-2 mb-4 leading-relaxed">{post.content}</p>
+                                <h3 className="text-xl font-extrabold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-1 decoration-indigo-500/30 underline-offset-8 group-hover:underline">
+                                    {post.title}
+                                </h3>
+                                <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed font-medium">
+                                    {post.content}
+                                </p>
 
-                                <div className="flex justify-between items-center pt-4 border-t border-slate-50">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-                                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs">
-                                            {post.author_name?.[0] || '익'}
+                                <div className="flex justify-between items-center pt-5 border-t border-slate-50">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-600 shadow-sm border border-white">
+                                            {post.author_name?.[0] || 'A'}
                                         </div>
-                                        {post.author_name || '익명'}
+                                        <span className="text-xs font-bold text-slate-700">{post.author_name || '익명'}</span>
                                     </div>
 
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-5">
                                         <button
                                             onClick={(e) => handleLike(e, post.id, post.likes)}
-                                            className="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-colors group/like"
+                                            className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-all group/like active:scale-90"
                                         >
                                             <ThumbsUp className="w-4 h-4 group-hover/like:fill-rose-500 group-hover/like:text-rose-500 transition-colors" />
-                                            <span className="text-sm font-medium">{post.likes || 0}</span>
+                                            <span className="text-xs font-black">{post.likes || 0}</span>
                                         </button>
-                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                        <div className="flex items-center gap-2 text-slate-400">
                                             <MessageSquare className="w-4 h-4" />
-                                            <span className="text-sm font-medium">댓글</span>
+                                            <span className="text-xs font-black">CHAT</span>
                                         </div>
                                     </div>
                                 </div>
@@ -338,6 +340,14 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                     </div>
                 )}
             </div>
+
+            {/* Mobile Floating Write Button */}
+            <button
+                onClick={handleWriteClick}
+                className="md:hidden fixed bottom-32 right-6 w-14 h-14 bg-slate-900 text-white rounded-2xl shadow-2xl shadow-slate-300 flex items-center justify-center transform active:scale-90 transition-all z-40 border border-slate-700/50"
+            >
+                <PenSquare className="w-6 h-6" />
+            </button>
 
             {/* Write Modal */}
             {isWriteModalOpen && (

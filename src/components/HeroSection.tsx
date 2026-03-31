@@ -58,7 +58,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <span className="relative flex items-center gap-2">
-              무료 분석 시작하기
+              지금 시작하기
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>

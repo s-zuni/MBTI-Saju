@@ -44,8 +44,8 @@ const BottomNav: React.FC<BottomNavProps> = () => {
     ];
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 pb-safe pt-2 z-50 rounded-t-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-end h-16 pb-2">
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50">
+            <div className="glass-card rounded-[32px] px-2 py-2 flex justify-between items-center shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-white/40">
                 {navItems.map((item, index) => {
                     const isActive = item.path === location.pathname;
 
@@ -54,17 +54,16 @@ const BottomNav: React.FC<BottomNavProps> = () => {
                             <button
                                 key={index}
                                 onClick={item.onClick}
-                                className="relative -top-5 flex flex-col items-center justify-center"
+                                className="relative flex flex-col items-center justify-center -mt-8"
                             >
-                                <div className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center transform active:scale-95 transition-all text-white">
+                                <div className="w-14 h-14 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-200 flex items-center justify-center transform active:scale-95 transition-all text-white border-4 border-white">
                                     <MessagesSquare className="w-6 h-6" />
                                     {/* HIT Badge */}
-                                    <div className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black px-1 py-0.5 rounded-sm shadow-sm scale-110">
+                                    <div className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
                                         HIT
                                     </div>
                                 </div>
-                                <span className="text-xs font-bold text-indigo-900 mt-1">{item.label}</span>
-                                <span className="text-[8px] text-indigo-400 font-bold -mt-0.5">4,100+</span>
+                                <span className="text-[10px] font-bold text-indigo-900 mt-2">{item.label}</span>
                             </button>
                         );
                     }
@@ -73,10 +72,11 @@ const BottomNav: React.FC<BottomNavProps> = () => {
                         <button
                             key={index}
                             onClick={item.onClick}
-                            className={`flex flex-col items-center justify-center w-14 gap-1 ${isActive ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'} active:scale-90 transition-transform duration-200`}
+                            className={`flex flex-col items-center justify-center py-2 px-3 rounded-2xl gap-1 transition-all duration-300 ${isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'} active:scale-90`}
                         >
-                            <item.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} />
-                            <span className="text-[10px] font-medium">{item.label}</span>
+                            <item.icon className={`w-5 h-5 ${isActive ? 'fill-indigo-600/10' : ''}`} />
+                            <span className="text-[10px] font-bold">{item.label}</span>
+                            {isActive && <div className="w-1 h-1 bg-indigo-600 rounded-full"></div>}
                         </button>
                     );
                 })}
