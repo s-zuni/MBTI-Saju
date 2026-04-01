@@ -16,6 +16,7 @@ const schemas: Record<string, any> = {
             monthBranchAnalysis: z.string()
         }),
         fiveElements: z.object({
+            summary: z.string().describe("오행의 조화와 특징에 대한 감각적인 요약 (2-3문장)"),
             elements: z.array(z.object({
                 element: z.string(),
                 count: z.number(),
@@ -72,6 +73,7 @@ const schemas: Record<string, any> = {
             monthBranchAnalysis: z.string()
         }),
         fiveElements: z.object({
+            summary: z.string().describe("오행의 조화와 특징에 대한 감각적인 요약 (2-3문장)"),
             elements: z.array(z.object({
                 element: z.string(),
                 count: z.number(),
@@ -227,7 +229,7 @@ export default async function handler(req: Request) {
                     prompt: userQuery,
                 });
             }
-            return new Response(JSON.stringify(result.object), { 
+            return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
                 status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             });

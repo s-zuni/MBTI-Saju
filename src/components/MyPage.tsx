@@ -54,6 +54,32 @@ interface Analysis {
   commonalities?: string;
 }
 
+const ELEMENT_STYLES: Record<string, string> = {
+  wood: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  fire: 'bg-rose-50 text-rose-700 border-rose-100',
+  earth: 'bg-amber-50 text-amber-700 border-amber-100',
+  metal: 'bg-slate-50 text-slate-700 border-slate-200',
+  water: 'bg-blue-50 text-blue-700 border-blue-100',
+  default: 'bg-slate-50 text-slate-400 border-slate-100'
+};
+
+const GAN_INFO: Record<string, { element: string; name: string }> = {
+  '甲': { element: 'wood', name: '갑목' }, '乙': { element: 'wood', name: '을목' },
+  '丙': { element: 'fire', name: '병화' }, '丁': { element: 'fire', name: '정화' },
+  '戊': { element: 'earth', name: '무토' }, '己': { element: 'earth', name: '기토' },
+  '庚': { element: 'metal', name: '경금' }, '辛': { element: 'metal', name: '신금' },
+  '壬': { element: 'water', name: '임수' }, '癸': { element: 'water', name: '계수' },
+};
+
+const ZHI_INFO: Record<string, { element: string; name: string }> = {
+  '子': { element: 'water', name: '자수' }, '丑': { element: 'earth', name: '축토' },
+  '寅': { element: 'wood', name: '인목' }, '卯': { element: 'wood', name: '묘목' },
+  '辰': { element: 'earth', name: '진토' }, '巳': { element: 'fire', name: '사화' },
+  '午': { element: 'fire', name: '오화' }, '未': { element: 'earth', name: '미토' },
+  '申': { element: 'metal', name: '신금' }, '酉': { element: 'metal', name: '유금' },
+  '戌': { element: 'earth', name: '술토' }, '亥': { element: 'water', name: '해수' },
+};
+
 interface MyPageProps {
   onOpenMbtiSaju: () => void;
   onOpenNaming: () => void;
@@ -66,6 +92,51 @@ interface MyPageProps {
   getCost: (serviceType: any) => number;
   session: any;
 }
+
+const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
+  if (!saju || !saju.ganZhi) return null;
+
+  const pillars = [
+    { label: '시주', key: 'hour' },
+    { label: '일주', key: 'day' },
+    { label: '월주', key: 'month' },
+    { label: '년주', key: 'year' },
+  ];
+
+  const renderCell = (char: string, type: 'gan' | 'zhi') => {
+    const info = type === 'gan' ? GAN_INFO[char] : ZHI_INFO[char];
+    const style = info ? ELEMENT_STYLES[info.element] : ELEMENT_STYLES.default;
+    
+    return (
+      <div className={`flex flex-col items-center justify-center p-2 md:p-3 rounded-xl border-2 transition-all hover:scale-105 ${style}`}>
+        <span className="text-xl md:text-3xl font-black mb-1">{char}</span>
+        <span className="text-[10px] md:text-xs font-bold opacity-80">{info?.name || '모름'}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid grid-cols-4 gap-2 md:gap-4 mb-8">
+      {pillars.map((p) => {
+        const pillarStr = saju.ganZhi[p.key] || '??';
+        const gan = pillarStr[0] || '?';
+        const zhi = pillarStr[1] || '?';
+        const isDayMaster = p.key === 'day';
+
+        return (
+          <div key={p.key} className="space-y-2">
+            <div className={`text-center py-1 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-wider ${isDayMaster ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500'}`}>
+              {p.label}
+              {isDayMaster && ' (나)'}
+            </div>
+            {renderCell(gan, 'gan')}
+            {renderCell(zhi, 'zhi')}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const MyPage: React.FC<MyPageProps> = ({ 
   onOpenMbtiSaju, 
@@ -435,10 +506,13 @@ const MyPage: React.FC<MyPageProps> = ({
             {/* Saju Type Section */}
             {(analysis.nature || (analysis as any).typeDescription) && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/50 p-8">
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-8">
                   <Sparkles className="w-6 h-6 text-indigo-600" />
                   <h2 className="text-2xl font-bold text-indigo-900">운명 분석 리포트</h2>
                 </div>
+
+                {/* Manseok Saju Grid */}
+                {analysis.saju && <SajuGrid saju={analysis.saju} />}
 
                 <div className="space-y-6">
                   {/* Day Master Analysis */}
