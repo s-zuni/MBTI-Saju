@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamObject } from 'ai';
+import { streamObject, generateObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
@@ -184,27 +184,54 @@ export default async function handler(req: Request) {
     });
 
     try {
-        let result;
-        try {
-            // Primary: 3.1 Flash Lite
-            result = await streamObject({
-                model: google('gemini-3.1-flash-lite-preview'),
-                schema: currentSchema,
-                system: systemPrompt,
-                prompt: userQuery,
-            });
-        } catch (error) {
-            console.warn(`Primary model failed for part ${part}, falling back to gemini-2.5-flash:`, error);
-            // Fallback: 2.5 Flash
-            result = await streamObject({
-                model: google('gemini-2.5-flash'),
-                schema: currentSchema,
-                system: systemPrompt,
-                prompt: userQuery,
+        const geminiModel = google('gemini-3.1-flash-lite-preview');
+        const fallbackModel = google('gemini-2.5-flash');
+
+        if (part === 'full') {
+            let result;
+            try {
+                // Primary: 3.1 Flash Lite
+                result = await streamObject({
+                    model: geminiModel,
+                    schema: currentSchema,
+                    system: systemPrompt,
+                    prompt: userQuery,
+                });
+            } catch (error) {
+                console.warn(`Primary model failed for streaming part ${part}, falling back:`, error);
+                // Fallback: 2.5 Flash
+                result = await streamObject({
+                    model: fallbackModel,
+                    schema: currentSchema,
+                    system: systemPrompt,
+                    prompt: userQuery,
+                });
+            }
+            return result.toTextStreamResponse({ headers: corsHeaders });
+        } else {
+            // Non-streaming for core, fortune, strategy
+            let result;
+            try {
+                result = await generateObject({
+                    model: geminiModel,
+                    schema: currentSchema,
+                    system: systemPrompt,
+                    prompt: userQuery,
+                });
+            } catch (error) {
+                console.warn(`Primary model failed for part ${part}, falling back:`, error);
+                result = await generateObject({
+                    model: fallbackModel,
+                    schema: currentSchema,
+                    system: systemPrompt,
+                    prompt: userQuery,
+                });
+            }
+            return new Response(JSON.stringify(result.object), { 
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             });
         }
-
-        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 

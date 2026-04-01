@@ -235,7 +235,10 @@ const MyPage: React.FC<MyPageProps> = ({
         throw new Error(`분석 실패: ${errData.error || errData.message || res.statusText}`);
       }
 
-      const coreData = await res.json();
+      const coreData = await res.json().catch((err) => {
+        console.error('JSON parsing error:', err);
+        throw new Error('분석 결과를 읽어오는 중 오류가 발생했습니다. (데이터 형식이 올바르지 않습니다.)');
+      });
       const initialAnalysisData = { ...coreData };
       setAnalysis(initialAnalysisData);
 
