@@ -606,24 +606,26 @@ const MyPage: React.FC<MyPageProps> = ({
                         <p className="text-sm text-indigo-800 leading-relaxed font-medium">
                           {analysis.saju.dayMaster.description}
                         </p>
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                           <div className="bg-white/50 p-2 rounded-lg text-center">
-                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">12운성</span>
-                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.twelveStages}</span>
-                           </div>
-                           <div className="bg-white/50 p-2 rounded-lg text-center">
-                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">12신살</span>
-                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.twelveSpirits}</span>
-                           </div>
-                           <div className="bg-white/50 p-2 rounded-lg text-center">
-                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">지지십성</span>
-                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.zhiShiShen}</span>
-                           </div>
-                           <div className="bg-white/50 p-2 rounded-lg text-center">
-                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">지장간</span>
-                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.hiddenStems.join(', ')}</span>
-                           </div>
-                        </div>
+                        {analysis.saju.pillars && (
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                             <div className="bg-white/50 p-2 rounded-lg text-center">
+                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">12운성</span>
+                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.twelveStages || '-'}</span>
+                             </div>
+                             <div className="bg-white/50 p-2 rounded-lg text-center">
+                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">12신살</span>
+                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.twelveSpirits || '-'}</span>
+                             </div>
+                             <div className="bg-white/50 p-2 rounded-lg text-center">
+                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">지지십성</span>
+                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.zhiShiShen || '-'}</span>
+                             </div>
+                             <div className="bg-white/50 p-2 rounded-lg text-center">
+                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">지장간</span>
+                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.hiddenStems?.join(', ') || '-'}</span>
+                             </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
