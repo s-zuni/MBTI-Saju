@@ -80,6 +80,49 @@ const ZHI_INFO: Record<string, { element: string; name: string }> = {
   '戌': { element: 'earth', name: '술토' }, '亥': { element: 'water', name: '해수' },
 };
 
+const SHISHEN_MAP: Record<string, string> = {
+  '比肩': '비견', '劫財': '겁재', '食神': '식신', '傷官': '상관',
+  '偏財': '편재', '正財': '정재', '偏官': '편관', '七殺': '편관',
+  '正官': '정관', '偏印': '편인', '正印': '정인'
+};
+
+const SHISHEN_COLORS: Record<string, string> = {
+  '비견': 'text-rose-600 bg-rose-50',
+  '겁재': 'text-rose-500 bg-rose-50/50',
+  '식신': 'text-orange-600 bg-orange-50',
+  '상관': 'text-orange-500 bg-orange-50/50',
+  '편재': 'text-amber-600 bg-amber-50',
+  '정재': 'text-amber-500 bg-amber-50/50',
+  '편관': 'text-emerald-700 bg-emerald-50',
+  '정관': 'text-emerald-600 bg-emerald-50/50',
+  '편인': 'text-indigo-600 bg-indigo-50',
+  '정인': 'text-indigo-500 bg-indigo-50/50',
+  'default': 'text-slate-500 bg-slate-50'
+};
+
+const translateShiShen = (s: string) => {
+  if (!s || s === '-') return '-';
+  // Handle concatenated strings like "偏印食神比肩"
+  let result = s;
+  Object.entries(SHISHEN_MAP).forEach(([zh, ko]) => {
+    result = result.replace(new RegExp(zh, 'g'), ko + ' ');
+  });
+  return result.trim().replace(/\s+/g, ', ');
+};
+
+const getShiShenStyle = (s: string) => {
+  const ko = translateShiShen(s).split(',')[0]; // Use the first one for color color if multiple
+  return SHISHEN_COLORS[ko || ''] || SHISHEN_COLORS.default;
+};
+
+const formatHiddenStems = (stems: string[]) => {
+  if (!stems || stems.length === 0) return '-';
+  return stems.map(s => {
+    const info = GAN_INFO[s];
+    return info ? info.name.substring(0, 1) : s;
+  }).join(', ');
+};
+
 interface MyPageProps {
   onOpenMbtiSaju: () => void;
   onOpenNaming: () => void;
@@ -149,18 +192,25 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       {/* 십성 (천간) Row */}
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
-        {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-600">
-            {p.key === 'day' ? <span className="text-rose-500 font-black">비견</span> : saju.pillars[p.key].ganShiShen}
-          </div>
-        ))}
+        {pillars.map((p) => {
+          const raw = saju.pillars[p.key].ganShiShen;
+          const ko = p.key === 'day' ? '비견' : translateShiShen(raw);
+          const style = getShiShenStyle(ko);
+          return (
+            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+               <span className={`px-1.5 py-0.5 rounded text-[10px] md:text-xs font-black ${style}`}>
+                 {ko}
+               </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* 지지 Row */}
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지지</div>
         {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center">
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/30 shadow-inner' : ''}`}>
             {renderCell(saju.pillars[p.key].zhi, 'zhi')}
           </div>
         ))}
@@ -169,19 +219,26 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       {/* 십성 (지지) Row */}
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
-        {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-600">
-            {saju.pillars[p.key].zhiShiShen}
-          </div>
-        ))}
+        {pillars.map((p) => {
+          const raw = saju.pillars[p.key].zhiShiShen;
+          const ko = translateShiShen(raw);
+          const style = getShiShenStyle(ko);
+          return (
+            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+               <span className={`px-1.5 py-0.5 rounded text-[9px] md:text-[11px] font-bold ${style}`}>
+                 {ko}
+               </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* 지장간 Row */}
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지장간</div>
         {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter">
-            {saju.pillars[p.key].hiddenStems?.join('') || '-'}
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter ${p.key === 'day' ? 'bg-indigo-50/10' : ''}`}>
+            {formatHiddenStems(saju.pillars[p.key].hiddenStems)}
           </div>
         ))}
       </div>
@@ -190,7 +247,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12운성</div>
         {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-indigo-600/80">
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-indigo-600/80 ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
             {saju.pillars[p.key].twelveStages}
           </div>
         ))}
@@ -200,7 +257,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12신살</div>
         {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500">
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
             {saju.pillars[p.key].twelveSpirits}
           </div>
         ))}
@@ -608,21 +665,21 @@ const MyPage: React.FC<MyPageProps> = ({
                         </p>
                         {analysis.saju.pillars && (
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                             <div className="bg-white/50 p-2 rounded-lg text-center">
-                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">12운성</span>
-                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.twelveStages || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-indigo-50/30 p-2.5 rounded-xl text-center border border-indigo-100/50 shadow-sm">
+                                <span className="block text-[9px] text-indigo-400 font-black uppercase tracking-tight mb-1">12운성</span>
+                                <span className="text-sm font-black text-indigo-700">{analysis.saju.pillars.day?.twelveStages || '-'}</span>
                              </div>
-                             <div className="bg-white/50 p-2 rounded-lg text-center">
-                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">12신살</span>
-                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.twelveSpirits || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-rose-50/30 p-2.5 rounded-xl text-center border border-rose-100/50 shadow-sm">
+                                <span className="block text-[9px] text-rose-400 font-black uppercase tracking-tight mb-1">12신살</span>
+                                <span className="text-sm font-black text-rose-700">{analysis.saju.pillars.day?.twelveSpirits || '-'}</span>
                              </div>
-                             <div className="bg-white/50 p-2 rounded-lg text-center">
-                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">지지십성</span>
-                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.zhiShiShen || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-amber-50/30 p-2.5 rounded-xl text-center border border-amber-100/50 shadow-sm">
+                                <span className="block text-[9px] text-amber-500 font-black uppercase tracking-tight mb-1">지지십성</span>
+                                <span className={`text-sm font-black ${getShiShenStyle(translateShiShen(analysis.saju.pillars.day?.zhiShiShen)).split(' ')[0]}`}>{translateShiShen(analysis.saju.pillars.day?.zhiShiShen) || '-'}</span>
                              </div>
-                             <div className="bg-white/50 p-2 rounded-lg text-center">
-                                <span className="block text-[10px] text-indigo-400 font-bold uppercase">지장간</span>
-                                <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day?.hiddenStems?.join(', ') || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-slate-50/50 p-2.5 rounded-xl text-center border border-slate-100/50 shadow-sm">
+                                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-tight mb-1">지장간</span>
+                                <span className="text-sm font-bold text-slate-700">{formatHiddenStems(analysis.saju.pillars.day?.hiddenStems)}</span>
                              </div>
                           </div>
                         )}
