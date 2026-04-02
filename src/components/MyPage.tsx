@@ -100,7 +100,7 @@ const SHISHEN_COLORS: Record<string, string> = {
   'default': 'text-slate-500 bg-slate-50'
 };
 
-const translateShiShen = (s: string) => {
+const translateShiShen = (s: string | undefined) => {
   if (!s || s === '-') return '-';
   // Handle concatenated strings like "偏印食神比肩"
   let result = s;
@@ -110,12 +110,13 @@ const translateShiShen = (s: string) => {
   return result.trim().replace(/\s+/g, ', ');
 };
 
-const getShiShenStyle = (s: string) => {
+const getShiShenStyle = (s: string | undefined): string => {
+  if (!s) return SHISHEN_COLORS.default as string;
   const ko = translateShiShen(s).split(',')[0]; // Use the first one for color color if multiple
-  return SHISHEN_COLORS[ko || ''] || SHISHEN_COLORS.default;
+  return (SHISHEN_COLORS[ko || ''] || SHISHEN_COLORS.default) as string;
 };
 
-const formatHiddenStems = (stems: string[]) => {
+const formatHiddenStems = (stems: string[] | undefined) => {
   if (!stems || stems.length === 0) return '-';
   return stems.map(s => {
     const info = GAN_INFO[s];
