@@ -105,7 +105,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
 
   const renderCell = (char: string, type: 'gan' | 'zhi', shishen: string = '') => {
     const isUnknown = char === '?' || char === '모름';
-    const info = type === 'gan' ? GAN_INFO[char] : ZHI_MAP[char];
+    const info = type === 'gan' ? GAN_INFO[char] : ZHI_INFO[char];
     const style = info ? ELEMENT_STYLES[info.element] : ELEMENT_STYLES.default;
     
     return (
