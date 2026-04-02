@@ -81,8 +81,8 @@ const ZHI_INFO: Record<string, { element: string; name: string }> = {
 };
 
 const SHISHEN_MAP: Record<string, string> = {
-  '比肩': '비견', '劫財': '겁재', '食神': '식신', '傷官': '상관',
-  '偏財': '편재', '正財': '정재', '偏官': '편관', '七殺': '편관',
+  '比肩': '비견', '劫財': '겁재', '劫财': '겁재', '食神': '식신', '傷官': '상관', '伤官': '상관',
+  '偏財': '편재', '偏财': '편재', '正財': '정재', '正财': '정재', '偏官': '편관', '七殺': '편관',
   '正官': '정관', '偏印': '편인', '正印': '정인'
 };
 
@@ -100,10 +100,13 @@ const SHISHEN_COLORS: Record<string, string> = {
   'default': 'text-slate-500 bg-slate-50'
 };
 
-const translateShiShen = (s: string | undefined) => {
+const translateShiShen = (s: any) => {
   if (!s || s === '-') return '-';
-  // Handle concatenated strings like "偏印食神比肩"
-  let result = s;
+  
+  // Handle array returned by lunar-javascript's get[..]ShiShenZhi()
+  let result = Array.isArray(s) ? s.join('') : String(s);
+  if (!result || result === '-') return '-';
+  
   Object.entries(SHISHEN_MAP).forEach(([zh, ko]) => {
     result = result.replace(new RegExp(zh, 'g'), ko + ' ');
   });
