@@ -94,46 +94,117 @@ interface MyPageProps {
 }
 
 const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
-  if (!saju || !saju.ganZhi) return null;
+  if (!saju || !saju.pillars) return null;
 
   const pillars = [
-    { label: '시주', key: 'hour' },
-    { label: '일주', key: 'day' },
-    { label: '월주', key: 'month' },
-    { label: '년주', key: 'year' },
+    { label: '생시', key: 'hour' },
+    { label: '생일', key: 'day' },
+    { label: '생월', key: 'month' },
+    { label: '생년', key: 'year' },
   ];
 
-  const renderCell = (char: string, type: 'gan' | 'zhi') => {
-    const info = type === 'gan' ? GAN_INFO[char] : ZHI_INFO[char];
+  const renderCell = (char: string, type: 'gan' | 'zhi', shishen: string = '') => {
+    const isUnknown = char === '?' || char === '모름';
+    const info = type === 'gan' ? GAN_INFO[char] : ZHI_MAP[char];
     const style = info ? ELEMENT_STYLES[info.element] : ELEMENT_STYLES.default;
     
     return (
-      <div className={`flex flex-col items-center justify-center p-2 md:p-3 rounded-xl border-2 transition-all hover:scale-105 ${style}`}>
-        <span className="text-xl md:text-3xl font-black mb-1">{char}</span>
-        <span className="text-[10px] md:text-xs font-bold opacity-80">{info?.name || '모름'}</span>
+      <div className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${style}`}>
+        <div className="flex items-center gap-1">
+          <span className="text-xl md:text-2xl font-black">{char}</span>
+          {!isUnknown && info && (
+             <span className="text-[8px] md:text-[10px] font-bold opacity-60">
+               {info.element === 'wood' ? '목' : 
+                info.element === 'fire' ? '화' : 
+                info.element === 'earth' ? '토' : 
+                info.element === 'metal' ? '금' : '수'}
+             </span>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="grid grid-cols-4 gap-2 md:gap-4 mb-8">
-      {pillars.map((p) => {
-        const pillarStr = saju.ganZhi[p.key] || '??';
-        const gan = pillarStr[0] || '?';
-        const zhi = pillarStr[1] || '?';
-        const isDayMaster = p.key === 'day';
-
-        return (
-          <div key={p.key} className="space-y-2">
-            <div className={`text-center py-1 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-wider ${isDayMaster ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500'}`}>
-              {p.label}
-              {isDayMaster && ' (나)'}
-            </div>
-            {renderCell(gan, 'gan')}
-            {renderCell(zhi, 'zhi')}
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-8">
+      <div className="grid grid-cols-5 border-b border-slate-100 bg-slate-50/50">
+        <div className="p-3 border-r border-slate-100"></div>
+        {pillars.map((p) => (
+          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-indigo-50/50 text-indigo-600' : ''}`}>
+            {p.label}
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      {/* 천간 Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">천간</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center">
+            {renderCell(saju.pillars[p.key].gan, 'gan')}
+          </div>
+        ))}
+      </div>
+
+      {/* 십성 (천간) Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-600">
+            {p.key === 'day' ? <span className="text-rose-500 font-black">비견</span> : saju.pillars[p.key].ganShiShen}
+          </div>
+        ))}
+      </div>
+
+      {/* 지지 Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지지</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center">
+            {renderCell(saju.pillars[p.key].zhi, 'zhi')}
+          </div>
+        ))}
+      </div>
+
+      {/* 십성 (지지) Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-600">
+            {saju.pillars[p.key].zhiShiShen}
+          </div>
+        ))}
+      </div>
+
+      {/* 지장간 Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지장간</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter">
+            {saju.pillars[p.key].hiddenStems?.join('') || '-'}
+          </div>
+        ))}
+      </div>
+
+      {/* 12운성 Row */}
+      <div className="grid grid-cols-5 border-b border-slate-50">
+        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12운성</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-indigo-600/80">
+            {saju.pillars[p.key].twelveStages}
+          </div>
+        ))}
+      </div>
+
+      {/* 12신살 Row */}
+      <div className="grid grid-cols-5">
+        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12신살</div>
+        {pillars.map((p) => (
+          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500">
+            {saju.pillars[p.key].twelveSpirits}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -377,12 +448,14 @@ const MyPage: React.FC<MyPageProps> = ({
   };
 
   const renderAnalysisSection = (Icon: React.ElementType, title: string, content: string, isLongText = false) => (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-lg shadow-slate-200/40 p-8">
-      <div className="flex items-center gap-3 mb-4">
-        <Icon className="w-6 h-6 text-indigo-500" />
-        <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-8">
+      <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+        <Icon className="w-6 h-6 text-slate-600" />
+        <h2 className="text-xl font-black text-slate-800">{title}</h2>
       </div>
-      <p className={`text-slate-600 leading-relaxed font-medium whitespace-pre-line`}>{content}</p>
+      <div className={`text-slate-700 leading-8 font-normal whitespace-pre-line text-[15px] md:text-[16px] tracking-tight`}>
+        {content}
+      </div>
     </div>
   );
 
@@ -523,11 +596,34 @@ const MyPage: React.FC<MyPageProps> = ({
                     </p>
                     {/* Show calculation details if available */}
                     {analysis.saju && (
-                      <div className="text-sm text-indigo-600 mt-2">
-                        <span className="inline-block bg-indigo-100 px-2 py-1 rounded text-xs font-bold mr-2">
-                          {analysis.saju.dayMaster.korean}({analysis.saju.dayMaster.chinese})
-                        </span>
-                        <span className="text-slate-600">{analysis.saju.dayMaster.description}</span>
+                      <div className="mt-4 pt-4 border-t border-indigo-100/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="inline-block bg-indigo-600 text-white px-2 py-1 rounded text-xs font-bold">
+                            {analysis.saju.dayMaster.korean}({analysis.saju.dayMaster.chinese})
+                          </span>
+                          <span className="text-xs font-bold text-indigo-500">일간의 특징</span>
+                        </div>
+                        <p className="text-sm text-indigo-800 leading-relaxed font-medium">
+                          {analysis.saju.dayMaster.description}
+                        </p>
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                           <div className="bg-white/50 p-2 rounded-lg text-center">
+                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">12운성</span>
+                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.twelveStages}</span>
+                           </div>
+                           <div className="bg-white/50 p-2 rounded-lg text-center">
+                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">12신살</span>
+                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.twelveSpirits}</span>
+                           </div>
+                           <div className="bg-white/50 p-2 rounded-lg text-center">
+                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">지지십성</span>
+                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.zhiShiShen}</span>
+                           </div>
+                           <div className="bg-white/50 p-2 rounded-lg text-center">
+                              <span className="block text-[10px] text-indigo-400 font-bold uppercase">지장간</span>
+                              <span className="text-sm font-bold text-indigo-700">{analysis.saju.pillars.day.hiddenStems.join(', ')}</span>
+                           </div>
+                        </div>
                       </div>
                     )}
                   </div>

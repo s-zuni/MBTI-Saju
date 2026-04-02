@@ -1,0 +1,21 @@
+﻿--- Saju Calculation Result ---
+Day Master: 寃쎄툑 (佯?
+Day Master Description: 諛붿쐞, 臾댁뇿, 寃곕떒?? ?섎━, 媛쒗쁺, 媛뺤씤??
+--- Pillars ---
+[YEAR]
+  Gan: 阿? Zhi: 雅?  ShiShen (Gan): 閭ｈ뇨
+  ShiShen (Zhi): 繇잏쪥,?뤺뇨
+  Hidden Stems: 鶯? ??  12 Stages: ??  12 Spirits: 留앹떊??[MONTH]
+  Gan: ?? Zhi: 耶?  ShiShen (Gan): ?뤷뜲
+  ShiShen (Zhi): 鴉ㅵ츟
+  Hidden Stems: ??  12 Stages: 閭?  12 Spirits: ?μ꽦??[DAY]
+  Gan: 佯? Zhi: 渦?  ShiShen (Gan): ?δ말
+  ShiShen (Zhi): ?뤷뜲,閭ｈ뇨,鴉ㅵ츟
+  Hidden Stems: ?? 阿? ??  12 Stages: ??  12 Spirits: ?붽컻??[HOUR]
+  Gan: ?? Zhi: ??  ShiShen (Gan): 鴉ㅵ츟
+  ShiShen (Zhi): 閭ｅ뜲,閭ｅ츟,閭ｈ뇨
+  Hidden Stems: 藥? 訝? 阿?  12 Stages: ?졾를
+  12 Spirits: 泥쒖궡
+
+--- Element Ratio ---
+{ wood: 13, fire: 0, earth: 38, metal: 13, water: 38 }

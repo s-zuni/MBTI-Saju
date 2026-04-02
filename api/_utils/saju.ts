@@ -14,6 +14,12 @@ export interface SajuResult {
         polarity: string;
         description: string;
     };
+    pillars: {
+        year: PillarInfo;
+        month: PillarInfo;
+        day: PillarInfo;
+        hour: PillarInfo;
+    };
     elements: {
         wood: number;
         fire: number;
@@ -28,6 +34,16 @@ export interface SajuResult {
         metal: number;
         water: number;
     };
+}
+
+export interface PillarInfo {
+    gan: string;
+    zhi: string;
+    ganShiShen: string;
+    zhiShiShen: string;
+    hiddenStems: string[];
+    twelveStages: string;
+    twelveSpirits: string;
 }
 
 const GAN_MAP: { [key: string]: { element: string; polarity: string; korean: string } } = {
@@ -58,6 +74,28 @@ const ZHI_MAP: { [key: string]: { element: string; polarity: string; korean: str
     '亥': { element: 'water', polarity: '-', korean: '해수' }, // Pig
 };
 
+// 12 Sinsal (Spirits) Mapping based on Triple Combinations (삼합)
+const SPIRIT_ORDER = ['지살', '연살', '월살', '망신살', '장성살', '반안살', '역마살', '육해살', '화개살', '겁살', '재살', '천살'];
+const ZHI_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+function getTwelveSpirits(baseZhi: string, targetZhi: string): string {
+    const TRIPLE_COMBO_START: { [key: string]: string } = {
+        '寅': '寅', '午': '寅', '戌': '寅', // Fire combo
+        '申': '申', '子': '申', '辰': '申', // Water combo
+        '亥': '亥', '卯': '亥', '未': '亥', // Wood combo
+        '巳': '巳', '酉': '巳', '丑': '巳', // Metal combo
+    };
+
+    const startZhi = TRIPLE_COMBO_START[baseZhi];
+    if (!startZhi) return '-';
+
+    const startIndex = ZHI_ORDER.indexOf(startZhi);
+    const targetIndex = ZHI_ORDER.indexOf(targetZhi);
+    
+    const distance = (targetIndex - startIndex + 12) % 12;
+    return SPIRIT_ORDER[distance] || '-';
+}
+
 const DAY_MASTER_DESC: { [key: string]: string } = {
     '갑목': '대들보, 거목, 리더십, 성장, 시작, 고집',
     '을목': '화초, 덩굴, 적응력, 유연함, 끈기, 현실적',
@@ -71,7 +109,6 @@ const DAY_MASTER_DESC: { [key: string]: string } = {
     '계수': '비, 시냇물, 지혜, 섬세함, 참모, 아이디어',
 };
 export function calculateSaju(birthDate: string, birthTime: string | null): SajuResult {
-    // birthDate format: YYYY-MM-DD or YYYY.MM.DD or YYYY/MM/DD
     const partsDate = birthDate.includes('-') ? birthDate.split('-').map(Number) :
                      birthDate.includes('.') ? birthDate.split('.').map(Number) :
                      birthDate.includes('/') ? birthDate.split('/').map(Number) :
@@ -91,10 +128,9 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
     day = day || 1;
     let hour = 12;
     let minute = 0;
-    let isTimeUnknown = true;
+    let isTimeUnknown = !birthTime;
 
     if (birthTime) {
-        // Handle range formats like "23:00-01:00" or simple "12:30"
         let timeStr = birthTime.trim();
         if (timeStr.includes('-')) {
             timeStr = timeStr.split('-')[0]!.trim();
@@ -107,13 +143,9 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
         if (isNaN(hour) || isNaN(minute)) {
             hour = 12;
             minute = 0;
+            isTimeUnknown = true;
         }
 
-        isTimeUnknown = false;
-
-        // 한국 표준시(KST) 자연시 보정
-        // 동경 135도 기준시에서 서울 127도 기준 진짜 태양시로 변환 (약 -30분 적용)
-        // 이를 통해 야자시/명자시 및 절기 교입 시각의 오차를 줄임
         const dateObj = new Date(year, month - 1, day, hour, minute);
         dateObj.setMinutes(dateObj.getMinutes() - 30);
 
@@ -128,35 +160,46 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
     const lunar = solar.getLunar();
     const eightChar = lunar.getEightChar();
 
-    // Gan-Zhi (Heavenly Stems and Earthly Branches)
     const yearGan = eightChar.getYearGan();
     const yearZhi = eightChar.getYearZhi();
     const monthGan = eightChar.getMonthGan();
     const monthZhi = eightChar.getMonthZhi();
     const dayGan = eightChar.getDayGan();
     const dayZhi = eightChar.getDayZhi();
-    const timeGan = isTimeUnknown ? '모름' : eightChar.getTimeGan();
-    const timeZhi = isTimeUnknown ? '모름' : eightChar.getTimeZhi();
+    const timeGan = isTimeUnknown ? '?' : eightChar.getTimeGan();
+    const timeZhi = isTimeUnknown ? '?' : eightChar.getTimeZhi();
 
     const dayMasterKorean = GAN_MAP[dayGan]?.korean || dayGan;
 
-    // Calculate Element Distribution
-    const elements = {
-        wood: 0,
-        fire: 0,
-        earth: 0,
-        metal: 0,
-        water: 0,
+    const createPillar = (gan: string, zhi: string, type: 'Year' | 'Month' | 'Day' | 'Time'): PillarInfo => {
+        const isUnknown = gan === '?';
+        return {
+            gan,
+            zhi,
+            ganShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenGan`]() || '-',
+            zhiShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenZhi`]() || '-',
+            hiddenStems: isUnknown ? [] : (eightChar as any)[`get${type}HideGan`]() || [],
+            twelveStages: isUnknown ? '-' : (eightChar as any)[`get${type}DiShi`]() || '-',
+            twelveSpirits: isUnknown ? '-' : getTwelveSpirits(dayZhi, zhi)
+        };
     };
 
-    const pillars = [
+    const pillars = {
+        year: createPillar(yearGan, yearZhi, 'Year'),
+        month: createPillar(monthGan, monthZhi, 'Month'),
+        day: createPillar(dayGan, dayZhi, 'Day'),
+        hour: createPillar(timeGan, timeZhi, 'Time'),
+    };
+
+    const elements = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+    const allPillars = [
         { gan: yearGan, zhi: yearZhi },
         { gan: monthGan, zhi: monthZhi },
         { gan: dayGan, zhi: dayZhi },
         { gan: timeGan, zhi: timeZhi },
     ];
 
-    pillars.forEach(p => {
+    allPillars.forEach(p => {
         const ganElem = GAN_MAP[p.gan]?.element;
         if (ganElem) elements[ganElem as keyof typeof elements]++;
 
@@ -164,13 +207,13 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
         if (zhiElem) elements[zhiElem as keyof typeof elements]++;
     });
 
-    const total = 8;
+    const total = allPillars.reduce((acc, p) => acc + (p.gan !== '?' ? 1 : 0) + (p.zhi !== '?' ? 1 : 0), 0) || 8;
     const elementRatio = {
-        wood: Math.round((elements.wood / total) * 100),
-        fire: Math.round((elements.fire / total) * 100),
-        earth: Math.round((elements.earth / total) * 100),
-        metal: Math.round((elements.metal / total) * 100),
-        water: Math.round((elements.water / total) * 100),
+        wood: Math.round((elements.wood / total) * 100) || 0,
+        fire: Math.round((elements.fire / total) * 100) || 0,
+        earth: Math.round((elements.earth / total) * 100) || 0,
+        metal: Math.round((elements.metal / total) * 100) || 0,
+        water: Math.round((elements.water / total) * 100) || 0,
     };
 
     return {
@@ -178,7 +221,7 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
             year: `${yearGan}${yearZhi}`,
             month: `${monthGan}${monthZhi}`,
             day: `${dayGan}${dayZhi}`,
-            hour: `${timeGan}${timeZhi}`,
+            hour: isTimeUnknown ? '모름' : `${timeGan}${timeZhi}`,
         },
         dayMaster: {
             korean: dayMasterKorean,
@@ -187,6 +230,7 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
             polarity: GAN_MAP[dayGan]?.polarity || '',
             description: DAY_MASTER_DESC[dayMasterKorean] || ''
         },
+        pillars,
         elements,
         elementRatio
     };
