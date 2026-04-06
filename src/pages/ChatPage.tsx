@@ -191,7 +191,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
             setMessages(prev => [...prev, initialBotMsg]);
 
             let accumulatedText = '';
-            const response = await sendMessage(
+            await sendMessage(
                 sessionId, 
                 text, 
                 messages, 
