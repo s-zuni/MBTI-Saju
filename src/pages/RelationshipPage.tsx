@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Loader2, Sparkles, Star } from 'lucide-react';
+import { Heart, Sparkles, Star } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import CompatibilityModal from '../components/CompatibilityModal';
 import { ServiceType } from '../components/ServiceNavigation';
