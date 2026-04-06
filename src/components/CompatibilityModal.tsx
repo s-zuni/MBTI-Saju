@@ -314,15 +314,6 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
         }
     }, [props.isOpen]);
 
-    if (!props.isOpen) return null;
-
-    // prefillData가 있으면 자동 시작
-    const hasAllPrefill = !!(
-        props.prefillData?.targetName &&
-        props.prefillData?.targetBirthDate &&
-        props.prefillData?.targetMbti
-    );
-
     // ESC 키로 닫기
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -331,6 +322,15 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [props.onClose]);
+
+    if (!props.isOpen) return null;
+
+    // prefillData가 있으면 자동 시작
+    const hasAllPrefill = !!(
+        props.prefillData?.targetName &&
+        props.prefillData?.targetBirthDate &&
+        props.prefillData?.targetMbti
+    );
 
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] p-4">
