@@ -305,37 +305,37 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     );
 };
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session, prefillData }) => {
     const [resetKey, setResetKey] = useState(0);
 
     useEffect(() => {
-        if (props.isOpen) {
+        if (isOpen) {
             setResetKey(prev => prev + 1);
         }
-    }, [props.isOpen]);
+    }, [isOpen]);
 
     // ESC 키로 닫기
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') props.onClose();
+            if (e.key === 'Escape') onClose();
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [props.onClose]);
+    }, [onClose]);
 
-    if (!props.isOpen) return null;
+    if (!isOpen) return null;
 
     // prefillData가 있으면 자동 시작
     const hasAllPrefill = !!(
-        props.prefillData?.targetName &&
-        props.prefillData?.targetBirthDate &&
-        props.prefillData?.targetMbti
+        prefillData?.targetName &&
+        prefillData?.targetBirthDate &&
+        prefillData?.targetMbti
     );
 
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] p-4">
             <div className="relative w-full max-w-2xl bg-white rounded-[48px] max-h-[94vh] overflow-hidden flex flex-col shadow-2xl">
-                <ServiceNavigation currentService="compatibility" onNavigate={props.onNavigate} onClose={props.onClose} />
+                <ServiceNavigation currentService="compatibility" onNavigate={onNavigate} onClose={onClose} />
 
                 <div className="p-8 sm:p-12 pb-4 shrink-0 bg-white">
                     <div className="flex justify-between items-end">
@@ -352,10 +352,10 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
                 <CompatibilityModalContent
                     key={resetKey}
                     onReset={() => setResetKey(prev => prev + 1)}
-                    onUseCredit={props.onUseCredit}
-                    credits={props.credits}
-                    session={props.session}
-                    prefillData={props.prefillData}
+                    onUseCredit={onUseCredit}
+                    credits={credits}
+                    session={session}
+                    prefillData={prefillData}
                     autoStart={hasAllPrefill}
                 />
             </div>

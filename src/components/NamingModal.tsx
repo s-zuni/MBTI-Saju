@@ -178,32 +178,32 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
     );
 };
 
-const NamingModal: React.FC<NamingModalProps> = (props) => {
+const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session }) => {
     const [resetKey, setResetKey] = useState(0);
 
     useEffect(() => {
-        if (props.isOpen) {
+        if (isOpen) {
             setResetKey(prev => prev + 1);
         }
-    }, [props.isOpen]);
+    }, [isOpen]);
 
     // ESC 키로 닫기
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') props.onClose();
+            if (e.key === 'Escape') onClose();
         };
-        if (props.isOpen) {
+        if (isOpen) {
             window.addEventListener('keydown', handleEsc);
         }
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [props.isOpen, props.onClose]);
+    }, [isOpen, onClose]);
 
-    if (!props.isOpen) return null;
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] p-4">
             <div className="relative w-full max-w-2xl bg-white rounded-[48px] max-h-[94vh] overflow-hidden flex flex-col shadow-2xl">
-                <ServiceNavigation currentService="naming" onNavigate={props.onNavigate} onClose={props.onClose} />
+                <ServiceNavigation currentService="naming" onNavigate={onNavigate} onClose={onClose} />
 
                 <div className="p-8 sm:p-12 pb-4 shrink-0 bg-white">
                     <div className="flex justify-between items-end">
@@ -220,9 +220,9 @@ const NamingModal: React.FC<NamingModalProps> = (props) => {
                 <NamingModalContent 
                     key={resetKey}
                     onReset={() => setResetKey(prev => prev + 1)}
-                    onUseCredit={props.onUseCredit}
-                    credits={props.credits}
-                    session={props.session}
+                    onUseCredit={onUseCredit}
+                    credits={credits}
+                    session={session}
                 />
             </div>
         </div>
