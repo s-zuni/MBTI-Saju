@@ -17,7 +17,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   const isHome = location.pathname === '/';
 
   const { session } = useAuth();
-  const { openModal } = useModalStore();
+  const { openModal, isAnyModalOpen } = useModalStore();
 
   // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
@@ -91,7 +91,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     : 'bg-transparent py-5';
 
   return (
-    <nav ref={navRef} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
+    <nav ref={navRef} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${navBg} ${isAnyModalOpen ? 'translate-y-[-105%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>

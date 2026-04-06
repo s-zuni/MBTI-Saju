@@ -323,8 +323,17 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
         props.prefillData?.targetMbti
     );
 
+    // ESC 키로 닫기
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') props.onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [props.onClose]);
+
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] p-4">
             <div className="relative w-full max-w-2xl bg-white rounded-[48px] max-h-[94vh] overflow-hidden flex flex-col shadow-2xl">
                 <ServiceNavigation currentService="compatibility" onNavigate={props.onNavigate} onClose={props.onClose} />
 

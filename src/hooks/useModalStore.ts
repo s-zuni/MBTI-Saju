@@ -77,6 +77,7 @@ export const useModalStore = () => {
     }, []);
 
     return {
+        isAnyModalOpen: Object.values(modals).some((m) => m.isOpen),
         modals,
         openModal,
         closeModal,

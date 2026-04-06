@@ -195,10 +195,21 @@ const SeasonalCherryModal: React.FC<CherryModalProps> = (props) => {
         }
     }, [props.isOpen]);
 
+    // ESC 키로 닫기
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') props.onClose();
+        };
+        if (props.isOpen) {
+            window.addEventListener('keydown', handleEsc);
+        }
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [props.isOpen, props.onClose]);
+
     if (!props.isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 animate-fade-in p-4 sm:p-6">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] animate-fade-in p-4 sm:p-6">
             <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
                 <ServiceNavigation currentService="cherry" onNavigate={props.onNavigate} onClose={props.onClose} />
 
