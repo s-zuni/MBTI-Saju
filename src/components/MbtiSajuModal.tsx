@@ -487,7 +487,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-center z-[100] p-4">
+    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-center z-[1000] p-4">
       <div className="relative w-full max-w-2xl bg-white rounded-[32px] max-h-[94vh] overflow-hidden flex flex-col">
         <ServiceNavigation currentService="mbti" onNavigate={onNavigate} onClose={onClose} />
         <div className="p-8 pb-4 shrink-0">

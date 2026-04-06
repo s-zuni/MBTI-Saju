@@ -82,7 +82,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm overflow-y-auto h-full w-full flex justify-center items-center z-[200] animate-fade-in p-4">
+    <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm overflow-y-auto h-full w-full flex justify-center items-center z-[1000] animate-fade-in p-4">
       <div className="relative border w-full max-w-lg shadow-2xl rounded-3xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
         {/* Navigation */}
         <ServiceNavigation currentService="fortune" onNavigate={onNavigate} onClose={onClose} />

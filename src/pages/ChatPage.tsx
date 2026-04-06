@@ -178,14 +178,32 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
         setMessageCount(prev => prev + 1);
 
         try {
-            const response = await sendMessage(sessionId, text, messages, userContext);
-            const botMsg: ChatMessage = {
-                id: (Date.now() + 1).toString(),
+            // Create a temporary ID for the bot message to update it
+            const botMessageId = (Date.now() + 1).toString();
+            
+            // Initial empty assistant message
+            const initialBotMsg: ChatMessage = {
+                id: botMessageId,
                 role: 'assistant',
-                content: response,
+                content: '',
                 createdAt: new Date()
             };
-            setMessages(prev => [...prev, botMsg]);
+            setMessages(prev => [...prev, initialBotMsg]);
+
+            let accumulatedText = '';
+            const response = await sendMessage(
+                sessionId, 
+                text, 
+                messages, 
+                userContext,
+                (token) => {
+                    accumulatedText += token;
+                    setMessages(prev => prev.map(m => 
+                        m.id === botMessageId ? { ...m, content: accumulatedText } : m
+                    ));
+                    setShouldAutoScroll(true);
+                }
+            );
 
             // 10회 도달 시 크레딧 차감
             if ((messageCount) % MESSAGES_PER_COIN_CHARGE === 0) {

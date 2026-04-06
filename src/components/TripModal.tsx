@@ -278,7 +278,7 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[100] p-4 sm:p-6">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[1000] p-4 sm:p-6">
             <div className="relative p-0 border-none w-full max-w-2xl shadow-2xl rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col">
                 <ServiceNavigation currentService="trip" onNavigate={onNavigate} onClose={onClose} />
 

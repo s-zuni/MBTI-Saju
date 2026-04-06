@@ -61,13 +61,14 @@ export const loadMessages = async (sessionId: string): Promise<ChatMessage[]> =>
 };
 
 /**
- * Sends a message to Gemini and saves context to Supabase
+ * Sends a message to Gemini and handles streaming response
  */
 export const sendMessage = async (
     sessionId: string,
     userMessage: string,
     history: ChatMessage[],
-    userContext: any
+    userContext: any,
+    onToken?: (token: string) => void
 ): Promise<string> => {
     // 1. Save User Message locally
     await supabase.from('chat_messages').insert({
@@ -109,34 +110,44 @@ export const sendMessage = async (
                 name: userContext.name,
                 gender: userContext.gender,
                 pastContext: pastContext,
-                messages: history // Pass history for context
+                messages: history
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error("API Error Details:", {
-                status: response.status,
-                statusText: response.statusText,
-                data: errorData
-            });
-            throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.details || 'Unknown error'}`);
+            throw new Error(`API Error: ${response.status} - ${errorData.details || 'Unknown error'}`);
         }
 
-        const data = await response.json();
-        const responseText = data.reply;
+        // 3. Handle Streaming Response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
 
-        // 3. Save Bot Response to DB
+        if (!reader) {
+            throw new Error("Failed to get reader from response");
+        }
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            fullText += chunk;
+            if (onToken) onToken(chunk);
+        }
+
+        // 4. Save Final Bot Response to DB
         await supabase.from('chat_messages').insert({
             session_id: sessionId,
             role: 'assistant',
-            content: responseText
+            content: fullText
         });
 
         // Update session timestamp
         await supabase.from('chat_sessions').update({ updated_at: new Date() }).eq('id', sessionId);
 
-        return responseText;
+        return fullText;
 
     } catch (error) {
         console.error("Chat Service Error:", error);
