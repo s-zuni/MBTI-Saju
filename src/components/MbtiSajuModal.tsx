@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
@@ -16,6 +16,29 @@ interface MbtiSajuModalProps {
   credits?: number;
   session: any;
 }
+
+interface ElementColor {
+  bg: string;
+  text: string;
+  bar: string;
+}
+
+const ELEMENT_COLORS: Record<string, ElementColor> = {
+  '목(木)': { bg: 'bg-green-50', text: 'text-green-700', bar: 'bg-green-500' },
+  '화(火)': { bg: 'bg-red-50', text: 'text-red-700', bar: 'bg-red-500' },
+  '토(土)': { bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-500' },
+  '금(金)': { bg: 'bg-slate-100', text: 'text-slate-700', bar: 'bg-slate-500' },
+  '수(水)': { bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-500' },
+};
+
+const DEFAULT_COLOR: ElementColor = { bg: 'bg-slate-50', text: 'text-slate-700', bar: 'bg-slate-400' };
+
+const getElementColor = (element: string): ElementColor => {
+  for (const key in ELEMENT_COLORS) {
+    if (element.includes(key.slice(0, 1))) return ELEMENT_COLORS[key] as ElementColor;
+  }
+  return DEFAULT_COLOR;
+};
 
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
   const [analysis, setAnalysis] = useState<any>(null);
@@ -132,7 +155,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
     setIsPurchasingDeep(true);
     try {
-      // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
       const { data: { session: fetchedSession } } = await supabase.auth.getSession();
       const activeSession = fetchedSession || initialSession;
       
@@ -168,7 +190,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
     setIsRegenerating(true);
     try {
-      // Safari ITP 대응: 최신 세션 정보 확보
       const { data: { session: fetchedSession } } = await supabase.auth.getSession();
       const activeSession = fetchedSession || initialSession;
       
@@ -226,115 +247,217 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
     return (
       <div className="space-y-6 animate-fade-up">
+        {/* 헤더: 운명 별명 */}
         {analysis.fusionNickname && (
-          <div className="text-center mb-6 py-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">나의 운명 별명</p>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3">✨ {stripMarkdown(analysis.fusionNickname)} ✨</h3>
-            <p className="text-xs text-slate-500">{analysis.mbti} × 사주 융합</p>
+          <div className="text-center mb-6 py-8 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 30% 50%, #6366f1 0%, transparent 60%), radial-gradient(circle at 70% 50%, #8b5cf6 0%, transparent 60%)'}} />
+            <div className="relative z-10">
+              <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2">MBTI × 사주 융합 별명</p>
+              <h3 className="text-2xl sm:text-3xl font-black text-white mb-3">✨ {stripMarkdown(analysis.fusionNickname)} ✨</h3>
+              <p className="text-xs text-indigo-300">{analysis.mbti} × 사주 명리학 교차 분석</p>
+            </div>
           </div>
         )}
 
         {analysis.reportTitle && (
-          <div className="text-center mb-10 py-4 border-y border-slate-100 italic">
+          <div className="text-center mb-6 py-4 border-y border-slate-100 italic">
             <h3 className="text-xl font-bold text-slate-800">"{stripMarkdown(analysis.reportTitle)}"</h3>
           </div>
         )}
 
-        <div className="space-y-12">
-          {analysis.nature && (
-            <section className="report-section">
-              <h4 className="report-section-title"><ScrollText className="w-5 h-5" /> 선천적 기질 및 본성</h4>
-              <div className="report-card">
-                <p className="text-slate-950 font-bold mb-4">{stripMarkdown(analysis.nature.dayPillarSummary)}</p>
-                <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
-                  {analysis.nature.dayMasterAnalysis && <p>• 일간: {stripMarkdown(analysis.nature.dayMasterAnalysis)}</p>}
-                  {analysis.nature.dayBranchAnalysis && <p>• 일지: {stripMarkdown(analysis.nature.dayBranchAnalysis)}</p>}
-                  {analysis.nature.monthBranchAnalysis && <p>• 월지: {stripMarkdown(analysis.nature.monthBranchAnalysis)}</p>}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {analysis.fiveElements?.elements && (
-            <section className="report-section">
-              <h4 className="report-section-title"><Layers className="w-5 h-5" /> 오행 에너지 구성</h4>
-              <div className="report-card !p-0 overflow-hidden text-sm">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-4 py-3 font-bold text-slate-700">오행</th>
-                      <th className="px-4 py-3 text-center font-bold text-slate-700">지표</th>
-                      <th className="px-4 py-3 font-bold text-slate-700">해석</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {analysis.fiveElements.elements.map((el: any, idx: number) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-3 font-bold text-slate-900">{el.element}</td>
-                        <td className="px-4 py-3 text-center font-black text-indigo-600">{el.count}</td>
-                        <td className="px-4 py-3 text-xs leading-relaxed">{stripMarkdown(el.interpretation)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
-
+        <div className="space-y-10">
+          {/* [1순위] 심층 융합 진단 - MBTI×사주 교차 분석의 핵심 */}
           {analysis.deepIntegration?.integrationPoints && (
             <section className="report-section">
-              <h4 className="report-section-title"><Zap className="w-5 h-5" /> 심층 융합 진단</h4>
+              <h4 className="report-section-title"><Zap className="w-5 h-5 text-indigo-600" /> MBTI × 사주 심층 융합 진단</h4>
+              <p className="text-xs text-slate-400 font-bold mb-4 pl-1">두 시스템의 교차점에서 발견된 핵심 통찰입니다.</p>
               <div className="space-y-4">
                 {analysis.deepIntegration.integrationPoints.map((p: any, i: number) => (
-                  <div key={i} className="report-card">
-                    <h5 className="font-bold text-slate-900 mb-2">{stripMarkdown(p.subtitle)}</h5>
-                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(p.content)}</p>
+                  <div key={i} className="report-card border-l-4 border-indigo-500 !pl-5">
+                    <div className="flex items-start gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                      <h5 className="font-black text-slate-900 text-sm leading-snug">{stripMarkdown(p.subtitle)}</h5>
+                    </div>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line pl-8">{stripMarkdown(p.content)}</p>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {analysis.persona && (
+          {/* [2순위] 사주 본성 분석 (MBTI와의 연결 포함) */}
+          {analysis.nature && (
             <section className="report-section">
-              <h4 className="report-section-title"><Brain className="w-5 h-5" /> {analysis.mbti} 심층 분석</h4>
-              <div className="report-card bg-slate-50">
-                <h5 className="font-black text-slate-950 mb-4">{stripMarkdown(analysis.persona.mbtiNickname)}</h5>
-                <div className="space-y-4 text-slate-700 text-sm">
-                  <div><strong className="block mb-1">핵심 에너지 (주기능)</strong>{stripMarkdown(analysis.persona.dominantFunction)}</div>
-                  <div><strong className="block mb-1">사회적 상호작용 (부기능)</strong>{stripMarkdown(analysis.persona.auxiliaryFunction)}</div>
+              <h4 className="report-section-title"><ScrollText className="w-5 h-5" /> 선천적 기질 — 사주가 말하는 본성</h4>
+              <div className="report-card">
+                <p className="text-slate-950 font-bold mb-4 text-sm leading-relaxed">{stripMarkdown(analysis.nature.dayPillarSummary)}</p>
+                <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
+                  {analysis.nature.dayMasterAnalysis && (
+                    <div className="flex gap-2">
+                      <span className="text-indigo-500 font-black shrink-0">일간</span>
+                      <p>{stripMarkdown(analysis.nature.dayMasterAnalysis)}</p>
+                    </div>
+                  )}
+                  {analysis.nature.dayBranchAnalysis && (
+                    <div className="flex gap-2">
+                      <span className="text-indigo-500 font-black shrink-0">일지</span>
+                      <p>{stripMarkdown(analysis.nature.dayBranchAnalysis)}</p>
+                    </div>
+                  )}
+                  {analysis.nature.monthBranchAnalysis && (
+                    <div className="flex gap-2">
+                      <span className="text-indigo-500 font-black shrink-0">월지</span>
+                      <p>{stripMarkdown(analysis.nature.monthBranchAnalysis)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
           )}
 
-          {analysis.yearlyFortune && (
+          {/* [3순위] 오행 에너지 구성 */}
+          {analysis.fiveElements?.elements && (
             <section className="report-section">
-              <h4 className="report-section-title"><Calendar className="w-5 h-5" /> 운세 흐름 가이드</h4>
-              <div className="report-card bg-slate-950 text-white">
-                <h5 className="text-xl font-black mb-4 italic">"{stripMarkdown(analysis.yearlyFortune.theme)}"</h5>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.yearlyFortune.overview)}</p>
-              </div>
-            </section>
-          )}
-
-          {analysis.fieldStrategies && (
-            <section className="report-section">
-              <h4 className="report-section-title"><Zap className="w-5 h-5" /> 2026년 분야별 심층 전략</h4>
-              <div className="space-y-4">
-                {['career', 'love', 'wealth'].map((field) => {
-                  const data = (analysis.fieldStrategies as any)[field];
-                  if (!data) return null;
-                  const icons = { career: '💼', love: '💖', wealth: '💰' };
+              <h4 className="report-section-title"><Layers className="w-5 h-5" /> 오행 에너지 구성</h4>
+              <div className="space-y-3">
+                {analysis.fiveElements.elements.map((el: any, idx: number) => {
+                  const color = getElementColor(el.element);
+                  const maxCount = Math.max(...analysis.fiveElements.elements.map((e: any) => e.count), 1);
+                  const pct = Math.round((el.count / maxCount) * 100);
                   return (
-                    <div key={field} className="report-card">
-                      <h5 className="font-bold text-slate-950 mb-2">{(icons as any)[field]} {stripMarkdown(data.subtitle)}</h5>
-                      <p className="text-slate-700 text-sm mb-2">{stripMarkdown(data.analysis)}</p>
-                      <p className="text-indigo-600 text-xs font-bold">전략: {stripMarkdown(data.advice)}</p>
+                    <div key={idx} className={`report-card !p-4 ${color.bg}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`font-black text-sm ${color.text}`}>{el.element}</span>
+                        <span className={`text-lg font-black ${color.text}`}>{el.count}</span>
+                      </div>
+                      <div className="w-full bg-white/60 rounded-full h-2 mb-2">
+                        <div className={`${color.bar} h-2 rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">{stripMarkdown(el.interpretation)}</p>
                     </div>
                   );
                 })}
               </div>
+            </section>
+          )}
+
+          {/* [4순위] MBTI 심층 분석 (사주와 교차) */}
+          {analysis.persona && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Brain className="w-5 h-5" /> {analysis.mbti} 심층 분석 — 사주와의 상호작용</h4>
+              <div className="report-card bg-slate-950 text-white">
+                <h5 className="font-black text-white mb-4 text-lg">{stripMarkdown(analysis.persona.mbtiNickname)}</h5>
+                <div className="space-y-4 text-slate-300 text-sm">
+                  <div>
+                    <strong className="block mb-1 text-indigo-300 text-xs uppercase tracking-widest">주기능 — 핵심 에너지</strong>
+                    <p className="leading-relaxed">{stripMarkdown(analysis.persona.dominantFunction)}</p>
+                  </div>
+                  <div>
+                    <strong className="block mb-1 text-indigo-300 text-xs uppercase tracking-widest">부기능 — 사회적 상호작용</strong>
+                    <p className="leading-relaxed">{stripMarkdown(analysis.persona.auxiliaryFunction)}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* [5순위] 운세 흐름 */}
+          {analysis.yearlyFortune && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Calendar className="w-5 h-5" /> 2026년 운세 흐름</h4>
+              <div className="report-card bg-gradient-to-br from-indigo-900 to-slate-900 text-white">
+                <h5 className="text-xl font-black mb-4 italic text-indigo-100">"{stripMarkdown(analysis.yearlyFortune.theme)}"</h5>
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{stripMarkdown(analysis.yearlyFortune.overview)}</p>
+                {analysis.yearlyFortune.keywords && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {analysis.yearlyFortune.keywords.filter((k: any): k is string => !!k).map((kw: string, i: number) => (
+                      <span key={i} className="px-3 py-1 bg-white/10 text-indigo-200 rounded-full text-xs font-bold border border-white/20">#{kw}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* 월별 운세 */}
+          {analysis.monthlyFortune?.months && analysis.monthlyFortune.months.length > 0 && (
+            <section className="report-section">
+              <h4 className="report-section-title"><TrendingUp className="w-5 h-5" /> 월별 에너지 가이드</h4>
+              <div className="grid gap-3">
+                {analysis.monthlyFortune.months.map((m: any, i: number) => (
+                  <div key={i} className="report-card !p-4 flex gap-4 items-start">
+                    <div className="shrink-0 w-12 text-center">
+                      <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg block">{m.period}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-500 mb-1">{stripMarkdown(m.energy)}</p>
+                      <p className="text-sm text-slate-700 leading-relaxed">{stripMarkdown(m.guide)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* [6순위] 분야별 심층 전략 */}
+          {analysis.fieldStrategies && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Zap className="w-5 h-5" /> MBTI × 사주 분야별 전략</h4>
+              <div className="space-y-4">
+                {(['career', 'love', 'wealth'] as const).map((field) => {
+                  const data = (analysis.fieldStrategies as any)[field];
+                  if (!data) return null;
+                  const fieldConfig = {
+                    career: { icon: '💼', label: '커리어·직업', color: 'border-blue-400' },
+                    love: { icon: '💖', label: '연애·관계', color: 'border-rose-400' },
+                    wealth: { icon: '💰', label: '재물·투자', color: 'border-amber-400' },
+                  };
+                  const cfg = fieldConfig[field];
+                  return (
+                    <div key={field} className={`report-card border-l-4 ${cfg.color} !pl-5`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-xl">{cfg.icon}</span>
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cfg.label}</p>
+                          <h5 className="font-black text-slate-950 text-sm">{stripMarkdown(data.subtitle)}</h5>
+                        </div>
+                      </div>
+                      <p className="text-slate-700 text-sm mb-3 leading-relaxed">{stripMarkdown(data.analysis)}</p>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">핵심 전략</p>
+                        <p className="text-slate-800 text-xs font-bold leading-relaxed">{stripMarkdown(data.advice)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* [7순위] 경계 및 주의 패턴 */}
+          {analysis.warnings && (
+            <section className="report-section">
+              <h4 className="report-section-title"><AlertTriangle className="w-5 h-5 text-amber-500" /> 주의 패턴 — MBTI 그림자 × 사주 충·형</h4>
+              <div className="space-y-3">
+                {analysis.warnings.watchOut?.map((w: any, i: number) => (
+                  <div key={i} className="report-card bg-amber-50 border-amber-100 !p-4">
+                    <h5 className="font-black text-amber-800 text-sm mb-1">⚠ {stripMarkdown(w.title)}</h5>
+                    <p className="text-amber-700 text-xs leading-relaxed">{stripMarkdown(w.description)}</p>
+                  </div>
+                ))}
+                {analysis.warnings.avoid?.map((w: any, i: number) => (
+                  <div key={i} className="report-card bg-red-50 border-red-100 !p-4">
+                    <h5 className="font-black text-red-800 text-sm mb-1">🚫 {stripMarkdown(w.title)}</h5>
+                    <p className="text-red-700 text-xs leading-relaxed">{stripMarkdown(w.description)}</p>
+                  </div>
+                ))}
+              </div>
+              {analysis.solution && (
+                <div className="mt-4 report-card bg-emerald-50 border-emerald-100 !p-5">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">종합 솔루션</p>
+                  <p className="text-emerald-800 text-sm font-bold leading-relaxed">{stripMarkdown(analysis.solution)}</p>
+                </div>
+              )}
             </section>
           )}
         </div>

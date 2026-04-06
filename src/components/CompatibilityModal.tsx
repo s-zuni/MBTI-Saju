@@ -8,17 +8,26 @@ import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 
+interface PrefillData {
+    targetName: string;
+    targetMbti: string;
+    targetBirthDate: string;
+    targetBirthTime: string;
+}
+
 interface CompatibilityModalProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
-    onUseCredit?: () => Promise<boolean>;
-    credits?: number;
+    onUseCredit?: (() => Promise<boolean>) | undefined;
+    credits?: number | undefined;
     session: any;
+    prefillData?: PrefillData | undefined;
 }
 
 const BIRTH_TIME_SLOTS = [
-    { value: 'unknown', label: '모름' },
+    { value: '', label: '시간 모름' },
+    { value: '23:00-01:00', label: '자시 (23:00~01:00)' },
     { value: '01:00-03:00', label: '축시 (01:00~03:00)' },
     { value: '03:00-05:00', label: '인시 (03:00~05:00)' },
     { value: '05:00-07:00', label: '묘시 (05:00~07:00)' },
@@ -37,15 +46,25 @@ interface CompatibilityContentProps {
     credits?: number | undefined;
     session: any;
     onReset: () => void;
+    prefillData?: PrefillData | undefined;
+    autoStart?: boolean | undefined;
 }
 
-const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseCredit, credits, session, onReset }) => {
+const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
+    onUseCredit,
+    credits,
+    session,
+    onReset,
+    prefillData,
+    autoStart = false,
+}) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const [error, setError] = useState<string | null>(null);
-    const [targetName, setTargetName] = useState('');
-    const [targetBirthDate, setTargetBirthDate] = useState('');
-    const [targetBirthTime, setTargetBirthTime] = useState('');
-    const [targetMbti, setTargetMbti] = useState('');
+    const [targetName, setTargetName] = useState(prefillData?.targetName || '');
+    const [targetBirthDate, setTargetBirthDate] = useState(prefillData?.targetBirthDate || '');
+    const [targetBirthTime, setTargetBirthTime] = useState(prefillData?.targetBirthTime || '');
+    const [targetMbti, setTargetMbti] = useState(prefillData?.targetMbti || '');
+    const hasAutoStarted = useRef(false);
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
@@ -56,12 +75,13 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
         }
     });
 
-    const handleFetchCompatibility = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!targetName || !targetBirthDate || !targetMbti) {
-            alert('상대방 정보를 모두 입력해주세요.');
-            return;
-        }
+    const runAnalysis = async (
+        name: string,
+        birthDate: string,
+        birthTime: string,
+        mbti: string
+    ) => {
+        if (!name || !birthDate || !mbti) return;
 
         const cost = SERVICE_COSTS.COMPATIBILITY;
         if (credits !== undefined && credits < cost) {
@@ -75,13 +95,13 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
             if (!metadata) throw new Error('로그인이 필요합니다.');
 
             const userSajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
-            const targetSajuData = calculateSaju(targetBirthDate, targetBirthTime);
+            const targetSajuData = calculateSaju(birthDate, birthTime);
 
             submit({
-                targetName,
-                targetBirthDate,
-                targetBirthTime,
-                targetMbti,
+                targetName: name,
+                targetBirthDate: birthDate,
+                targetBirthTime: birthTime,
+                targetMbti: mbti,
                 userName: metadata.full_name,
                 userBirthDate: metadata.birth_date,
                 userBirthTime: metadata.birth_time,
@@ -99,6 +119,31 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
         }
     };
 
+    // prefillData가 있고 autoStart가 true이면 자동 분석 시작
+    useEffect(() => {
+        if (
+            autoStart &&
+            !hasAutoStarted.current &&
+            prefillData?.targetName &&
+            prefillData?.targetBirthDate &&
+            prefillData?.targetMbti
+        ) {
+            hasAutoStarted.current = true;
+            runAnalysis(
+                prefillData.targetName,
+                prefillData.targetBirthDate,
+                prefillData.targetBirthTime,
+                prefillData.targetMbti
+            );
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autoStart, prefillData]);
+
+    const handleFetchCompatibility = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await runAnalysis(targetName, targetBirthDate, targetBirthTime, targetMbti);
+    };
+
     const handleDownloadPDF = async () => {
         if (!reportRef.current || !result) return;
         try {
@@ -110,34 +155,64 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
 
     return (
         <div className="px-8 sm:p-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+            {/* 분석 전 폼: prefillData가 없거나 result/isLoading이 없을 때만 표시 */}
             {!result && !isLoading && (
                 <form onSubmit={handleFetchCompatibility} className="space-y-6 animate-fade-up">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 이름</label>
-                            <input type="text" value={targetName} onChange={(e) => setTargetName(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" placeholder="이름 입력" />
+                            <input
+                                type="text"
+                                value={targetName}
+                                onChange={(e) => setTargetName(e.target.value)}
+                                className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold"
+                                placeholder="이름 입력"
+                                readOnly={!!prefillData?.targetName}
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 MBTI</label>
-                            <input type="text" value={targetMbti} onChange={(e) => setTargetMbti(e.target.value.toUpperCase())} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" placeholder="예: ENFP" maxLength={4} />
+                            <input
+                                type="text"
+                                value={targetMbti}
+                                onChange={(e) => setTargetMbti(e.target.value.toUpperCase())}
+                                className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold"
+                                placeholder="예: ENFP"
+                                maxLength={4}
+                                readOnly={!!prefillData?.targetMbti}
+                            />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 생년월일</label>
-                            <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold" />
+                            <input
+                                type="date"
+                                value={targetBirthDate}
+                                onChange={(e) => setTargetBirthDate(e.target.value)}
+                                className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold"
+                                readOnly={!!prefillData?.targetBirthDate}
+                            />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">상대방 태어난 시간</label>
-                            <select value={targetBirthTime} onChange={(e) => setTargetBirthTime(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold appearance-none">
-                                <option value="">시간 모름</option>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">태어난 시간</label>
+                            <select
+                                value={targetBirthTime}
+                                onChange={(e) => setTargetBirthTime(e.target.value)}
+                                className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl font-bold appearance-none"
+                            >
                                 {BIRTH_TIME_SLOTS.map((slot) => (
                                     <option key={slot.value} value={slot.value}>{slot.label}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
-                    <button type="submit" className="w-full py-5 bg-slate-950 text-white rounded-full font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">궁합 분석 시작하기({SERVICE_COSTS.COMPATIBILITY} 크레딧)</button>
+                    <button
+                        type="submit"
+                        className="w-full py-5 bg-slate-950 text-white rounded-full font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"
+                    >
+                        궁합 분석 시작하기 ({SERVICE_COSTS.COMPATIBILITY} 크레딧)
+                    </button>
                 </form>
             )}
 
@@ -151,31 +226,39 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
                     ) : error ? (
                         <div className="text-center py-20 bg-red-50 rounded-[32px]">
                             <p className="text-red-500 font-black mb-4">분석 중 오류가 발생했습니다.</p>
-                            <button onClick={handleFetchCompatibility} className="px-8 py-3 bg-slate-950 text-white rounded-full">다시 시도</button>
+                            <button
+                                onClick={onReset}
+                                className="px-8 py-3 bg-slate-950 text-white rounded-full"
+                            >
+                                다시 시도
+                            </button>
                         </div>
                     ) : result ? (
                         <div className="space-y-12 animate-fade-up">
-                            {/* Score Circle */}
+                            {/* 점수 원형 */}
                             <div className="flex flex-col items-center py-10">
                                 <div className="relative w-40 h-40">
                                     <div className="absolute inset-0 rounded-full border-8 border-slate-50"></div>
-                                    <div className="absolute inset-0 rounded-full border-8 border-rose-500 transition-all duration-1000" style={{ clipPath: `inset(0 0 0 ${100 - (result.score || 0)}%)` }}></div>
+                                    <div
+                                        className="absolute inset-0 rounded-full border-8 border-rose-500 transition-all duration-1000"
+                                        style={{ clipPath: `inset(0 0 0 ${100 - (result.score || 0)}%)` }}
+                                    ></div>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-4xl font-black text-slate-950">{result.score || 0}</span>
+                                        <span className="text-4xl font-black text-slate-950">{(result.score ?? 0)}</span>
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Points</span>
                                     </div>
                                 </div>
                                 <h4 className="mt-6 text-xl font-bold text-slate-950">{stripMarkdown(result.summary)}</h4>
                             </div>
 
-                            {/* Keywords */}
+                            {/* 키워드 */}
                             <div className="flex justify-center gap-2 flex-wrap pb-10 border-b border-slate-100">
                                 {result?.keywords?.filter((k: any): k is string => !!k).map((k, i) => (
                                     <span key={i} className="px-4 py-2 bg-slate-50 text-slate-900 rounded-lg text-xs font-bold border border-slate-100">#{k.trim()}</span>
                                 ))}
                             </div>
 
-                            {/* Details */}
+                            {/* 상세 분석 */}
                             <div className="grid gap-6">
                                 <section className="report-section">
                                     <h4 className="report-section-title"><Zap className="w-5 h-5 text-indigo-600" /> MBTI & 사주 융합 분석</h4>
@@ -201,10 +284,18 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({ onUseC
                             </div>
 
                             <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
-                                <button onClick={handleDownloadPDF} className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3"
+                                >
                                     <Download className="w-5 h-5" /> PDF 결과서 다운로드
                                 </button>
-                                <button onClick={onReset} className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4">상대방 바꿔서 분석하기</button>
+                                <button
+                                    onClick={onReset}
+                                    className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
+                                >
+                                    상대방 바꿔서 분석하기
+                                </button>
                             </div>
                         </div>
                     ) : null}
@@ -224,6 +315,13 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
     }, [props.isOpen]);
 
     if (!props.isOpen) return null;
+
+    // prefillData가 있으면 자동 시작
+    const hasAllPrefill = !!(
+        props.prefillData?.targetName &&
+        props.prefillData?.targetBirthDate &&
+        props.prefillData?.targetMbti
+    );
 
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4">
@@ -248,6 +346,8 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = (props) => {
                     onUseCredit={props.onUseCredit}
                     credits={props.credits}
                     session={props.session}
+                    prefillData={props.prefillData}
+                    autoStart={hasAllPrefill}
                 />
             </div>
         </div>
