@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Plane, PenTool, Ticket, Heart, X, CircleDot } from 'lucide-react';
+import { Compass, Plane, PenTool, Heart, X, CircleDot } from 'lucide-react';
 
 export type ServiceType = 'fortune' | 'mbti' | 'trip' | 'naming' | 'kbo' | 'compatibility';
 

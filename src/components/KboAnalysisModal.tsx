@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, TrendingUp, Sparkles, X, Trophy, Activity, CircleDot } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles, X, Trophy } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
