@@ -47,7 +47,7 @@ const RecommendationModal = lazy(() => import('./components/RecommendationModal'
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const TripModal = lazy(() => import('./components/TripModal'));
 const NamingModal = lazy(() => import('./components/NamingModal'));
-const SeasonalCherryModal = lazy(() => import('./components/SeasonalCherryModal'));
+const KboAnalysisModal = lazy(() => import('./components/KboAnalysisModal'));
 const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
@@ -260,16 +260,16 @@ function AppContent({
                             </button>
 
                             <button
-                              onClick={() => openModal('cherry')}
+                              onClick={() => openModal('kbo')}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
-                              <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-pink-100 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flower2 w-7 h-7 text-pink-500"><path d="M12 2v8"/><path d="m4.93 4.93 7.07 7.07"/><path d="M2 12h8"/><path d="m4.93 19.07 7.07-7.07"/><path d="M12 22v-8"/><path d="m19.07 19.07-7.07-7.07"/><path d="M22 12h-8"/><path d="m19.07 4.93-7.07 7.07"/></svg>
+                              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy w-7 h-7 text-blue-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                               </div>
-                              <h3 className="text-xl font-bold mb-3 group-hover:text-pink-600 transition-colors">벚꽃 명소 선정</h3>
-                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">나의 사주와 성향에 꼭 맞는 올해의 벚꽃 스팟을 추천해 드립니다.</p>
+                              <h3 className="text-xl font-bold mb-3 group-hover:text-blue-600 transition-colors">KBO 구단 궁합</h3>
+                              <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">MBTI와 사주를 분석해 나와 가장 잘 맞는 KBO 프로야구 구단을 알려드립니다.</p>
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold rounded-md">1,200+ 이용 중</span>
+                                <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md">1,500+ 이용 중</span>
                                 <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">NEW</span>
                               </div>
                             </button>
@@ -319,7 +319,7 @@ function AppContent({
                       onTarotClick={() => openModal('tarot')}
                       onTripClick={() => openModal('trip')}
                       onNamingClick={() => openModal('naming')}
-                      onCherryClick={() => openModal('cherry')}
+                      onKboClick={() => openModal('kbo')}
                       onCompatibilityClick={() => openModal('compatibility')}
                     />
                   } />
@@ -449,9 +449,9 @@ function AppContent({
                 credits={credits}
                 session={session}
               />
-              <SeasonalCherryModal
-                isOpen={modals?.cherry?.isOpen || false}
-                onClose={() => closeModal('cherry')}
+              <KboAnalysisModal
+                isOpen={modals?.kbo?.isOpen || false}
+                onClose={() => closeModal('kbo')}
                 onNavigate={(service: any) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
@@ -459,7 +459,7 @@ function AppContent({
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
-                  return await consumeCredits('CHERRY');
+                  return await consumeCredits('KBO');
                 }}
                 credits={credits}
                 session={session}

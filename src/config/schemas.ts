@@ -105,17 +105,16 @@ export const tripSchema = z.object({
     tip: z.string()
 });
 
-// Special Analysis: Cherry Blossom
-export const cherrySchema = z.object({
-    places: z.array(z.object({
-        name: z.string(),
-        reason: z.string(),
-        activity: z.string(),
-        address: z.string(),
-        isHiddenGem: z.boolean()
-    })),
-    summary: z.string(),
-    tip: z.string()
+// Special Analysis: KBO Baseball
+export const kboSchema = z.object({
+    score: z.number(),
+    supportedTeamAnalysis: z.string(),
+    bestTeam: z.string(),
+    worstTeam: z.string(),
+    dimensions: z.array(z.object({
+        label: z.string(),
+        value: z.number()
+    }))
 });
 
 // Special Analysis: Trip

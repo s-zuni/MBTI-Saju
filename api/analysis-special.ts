@@ -47,16 +47,15 @@ const schemas: Record<string, any> = {
         bestTime: z.string(),
         tip: z.string()
     }),
-    cherry: z.object({
-        places: z.array(z.object({
-            name: z.string().describe("장소 이름 (잘 알려진 곳 또는 숨겨진 명소)"),
-            reason: z.string().describe("이 장소를 추천하는 이유 (사용자의 사주 오행/MBTI 특성과 연결)"),
-            activity: z.string().describe("장소에서 즐길 수 있는 특별한 활동"),
-            address: z.string().describe("장소의 대략적인 위치"),
-            isHiddenGem: z.boolean().describe("잘 알려지지 않은 숨겨진 명소인지 여부")
-        })).length(3),
-        summary: z.string().describe("사용자의 올해 벚꽃 기운과 장소들에 대한 총괄 요약"),
-        tip: z.string().describe("방문 시 꿀팁 (준비물, 시간대 등)")
+    kbo: z.object({
+        score: z.number().describe("선택한 구단과의 궁합 점수 (0-100), 만약 선택한 구단이 '없음'이라면 가장 잘 맞는 구단과의 점수"),
+        supportedTeamAnalysis: z.string().describe("선택한 응원 구단과의 궁합을 단호하고도 친근한 어조로 최소 700자 이상 냉정하게 평가 및 설명 (글머리표 등 활용)"),
+        bestTeam: z.string().describe("나와 가장 궁합이 잘 맞는 KBO 구단"),
+        worstTeam: z.string().describe("나와 가장 궁합이 안 맞는 KBO 구단"),
+        dimensions: z.array(z.object({
+            label: z.string().describe("평가 척도 이름 (예: 충성도, 승부욕, 멘탈력, 유쾌함, 전략적 사고 등)"),
+            value: z.number().describe("해당 척도의 점수 (0-100)")
+        })).length(5)
     }),
     fortune: z.object({
         today: fortuneItemSchema,
@@ -133,9 +132,12 @@ export default async function handler(req: Request) {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
     } else if (type === 'trip') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
-    } else if (type === 'cherry') {
-        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}, 선호/요청사항: ${requirements || '없음'}. 
-        **반드시 잘 알려진 유명 명소와 잘 알려지지 않은 숨겨진 명소를 골고루 섞어 정확히 3곳을 추천하세요.**`;
+    } else if (type === 'kbo') {
+        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}.
+        현재 응원 구단(또는 선호): ${requirements || '없음'}.
+        위 사용자의 성향을 바탕으로 가장 잘 맞는 KBO 구단과 피해야 할 구단을 분석해 주세요. 
+        만약 사용자가 응원 구단을 입력했다면, 그 구단과의 궁합을 매우 냉정하고 솔직하게, 뼈를 때리듯(팩트 폭격) 분석하되 친근한 어투를 유지해주세요. 
+        분석 내용은 반드시 700자 이상으로 매우 상세하고 깊이 있게 작성해 주세요.`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
