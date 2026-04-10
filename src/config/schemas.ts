@@ -109,6 +109,7 @@ export const tripSchema = z.object({
 export const kboSchema = z.object({
     score: z.number(),
     supportedTeamAnalysis: z.string(),
+    winFairyScore: z.number().describe("나의 기운과 구장 기운의 합을 분석한 승리 요정 지수 (0-100)"),
     bestTeam: z.string(),
     worstTeam: z.string(),
     dimensions: z.array(z.object({

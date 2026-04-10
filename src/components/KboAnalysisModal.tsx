@@ -161,27 +161,43 @@ const KboContent: React.FC<{
                 <div className="space-y-10 animate-fade-up py-4">
                     
                     {/* Score section */}
-                    <section className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                        <h4 className="font-bold text-blue-200 mb-2 uppercase tracking-widest text-xs flex items-center gap-2">
-                            <Sparkles className="w-4 h-4"/> Compatibility Score
-                        </h4>
-                        <div className="flex items-end gap-2 mb-4">
-                            <span className="text-6xl font-black">{result.score || 0}</span>
-                            <span className="text-xl font-medium text-blue-200 mb-2">점</span>
-                        </div>
-                        <p className="font-medium text-blue-100 text-sm leading-relaxed max-w-sm">
-                            {selectedTeam === '없음 (아직 없음)' ? '당신에게 가장 완벽한 짝꿍 구단과의 매칭 점수입니다.' : `현재 응원 중인 [${selectedTeam}] 구단과의 우주적 궁합 점수입니다.`}
-                        </p>
-                    </section>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <section className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <h4 className="font-bold text-blue-200 mb-2 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                                <Sparkles className="w-3 h-3"/> Compatibility Score
+                            </h4>
+                            <div className="flex items-end gap-1 mb-2">
+                                <span className="text-5xl font-black">{result.score || 0}</span>
+                                <span className="text-lg font-medium text-blue-200 mb-1.5">점</span>
+                            </div>
+                            <p className="font-medium text-blue-100 text-[11px] leading-tight opacity-80">
+                                {selectedTeam === '없음 (아직 없음)' ? '최적 매칭 구단 궁합' : `[${selectedTeam}] 구단 궁합`}
+                            </p>
+                        </section>
+
+                        <section className="bg-gradient-to-br from-amber-400 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <h4 className="font-bold text-amber-100 mb-2 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                                <Trophy className="w-3 h-3"/> Winning Fairy Index
+                            </h4>
+                            <div className="flex items-end gap-1 mb-2">
+                                <span className="text-5xl font-black">{result.winFairyScore || 0}</span>
+                                <span className="text-lg font-medium text-amber-100 mb-1.5">점</span>
+                            </div>
+                            <p className="font-medium text-amber-50 text-[11px] leading-tight opacity-80">
+                                내 기운과 구장 에너지의 시너지 점수
+                            </p>
+                        </section>
+                    </div>
 
                     {/* Detailed Analysis */}
                     <section className="bg-slate-50 p-7 sm:p-8 rounded-[32px] border border-slate-100 shadow-sm relative">
                         <h5 className="font-black text-slate-900 mb-6 text-lg tracking-tight border-b border-slate-200 pb-4">
                             팩트 폭격 심층 분석
                         </h5>
-                        <div className="text-slate-700 text-[15px] leading-loose font-medium whitespace-pre-wrap">
-                            {stripMarkdown(result.supportedTeamAnalysis)}
+                        <div className="text-slate-700 text-[15px] leading-[1.8] font-medium whitespace-pre-wrap">
+                            {result.supportedTeamAnalysis}
                         </div>
                     </section>
 

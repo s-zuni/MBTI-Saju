@@ -48,13 +48,14 @@ const schemas: Record<string, any> = {
         tip: z.string()
     }),
     kbo: z.object({
-        score: z.number().describe("선택한 구단과의 궁합 점수 (0-100), 만약 선택한 구단이 '없음'이라면 가장 잘 맞는 구단과의 점수"),
-        supportedTeamAnalysis: z.string().describe("선택한 응원 구단과의 궁합을 단호하고도 친근한 어조로 최소 700자 이상 냉정하게 평가 및 설명 (글머리표 등 활용)"),
+        score: z.number().describe("선택한 구단과의 궁합 점수 (0-100)"),
+        supportedTeamAnalysis: z.string().describe("궁합 분석을 단호하고 친근한 어조로 최소 700자 이상 냉정하게 평가. 반드시 가독성을 위해 단락을 나누고 \\n\\n을 자주 사용하여 줄바꿈을 명확히 할 것."),
+        winFairyScore: z.number().describe("사용자의 기운(사주, MBTI)과 해당 구단 홈 구장의 기운(위치, 역사 등)을 분석해 도출한 승리 요정 지수 (0-100)"),
         bestTeam: z.string().describe("나와 가장 궁합이 잘 맞는 KBO 구단"),
         worstTeam: z.string().describe("나와 가장 궁합이 안 맞는 KBO 구단"),
         dimensions: z.array(z.object({
-            label: z.string().describe("평가 척도 이름 (예: 충성도, 승부욕, 멘탈력, 유쾌함, 전략적 사고 등)"),
-            value: z.number().describe("해당 척도의 점수 (0-100)")
+            label: z.string().describe("평가 척도 이름"),
+            value: z.number().describe("해당 척도 점수 (0-100)")
         })).length(5)
     }),
     fortune: z.object({
@@ -134,10 +135,14 @@ export default async function handler(req: Request) {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'kbo') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}.
-        현재 응원 구단(또는 선호): ${requirements || '없음'}.
-        위 사용자의 성향을 바탕으로 가장 잘 맞는 KBO 구단과 피해야 할 구단을 분석해 주세요. 
-        만약 사용자가 응원 구단을 입력했다면, 그 구단과의 궁합을 매우 냉정하고 솔직하게, 뼈를 때리듯(팩트 폭격) 분석하되 친근한 어투를 유지해주세요. 
-        분석 내용은 반드시 700자 이상으로 매우 상세하고 깊이 있게 작성해 주세요.`;
+        현재 응원 구단: ${requirements || '없음'}.
+        
+        [수행 작업]
+        1. 선택한 구단과의 궁합을 사주/MBTI 관점에서 냉정하고 솔직하게(팩트 폭격) 분석하세요. 
+        2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \\n\\n을 사용하여 줄바꿈을 확실히 하세요. 
+        3. 전체 내용은 공백 포함 700자 이상이어야 합니다.
+        4. 사용자의 기운과 해당 구단의 홈 구장(연고지) 기운을 비교하여 '승리 요정 지수(winFairyScore)'를 0-100 사이로 산출하세요.
+        5. 가장 잘 맞는 구단과 안 맞는 구단을 추천하세요.`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
