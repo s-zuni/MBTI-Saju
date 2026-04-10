@@ -1,13 +1,121 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, TrendingUp, Sparkles, X, Trophy } from 'lucide-react';
-import { stripMarkdown } from '../utils/textUtils';
+import { Loader2, TrendingUp, Sparkles, X, Trophy, Activity, CircleDot } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+
+const BaseballIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 2.5a10 10 0 0 1 0 19" />
+        <path d="M16 2.5a10 10 0 0 0 0 19" />
+    </svg>
+);
+
+const RadarChart = ({ data }: { data: any[] }) => {
+    const cx = 150;
+    const cy = 150;
+    const radius = 100;
+    const total = 5;
+
+    const getPoint = (index: number, val: number, r: number) => {
+        const angle = (index * (360 / total) - 90) * (Math.PI / 180);
+        return {
+            x: cx + r * (val / 100) * Math.cos(angle),
+            y: cy + r * (val / 100) * Math.sin(angle)
+        };
+    };
+
+    const gridPoints = [25, 50, 75, 100].map(level => {
+        return Array.from({ length: total }).map((_, i) => getPoint(i, 100, level * (radius / 100)));
+    });
+
+    const outerGrid = gridPoints[gridPoints.length - 1] || [];
+    const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, data[i]?.value || 0, radius));
+    const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+
+    return (
+        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-3xl border border-slate-100 shadow-sm">
+            <svg viewBox="0 0 300 300" className="w-full max-w-[300px] h-auto overflow-visible">
+                {/* Background Grid */}
+                {gridPoints.map((points, i) => (
+                    <path
+                        key={i}
+                        d={points.map((p, pi) => `${pi === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'}
+                        fill="none"
+                        stroke="#e2e8f0"
+                        strokeWidth="1"
+                        strokeDasharray={i === 3 ? "0" : "4 4"}
+                    />
+                ))}
+                
+                {/* Axes */}
+                {outerGrid.map((p, i) => (
+                    <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />
+                ))}
+
+                {/* Data Area */}
+                <path
+                    d={dataPath}
+                    fill="url(#radarGradient)"
+                    fillOpacity="0.4"
+                    stroke="#4f46e5"
+                    strokeWidth="3"
+                    className="animate-pulse-slow"
+                />
+                <defs>
+                    <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#4f46e5" />
+                        <stop offset="100%" stopColor="#3b82f6" />
+                    </linearGradient>
+                </defs>
+
+                {/* Data points */}
+                {dataPoints.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#4f46e5" stroke="white" strokeWidth="2" />
+                ))}
+
+                {/* Labels */}
+                {outerGrid.map((p, i) => {
+                    const angle = (i * (360 / total) - 90) * (Math.PI / 180);
+                    const labelX = cx + (radius + 40) * Math.cos(angle);
+                    const labelY = cy + (radius + 20) * Math.sin(angle);
+                    
+                    let textAnchor: "start" | "middle" | "end" = "middle";
+                    if (Math.cos(angle) > 0.1) textAnchor = "start";
+                    else if (Math.cos(angle) < -0.1) textAnchor = "end";
+
+                    return (
+                        <g key={i}>
+                            <text
+                                x={labelX}
+                                y={labelY}
+                                textAnchor={textAnchor}
+                                className="text-[12px] font-black fill-slate-900"
+                            >
+                                {data[i]?.label || ''}
+                            </text>
+                            {data[i]?.value !== undefined && (
+                                <text
+                                    x={labelX}
+                                    y={labelY + 14}
+                                    textAnchor={textAnchor}
+                                    className="text-[10px] font-bold fill-indigo-600"
+                                >
+                                    {data[i].value}%
+                                </text>
+                            )}
+                        </g>
+                    );
+                })}
+            </svg>
+        </div>
+    );
+};
 
 interface KboModalProps {
     isOpen: boolean;
@@ -206,22 +314,7 @@ const KboContent: React.FC<{
                         <h5 className="font-black text-slate-900 mb-6 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-indigo-500" /> 성향 파라미터 그래프
                         </h5>
-                        <div className="space-y-5 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            {result.dimensions?.map((dim: any, i: number) => (
-                                <div key={i} className="flex flex-col gap-2">
-                                    <div className="flex justify-between items-center text-sm font-bold text-slate-700">
-                                        <span>{dim.label}</span>
-                                        <span className="text-indigo-600">{dim.value}%</span>
-                                    </div>
-                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shrink-0">
-                                        <div 
-                                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out"
-                                            style={{ width: `${dim.value || 0}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <RadarChart data={result.dimensions || []} />
                     </section>
 
                     {/* Best & Worst Match */}
@@ -294,11 +387,11 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 sm:px-12 pt-10 pb-4 shrink-0">
                     <div className="flex justify-between items-end">
                         <div>
-                            <div className="flex items-center gap-2 text-indigo-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5 border border-indigo-200 bg-white px-2 py-1 rounded-full w-fit">
-                                <Trophy className="w-3 h-3" /> BEST MATCH PREDICTION
+                            <div className="flex items-center gap-2 text-blue-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5 border border-blue-200 bg-white px-2 py-1 rounded-full w-fit">
+                                <BaseballIcon className="w-3 h-3" /> BEST MATCH PREDICTION
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none mt-4">
-                                KBO 프로야구 성향 분석
+                                KBO 팬 궁합
                             </h3>
                         </div>
                     </div>
