@@ -60,9 +60,61 @@ const schemas: Record<string, any> = {
     }),
     fortune: z.object({
         today: fortuneItemSchema,
-        tomorrow: fortuneItemSchema
+        today_date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
+        tomorrow: fortuneItemSchema,
+        tomorrow_date: z.string().describe("내일 날짜 (YYYY-MM-DD)")
     })
 };
+
+const KBO_TEAMS = [
+    'KIA 타이거즈', '삼성 라이온즈', 'LG 트윈스', '두산 베어스', 'SSG 랜더스',
+    'KT 위즈', '한화 이글스', '롯데 자이언츠', 'NC 다이노스', '키움 히어로즈'
+];
+
+function getDeterministicValue(seed: string, offset: number, min: number, max: number) {
+    let hash = 0;
+    const input = seed + offset.toString();
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) - hash) + input.charCodeAt(i);
+        hash |= 0;
+    }
+    const val = Math.abs(hash);
+    return min + (val % (max - min + 1));
+}
+
+function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string) {
+    const mainSeed = `${birthDate}-${mbti}`;
+    
+    // 1. Team rankings based on mainSeed
+    const teamScores = KBO_TEAMS.map(team => ({
+        team,
+        score: getDeterministicValue(mainSeed, team.length + team.charCodeAt(0), 40, 98)
+    })).sort((a, b) => b.score - a.score);
+
+    const bestTeam = teamScores[0]?.team || KBO_TEAMS[0];
+    const worstTeam = teamScores[teamScores.length - 1]?.team || KBO_TEAMS[KBO_TEAMS.length - 1];
+
+    // 2. Specific score for currentTeam
+    const currentTeamScore = teamScores.find(t => t.team === currentTeam)?.score || 50;
+    
+    // 3. Win Fairy Score (User + Stadium synergy)
+    const winFairyScore = getDeterministicValue(mainSeed + currentTeam, 777, 30, 95);
+
+    // 4. Dimensions
+    const dimensionLabels = ['열정 수치', '직관 에너지', '응원 화력', '승리 행운', '팀 로열티'];
+    const dimensions = dimensionLabels.map((label, i) => ({
+        label,
+        value: getDeterministicValue(mainSeed + currentTeam, i + 999, 40, 100)
+    }));
+
+    return {
+        score: currentTeamScore,
+        winFairyScore,
+        bestTeam,
+        worstTeam,
+        dimensions
+    };
+}
 
 export const config = {
     runtime: 'edge',
@@ -117,7 +169,8 @@ export default async function handler(req: Request) {
     2. 답변 내용을 단순한 줄글로 나열하지 말고, 반드시 '글머리표(-)'와 '줄바꿈(\\n)'을 사용하여 시각적 가독성을 극대화하세요.
     3. '오늘의 미션'은 소소하지만 확실한 행복(소확행)이나, 재미있는 챌린지 형태로 제안하여 사용자가 미소 지을 수 있게 하세요 (예: '오늘 점심은 최애 음료 마시기', '거울 보고 윙크 한 번 하기' 등).
     4. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 숫자, 이모지 등을 활용하세요.
-    5. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.`;
+    5. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
+    6. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요 (예: '물 (water)'와 같은 표현 금지). 모든 개념을 한국어로만 설명하세요.`;
 
     let userQuery = '';
 
@@ -134,15 +187,24 @@ export default async function handler(req: Request) {
     } else if (type === 'trip') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'kbo') {
-        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(saju?.elementRatio)}.
+        const kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음');
+        
+        userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}.
         현재 응원 구단: ${requirements || '없음'}.
         
+        [중요: 결과 데이터 필수 준수]
+        아래의 데이터는 사주-MBTI 동기화 엔진을 통해 이미 확정된 결과입니다. JSON 응답 시 반드시 이 값을 사용하세요:
+        - 궁합 점수(score): ${kboFixed.score}
+        - 승리 요정 지수(winFairyScore): ${kboFixed.winFairyScore}
+        - 최강 궁합 구단(bestTeam): ${kboFixed.bestTeam}
+        - 최악 궁합 구단(worstTeam): ${kboFixed.worstTeam}
+        - 성향 파라미터(dimensions): ${JSON.stringify(kboFixed.dimensions)}
+
         [수행 작업]
-        1. 선택한 구단과의 궁합을 사주/MBTI 관점에서 냉정하고 솔직하게(팩트 폭격) 분석하세요. 
+        1. 위에서 확정된 결과를 바탕으로, 왜 이런 점수와 구단 매칭 결과가 나왔는지 사주와 MBTI 관점에서 논리적으로(때로는 팩트 폭격으로) 상세히 분석하세요. 
         2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \\n\\n을 사용하여 줄바꿈을 확실히 하세요. 
         3. 전체 내용은 공백 포함 700자 이상이어야 합니다.
-        4. 사용자의 기운과 해당 구단의 홈 구장(연고지) 기운을 비교하여 '승리 요정 지수(winFairyScore)'를 0-100 사이로 산출하세요.
-        5. 가장 잘 맞는 구단과 안 맞는 구단을 추천하세요.`;
+        4. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];

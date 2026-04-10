@@ -11,7 +11,7 @@ const subCategories = [
     { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true },
     { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false },
     { id: 'naming', img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '행운의 이름 찾기', cost: SERVICE_COSTS.NAMING, userCount: '1,200+', isPopular: false },
-    { id: 'kbo', img: '/assets/icons/3d_trip.png', label: 'KBO 팬 궁합', sub: '사주×야구 궁합', cost: SERVICE_COSTS.KBO, userCount: '1,500+', isPopular: true, isNew: true },
+    { id: 'kbo', img: '/assets/icons/3d_kbo.png', label: 'KBO 팬 궁합', sub: '사주×야구 궁합', cost: SERVICE_COSTS.KBO, userCount: '1,500+', isPopular: true, isNew: true },
     { id: 'relationship', img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', cost: SERVICE_COSTS.RELATIONSHIP_ADD, userCount: '3,300+', isPopular: true },
 ];
 

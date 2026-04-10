@@ -263,12 +263,12 @@ function AppContent({
                               onClick={() => openModal('kbo')}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
-                              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-blue-500">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="M8 2.5a10 10 0 0 1 0 19" />
-                                  <path d="M16 2.5a10 10 0 0 0 0 19" />
-                                </svg>
+                              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors p-2">
+                                <img
+                                  src="/assets/icons/3d_kbo.png"
+                                  alt="KBO"
+                                  className="w-full h-full object-contain drop-shadow-lg"
+                                />
                               </div>
                               <h3 className="text-xl font-bold mb-3 group-hover:text-blue-600 transition-colors">KBO 팬 궁합</h3>
                               <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">MBTI와 사주를 분석해 나와 가장 잘 맞는 KBO 프로야구 구단을 알려드립니다.</p>
