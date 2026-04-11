@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, TrendingUp, Sparkles, X, Trophy } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles, X, Trophy, Share2, Instagram, Download } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
+import { generateImage } from '../utils/exportUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { getTeamInfo } from '../config/teamConfig';
+import KboShareCard from './KboShareCard';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -127,7 +130,7 @@ interface KboModalProps {
 }
 
 const KBO_TEAMS = [
-    '기아 타이거즈',
+    'KIA 타이거즈',
     '삼성 라이온즈',
     'LG 트윈스',
     '두산 베어스',
@@ -149,9 +152,14 @@ const KboContent: React.FC<{
     onClose: () => void;
 }> = ({ onUseCredit, credits, session, onReset, onNavigate, onClose }) => {
     const reportRef = useRef<HTMLDivElement>(null);
+    const shareRef = useRef<HTMLDivElement>(null);
+    const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [hasStarted, setHasStarted] = useState(false);
+
+    const teamInfo = selectedTeam ? getTeamInfo(selectedTeam) : null;
+    const userName = session?.user?.user_metadata?.full_name || '사용자';
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
@@ -218,32 +226,54 @@ const KboContent: React.FC<{
         }
     };
 
+    const handleShareInstagram = async () => {
+        if (!shareRef.current || !result) return;
+        setIsSharing(true);
+        try {
+            const fileName = `MBTIJU_KBO_Story_${new Date().getTime()}`;
+            await generateImage(shareRef.current, fileName);
+            alert('인스타그램 스토리용 이미지가 다운로드되었습니다. 인스타그램에 접속하여 공유해보세요!');
+        } catch (err) {
+            alert('이미지 생성 중 오류가 발생했습니다.');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     if (!hasStarted) {
         return (
             <div className="px-8 sm:px-12 pb-12 pt-8 overflow-y-auto custom-scrollbar grow bg-white">
                 <div className="max-w-md mx-auto">
                     <h4 className="text-xl font-black text-slate-900 mb-6 text-center tracking-tight">당신의 현재 응원 구단을 알려주세요</h4>
                     <div className="grid grid-cols-2 gap-3 mb-8">
-                        {KBO_TEAMS.map((team) => (
-                            <button
-                                key={team}
-                                onClick={() => { setError(null); setSelectedTeam(team); }}
-                                className={`px-4 py-3 rounded-2xl text-sm font-bold border-2 transition-all ${
-                                    selectedTeam === team
-                                    ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-md'
-                                    : 'bg-white border-slate-100 text-slate-600 flex-1 hover:border-blue-200'
-                                }`}
-                            >
-                                {team}
-                            </button>
-                        ))}
+                        {KBO_TEAMS.map((team) => {
+                            const info = getTeamInfo(team);
+                            return (
+                                <button
+                                    key={team}
+                                    onClick={() => { setError(null); setSelectedTeam(team); }}
+                                    className={`px-4 py-4 rounded-2xl text-sm font-bold border-2 transition-all flex flex-col items-center gap-2 ${
+                                        selectedTeam === team
+                                        ? 'bg-slate-900 border-slate-900 text-white shadow-xl scale-[1.02]'
+                                        : 'bg-white border-slate-100 text-slate-600 hover:border-slate-300'
+                                    }`}
+                                >
+                                    {info?.logo && (
+                                        <div className={`w-10 h-10 rounded-lg p-1 ${selectedTeam === team ? 'bg-white' : 'bg-slate-50'}`}>
+                                            <img src={info.logo} alt={team} className="w-full h-full object-contain" />
+                                        </div>
+                                    )}
+                                    {team}
+                                </button>
+                            );
+                        })}
                     </div>
                     {error && (
                         <p className="text-red-500 text-center font-bold text-sm mb-4">{error}</p>
                     )}
                     <button
                         onClick={startAnalysis}
-                        className="w-full py-4 bg-slate-950 text-white rounded-full font-black flex justify-center items-center gap-2 hover:bg-slate-800 transition-colors shadow-xl shadow-slate-200"
+                        className="w-full py-5 bg-slate-950 text-white rounded-full font-black flex justify-center items-center gap-2 hover:bg-slate-800 transition-all shadow-2xl hover:scale-[1.01] active:scale-95"
                     >
                         <Trophy className="w-5 h-5" /> 5 크레딧으로 분석 시작
                     </button>
@@ -254,11 +284,23 @@ const KboContent: React.FC<{
 
     return (
         <div className="px-5 sm:px-10 pb-12 pt-6 overflow-y-auto custom-scrollbar grow bg-white">
+            {/* HIDDEN SHARE CARD FOR CAPTURE */}
+            <div className="fixed left-[-9999px] top-[-9999px]">
+                 {result && (
+                    <KboShareCard 
+                        ref={shareRef}
+                        result={result}
+                        selectedTeam={selectedTeam || ''}
+                        userName={userName}
+                    />
+                 )}
+            </div>
+
             <div ref={reportRef} className="bg-white">
             {isLoading && !result ? (
                 <div className="flex flex-col justify-center items-center h-80">
                     <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6 stroke-[1px]" />
-                        <p className="text-blue-600 font-bold text-[10px] tracking-[0.3em] uppercase">나와의 데스티니 구단 찾는 중...</p>
+                    <p className="text-blue-600 font-black text-[10px] tracking-[0.3em] uppercase">나와의 데스티니 구단 찾는 중...</p>
                 </div>
             ) : error ? (
                 <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
@@ -270,77 +312,115 @@ const KboContent: React.FC<{
                     
                     {/* Score section */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <section className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                            <h4 className="font-black text-blue-100 mb-4 tracking-tight text-lg flex items-center gap-2">
-                                <Sparkles className="w-5 h-5"/> {selectedTeam === '없음 (아직 없음)' ? '최적 매칭 구단' : `[${selectedTeam}]`} 궁합
-                            </h4>
-                            <div className="flex items-end gap-1">
-                                <span className="text-6xl font-black">{result.score || 0}</span>
-                                <span className="text-xl font-bold text-blue-200 mb-2">점</span>
+                        <section 
+                            className="rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]"
+                            style={{ background: teamInfo ? `linear-gradient(135deg, ${teamInfo.primaryColor} 0%, ${teamInfo.secondaryColor} 100%)` : 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)' }}
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-4">
+                                    {teamInfo?.logo && (
+                                        <div className="w-10 h-10 bg-white rounded-lg p-1.5 shadow-lg">
+                                            <img src={teamInfo.logo} alt={selectedTeam || ''} className="w-full h-full object-contain" />
+                                        </div>
+                                    )}
+                                    <h4 className="font-black text-white/90 tracking-tight text-lg">
+                                        {selectedTeam === '없음 (아직 없음)' ? '최적 매칭 구단' : `[${selectedTeam}]`} 궁합
+                                    </h4>
+                                </div>
+                                <div className="flex items-end gap-1">
+                                    <span className="text-7xl font-black tracking-tighter">{result.score || 0}</span>
+                                    <span className="text-2xl font-bold text-white/70 mb-2">점</span>
+                                </div>
                             </div>
                         </section>
 
-                        <section className="bg-gradient-to-br from-amber-400 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                            <h4 className="font-black text-amber-50 mb-4 tracking-tight text-lg flex items-center gap-2">
-                                <Trophy className="w-5 h-5"/> 승리 요정 지수
-                            </h4>
-                            <div className="flex items-end gap-1">
-                                <span className="text-6xl font-black">{result.winFairyScore || 0}</span>
-                                <span className="text-xl font-bold text-amber-100 mb-2">점</span>
+                        <section className="bg-gradient-to-br from-amber-400 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10">
+                                <h4 className="font-black text-amber-50 mb-4 tracking-tight text-lg flex items-center gap-2">
+                                    <Trophy className="w-5 h-5"/> 승리 요정 지수
+                                </h4>
+                                <div className="flex items-end gap-1">
+                                    <span className="text-7xl font-black tracking-tighter">{result.winFairyScore || 0}</span>
+                                    <span className="text-2xl font-bold text-amber-100 mb-2">점</span>
+                                </div>
                             </div>
                         </section>
                     </div>
 
                     {/* Detailed Analysis */}
-                    <section className="bg-slate-50 p-7 sm:p-8 rounded-[32px] border border-slate-100 shadow-sm relative">
-                        <h5 className="font-black text-slate-900 mb-6 text-lg tracking-tight border-b border-slate-200 pb-4">
-                            팩트 폭격 심층 분석
+                    <section className="bg-slate-50 p-7 sm:p-10 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                            <Sparkles className="w-32 h-32 text-slate-900" />
+                        </div>
+                        <h5 className="font-black text-slate-900 mb-8 text-xl tracking-tight border-b-2 border-slate-200 pb-5 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-indigo-500" /> 팩트 폭격 심층 분석
                         </h5>
-                        <div className="text-slate-700 text-[15px] leading-[1.8] font-medium whitespace-pre-wrap">
+                        <div className="text-slate-700 text-[16px] leading-[1.9] font-medium whitespace-pre-wrap">
                             {result.supportedTeamAnalysis}
                         </div>
                     </section>
 
                     {/* Infographic 5 Dimensions */}
                     <section className="pt-4">
-                        <h5 className="font-black text-slate-900 mb-6 flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-indigo-500" /> 성향 파라미터 그래프
-                        </h5>
+                        <div className="flex items-center justify-between mb-8">
+                            <h5 className="font-black text-slate-900 text-lg flex items-center gap-2">
+                                <TrendingUp className="w-6 h-6 text-indigo-500" /> 성향 파라미터 그래프
+                            </h5>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DNA Analysis</span>
+                        </div>
                         <RadarChart data={result.dimensions || []} />
                     </section>
 
                     {/* Best & Worst Match */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-6 bg-emerald-50 rounded-[28px] border border-emerald-100">
-                            <div className="text-emerald-700 font-bold text-[10px] uppercase tracking-widest mb-1">Soulmate</div>
-                            <h5 className="font-black text-emerald-900 text-lg mb-2">최강 궁합 구단</h5>
-                            <p className="text-emerald-800 font-bold flex items-center gap-2">
-                                <Trophy className="w-4 h-4" /> {result.bestTeam}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-8 bg-emerald-50 rounded-[32px] border border-emerald-100 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
+                                <Trophy className="w-16 h-16 text-emerald-600" />
+                            </div>
+                            <div className="text-emerald-700 font-black text-[10px] uppercase tracking-widest mb-2">Soulmate Team</div>
+                            <h5 className="font-black text-emerald-900 text-xl mb-3">최강 궁합 구단</h5>
+                            <p className="text-emerald-800 font-black text-2xl flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-emerald-500" /> {result.bestTeam}
                             </p>
                         </div>
-                        <div className="p-6 bg-rose-50 rounded-[28px] border border-rose-100">
-                            <div className="text-rose-700 font-bold text-[10px] uppercase tracking-widest mb-1">Mismatch</div>
-                            <h5 className="font-black text-rose-900 text-lg mb-2">최악 궁합 구단</h5>
-                            <p className="text-rose-800 font-bold flex items-center gap-2">
-                                <X className="w-4 h-4" /> {result.worstTeam}
+                        <div className="p-8 bg-rose-50 rounded-[32px] border border-rose-100 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
+                                <X className="w-16 h-16 text-rose-600" />
+                            </div>
+                            <div className="text-rose-700 font-black text-[10px] uppercase tracking-widest mb-2">Mismatch Team</div>
+                            <h5 className="font-black text-rose-900 text-xl mb-3">최악 궁합 구단</h5>
+                            <p className="text-rose-800 font-black text-2xl flex items-center gap-2">
+                                <X className="w-6 h-6 text-rose-500" /> {result.worstTeam}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-center pt-8 border-t border-slate-100 gap-4 mt-8">
-                        <button
-                            onClick={handleDownloadPDF}
-                            className="px-10 py-5 bg-slate-950 text-white rounded-full text-md font-black shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3"
-                        >
-                            <TrendingUp className="w-5 h-5" /> 결과 리포트 다운로드
-                        </button>
+                    {/* Action Buttons */}
+                    <div className="flex flex-col items-center pt-12 border-t border-slate-100 gap-6 mt-12 bg-slate-50/50 rounded-[40px] p-8">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
+                            <button
+                                onClick={handleShareInstagram}
+                                disabled={isSharing}
+                                className="flex-1 w-full px-8 py-5 bg-gradient-to-br from-purple-600 to-rose-500 text-white rounded-2xl text-md font-black shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                인스타 스토리 공유
+                            </button>
+                            <button
+                                onClick={handleDownloadPDF}
+                                className="flex-1 w-full px-8 py-5 bg-slate-900 text-white rounded-2xl text-md font-black shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                            >
+                                <Download className="w-5 h-5" /> 리포트 다운로드
+                            </button>
+                        </div>
+                        
                         <button
                             onClick={() => { setHasStarted(false); onReset(); }}
-                            className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"
+                            className="flex items-center gap-2 text-slate-400 text-sm font-bold hover:text-slate-950 transition-colors py-2 px-4 rounded-full border border-transparent hover:border-slate-200"
                         >
-                            다른 구단 다시 선택하기
+                            <Share2 className="w-4 h-4" /> 다른 구단 결과 확인하기
                         </button>
                     </div>
                 </div>
@@ -355,7 +435,7 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
 
     useEffect(() => {
         if (isOpen) {
-            setResetKey(prev => prev + 1);
+            setResetKey((prev: number) => prev + 1);
         }
     }, [isOpen]);
 
@@ -394,7 +474,7 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
 
                 <KboContent 
                     key={resetKey}
-                    onReset={() => setResetKey(prev => prev + 1)}
+                    onReset={() => setResetKey((prev: number) => prev + 1)}
                     onUseCredit={onUseCredit}
                     credits={credits}
                     session={session}
