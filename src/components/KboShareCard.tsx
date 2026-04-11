@@ -1,6 +1,6 @@
 import React from 'react';
 import { getTeamInfo } from '../config/teamConfig';
-import { Sparkles, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingUp, Trophy, Star } from 'lucide-react';
 
 interface KboShareCardProps {
     result: any;
@@ -11,45 +11,99 @@ interface KboShareCardProps {
 const RadarChartSmall = ({ data, color }: { data: any[], color: string }) => {
     const cx = 100;
     const cy = 100;
-    const radius = 60;
+    const radius = 65;
     const total = 5;
 
     const getPoint = (index: number, val: number, r: number) => {
-        const angle = (index * (360 / total) - 90) * (Math.PI / 180);
+        const MathPI = Math.PI;
+        // Start from top (-90 degrees)
+        const angle = (index * (360 / total) - 90) * (MathPI / 180);
         return {
             x: cx + r * (val / 100) * Math.cos(angle),
             y: cy + r * (val / 100) * Math.sin(angle)
         };
     };
 
-    const gridPoints = [50, 100].map(level => {
+    const gridPoints = [20, 40, 60, 80, 100].map(level => {
         return Array.from({ length: total }).map((_, i) => getPoint(i, 100, level * (radius / 100)));
     });
 
-    const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, data[i]?.value || 0, radius));
+    // Provide default fallback data if empty
+    const renderData = data && data.length === 5 ? data : [
+        { name: '열정', value: 80 },
+        { name: '분석', value: 70 },
+        { name: '직관', value: 90 },
+        { name: '안정', value: 60 },
+        { name: '협동', value: 85 }
+    ];
+
+    const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, renderData[i]?.value || 0, radius));
     const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+    
+    // Labels for each corner
+    const labels = ["Passion", "Logic", "Vibe", "Steady", "Team"];
+    const labelPoints = Array.from({ length: total }).map((_, i) => getPoint(i, 100, radius + 25));
 
     return (
-        <div className="relative flex items-center justify-center">
-            <svg viewBox="0 0 200 200" className="w-full h-auto overflow-visible">
+        <div className="relative flex items-center justify-center w-full h-full">
+            <svg viewBox="0 0 200 200" className="w-[120%] h-[120%] overflow-visible">
+                <defs>
+                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={color} stopOpacity="0.8" />
+                        <stop offset="100%" stopColor={color} stopOpacity="0.1" />
+                    </linearGradient>
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                </defs>
+                {/* Background grids */}
                 {gridPoints.map((points, i) => (
                     <path
                         key={i}
                         d={points.map((p, pi) => `${pi === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'}
-                        fill="none"
-                        stroke="rgba(255,255,255,0.2)"
+                        fill={i === 4 ? 'rgba(255,255,255,0.02)' : 'none'}
+                        stroke="rgba(255,255,255,0.15)"
                         strokeWidth="1"
                     />
                 ))}
+                
+                {/* Axes */}
+                {Array.from({ length: total }).map((_, i) => {
+                    const outer = getPoint(i, 100, radius);
+                    return <line key={`axis-${i}`} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="2 2" />
+                })}
+
+                {/* Data blob */}
                 <path
                     d={dataPath}
-                    fill={color}
-                    fillOpacity="0.4"
+                    fill="url(#chartGradient)"
                     stroke={color}
-                    strokeWidth="2"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    filter="url(#glow)"
                 />
+                
+                {/* Points */}
                 {dataPoints.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} stroke="white" strokeWidth="1.5" />
+                    <circle key={i} cx={p.x} cy={p.y} r="3" fill="#fff" stroke={color} strokeWidth="2" />
+                ))}
+
+                {/* Labels */}
+                {labelPoints.map((p, i) => (
+                    <text 
+                        key={`label-${i}`} 
+                        x={p.x} 
+                        y={p.y + 4} 
+                        fill="rgba(255,255,255,0.9)" 
+                        fontSize="9" 
+                        fontWeight="900" 
+                        letterSpacing="1"
+                        textAnchor="middle"
+                        className="uppercase opacity-80"
+                    >
+                        {labels[i]}
+                    </text>
                 ))}
             </svg>
         </div>
@@ -64,129 +118,136 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
     return (
         <div 
             ref={ref}
-            className="w-[1080px] h-[1920px] bg-slate-950 flex flex-col relative overflow-hidden font-sans"
+            className="w-[1080px] h-[1920px] bg-black flex flex-col relative overflow-hidden font-sans"
             style={{ 
-                background: `linear-gradient(165deg, ${secondaryColor} 0%, #000000 100%)` 
+                background: `linear-gradient(145deg, #050505 0%, ${secondaryColor}66 50%, #000000 100%)` 
             }}
         >
-            {/* High-End Decorative Background Elements */}
+            {/* Soft Orbs for background depth */}
             <div 
-                className="absolute top-[-10%] right-[-10%] w-[1200px] h-[1200px] rounded-full blur-[180px] opacity-20"
+                className="absolute top-[-15%] right-[-20%] w-[1000px] h-[1000px] rounded-full blur-[100px] opacity-40 mix-blend-screen"
                 style={{ background: `radial-gradient(circle, ${primaryColor} 0%, transparent 70%)` }}
-            ></div>
+            />
             <div 
-                className="absolute bottom-[-5%] left-[-10%] w-[900px] h-[900px] rounded-full blur-[150px] opacity-15"
+                className="absolute bottom-[-10%] left-[-20%] w-[1200px] h-[1200px] rounded-full blur-[120px] opacity-20 mix-blend-screen"
                 style={{ background: `radial-gradient(circle, ${primaryColor} 0%, transparent 70%)` }}
-            ></div>
+            />
             
-            {/* Glassmorphism Grain Overlay */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/carbon-fibre.png")' }}></div>
+            {/* Grid Pattern Overlay to make it look premium/techy */}
+            <div className="absolute inset-0 opacity-[0.05]" 
+                 style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
+            />
 
-            <div className="flex-1 flex flex-col px-12 pt-24 pb-16 z-10 relative">
-                {/* Header Section */}
-                <div className="flex flex-col items-center mb-16 px-4">
-                    <div className="flex items-center gap-4 px-8 py-3 bg-white/5 backdrop-blur-2xl rounded-full border border-white/10 mb-10 shadow-[0_0_40px_rgba(255,255,255,0.05)]">
-                        <Sparkles className="w-8 h-8 text-white animate-pulse" />
-                        <span className="text-white font-black tracking-[0.4em] text-2xl uppercase">KBO Destiny Analysis</span>
+            {/* Top Navigation / Brand Header */}
+            <div className="absolute top-20 left-0 right-0 px-20 flex justify-between items-center z-20">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center backdrop-blur-xl">
+                        <span className="text-white font-black text-3xl tracking-tighter">M</span>
                     </div>
-                    
-                    <div className="relative mb-12">
-                        <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-75 animate-pulse"></div>
-                        <img src="/assets/icons/3d_kbo.png" alt="KBO" className="w-56 h-56 relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
-                    </div>
+                    <span className="text-white text-2xl font-black tracking-[0.2em] uppercase">MBTIJU.COM</span>
+                </div>
+                <div className="px-6 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-2xl">
+                    <span className="text-white text-xl tracking-[0.15em] font-medium uppercase block">Season 2026 Analysis</span>
+                </div>
+            </div>
 
-                    <h1 className="text-8xl font-black text-white text-center tracking-tighter leading-none italic">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
-                            {userName}님의<br />운명적 구단
+            <div className="flex-1 flex flex-col px-20 pt-56 pb-20 z-10 relative">
+                
+                {/* Title Area */}
+                <div className="flex flex-col mb-16">
+                    <div className="inline-flex items-center gap-4 mb-6">
+                        <Sparkles className="w-10 h-10 text-amber-300" fill="currentColor" />
+                        <span className="text-3xl text-amber-300 font-bold tracking-[0.3em]">PERFECT MATCH</span>
+                    </div>
+                    <h1 className="text-[7.5rem] font-black text-white tracking-tight leading-[1.05] drop-shadow-2xl">
+                        {userName}님의 운명은<br/>
+                        <span style={{ color: primaryColor }} className="brightness-150 inline-block mt-4">
+                             {teamInfo?.name || selectedTeam}
                         </span>
                     </h1>
                 </div>
 
-                {/* Main Content Card - Premium Glassmorphism */}
-                <div className="bg-white/95 backdrop-blur-3xl rounded-[100px] p-16 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col grow relative overflow-hidden border border-white/20">
-                    <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
+                {/* Main Content Glass Card */}
+                <div className="bg-[#111111]/70 backdrop-blur-2xl rounded-[70px] p-14 flex flex-col grow relative border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 overflow-hidden">
                     
-                    {/* Team Profile Header */}
-                    <div className="flex items-center gap-10 mb-16">
+                    {/* Top Section - Logo & Badge */}
+                    <div className="flex justify-between items-center mb-16">
                         {teamInfo && (
-                            <div className="w-48 h-48 bg-slate-50 rounded-[40px] p-6 flex items-center justify-center shadow-[inset_0_4px_12px_rgba(0,0,0,0.05)] border border-slate-100">
+                            <div className="w-64 h-64 bg-white rounded-full p-10 flex items-center justify-center border-4 border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.4)] z-10 relative shrink-0">
+                                {/* Subtle internal glow */}
+                                <div className="absolute inset-0 rounded-full blur-xl opacity-30" style={{ background: primaryColor }} />
                                 <img 
                                     src={teamInfo.logo} 
                                     alt={teamInfo.name} 
                                     crossOrigin="anonymous"
-                                    className="w-full h-full object-contain" 
+                                    className="w-full h-full object-contain relative z-10 scale-110 drop-shadow-xl" 
                                 />
                             </div>
                         )}
-                        <div className="flex-1">
-                            <h2 className="text-7xl font-black text-slate-950 mb-4 tracking-tighter">{teamInfo?.name || selectedTeam}</h2>
-                            <div className="flex items-center gap-4">
-                                <span 
-                                    className="px-6 py-2 text-white rounded-2xl text-2xl font-black uppercase tracking-widest shadow-lg"
-                                    style={{ background: primaryColor }}
-                                >
-                                    FATED MATCH
-                                </span>
+                        <div className="flex flex-col items-end gap-3 justify-center ml-10">
+                            <div className="px-10 py-4 rounded-full text-3xl font-black uppercase tracking-widest text-[#1a1a1a] shadow-lg" style={{ background: 'linear-gradient(135deg, #FFD700, #FDB931)' }}>
+                                S CLASS RANK
                             </div>
+                            <span className="text-white/60 text-2xl tracking-[0.2em] font-medium mt-2 text-right">OPTIMAL SYNERGY MATCH FOUND</span>
                         </div>
                     </div>
 
-                    {/* Scores Section */}
-                    <div className="grid grid-cols-2 gap-10 mb-16">
-                        <div className="flex flex-col items-center p-12 bg-slate-50 rounded-[70px] border border-slate-100/50 shadow-sm grow relative group">
-                            <span className="text-2xl font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Harmony</span>
-                            <div className="flex items-end gap-2">
-                                <span 
-                                    className="text-[12rem] font-black leading-none tracking-tighter"
-                                    style={{ color: primaryColor }}
-                                >
+                    {/* Score Cards */}
+                    <div className="grid grid-cols-2 gap-10 mb-14">
+                        {/* Harmony Score */}
+                        <div className="bg-[#1a1a1a]/80 rounded-[48px] p-12 border border-white/5 relative overflow-hidden group shadow-inner">
+                            <div className="absolute top-0 left-0 w-full h-2" style={{ background: primaryColor }} />
+                            <div className="flex justify-between items-center mb-8">
+                                <span className="text-3xl font-black text-white/50 uppercase tracking-[0.1em]">Harmony</span>
+                                <Trophy className="w-10 h-10 text-white/20" />
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-9xl font-black text-white tracking-tighter" style={{ textShadow: `0 0 50px ${primaryColor}99` }}>
                                     {result.score}
                                 </span>
-                                <span className="text-5xl font-bold text-slate-300 mb-6">%</span>
+                                <span className="text-5xl text-white/60 font-bold">%</span>
                             </div>
+                            <p className="mt-6 text-white/40 text-2xl font-medium tracking-wide">팀과의 완벽한 화합 지수</p>
                         </div>
-                        <div className="flex flex-col items-center p-12 bg-amber-50/50 rounded-[70px] border border-amber-100/50 shadow-sm grow">
-                            <span className="text-2xl font-black text-amber-500/60 uppercase tracking-[0.2em] mb-4">Win Fairy</span>
-                            <div className="flex items-end gap-2">
-                                <span className="text-[12rem] font-black text-amber-600 leading-none tracking-tighter">{result.winFairyScore}</span>
-                                <span className="text-5xl font-bold text-amber-400 mb-6">%</span>
+                        
+                        {/* Win Fairy Score */}
+                        <div className="bg-[#1a1a1a]/80 rounded-[48px] p-12 border border-white/5 relative overflow-hidden shadow-inner">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-amber-400" />
+                            <div className="flex justify-between items-center mb-8">
+                                <span className="text-3xl font-black text-white/50 uppercase tracking-[0.1em]">Win Fairy</span>
+                                <Star className="w-10 h-10 text-amber-400/30" />
                             </div>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-9xl font-black text-white tracking-tighter drop-shadow-[0_0_50px_rgba(251,191,36,0.3)]">
+                                    {result.winFairyScore}
+                                </span>
+                                <span className="text-5xl text-white/60 font-bold">%</span>
+                            </div>
+                            <p className="mt-6 text-white/40 text-2xl font-medium tracking-wide">승리의 요정이 될 확률</p>
                         </div>
                     </div>
 
-                    {/* Radar Chart Section */}
-                    <div className="flex flex-col grow justify-center items-center border-t border-slate-100/50 pt-10">
-                         <div className="flex items-center gap-4 mb-10">
-                            <TrendingUp className="w-16 h-16 text-indigo-500" />
-                            <h3 className="text-5xl font-black text-slate-900 tracking-tight">Personal DNA Cluster</h3>
+                    {/* Radar Chart Area */}
+                    <div className="flex-1 bg-white/5 rounded-[48px] border border-white/5 p-12 flex flex-col items-center justify-center relative">
+                        <div className="absolute top-12 left-12 flex items-center gap-4">
+                            <TrendingUp className="w-8 h-8 text-white/50" />
+                            <span className="text-white/40 text-2xl font-black tracking-[0.2em] uppercase">DNA Signature</span>
                         </div>
-                        <div className="w-[750px] transform scale-110">
+                        <div className="w-[500px] h-[500px] mt-10">
                             <RadarChartSmall data={result.dimensions || []} color={primaryColor} />
                         </div>
                     </div>
-
-                    <div className="mt-16 text-center">
-                        <p className="text-4xl text-slate-400 font-bold italic tracking-tight opacity-60 line-clamp-1">
-                            "AI Saju Analysis Engine v3.0 Powered"
-                        </p>
-                    </div>
                 </div>
 
-                {/* Footer Section */}
-                <div className="mt-16 flex justify-between items-center px-8 border-t border-white/10 pt-10">
-                    <div className="flex items-center gap-4">
-                         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
-                            <Sparkles className="w-10 h-10 text-slate-950" />
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="text-4xl font-black text-white tracking-tight">MBTIJU.COM</span>
-                            <span className="text-xl font-bold text-white/40 uppercase tracking-widest">Fortune Tech</span>
-                         </div>
-                    </div>
-                    <div className="text-white/30 text-right">
-                        <p className="text-2xl font-bold">2026 Season Official</p>
-                        <p className="text-lg opacity-60">Verified by DNA Engine</p>
-                    </div>
+                {/* Footer Bottom */}
+                <div className="mt-20 flex justify-between items-center z-10 px-6">
+                    <p className="text-3xl text-white/60 font-bold tracking-widest flex items-center gap-4">
+                        <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
+                        AI 분석 완료
+                    </p>
+                    <p className="text-2xl text-white/40 font-bold tracking-[0.2em]">
+                        MBTIJU.COM
+                    </p>
                 </div>
             </div>
         </div>
@@ -194,3 +255,4 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
 });
 
 export default KboShareCard;
+
