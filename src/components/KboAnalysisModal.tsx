@@ -260,7 +260,7 @@ const KboContent: React.FC<{
                                 >
                                     {info?.logo && (
                                         <div className={`w-10 h-10 rounded-lg p-1 ${selectedTeam === team ? 'bg-white' : 'bg-slate-50'}`}>
-                                            <img src={info.logo} alt={team} className="w-full h-full object-contain" />
+                                            <img src={info.logo} alt={team} crossOrigin="anonymous" className="w-full h-full object-contain" />
                                         </div>
                                     )}
                                     {team}
@@ -321,7 +321,7 @@ const KboContent: React.FC<{
                                 <div className="flex items-center gap-3 mb-4">
                                     {teamInfo?.logo && (
                                         <div className="w-10 h-10 bg-white rounded-lg p-1.5 shadow-lg">
-                                            <img src={teamInfo.logo} alt={selectedTeam || ''} className="w-full h-full object-contain" />
+                                            <img src={teamInfo.logo} alt={selectedTeam || ''} crossOrigin="anonymous" className="w-full h-full object-contain" />
                                         </div>
                                     )}
                                     <h4 className="font-black text-white/90 tracking-tight text-lg">

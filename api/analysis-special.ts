@@ -49,7 +49,7 @@ const schemas: Record<string, any> = {
     }),
     kbo: z.object({
         score: z.number().describe("선택한 구단과의 궁합 점수 (0-100)"),
-        supportedTeamAnalysis: z.string().describe("궁합 분석을 단호하고 친근한 어조로 최소 700자 이상 냉정하게 평가. 반드시 가독성을 위해 단락을 나누고 \\n\\n을 자주 사용하여 줄바꿈을 명확히 할 것."),
+        supportedTeamAnalysis: z.string().describe("궁합 분석을 단호하고 친근한 어조로 약 400-500자 내외로 냉정하게 평가. 반드시 가독성을 위해 단락을 나누고 \\n\\n을 자주 사용하여 줄바꿈을 명확히 할 것."),
         winFairyScore: z.number().describe("사용자의 기운(사주, MBTI)과 해당 구단 홈 구장의 기운(위치, 역사 등)을 분석해 도출한 승리 요정 지수 (0-100)"),
         bestTeam: z.string().describe("나와 가장 궁합이 잘 맞는 KBO 구단"),
         worstTeam: z.string().describe("나와 가장 궁합이 안 맞는 KBO 구단"),
@@ -203,7 +203,7 @@ export default async function handler(req: Request) {
         [수행 작업]
         1. 위에서 확정된 결과를 바탕으로, 왜 이런 점수와 구단 매칭 결과가 나왔는지 사주와 MBTI 관점에서 논리적으로(때로는 팩트 폭격으로) 상세히 분석하세요. 
         2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \\n\\n을 사용하여 줄바꿈을 확실히 하세요. 
-        3. 전체 내용은 공백 포함 700자 이상이어야 합니다.
+        3. 전체 내용은 공백 포함 400-500자 내외여야 합니다.
         4. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';

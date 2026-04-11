@@ -93,7 +93,7 @@ export const TEAM_CONFIG: Record<string, TeamInfo> = {
     '키움 히어로즈': {
         name: '키움 히어로즈',
         id: 'kiwoom',
-        logo: `${STORAGE_URL}/wordmark.jpg`,
+        logo: `${STORAGE_URL}/kiwoom.png`, // Adjusted based on common patterns
         primaryColor: '#820024',
         secondaryColor: '#FFFFFF',
         textColor: '#FFFFFF'
