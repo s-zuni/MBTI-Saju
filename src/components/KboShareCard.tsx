@@ -1,6 +1,6 @@
 import React from 'react';
 import { getTeamInfo } from '../config/teamConfig';
-import { Sparkles, Trophy, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingUp } from 'lucide-react';
 
 interface KboShareCardProps {
     result: any;

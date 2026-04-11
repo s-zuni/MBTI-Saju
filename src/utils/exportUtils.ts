@@ -8,9 +8,6 @@ import html2canvas from 'html2canvas';
  */
 export const generateImage = async (element: HTMLElement, fileName: string, scale: number = 3) => {
     try {
-        // 스타일 강제 적용 (캡처 시점에만)
-        const originalStyle = element.getAttribute('style') || '';
-        
         const canvas = await html2canvas(element, {
             scale: scale,
             useCORS: true,
