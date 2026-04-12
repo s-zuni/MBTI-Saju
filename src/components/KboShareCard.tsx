@@ -11,7 +11,7 @@ interface KboShareCardProps {
 const RadarChartSmall = ({ data, color }: { data: any[], color: string }) => {
     const cx = 100;
     const cy = 100;
-    const radius = 65;
+    const radius = 60;
     const total = 5;
 
     const getPoint = (index: number, val: number, r: number) => {
@@ -30,18 +30,18 @@ const RadarChartSmall = ({ data, color }: { data: any[], color: string }) => {
 
     // Provide default fallback data if empty
     const renderData = data && data.length === 5 ? data : [
-        { name: '열정', value: 80 },
-        { name: '분석', value: 70 },
-        { name: '직관', value: 90 },
-        { name: '안정', value: 60 },
-        { name: '협동', value: 85 }
+        { label: '열정', value: 80 },
+        { label: '분석', value: 70 },
+        { label: '직관', value: 90 },
+        { label: '안정', value: 60 },
+        { label: '협동', value: 85 }
     ];
 
     const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, renderData[i]?.value || 0, radius));
     const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
     
     // Labels for each corner
-    const labels = ["Passion", "Logic", "Vibe", "Steady", "Team"];
+    const defaultLabels = ["열정", "분석", "직관", "안정", "협동"];
     const labelPoints = Array.from({ length: total }).map((_, i) => getPoint(i, 100, radius + 25));
 
     return (
@@ -90,21 +90,24 @@ const RadarChartSmall = ({ data, color }: { data: any[], color: string }) => {
                 ))}
 
                 {/* Labels */}
-                {labelPoints.map((p, i) => (
-                    <text 
-                        key={`label-${i}`} 
-                        x={p.x} 
-                        y={p.y + 4} 
-                        fill="rgba(255,255,255,0.9)" 
-                        fontSize="9" 
-                        fontWeight="900" 
-                        letterSpacing="1"
-                        textAnchor="middle"
-                        className="uppercase opacity-80"
-                    >
-                        {labels[i]}
-                    </text>
-                ))}
+                {labelPoints.map((p, i) => {
+                    const labelText = renderData[i]?.label || defaultLabels[i];
+                    return (
+                        <text 
+                            key={`label-${i}`} 
+                            x={p.x} 
+                            y={p.y + 4} 
+                            fill="rgba(255,255,255,1)" 
+                            fontSize="11" 
+                            fontWeight="900" 
+                            letterSpacing="1"
+                            textAnchor="middle"
+                            className="drop-shadow-md"
+                        >
+                            {labelText}
+                        </text>
+                    );
+                })}
             </svg>
         </div>
     );
@@ -139,41 +142,41 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
             />
 
             {/* Top Navigation / Brand Header */}
-            <div className="absolute top-20 left-0 right-0 px-20 flex justify-between items-center z-20">
+            <div className="absolute top-20 left-0 right-0 px-16 flex justify-between items-center z-20">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center backdrop-blur-xl">
                         <span className="text-white font-black text-3xl tracking-tighter">M</span>
                     </div>
-                    <span className="text-white text-2xl font-black tracking-[0.2em] uppercase">MBTIJU.COM</span>
+                    <span className="text-white text-2xl font-black tracking-widest">MBTIJU</span>
                 </div>
                 <div className="px-6 py-3 rounded-full border border-white/20 bg-white/5 backdrop-blur-2xl">
-                    <span className="text-white text-xl tracking-[0.15em] font-medium uppercase block">Season 2026 Analysis</span>
+                    <span className="text-white text-lg tracking-widest font-bold block">야구팬 특별 분석</span>
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col px-20 pt-56 pb-20 z-10 relative">
+            <div className="flex-1 flex flex-col px-16 pt-40 pb-16 z-10 relative h-full">
                 
                 {/* Title Area */}
-                <div className="flex flex-col mb-16">
-                    <div className="inline-flex items-center gap-4 mb-6">
-                        <Sparkles className="w-10 h-10 text-amber-300" fill="currentColor" />
-                        <span className="text-3xl text-amber-300 font-bold tracking-[0.3em]">PERFECT MATCH</span>
+                <div className="flex flex-col mb-10 shrink-0">
+                    <div className="inline-flex items-center gap-4 mb-4">
+                        <Sparkles className="w-8 h-8 text-amber-300" fill="currentColor" />
+                        <span className="text-2xl text-amber-300 font-bold tracking-[0.2em] opacity-90">운명의 조합</span>
                     </div>
-                    <h1 className="text-[7.5rem] font-black text-white tracking-tight leading-[1.05] drop-shadow-2xl">
-                        {userName}님의 운명은<br/>
-                        <span style={{ color: primaryColor }} className="brightness-150 inline-block mt-4">
+                    <h1 className="text-[6rem] font-black text-white tracking-tight leading-[1.1] drop-shadow-2xl">
+                        {userName}님에게 딱 맞는<br/>
+                        <span style={{ color: primaryColor }} className="brightness-150 inline-block mt-2">
                              {teamInfo?.name || selectedTeam}
                         </span>
                     </h1>
                 </div>
 
                 {/* Main Content Glass Card */}
-                <div className="bg-[#111111]/70 backdrop-blur-2xl rounded-[70px] p-14 flex flex-col grow relative border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 overflow-hidden">
+                <div className="bg-[#111111]/70 backdrop-blur-2xl rounded-[60px] p-10 flex flex-col grow relative border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] z-20 overflow-hidden">
                     
                     {/* Top Section - Logo & Badge */}
-                    <div className="flex justify-between items-center mb-16">
+                    <div className="flex justify-between items-center mb-10 shrink-0">
                         {teamInfo && (
-                            <div className="w-64 h-64 bg-white rounded-full p-10 flex items-center justify-center border-4 border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.4)] z-10 relative shrink-0">
+                            <div className="w-52 h-52 bg-white rounded-full p-8 flex items-center justify-center border-4 border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.4)] z-10 relative shrink-0">
                                 {/* Subtle internal glow */}
                                 <div className="absolute inset-0 rounded-full blur-xl opacity-30" style={{ background: primaryColor }} />
                                 <img 
@@ -184,69 +187,64 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                                 />
                             </div>
                         )}
-                        <div className="flex flex-col items-end gap-3 justify-center ml-10">
-                            <div className="px-10 py-4 rounded-full text-3xl font-black uppercase tracking-widest text-[#1a1a1a] shadow-lg" style={{ background: 'linear-gradient(135deg, #FFD700, #FDB931)' }}>
-                                S CLASS RANK
+                        <div className="flex flex-col items-end gap-2 justify-center ml-8">
+                            <div className="px-8 py-3 rounded-full text-2xl font-black tracking-widest text-[#1a1a1a] shadow-lg" style={{ background: 'linear-gradient(135deg, #FFD700, #FDB931)' }}>
+                                찰떡 궁합
                             </div>
-                            <span className="text-white/60 text-2xl tracking-[0.2em] font-medium mt-2 text-right">OPTIMAL SYNERGY MATCH FOUND</span>
+                            <span className="text-white/80 text-xl tracking-wider font-medium mt-2 text-right">최적의 시너지 발견</span>
                         </div>
                     </div>
 
-                    {/* Score Cards */}
-                    <div className="grid grid-cols-2 gap-10 mb-14">
+                    {/* Score Cards (Highlighting "팀 궁합" and "오늘은 승요지수") */}
+                    <div className="grid grid-cols-2 gap-6 mb-10 shrink-0">
                         {/* Harmony Score */}
-                        <div className="bg-[#1a1a1a]/80 rounded-[48px] p-12 border border-white/5 relative overflow-hidden group shadow-inner">
-                            <div className="absolute top-0 left-0 w-full h-2" style={{ background: primaryColor }} />
-                            <div className="flex justify-between items-center mb-8">
-                                <span className="text-3xl font-black text-white/50 uppercase tracking-[0.1em]">Harmony</span>
-                                <Trophy className="w-10 h-10 text-white/20" />
+                        <div className="bg-[#1a1a1a]/80 rounded-[40px] p-8 border-t-[4px] relative overflow-hidden group shadow-[0_20px_60px_rgba(0,0,0,0.5)] flex flex-col justify-center" style={{ borderTopColor: primaryColor }}>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-3xl font-black text-white tracking-widest">팀 궁합</span>
+                                <Trophy className="w-10 h-10 text-white/30" />
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-9xl font-black text-white tracking-tighter" style={{ textShadow: `0 0 50px ${primaryColor}99` }}>
+                            <div className="flex items-baseline gap-2 mt-4">
+                                <span className="text-[7rem] leading-none font-black text-white tracking-tighter" style={{ textShadow: `0 0 50px ${primaryColor}99` }}>
                                     {result.score}
                                 </span>
-                                <span className="text-5xl text-white/60 font-bold">%</span>
+                                <span className="text-4xl text-white/60 font-bold">점</span>
                             </div>
-                            <p className="mt-6 text-white/40 text-2xl font-medium tracking-wide">팀과의 완벽한 화합 지수</p>
+                            <p className="mt-6 text-white/50 text-xl font-bold tracking-wide">직관 갈 때마다 완벽한 화합</p>
                         </div>
                         
                         {/* Win Fairy Score */}
-                        <div className="bg-[#1a1a1a]/80 rounded-[48px] p-12 border border-white/5 relative overflow-hidden shadow-inner">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-amber-400" />
-                            <div className="flex justify-between items-center mb-8">
-                                <span className="text-3xl font-black text-white/50 uppercase tracking-[0.1em]">Win Fairy</span>
+                        <div className="bg-[#1a1a1a]/80 rounded-[40px] p-8 border-t-[4px] border-t-amber-400 relative overflow-hidden flex flex-col justify-center shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-3xl font-black text-amber-100 tracking-widest">오늘의 승요지수</span>
                                 <Star className="w-10 h-10 text-amber-400/30" />
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-9xl font-black text-white tracking-tighter drop-shadow-[0_0_50px_rgba(251,191,36,0.3)]">
+                            <div className="flex items-baseline gap-2 mt-4">
+                                <span className="text-[7rem] leading-none font-black text-white tracking-tighter drop-shadow-[0_0_50px_rgba(251,191,36,0.3)]">
                                     {result.winFairyScore}
                                 </span>
-                                <span className="text-5xl text-white/60 font-bold">%</span>
+                                <span className="text-4xl text-white/60 font-bold">점</span>
                             </div>
-                            <p className="mt-6 text-white/40 text-2xl font-medium tracking-wide">승리의 요정이 될 확률</p>
+                            <p className="mt-6 text-white/50 text-xl font-bold tracking-wide">내가 가면 무조건 이긴다</p>
                         </div>
                     </div>
 
                     {/* Radar Chart Area */}
-                    <div className="flex-1 bg-white/5 rounded-[48px] border border-white/5 p-12 flex flex-col items-center justify-center relative">
-                        <div className="absolute top-12 left-12 flex items-center gap-4">
-                            <TrendingUp className="w-8 h-8 text-white/50" />
-                            <span className="text-white/40 text-2xl font-black tracking-[0.2em] uppercase">DNA Signature</span>
+                    <div className="flex-1 bg-white/5 rounded-[40px] border border-white/5 p-8 flex flex-col items-center justify-center relative min-h-[350px]">
+                        <div className="absolute top-8 left-8 flex items-center gap-3">
+                            <TrendingUp className="w-6 h-6 text-white/70" />
+                            <span className="text-white/80 text-xl font-black tracking-widest">응원 성향 분석</span>
                         </div>
-                        <div className="w-[500px] h-[500px] mt-10">
+                        <div className="w-[360px] h-[360px] mt-6">
                             <RadarChartSmall data={result.dimensions || []} color={primaryColor} />
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Bottom */}
-                <div className="mt-20 flex justify-between items-center z-10 px-6">
-                    <p className="text-3xl text-white/60 font-bold tracking-widest flex items-center gap-4">
+                <div className="mt-12 flex justify-between items-center shrink-0 px-6 opacity-70">
+                    <p className="text-2xl text-white/80 font-bold tracking-widest flex items-center gap-4">
                         <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
-                        AI 분석 완료
-                    </p>
-                    <p className="text-2xl text-white/40 font-bold tracking-[0.2em]">
-                        MBTIJU.COM
+                        분석 완료
                     </p>
                 </div>
             </div>
@@ -255,4 +253,3 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
 });
 
 export default KboShareCard;
-

@@ -1,31 +1,30 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-
 /**
  * PDF를 생성합니다.
- * - 콘텐츠를 스크롤 가능한 전체 높이로 캡처
- * - 각 A4 페이지에 정확히 나뉘어 출력
- * - 콘텐츠 중간에 페이지가 잘리지 않도록 섹션 단위로 페이지 나눔
+ * - 스크롤 안에 있는 UI가 온전히 캡처되도록 요소를 복제하여 전체 형태로 렌더링 후 캡처
+ * - 페이지 중간에 내용이 잘리지 않도록 (페이지 잘림 방지), 
+ *   콘텐츠 길이에 딱 맞춘 단일 페이지(One-page) 형태의 PDF로 생성합니다.
  */
 export const generatePDF = async (element: HTMLElement, fileName: string) => {
+    let clone: HTMLElement | null = null;
     try {
-        // 1. A4 PDF 문서 설정
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-            compress: true,
-        });
+        // 1. 요소 전체 캡처를 완벽히 하기 위해 복제본 생성
+        clone = element.cloneNode(true) as HTMLElement;
+        document.body.appendChild(clone);
 
-        const pdfPageWidth = pdf.internal.pageSize.getWidth();   // 210mm
-        const pdfPageHeight = pdf.internal.pageSize.getHeight(); // 297mm
-        const MARGIN_MM = 12;   // 상하좌우 여백 (mm)
-        const contentWidthMm = pdfPageWidth - MARGIN_MM * 2;
-        const contentHeightMm = pdfPageHeight - MARGIN_MM * 2;
+        // 오프스크린에서 전체 높이로 렌더링되도록 스타일 강제화
+        clone.style.position = 'absolute';
+        clone.style.top = '0';
+        clone.style.left = '-9999px';
+        clone.style.width = '800px'; // A4 가로 비율에 적합한 픽셀 폭
+        clone.style.height = 'max-content';
+        clone.style.overflow = 'visible';
+        clone.style.zIndex = '-9999';
 
         // Apply PDF-specific styles to force readability
-        element.classList.add('pdf-report-container');
+        clone.classList.add('pdf-report-container');
         const style = document.createElement('style');
         style.id = 'pdf-report-print-style';
         style.innerHTML = `
@@ -47,96 +46,73 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
         document.head.appendChild(style);
         
         // Wait briefly for style application (Critical for mobile/Safari)
-        await new Promise(resolve => setTimeout(resolve, 150));
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-        // 2. 고해상도 전체 요소 캡처
-        const canvas = await html2canvas(element, {
+        // 2. 고해상도 전체 요소 캡처 (스크롤/숨겨진 영역 문제 해결)
+        const canvas = await html2canvas(clone, {
             scale: 3,            // 선명도 극대화를 위해 x3
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            windowWidth: 800,     // A4 가로 비율에 최적화된 고정폭
-            height: element.scrollHeight,
-            windowHeight: element.scrollHeight,
-            scrollY: -window.scrollY,
+            windowWidth: 800,
             imageTimeout: 15000,
         });
 
-        // Remove PDF-specific styles immediately after capture to restore UI
-        element.classList.remove('pdf-report-container');
-        const insertedStyle = document.getElementById('pdf-report-print-style');
-        if (insertedStyle) {
-            insertedStyle.remove();
+        // 3. 다 쓴 복제본 및 스타일 정리
+        if (clone) {
+            document.body.removeChild(clone);
+            clone = null;
         }
+        const insertedStyle = document.getElementById('pdf-report-print-style');
+        if (insertedStyle) insertedStyle.remove();
 
         const ctxWidth = canvas.width;
         const ctxHeight = canvas.height;
 
-        // 3. PDF 페이지 콘텐츠 영역 픽셀 높이 계산
-        const scaleRatio = contentWidthMm / ctxWidth;
-        const contentHeightPx = contentHeightMm / scaleRatio;
+        // 4. 단일 페이지 PDF (콘텐츠 길이에 딱 맞춘 커스텀 사이즈)
+        // PDF 폭을 A4 기준 210mm로 잡고, 높이는 캔버스 비율에 맞춥니다.
+        const pdfPageWidth = 210;
+        const pdfPageHeight = (ctxHeight * pdfPageWidth) / ctxWidth;
 
-        let yOffset = 0;   // 현재 캡처 시작 Y 픽셀
-        let isFirstPage = true;
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: [pdfPageWidth, pdfPageHeight],
+            compress: true,
+        });
 
-        // 4. 페이지 단위로 슬라이스하여 PDF에 삽입
-        while (yOffset < ctxHeight) {
-            if (!isFirstPage) {
-                pdf.addPage();
-            }
-            isFirstPage = false;
+        const imgData = canvas.toDataURL('image/png');
 
-            // 이번 페이지에 들어갈 높이
-            const sliceHeight = Math.min(contentHeightPx, ctxHeight - yOffset);
+        // 여백 없이 전체 페이지를 덮도록 생성 (또는 약간의 여백 추가)
+        const MARGIN_MM = 12;
+        const drawWidth = pdfPageWidth - MARGIN_MM * 2;
+        const drawHeight = (ctxHeight * drawWidth) / ctxWidth;
 
-            // 슬라이스 캔버스 생성
-            const sliceCanvas = document.createElement('canvas');
-            sliceCanvas.width = ctxWidth;
-            sliceCanvas.height = sliceHeight;
-            const ctx = sliceCanvas.getContext('2d');
-            if (!ctx) break;
-            
-            // Critical for sharp text: Disable smoothing when copying from the high-res source
-            ctx.imageSmoothingEnabled = false;
+        // 배경 하얗게 칠하기
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pdfPageWidth, pdfPageHeight, 'F');
 
-            // 원본 canvas에서 해당 슬라이스 복사
-            ctx.drawImage(
-                canvas,
-                0, yOffset,          // 소스 시작점
-                ctxWidth, sliceHeight, // 소스 크기
-                0, 0,               // 대상 시작점
-                ctxWidth, sliceHeight  // 대상 크기
-            );
+        // 이미지 삽입
+        pdf.addImage(
+            imgData,
+            'PNG',
+            MARGIN_MM,
+            MARGIN_MM,
+            drawWidth,
+            drawHeight,
+            undefined,
+            'FAST'
+        );
 
-            // Use PNG for pixel-perfect text rendering (crisper than JPEG)
-            // If file size is an issue, 'image/jpeg' with quality 1.0 is the fallback.
-            const sliceImgData = sliceCanvas.toDataURL('image/png');
-            const sliceHeightMm = sliceHeight * scaleRatio;
-
-            pdf.addImage(
-                sliceImgData,
-                'PNG',
-                MARGIN_MM,
-                MARGIN_MM,
-                contentWidthMm,
-                sliceHeightMm,
-                undefined,
-                'FAST' // Speed up generation
-            );
-
-            // 페이지 번호 표시 (하단)
-            const currentPage = pdf.getNumberOfPages();
-            pdf.setFontSize(8);
-            pdf.setTextColor(180, 180, 180);
-            pdf.text(
-                `MBTIJU Soul Report  ${currentPage}`,
-                pdfPageWidth / 2,
-                pdfPageHeight - 6,
-                { align: 'center' }
-            );
-
-            yOffset += contentHeightPx;
-        }
+        // 페이지 하단 워터마크
+        pdf.setFontSize(8);
+        pdf.setTextColor(180, 180, 180);
+        pdf.text(
+            'MBTIJU Soul Report  -  mbtiju.com',
+            pdfPageWidth / 2,
+            pdfPageHeight - 6,
+            { align: 'center' }
+        );
 
         pdf.save(`${fileName}.pdf`);
 
@@ -146,6 +122,12 @@ export const generatePDF = async (element: HTMLElement, fileName: string) => {
 
         return true;
     } catch (error) {
+        if (clone && clone.parentNode) {
+            clone.parentNode.removeChild(clone);
+        }
+        const insertedStyle = document.getElementById('pdf-report-print-style');
+        if (insertedStyle) insertedStyle.remove();
+        
         console.error('PDF Generation Error:', error);
         throw error;
     }
