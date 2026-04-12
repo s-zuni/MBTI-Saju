@@ -7,7 +7,7 @@ export interface TeamInfo {
     textColor: string;
 }
 
-const PUBLIC_STORAGE_URL = 'https://tffvsyarxfujmvbqlutr.supabase.co/storage/v1/object/public/KBO%20LOGO/KBO%20LOGO';
+const PUBLIC_STORAGE_URL = 'https://tffvsyarxfujmvbqlutr.supabase.co/storage/v1/object/public/KBO%20LOGO/KBO_LOGO';
 
 export const TEAM_CONFIG: Record<string, TeamInfo> = {
     'KIA 타이거즈': {
