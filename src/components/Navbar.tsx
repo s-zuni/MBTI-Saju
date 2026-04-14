@@ -80,15 +80,11 @@ const Navbar: React.FC<NavbarProps> = () => {
     }
   };
 
-  // Dynamic styles: If scrolled OR not on home page, use dark text/white bg style
-  const useDarkStyle = isScrolled || !isHome;
-
-  const textColor = useDarkStyle ? "text-slate-900" : "text-white";
-  const iconColor = useDarkStyle ? "text-slate-900" : "text-indigo-100";
-  const buttonHover = useDarkStyle ? "hover:text-indigo-600" : "hover:text-white";
-  const navBg = useDarkStyle
-    ? 'bg-white/90 backdrop-blur-md border-b border-slate-100 py-3 shadow-sm'
-    : 'bg-transparent py-5';
+  // Dynamic styles: Aura Ethereal high-contrast style
+  const textColor = "text-slate-800"; // #30323a equivalent
+  const iconColor = "text-slate-700";
+  const buttonHover = "hover:text-indigo-600";
+  const navBg = 'bg-white/70 backdrop-blur-xl border-b border-slate-100/50 py-3 shadow-sm';
 
   return (
     <nav ref={navRef} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${navBg} ${isAnyModalOpen ? 'translate-y-[-105%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
@@ -124,7 +120,7 @@ const Navbar: React.FC<NavbarProps> = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-6">
-          <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors ${useDarkStyle ? 'border-slate-200' : 'border-white/20'}`}>
+          <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors border-slate-200`}>
             <div className="flex items-center gap-2">
               {session ? (
                 <>

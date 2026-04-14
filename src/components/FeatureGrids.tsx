@@ -75,25 +75,25 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
     ];
 
     return (
-        <div className="section-container relative -mt-16 z-20 px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative z-20 px-6 max-w-7xl mx-auto -mt-10 md:-mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {mainCategories.map((cat, i) => (
                     <button
                         key={i}
                         onClick={cat.action}
-                        className="group relative overflow-hidden bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 hover:-translate-y-2 transition-all duration-300 text-left border border-slate-100"
+                        className="group relative overflow-hidden bg-white p-8 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 text-left border-none"
                     >
-                        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${cat.bg} opacity-10 rounded-bl-full -mr-4 -mt-4 transition-opacity group-hover:opacity-20`}></div>
+                        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.bg} opacity-[0.03] rounded-bl-full -mr-8 -mt-8 transition-opacity group-hover:opacity-[0.08]`}></div>
 
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.bg} flex items-center justify-center text-white shadow-lg mb-4`}>
-                            <cat.icon className="w-6 h-6" />
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.bg} flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}>
+                            <cat.icon className="w-7 h-7" />
                         </div>
 
-                        <h3 className="text-lg font-bold text-slate-900 mb-1">{cat.label}</h3>
-                        <p className="text-sm text-slate-500">{cat.sub}</p>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">{cat.label}</h3>
+                        <p className="text-sm font-medium text-slate-500 leading-relaxed">{cat.sub}</p>
 
-                        <div className="absolute bottom-4 right-4 transition-opacity transform translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100">
-                            <ArrowRight className="w-5 h-5 text-slate-300" />
+                        <div className="absolute bottom-6 right-6 transition-all duration-500 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100">
+                            <ArrowRight className="w-6 h-6 text-slate-300" />
                         </div>
                     </button>
                 ))}

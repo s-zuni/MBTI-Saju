@@ -244,7 +244,7 @@ function AppContent({
                       <ReviewsSection />
                       
                       {/* Featured Analysis Section */}
-                      <section className="py-24 bg-slate-50/50 relative">
+                      <section className="py-16 bg-[#faf8fe] relative">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
                         <div className="section-container relative z-10">
                           <div className="text-center mb-16">
