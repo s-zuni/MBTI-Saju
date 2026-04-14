@@ -76,7 +76,12 @@ export const dailyFortuneSchema = z.object({
             number: z.string(),
             direction: z.string()
         }),
-        mission: z.string().optional()
+        mission: z.string().optional(),
+        charm_stats: z.array(z.object({
+            label: z.string(),
+            value: z.number()
+        })).optional(),
+        lucky_ootd: z.string().optional()
     }),
     tomorrow: z.object({
         fortune: z.string(),
@@ -85,7 +90,12 @@ export const dailyFortuneSchema = z.object({
             number: z.string(),
             direction: z.string()
         }),
-        mission: z.string().optional()
+        mission: z.string().optional(),
+        charm_stats: z.array(z.object({
+            label: z.string(),
+            value: z.number()
+        })).optional(),
+        lucky_ootd: z.string().optional()
     })
 });
 

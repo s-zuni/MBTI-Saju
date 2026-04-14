@@ -52,9 +52,10 @@ const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
-const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
+// const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
+const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -175,7 +176,18 @@ function AppContent({
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {
   const location = useLocation();
+  const navigate = useNavigate();
   const isChatPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/room');
+  
+  // Handle automatic modal opening from share link
+  useEffect(() => {
+    if (location.state?.openCompatibility && session) {
+      openModal('compatibility');
+      // Clear state to prevent re-opening
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, session, openModal, navigate, location.pathname]);
+
   const handleCloseOnboarding = () => {
     if (session?.user) {
       localStorage.setItem(`hasSeenOnboarding_${session.user.id}`, 'true');
@@ -227,7 +239,7 @@ function AppContent({
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} />
                       <FeatureGrids />
-                      <SocialProofToast />
+                      {/* <SocialProofToast /> */}
 
                       <ReviewsSection />
                       
@@ -347,7 +359,10 @@ function AppContent({
                   } />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
-                   <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />
+                  <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />
+                  <Route path="/tarot" element={<ChatPage session={session} defaultService="tarot" />} />
+                  <Route path="/saju" element={<ChatPage session={session} defaultService="saju" />} />
+                  <Route path="/share/compatibility/:userId" element={<CompatibilitySharePage />} />
                   <Route path="/room" element={<ChatPage session={session} />} />
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
@@ -358,7 +373,7 @@ function AppContent({
 
               {!isChatPage && <Footer />}
               {!isChatPage && <BottomNav />}
-              <SocialProofToast />
+              {/* <SocialProofToast /> */}
 
               {/* Modals are now lazy loaded and managed by openModal store */}
               <AnalysisModal

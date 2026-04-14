@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Zap, Download, Heart } from 'lucide-react';
+import { Loader2, Zap, Download, Heart, Share2, Check } from 'lucide-react';
 import { stripMarkdown } from '../utils/textUtils';
 import { generatePDF } from '../utils/pdfGenerator';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
@@ -153,6 +153,20 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
         }
     };
 
+    const [copied, setCopied] = useState(false);
+    const handleShareLink = () => {
+        const userId = session?.user?.id;
+        if (!userId) {
+            alert('공유를 위해 로그인이 필요합니다.');
+            return;
+        }
+        const shareUrl = `${window.location.origin}/share/compatibility/${userId}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
     return (
         <div className="px-8 sm:p-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
             {/* 분석 전 폼: prefillData가 없거나 result/isLoading이 없을 때만 표시 */}
@@ -284,12 +298,21 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                             </div>
 
                             <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    className="px-10 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center gap-3"
-                                >
-                                    <Download className="w-5 h-5" /> PDF 결과서 다운로드
-                                </button>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        className="px-8 py-5 bg-slate-100 text-slate-900 rounded-full font-black shadow-sm flex items-center justify-center gap-3 hover:bg-slate-200 transition-all flex-1"
+                                    >
+                                        <Download className="w-5 h-5" /> PDF 저장
+                                    </button>
+                                    <button
+                                        onClick={handleShareLink}
+                                        className="px-8 py-5 bg-slate-950 text-white rounded-full font-black shadow-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all flex-1"
+                                    >
+                                        {copied ? <Check className="w-5 h-5 text-green-400" /> : <Share2 className="w-5 h-5" />}
+                                        {copied ? '링크 복사됨!' : '친구와 궁합보기'}
+                                    </button>
+                                </div>
                                 <button
                                     onClick={onReset}
                                     className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4"

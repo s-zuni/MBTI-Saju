@@ -9,8 +9,20 @@ interface FortuneModalProps {
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
   fortune: {
-    today: { fortune: string; lucky: { color: string; number: string; direction: string }; mission?: string };
-    tomorrow: { fortune: string; lucky: { color: string; number: string; direction: string }; mission?: string };
+    today: { 
+      fortune: string; 
+      lucky: { color: string; number: string; direction: string }; 
+      mission?: string;
+      charm_stats?: { label: string; value: number }[];
+      lucky_ootd?: string;
+    };
+    tomorrow: { 
+      fortune: string; 
+      lucky: { color: string; number: string; direction: string }; 
+      mission?: string;
+      charm_stats?: { label: string; value: number }[];
+      lucky_ootd?: string;
+    };
   } | null;
   loading: boolean;
   // 크레딧 관련 props
@@ -183,11 +195,55 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                 </div>
               )}
 
-              <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 mb-6">
-                <p className="text-slate-700 leading-relaxed font-medium whitespace-pre-line">
+              <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 mb-6 group hover:bg-white hover:shadow-xl hover:shadow-indigo-50 transition-all duration-500">
+                <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-line text-base">
                   {stripMarkdown(activeData.fortune)}
                 </p>
               </div>
+
+              {/* CHARM STATS */}
+              {activeData.charm_stats && (
+                <div className="mb-6 bg-white border border-slate-100 p-6 rounded-[32px] shadow-sm">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-pink-400 rounded-full animate-ping"></span>
+                    오늘의 매력 스탯
+                  </h4>
+                  <div className="space-y-4">
+                    {activeData.charm_stats.map((stat, idx) => (
+                      <div key={idx} className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-black text-slate-600">
+                          <span>{stat.label}</span>
+                          <span className="text-pink-500">{stat.value}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-pink-200 to-pink-400 rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${stat.value}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* OOTD RECOMMENDATION */}
+              {activeData.lucky_ootd && (
+                <div className="mb-6 bg-gradient-to-br from-indigo-50 to-pink-50 border border-indigo-100 p-6 rounded-[32px] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 12V8H16V12H20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M4 12V8H8V12H4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 12V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 21C16.9706 21 21 16.9706 21 12H3C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Lucky OOTD</h4>
+                  <p className="text-slate-800 font-bold text-lg leading-snug">
+                    {activeData.lucky_ootd}
+                  </p>
+                </div>
+              )}
 
               {activeData.lucky && (
                 <div className="grid grid-cols-3 gap-3">

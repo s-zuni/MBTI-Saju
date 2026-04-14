@@ -11,9 +11,10 @@ const MESSAGES_PER_COIN_CHARGE = 5; // 5회 대화당 크레딧 차감
 
 interface ChatPageProps {
     session: any;
+    defaultService?: 'tarot' | 'saju' | 'general';
 }
 
-const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
+const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultService = 'general' }) => {
     const navigate = useNavigate();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
@@ -81,10 +82,16 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 setSessionId(sid);
                 const history = await loadMessages(sid);
                 if (history.length === 0) {
+                    const welcomeMsg = defaultService === 'tarot' 
+                        ? "신비한 타로의 세계에 오신 것을 환영합니다! 당신의 궁금한 점이나 고민을 말씀해 주시면 카드를 통해 길을 찾아드릴게요."
+                        : defaultService === 'saju'
+                        ? "공인된 명리학 데이터를 바탕으로 당신의 운명을 분석해 드립니다. 어떤 사주적 고민이 있으신가요?"
+                        : "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.";
+                    
                     setMessages([{
                         id: 'welcome',
                         role: 'assistant',
-                        content: "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.",
+                        content: welcomeMsg,
                         createdAt: new Date()
                     }]);
                     setMessageCount(0);
@@ -239,7 +246,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-1 text-white font-bold text-xl px-2">
                         <Bot className="w-8 h-8 text-indigo-400" />
-                        <span>운명 심층 상담</span>
+                        <span>{defaultService === 'tarot' ? '신비한 타로 상담' : defaultService === 'saju' ? '명리 심층 분석' : '운명 심층 상담'}</span>
                     </div>
                     <div className="px-2 mb-8 flex items-center gap-1.5">
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -300,7 +307,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession }) => {
                         <button onClick={() => navigate('/')} className="p-2 -ml-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6" /></svg>
                         </button>
-                        <span className="font-bold ml-1 text-slate-800 text-lg">운명 심층 상담</span>
+                        <span className="font-bold ml-1 text-slate-800 text-lg">
+                            {defaultService === 'tarot' ? '타로 상담' : defaultService === 'saju' ? '사주 분석' : '운명 상담'}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">

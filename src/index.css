@@ -6,10 +6,11 @@
 
 @layer base {
   :root {
-    --celestial-gold: #F59E0B;
-    --cosmic-purple: #7C3AED;
-    --lunar-bg: #F8FAFC;
-    --stellar-indigo: #4F46E5;
+    --primary-pink: #FFB7B2;
+    --soft-peach: #FFDAC1;
+    --sky-blue: #B2E2F2;
+    --clean-white: #FFFFFF;
+    --slate-text: #0F172A;
   }
 
   body {
@@ -19,11 +20,11 @@
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-slate-900 text-white rounded-full font-bold transition-all hover:bg-slate-800 active:scale-95 shadow-lg shadow-slate-200 flex items-center justify-center gap-2;
+    @apply px-8 py-4 bg-slate-900 text-white rounded-[24px] font-black tracking-tight transition-all hover:bg-slate-800 active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-2;
   }
 
   .btn-celestial {
-    @apply px-6 py-3 bg-indigo-600 text-white rounded-full font-bold transition-all hover:bg-indigo-700 active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2;
+    @apply px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black tracking-tight transition-all hover:bg-indigo-700 active:scale-95 shadow-xl shadow-indigo-100 flex items-center justify-center gap-2;
   }
 
   .glass-card {
@@ -31,7 +32,7 @@
   }
 
   .celestial-card {
-    @apply bg-white rounded-[32px] p-6 border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1 transition-all duration-300;
+    @apply bg-white rounded-[40px] p-8 border border-slate-50 shadow-[0_30px_60px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_rgba(79,70,229,0.08)] hover:-translate-y-2 transition-all duration-500;
   }
 
   .nav-link {
