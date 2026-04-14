@@ -13,7 +13,7 @@ const CompatibilitySharePage = () => {
         const fetchInviter = async () => {
             if (!userId) return;
             try {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('profiles')
                     .select('full_name')
                     .eq('id', userId)

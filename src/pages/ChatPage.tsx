@@ -37,6 +37,53 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
 
     // 1. Initial Load
     useEffect(() => {
+        const loadLatestSession = async (userId: string) => {
+            setIsLoadingHistory(true);
+            try {
+                const { data: sessions } = await supabase
+                    .from('chat_sessions')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .order('updated_at', { ascending: false })
+                    .limit(1);
+
+                let sid = sessions?.[0]?.id || null;
+
+                if (!sid) {
+                    sid = await createSession(userId);
+                }
+
+                if (sid) {
+                    setSessionId(sid);
+                    const history = await loadMessages(sid);
+                    if (history.length === 0) {
+                        const welcomeMsg = defaultService === 'tarot' 
+                            ? "신비한 타로의 세계에 오신 것을 환영합니다! 당신의 궁금한 점이나 고민을 말씀해 주시면 카드를 통해 길을 찾아드릴게요."
+                            : defaultService === 'saju'
+                            ? "공인된 명리학 데이터를 바탕으로 당신의 운명을 분석해 드립니다. 어떤 사주적 고민이 있으신가요?"
+                            : "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.";
+                        
+                        setMessages([{
+                            id: 'welcome',
+                            role: 'assistant',
+                            content: welcomeMsg,
+                            createdAt: new Date()
+                        }]);
+                        setMessageCount(0);
+                    } else {
+                        setMessages(history);
+                        // 사용자 메시지 수 계산 (10회마다 크레딧 차감을 위해)
+                        const userMsgCount = history.filter(m => m.role === 'user').length;
+                        setMessageCount(userMsgCount % MESSAGES_PER_COIN_CHARGE);
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
         const init = async () => {
             // Safari ITP 대응: Props로 받은 세션보다 getSession()으로 가져온 최신 세션을 우선시합니다.
             const { data: { session: fetchedSession } } = await supabase.auth.getSession();
@@ -60,54 +107,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
             await loadLatestSession(currentSession.user.id);
         };
         init();
-    }, [navigate, initialSession]);
-
-    const loadLatestSession = async (userId: string) => {
-        setIsLoadingHistory(true);
-        try {
-            const { data: sessions } = await supabase
-                .from('chat_sessions')
-                .select('id')
-                .eq('user_id', userId)
-                .order('updated_at', { ascending: false })
-                .limit(1);
-
-            let sid = sessions?.[0]?.id || null;
-
-            if (!sid) {
-                sid = await createSession(userId);
-            }
-
-            if (sid) {
-                setSessionId(sid);
-                const history = await loadMessages(sid);
-                if (history.length === 0) {
-                    const welcomeMsg = defaultService === 'tarot' 
-                        ? "신비한 타로의 세계에 오신 것을 환영합니다! 당신의 궁금한 점이나 고민을 말씀해 주시면 카드를 통해 길을 찾아드릴게요."
-                        : defaultService === 'saju'
-                        ? "공인된 명리학 데이터를 바탕으로 당신의 운명을 분석해 드립니다. 어떤 사주적 고민이 있으신가요?"
-                        : "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.";
-                    
-                    setMessages([{
-                        id: 'welcome',
-                        role: 'assistant',
-                        content: welcomeMsg,
-                        createdAt: new Date()
-                    }]);
-                    setMessageCount(0);
-                } else {
-                    setMessages(history);
-                    // 사용자 메시지 수 계산 (10회마다 크레딧 차감을 위해)
-                    const userMsgCount = history.filter(m => m.role === 'user').length;
-                    setMessageCount(userMsgCount % MESSAGES_PER_COIN_CHARGE);
-                }
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoadingHistory(false);
-        }
-    };
+    }, [navigate, initialSession, defaultService]);
 
     const handleNewSession = async () => {
         if (!userContext || !session) return;
