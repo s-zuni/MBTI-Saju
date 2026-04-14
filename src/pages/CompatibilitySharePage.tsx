@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../supabaseClient';
 import { Heart, ArrowRight, Loader2 } from 'lucide-react';
 
 const CompatibilitySharePage = () => {
