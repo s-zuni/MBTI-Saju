@@ -8,13 +8,11 @@ import { useModalStore } from '../hooks/useModalStore';
 interface NavbarProps { }
 
 const Navbar: React.FC<NavbarProps> = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === '/';
 
   const { session } = useAuth();
   const { openModal, isAnyModalOpen } = useModalStore();
@@ -39,16 +37,6 @@ const Navbar: React.FC<NavbarProps> = () => {
       document.removeEventListener('touchstart', handleClickOutside as any);
     };
   }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
