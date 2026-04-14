@@ -67,11 +67,16 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const hasAutoStarted = useRef(false);
 
     // Streaming Hook
-    const { object: result, submit, isLoading } = useObject({
+    const { object: result, submit, isLoading, error: analysisError } = useObject({
         api: '/api/compatibility',
         schema: compatibilitySchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: ({ object }) => {
+            if (object && onUseCredit) {
+                onUseCredit();
+            }
         }
     });
 
@@ -111,9 +116,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                 targetSajuData: targetSajuData
             });
 
-            if (onUseCredit) {
-                await onUseCredit();
-            }
+            // onUseCredit call moved to onFinish of useObject
         } catch (e: any) {
             setError(e.message);
         }
@@ -237,14 +240,23 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                             <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
                             <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">궁합 분석 중입니다...</p>
                         </div>
-                    ) : error ? (
-                        <div className="text-center py-20 bg-red-50 rounded-[32px]">
-                            <p className="text-red-500 font-black mb-4">분석 중 오류가 발생했습니다.</p>
-                            <button
-                                onClick={onReset}
-                                className="px-8 py-3 bg-slate-950 text-white rounded-full"
-                            >
-                                다시 시도
+                    ) : (analysisError || error) ? (
+                        <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-up">
+                            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                                <Zap className="w-8 h-8 text-red-500 fill-red-500" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 mb-2">분석 중 오류가 발생했습니다</h3>
+                            <p className="text-red-500 text-sm mb-4 leading-relaxed font-bold">
+                                {(analysisError?.message || error) || "원인을 알 수 없는 오류가 발생했습니다."}
+                            </p>
+                            <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full border border-slate-100 italic">
+                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                                    💡 네트워크 환경이 불안정하거나 서버 응답이 지연되고 있습니다. <br/>
+                                    <span className="text-rose-600 block mt-2 font-black">걱정 마세요! 분석에 실패한 경우 크레딧은 차감되지 않았습니다.</span>
+                                </p>
+                            </div>
+                            <button onClick={onReset} className="px-10 py-4 bg-slate-950 text-white rounded-full font-black">
+                                다시 시도하기
                             </button>
                         </div>
                     ) : result ? (
@@ -255,14 +267,14 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                     <div className="absolute inset-0 rounded-full border-8 border-slate-50"></div>
                                     <div
                                         className="absolute inset-0 rounded-full border-8 border-rose-500 transition-all duration-1000"
-                                        style={{ clipPath: `inset(0 0 0 ${100 - (result.score || 0)}%)` }}
+                                        style={{ clipPath: `inset(0 0 0 ${100 - (result?.score || 0)}%)` }}
                                     ></div>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-4xl font-black text-slate-950">{(result.score ?? 0)}</span>
+                                        <span className="text-4xl font-black text-slate-950">{(result?.score ?? 0)}</span>
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Points</span>
                                     </div>
                                 </div>
-                                <h4 className="mt-6 text-xl font-bold text-slate-950">{stripMarkdown(result.summary)}</h4>
+                                <h4 className="mt-6 text-xl font-bold text-slate-950">{stripMarkdown(result?.summary || '')}</h4>
                             </div>
 
                             {/* 키워드 */}
@@ -279,19 +291,19 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                     <div className="space-y-6">
                                         <div className="report-card">
                                             <h5 className="font-bold text-slate-950 mb-2">성격 및 가치관 조화</h5>
-                                            <p className="text-sm text-slate-600 leading-relaxed">{stripMarkdown(result.details?.mbti_harmony)}</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed">{stripMarkdown(result?.details?.mbti_harmony || '')}</p>
                                         </div>
                                         <div className="report-card">
                                             <h5 className="font-bold text-slate-950 mb-2">사주 명리학적 조화</h5>
-                                            <p className="text-sm text-slate-600 leading-relaxed">{stripMarkdown(result.details?.saju_harmony)}</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed">{stripMarkdown(result?.details?.saju_harmony || '')}</p>
                                         </div>
                                         <div className="report-card bg-slate-950 text-white">
                                             <h5 className="font-bold mb-2">관계 시너지</h5>
-                                            <p className="text-sm text-slate-300 leading-relaxed">{stripMarkdown(result.details?.synergy)}</p>
+                                            <p className="text-sm text-slate-300 leading-relaxed">{stripMarkdown(result?.details?.synergy || '')}</p>
                                         </div>
                                         <div className="report-card border-slate-900">
                                             <h5 className="font-bold text-slate-950 mb-2">조언 및 주의사항</h5>
-                                            <p className="text-sm text-slate-600 leading-relaxed font-bold italic">{stripMarkdown(result.details?.advice)}</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed font-bold italic">{stripMarkdown(result?.details?.advice || '')}</p>
                                         </div>
                                     </div>
                                 </section>

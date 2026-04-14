@@ -3,7 +3,7 @@ import { streamObject, generateObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
+import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
 
 const schemas: Record<string, any> = {
     core: z.object({
@@ -147,14 +147,8 @@ export default async function handler(req: Request) {
         });
     }
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-
-    if (!GEMINI_API_KEY) {
-        return new Response(JSON.stringify({ error: 'Missing API Key' }), { 
-            status: 500, 
-            headers: corsHeaders 
-        });
-    }
+    // API Key checking is now handled centrally in ai-provider.ts
+    // but we can add a quick guard here if needed.
 
     // Use client-provided sajuData or calculate on server as fallback
     let finalSaju = sajuData;
@@ -194,58 +188,50 @@ export default async function handler(req: Request) {
 
     let userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
 
-    const google = createGoogleGenerativeAI({
-        apiKey: GEMINI_API_KEY
-    });
-
     try {
-        const geminiModel = google(PRIMARY_MODEL);
-        const fallbackModel = google(FALLBACK_MODEL);
-
         if (part === 'full') {
-            let result;
-            try {
-                // Primary: 3.1 Flash Lite
-                result = await streamObject({
-                    model: geminiModel,
-                    schema: currentSchema,
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
-            } catch (error) {
-                console.warn(`Primary model failed for streaming part ${part}, falling back:`, error);
-                // Fallback: 2.5 Flash
-                result = await streamObject({
-                    model: fallbackModel,
-                    schema: currentSchema,
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
+            let lastError;
+            // Try up to 4 fallback levels (Gemini primary -> Gemini fallback -> GPT mini -> GPT 4o)
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const { model, name } = getAIProvider(attempt);
+                    const result = await streamObject({
+                        model,
+                        schema: currentSchema,
+                        system: systemPrompt,
+                        prompt: userQuery,
+                    });
+                    return result.toTextStreamResponse({ headers: corsHeaders });
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed:`, error);
+                    if (!isRetryableAIError(error)) break; // Stop loop if errors aren't about demand/quota
+                }
             }
-            return result.toTextStreamResponse({ headers: corsHeaders });
+            throw lastError;
         } else {
             // Non-streaming for core, fortune, strategy
-            let result;
-            try {
-                result = await generateObject({
-                    model: geminiModel,
-                    schema: currentSchema,
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
-            } catch (error) {
-                console.warn(`Primary model failed for part ${part}, falling back:`, error);
-                result = await generateObject({
-                    model: fallbackModel,
-                    schema: currentSchema,
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
+            let lastError;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const { model, name } = getAIProvider(attempt);
+                    const result = await generateObject({
+                        model,
+                        schema: currentSchema,
+                        system: systemPrompt,
+                        prompt: userQuery,
+                    });
+                    return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
+                        status: 200,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                    });
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for part ${part}:`, error);
+                    if (!isRetryableAIError(error)) break;
+                }
             }
-            return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
-                status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            });
+            throw lastError;
         }
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);

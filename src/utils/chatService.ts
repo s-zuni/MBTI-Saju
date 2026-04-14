@@ -151,7 +151,7 @@ export const sendMessage = async (
 
     } catch (error) {
         console.error("Chat Service Error:", error);
-        return `죄송합니다. 신령님과의 연결이 잠시 약해졌습니다. (오류: ${error instanceof Error ? error.message : '알 수 없는 오류'})`;
+        throw error; // Let the caller handle it for credit protection
     }
 };
 

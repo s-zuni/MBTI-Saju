@@ -2,7 +2,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, convertToModelMessages } from 'ai';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
+import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
 
 export const config = {
     runtime: 'edge',
@@ -22,11 +22,7 @@ export default async (req: Request) => {
     try {
         const body = await req.json();
         const { message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = body;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-
-        if (!GEMINI_API_KEY) {
-            return new Response(JSON.stringify({ error: '서버 설정 오류: GEMINI_API_KEY가 누락되었습니다.' }), { status: 500, headers: corsHeaders });
-        }
+        // AI Key checking is now handled centrally in ai-provider.ts
 
         // Calculate Saju
         let sajuInfo = "Saju information not available";
@@ -73,34 +69,34 @@ export default async (req: Request) => {
         ${pastContext}\n` : ''}
         `;
 
-        const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
+
         
         const coreMessages = messages ? await convertToModelMessages(messages.slice(-10)) : [];
         if (coreMessages.length === 0 || (coreMessages[coreMessages.length - 1] as any).role !== 'user') {
             (coreMessages as any).push({ role: 'user', content: message });
         }
 
-        let result;
         try {
-            // Primary
-            result = await streamText({
-                model: google(PRIMARY_MODEL),
-                system: systemPrompt,
-                messages: coreMessages as any,
-            });
-        } catch (error) {
-            console.warn(`Primary model failed, falling back to ${FALLBACK_MODEL}:`, error);
-            // Fallback
-            result = await streamText({
-                model: google(FALLBACK_MODEL),
-                system: systemPrompt,
-                messages: coreMessages as any,
-            });
-        }
-
-        return result.toTextStreamResponse({ 
-            headers: corsHeaders 
-        });
+            let lastError;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const { model, name } = getAIProvider(attempt);
+                    const result = await streamText({
+                        model,
+                        system: systemPrompt,
+                        messages: coreMessages as any,
+                    });
+                    return result.toTextStreamResponse({ 
+                        headers: corsHeaders 
+                    });
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for chat:`, error);
+                    if (!isRetryableAIError(error)) break;
+                }
+            }
+            throw lastError;
+        } catch (error: any) {
     } catch (error: any) {
         console.error('ChatServer Error:', error);
         return new Response(JSON.stringify({ error: error.message || "채팅 분석 중 오류가 발생했습니다." }), { status: 500, headers: corsHeaders });

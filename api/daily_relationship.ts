@@ -3,7 +3,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
+import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
 
 export const config = {
     runtime: 'edge',
@@ -31,13 +31,7 @@ export default async (req: Request) => {
             });
         }
 
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-        if (!GEMINI_API_KEY) {
-            return new Response(JSON.stringify({ error: 'Missing API Key' }), { 
-                status: 500, 
-                headers: corsHeaders 
-            });
-        }
+        // AI Key checking is now handled centrally in ai-provider.ts
 
         const mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
         const partnersData = partners.map((p: any) => {
@@ -66,41 +60,38 @@ export default async (req: Request) => {
         일자: ${new Date().toLocaleDateString('ko-KR')}
         파트너 리스트: ${JSON.stringify(partnersData)}`;
 
-        const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
-        
-        let result;
         try {
-            // Primary
-            result = await streamObject({
-                model: google(PRIMARY_MODEL),
-                schema: z.object({
-                    results: z.array(z.object({
-                        id: z.string(),
-                        score: z.number(),
-                        msg: z.string()
-                    }))
-                }),
-                system: systemPrompt,
-                prompt: userQuery,
-            });
-        } catch (error) {
-            console.warn(`Primary model failed for daily relationship, falling back to ${FALLBACK_MODEL}:`, error);
-            // Fallback
-            result = await streamObject({
-                model: google(FALLBACK_MODEL),
-                schema: z.object({
-                    results: z.array(z.object({
-                        id: z.string(),
-                        score: z.number(),
-                        msg: z.string()
-                    }))
-                }),
-                system: systemPrompt,
-                prompt: userQuery,
+            let lastError;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const { model, name } = getAIProvider(attempt);
+                    const result = await streamObject({
+                        model,
+                        schema: z.object({
+                            results: z.array(z.object({
+                                id: z.string(),
+                                score: z.number(),
+                                msg: z.string()
+                            }))
+                        }),
+                        system: systemPrompt,
+                        prompt: userQuery,
+                    });
+                    return result.toTextStreamResponse({ headers: corsHeaders });
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for daily relationship:`, error);
+                    if (!isRetryableAIError(error)) break;
+                }
+            }
+            throw lastError;
+        } catch (error: any) {
+            console.error('Daily Relationship API Error:', error);
+            return new Response(JSON.stringify({ error: error.message }), { 
+                status: 500, 
+                headers: corsHeaders 
             });
         }
-
-        return result.toTextStreamResponse({ headers: corsHeaders });
     } catch (error: any) {
         console.error('Daily Relationship API Error:', error);
         return new Response(JSON.stringify({ error: error.message }), { 

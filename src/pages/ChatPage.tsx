@@ -174,6 +174,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
         const text = inputText;
         setInputText('');
         setIsTyping(true);
+        const botMessageId = (Date.now() + 1).toString();
 
         const tempMsg: ChatMessage = {
             id: Date.now().toString(),
@@ -185,9 +186,6 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
         setMessageCount(prev => prev + 1);
 
         try {
-            // Create a temporary ID for the bot message to update it
-            const botMessageId = (Date.now() + 1).toString();
-            
             // Initial empty assistant message
             const initialBotMsg: ChatMessage = {
                 id: botMessageId,
@@ -219,11 +217,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                     console.error('Failed to spend credits for professional chat');
                 }
             }
-        } catch (err) {
+        } catch (err: any) {
+            // Roll back message count and remove the failed bot message
+            setMessageCount(prev => prev - 1);
+            setMessages(prev => prev.filter(m => m.id !== botMessageId));
+
             const errorMsg: ChatMessage = {
                 id: (Date.now() + 2).toString(),
                 role: 'assistant',
-                content: "오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                content: `⚠️ 신령님과의 연결이 끊겼습니다: ${err.message || '알 수 없는 오류'}\n\n시스템 과부하일 수 있으니 잠시 후 다시 시도해주세요. 안심하세요! 메시지 전달에 실패하여 이번 대화의 크레딧은 차감되지 않았습니다.`,
                 createdAt: new Date()
             };
             setMessages(prev => [...prev, errorMsg]);

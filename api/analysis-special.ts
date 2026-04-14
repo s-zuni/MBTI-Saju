@@ -3,7 +3,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
+import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
 
 const luckySchema = z.object({
     color: z.string().describe("행운의 색상"),
@@ -155,13 +155,7 @@ export default async function handler(req: Request) {
         sajuData, targetSajuData
     } = body;
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    if (!GEMINI_API_KEY) {
-        return new Response(JSON.stringify({ error: 'Missing API Key' }), { 
-            status: 500, 
-            headers: corsHeaders 
-        });
-    }
+    // API Key checking is now handled centrally in ai-provider.ts
 
     let saju = sajuData;
     if (!saju && birthDate) {
@@ -219,30 +213,25 @@ export default async function handler(req: Request) {
         userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
     }
 
-    const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
-
     try {
-        let result;
-        try {
-            // Primary
-            result = await streamObject({
-                model: google(PRIMARY_MODEL),
-                schema: currentSchema,
-                system: systemPrompt,
-                prompt: userQuery,
-            });
-        } catch (error) {
-            console.warn(`Primary model failed for type ${type}, falling back to ${FALLBACK_MODEL}:`, error);
-            // Fallback
-            result = await streamObject({
-                model: google(FALLBACK_MODEL),
-                schema: currentSchema,
-                system: systemPrompt,
-                prompt: userQuery,
-            });
+        let lastError;
+        for (let attempt = 0; attempt < 4; attempt++) {
+            try {
+                const { model, name } = getAIProvider(attempt);
+                const result = await streamObject({
+                    model,
+                    schema: currentSchema,
+                    system: systemPrompt,
+                    prompt: userQuery,
+                });
+                return result.toTextStreamResponse({ headers: corsHeaders });
+            } catch (error) {
+                lastError = error;
+                console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for type ${type}:`, error);
+                if (!isRetryableAIError(error)) break;
+            }
         }
-
-        return result.toTextStreamResponse({ headers: corsHeaders });
+        throw lastError;
     } catch (error: any) {
         console.error(`[Streaming Error - ${type}]:`, error);
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 

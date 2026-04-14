@@ -21,19 +21,44 @@ interface TarotModalProps {
     session: any;
 }
 
-const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgradeRequired, onUseCredit, onNavigate, credits, session }) => {
+export default function TarotModal({ 
+    isOpen, 
+    onClose, 
+    tier, 
+    onUpgradeRequired, 
+    onUseCredit, 
+    onNavigate, 
+    credits, 
+    session 
+}: TarotModalProps) {
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
     const [question, setQuestion] = useState("");
     const [deck, setDeck] = useState<TarotCard[]>([]);
     const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
 
-
     // Streaming Hook
-    const { object: reading, submit, isLoading } = useObject({
+    const { object: reading, submit, isLoading, error: analysisError } = useObject({
         api: '/api/tarot',
         schema: tarotSchema,
         headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
+        onFinish: async ({ object }) => {
+            if (object) {
+                if (onUseCredit) await onUseCredit();
+                
+                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
+                const activeSession = fetchedSession || session;
+                if (activeSession) {
+                    await supabase.from('tarot_readings').insert({
+                        user_id: activeSession.user.id,
+                        spread_type: selectedSpread,
+                        question: question,
+                        selected_cards: selectedCards,
+                        reading_result: object
+                    });
+                }
+            }
+        }
     });
 
     const fisherYatesShuffle = (array: TarotCard[]): TarotCard[] => {
@@ -70,10 +95,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         }
         setDeck(fisherYatesShuffle(TAROT_DECK));
         setStep('shuffle');
-
-        setTimeout(() => {
-            setStep('select');
-        }, 2200);
+        setTimeout(() => setStep('select'), 2200);
     };
 
     const getRequiredCardCount = () => {
@@ -99,9 +121,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
     };
 
     const handleAnalyze = async (cards: TarotCard[]) => {
-        if (!question.trim()) {
-            return;
-        }
+        if (!question.trim()) return;
 
         const cost = SERVICE_COSTS.TAROT;
         if (credits !== undefined && credits < cost) {
@@ -113,22 +133,7 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
         setStep('result');
 
         try {
-            if (onUseCredit) {
-                const success = await onUseCredit();
-                if (!success) {
-                    alert("크레딧이 부족합니다.");
-                    setStep('select');
-                    setSelectedCards([]);
-                    return;
-                }
-            }
-
-            // Safari ITP 대응: 최신 세션 정보 확보
-            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-            const activeSession = fetchedSession || session;
-            
-            const user = activeSession?.user?.user_metadata || {};
-            
+            const user = session?.user?.user_metadata || {};
             submit({
                 question,
                 selectedCards: cards,
@@ -139,20 +144,8 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                     birthDate: user.birth_date
                 }
             });
-
-            // Save reading to Supabase (optional)
-            if (activeSession) {
-                await supabase.from('tarot_readings').insert({
-                    user_id: activeSession.user.id,
-                    spread_type: selectedSpread,
-                    question: question,
-                    selected_cards: cards,
-                    reading_result: {}
-                });
-            }
-
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
             alert("타로 해석 중 오류가 발생했습니다. 다시 시도해 주세요.");
             setStep('select');
             setSelectedCards([]);
@@ -256,6 +249,25 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                         <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
                                         <h3 className="text-2xl font-black text-slate-900 mb-3">메시지를 해석하는 중입니다</h3>
                                     </div>
+                                ) : analysisError ? (
+                                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-up">
+                                        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-8">
+                                            <Compass className="w-10 h-10 text-red-500 animate-bounce" />
+                                        </div>
+                                        <h3 className="text-3xl font-black text-slate-900 mb-4">해석의 맥이 끊겼습니다</h3>
+                                        <p className="text-red-500 text-lg mb-6 leading-relaxed font-bold break-keep">
+                                            {analysisError.message || "원인을 알 수 없는 오류가 발생했습니다."}
+                                        </p>
+                                        <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 w-full max-w-lg border-2 border-slate-100 italic">
+                                            <p className="text-sm text-slate-500 font-bold leading-relaxed">
+                                                💡 별의 기운이 약해져 일시적인 통신 오류가 발생했습니다. <br/>
+                                                <span className="text-indigo-600 block mt-2 text-base">안심하세요! 해석에 실패한 경우 크레딧은 차감되지 않았습니다.</span>
+                                            </p>
+                                        </div>
+                                        <button onClick={() => handleAnalyze(selectedCards)} className="px-12 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-lg shadow-2xl hover:scale-[1.05] transition-transform">
+                                            다시 읽어보기
+                                        </button>
+                                    </div>
                                 ) : reading && (
                                     <div className="max-w-4xl mx-auto py-4">
                                         <div className="text-center mb-16">
@@ -268,18 +280,18 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
                                                     <div className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-6">Position {idx + 1}</div>
                                                     <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-amber-100"><div className="text-7xl">🃏</div></div>
                                                     <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
-                                                    <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation)}</p>
+                                                    <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation ?? '')}</p>
                                                 </div>
                                             ))}
                                         </div>
                                         <div className="space-y-10 mb-20">
                                             <div className="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
                                                 <h4 className="text-2xl font-black mb-8 flex items-center gap-4"><Sparkles className="w-5 h-5 text-indigo-300" /> 별들의 종합 조언</h4>
-                                                <p className="text-lg leading-9 text-indigo-50/90 whitespace-pre-wrap font-medium">{stripMarkdown(reading.overallReading)}</p>
+                                                <p className="text-lg leading-9 text-indigo-50/90 whitespace-pre-wrap font-medium">{stripMarkdown(reading.overallReading ?? '')}</p>
                                             </div>
                                             <div className="bg-white p-10 rounded-[3rem] border-4 border-indigo-50 shadow-inner">
                                                 <h4 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-4"><Sun className="w-5 h-5 text-indigo-500" /> 실천 가이드</h4>
-                                                <p className="text-xl leading-9 text-slate-700 font-bold italic break-keep">"{stripMarkdown(reading.advice)}"</p>
+                                                <p className="text-xl leading-9 text-slate-700 font-bold italic break-keep">"{stripMarkdown(reading.advice ?? '')}"</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-4 justify-center pb-10">
@@ -295,6 +307,4 @@ const TarotModal: React.FC<TarotModalProps> = ({ isOpen, onClose, tier, onUpgrad
             </div>
         </div>
     );
-};
-
-export default TarotModal;
+}

@@ -4,7 +4,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
+import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
 
 export const config = {
     runtime: 'edge',
@@ -17,12 +17,6 @@ export default async (req: Request) => {
     try {
         const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-
-        if (!supabaseUrl || !supabaseAnonKey || !GEMINI_API_KEY) {
-            throw new Error('Missing environment variables');
-        }
-
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         // Authenticate user
@@ -128,49 +122,34 @@ export default async (req: Request) => {
 
             위 정보를 바탕으로 두 사람의 심층 궁합 분석을 수행해 주세요. 각 섹션은 충분히 길고 상세하게 작성되어야 합니다.`;
 
-            const google = createGoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
-            
-            let result;
-            try {
-                // Primary
-                result = await streamObject({
-                    model: google(PRIMARY_MODEL),
-                    schema: z.object({
-                        score: z.number(),
-                        summary: z.string(),
-                        keywords: z.array(z.string()),
-                        details: z.object({
-                            mbti_harmony: z.string(),
-                            saju_harmony: z.string(),
-                            synergy: z.string(),
-                            advice: z.string()
-                        })
-                    }),
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
-            } catch (error) {
-                console.warn(`Primary model failed for compatibility, falling back to ${FALLBACK_MODEL}:`, error);
-                // Fallback
-                result = await streamObject({
-                    model: google(FALLBACK_MODEL),
-                    schema: z.object({
-                        score: z.number(),
-                        summary: z.string(),
-                        keywords: z.array(z.string()),
-                        details: z.object({
-                            mbti_harmony: z.string(),
-                            saju_harmony: z.string(),
-                            synergy: z.string(),
-                            advice: z.string()
-                        })
-                    }),
-                    system: systemPrompt,
-                    prompt: userQuery,
-                });
+            let lastError;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const { model, name } = getAIProvider(attempt);
+                    const result = await streamObject({
+                        model,
+                        schema: z.object({
+                            score: z.number(),
+                            summary: z.string(),
+                            keywords: z.array(z.string()),
+                            details: z.object({
+                                mbti_harmony: z.string(),
+                                saju_harmony: z.string(),
+                                synergy: z.string(),
+                                advice: z.string()
+                            })
+                        }),
+                        system: systemPrompt,
+                        prompt: userQuery,
+                    });
+                    return result.toTextStreamResponse({ headers: corsHeaders });
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for compatibility:`, error);
+                    if (!isRetryableAIError(error)) break;
+                }
             }
-
-            return result.toTextStreamResponse({ headers: corsHeaders });
+            throw lastError;
         } else {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
                 status: 405, 
