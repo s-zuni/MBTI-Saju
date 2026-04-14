@@ -162,7 +162,7 @@ const KboContent: React.FC<{
     const userName = session?.user?.user_metadata?.full_name || '사용자';
 
     // Streaming Hook
-    const { object: result, submit, isLoading, error: aiError, stop } = useObject({
+    const { object: result, submit, isLoading, error: aiError } = useObject({
         api: '/api/analysis-special',
         schema: kboSchema,
         headers: {
