@@ -162,11 +162,23 @@ const KboContent: React.FC<{
     const userName = session?.user?.user_metadata?.full_name || '사용자';
 
     // Streaming Hook
-    const { object: result, submit, isLoading } = useObject({
+    const { object: result, submit, isLoading, error: aiError, stop } = useObject({
         api: '/api/analysis-special',
         schema: kboSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: ({ object }) => {
+            // Only deduct credits if analysis successfully finished
+            if (object) {
+                if (onUseCredit) {
+                    onUseCredit();
+                }
+            }
+        },
+        onError: (err) => {
+            console.error('KBO Analysis Error:', err);
+            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. (크레딧은 차감되지 않았습니다)');
         }
     });
 
@@ -206,10 +218,6 @@ const KboContent: React.FC<{
                 sajuData,
                 requirements: selectedTeam // 구단 정보 전달
             });
-
-            if (onUseCredit) {
-                await onUseCredit();
-            }
         } catch (e: any) {
             setError(e.message);
             setHasStarted(false);
@@ -297,7 +305,24 @@ const KboContent: React.FC<{
             </div>
 
             <div ref={reportRef} className="bg-white">
-            {isLoading && !result ? (
+            {aiError && !result ? (
+                <div className="py-20 text-center">
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">분석에 실패했습니다</h3>
+                    <p className="text-slate-500 mb-8 whitespace-pre-wrap">
+                        {aiError.message || '일시적인 오류가 발생했습니다.'}
+                        {"\n"}크레딧은 차감되지 않았습니다.
+                    </p>
+                    <button
+                        onClick={() => { setHasStarted(false); setError(null); }}
+                        className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold shadow-lg active:scale-95 transition-all"
+                    >
+                        뒤로 가기
+                    </button>
+                </div>
+            ) : isLoading && !result ? (
                 <div className="flex flex-col justify-center items-center h-80">
                     <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6 stroke-[1px]" />
                     <p className="text-blue-600 font-black text-[10px] tracking-[0.3em] uppercase">나와의 데스티니 구단 찾는 중...</p>

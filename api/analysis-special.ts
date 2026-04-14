@@ -223,12 +223,18 @@ export default async function handler(req: Request) {
                     schema: currentSchema,
                     system: systemPrompt,
                     prompt: userQuery,
+                    maxRetries: 0, // Disable SDK retries to allow our custom fallback loop to switch models faster
                 });
                 return result.toTextStreamResponse({ headers: corsHeaders });
             } catch (error) {
                 lastError = error;
                 console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for type ${type}:`, error);
-                if (!isRetryableAIError(error)) break;
+                
+                // If not retryable or we've exhausted attempts, bread out
+                if (!isRetryableAIError(error)) {
+                    console.error(`Non-retryable error on attempt ${attempt + 1}:`, error);
+                    break;
+                }
             }
         }
         throw lastError;

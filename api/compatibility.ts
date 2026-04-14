@@ -122,34 +122,38 @@ export default async (req: Request) => {
 
             위 정보를 바탕으로 두 사람의 심층 궁합 분석을 수행해 주세요. 각 섹션은 충분히 길고 상세하게 작성되어야 합니다.`;
 
-            let lastError;
-            for (let attempt = 0; attempt < 4; attempt++) {
-                try {
-                    const { model, name } = getAIProvider(attempt);
-                    const result = await streamObject({
-                        model,
-                        schema: z.object({
-                            score: z.number(),
-                            summary: z.string(),
-                            keywords: z.array(z.string()),
-                            details: z.object({
-                                mbti_harmony: z.string(),
-                                saju_harmony: z.string(),
-                                synergy: z.string(),
-                                advice: z.string()
-                            })
-                        }),
-                        system: systemPrompt,
-                        prompt: userQuery,
-                    });
-                    return result.toTextStreamResponse({ headers: corsHeaders });
-                } catch (error) {
-                    lastError = error;
-                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for compatibility:`, error);
-                    if (!isRetryableAIError(error)) break;
-                }
+            try {
+                let lastError;
+                for (let attempt = 0; attempt < 4; attempt++) {
+                    try {
+                        const { model, name } = getAIProvider(attempt);
+                        const result = await streamObject({
+                            model,
+                            schema: z.object({
+                                score: z.number(),
+                                summary: z.string(),
+                                keywords: z.array(z.string()),
+                                details: z.object({
+                                    mbti_harmony: z.string(),
+                                    saju_harmony: z.string(),
+                                    synergy: z.string(),
+                                    advice: z.string()
+                                })
+                            }),
+                            system: systemPrompt,
+                            prompt: userQuery,
+                            maxRetries: 0, // Faster switching
+                        });
+                        return result.toTextStreamResponse({ headers: corsHeaders });
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for compatibility:`, error);
+                        if (!isRetryableAIError(error)) break;
+                    }
+                throw lastError;
+            } catch (err) {
+                throw err;
             }
-            throw lastError;
         } else {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
                 status: 405, 

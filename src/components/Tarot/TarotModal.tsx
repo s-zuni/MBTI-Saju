@@ -243,8 +243,27 @@ export default function TarotModal({
                         )}
 
                         {step === 'result' && (
-                            <div className="w-full h-full animate-fade-in">
-                                {isLoading && !reading ? (
+                            <div className="w-full h-full animate-fade-in px-4">
+                                {analysisError && !reading ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
+                                        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-8">
+                                            <Sparkles className="w-10 h-10 text-red-400 opacity-50" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-4">운명의 연결이 불안정합니다</h3>
+                                        <p className="text-slate-500 mb-10 leading-relaxed font-medium">
+                                            {analysisError.message || "별들의 메시지를 읽어오는 데 실패했습니다."}
+                                            <br /><br />
+                                            <span className="text-indigo-600 font-black underline underline-offset-4 decoration-indigo-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
+                                            <br />잠시 후 다시 카드를 뽑아주세요.
+                                        </p>
+                                        <button
+                                            onClick={() => setStep('spread')}
+                                            className="w-full bg-slate-900 py-5 rounded-[1.5rem] text-white font-black text-lg shadow-xl active:scale-95 transition-all"
+                                        >
+                                            처음으로 돌아가기
+                                        </button>
+                                    </div>
+                                ) : isLoading && !reading ? (
                                     <div className="flex flex-col items-center justify-center py-20">
                                         <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
                                         <h3 className="text-2xl font-black text-slate-900 mb-3">메시지를 해석하는 중입니다</h3>

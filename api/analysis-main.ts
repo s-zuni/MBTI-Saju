@@ -191,7 +191,6 @@ export default async function handler(req: Request) {
     try {
         if (part === 'full') {
             let lastError;
-            // Try up to 4 fallback levels (Gemini primary -> Gemini fallback -> GPT mini -> GPT 4o)
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
                     const { model, name } = getAIProvider(attempt);
@@ -200,12 +199,13 @@ export default async function handler(req: Request) {
                         schema: currentSchema,
                         system: systemPrompt,
                         prompt: userQuery,
+                        maxRetries: 0, // Faster fallback
                     });
                     return result.toTextStreamResponse({ headers: corsHeaders });
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed:`, error);
-                    if (!isRetryableAIError(error)) break; // Stop loop if errors aren't about demand/quota
+                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for full analysis:`, error);
+                    if (!isRetryableAIError(error)) break;
                 }
             }
             throw lastError;
@@ -220,6 +220,7 @@ export default async function handler(req: Request) {
                         schema: currentSchema,
                         system: systemPrompt,
                         prompt: userQuery,
+                        maxRetries: 0, // Faster fallback
                     });
                     return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
                         status: 200,

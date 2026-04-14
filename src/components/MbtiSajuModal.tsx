@@ -51,13 +51,16 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   // Streaming Hook
   const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading, error: analysisError } = useObject({
-    api: '/api/analyze_full',
+    api: '/api/analysis-main?part=full',
     schema: analysisSchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
     onFinish: ({ object }) => {
       if (object && onUseCredit) {
         onUseCredit(isRegenerating);
       }
+    },
+    onError: (err) => {
+      console.error('MbtiSaju Analysis Error:', err);
     }
   });
 
@@ -517,16 +520,15 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
               <h3 className="text-xl font-black text-slate-900 mb-2">분석 중 오류가 발생했습니다</h3>
-              <p className="text-red-500 text-sm mb-4 leading-relaxed font-bold">
-                {analysisError.message || "원인을 알 수 없는 오류가 발생했습니다."}
+              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                {analysisError?.message || "일시적인 서버 부하로 분석이 중단되었습니다."}
+                <br />
+                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-indigo-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
               </p>
-              <div className="bg-slate-50 rounded-xl p-4 mb-8 w-full border border-slate-100 italic">
-                <p className="text-[10px] text-slate-500 font-bold">
-                  💡 시스템 과부하 또는 네트워크 일시적 오류일 수 있습니다. <br/>
-                  <span className="text-indigo-600">안심하세요! 분석에 실패한 경우 크레딧은 차감되지 않았습니다.</span>
-                </p>
-              </div>
-              <button onClick={() => { setAnalysis(null); loadAnalysis(); }} className="px-8 py-3 bg-slate-900 text-white rounded-full font-black text-sm">
+              <button 
+                onClick={() => { setAnalysis(null); loadAnalysis(); }} 
+                className="px-8 py-4 bg-slate-950 text-white rounded-full font-black text-sm shadow-xl active:scale-95 transition-all"
+              >
                 다시 시도하기
               </button>
             </div>

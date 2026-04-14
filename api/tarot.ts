@@ -119,6 +119,7 @@ export default async (req: Request) => {
                         schema,
                         system: fullSystemPrompt,
                         prompt: userQuery,
+                        maxRetries: 0, // Faster switching
                     });
                     return result.toTextStreamResponse({ headers: corsHeaders });
                 } catch (error) {

@@ -24,7 +24,6 @@ export const MODELS = {
  */
 export function getAIProvider(attempt: number = 0) {
     // 1. Fetch Keys (Server-side ONLY)
-    // We prioritize standard names to avoid accidental frontend exposure
     const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
@@ -32,6 +31,7 @@ export function getAIProvider(attempt: number = 0) {
     const openai = createOpenAI({ apiKey: OPENAI_KEY || '' });
 
     // Fallback Sequence
+    // 0: Gemini Primary, 1: Gemini Fallback, 2: GPT Primary, 3: GPT Fallback
     switch (attempt) {
         case 0:
             return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
@@ -41,7 +41,6 @@ export function getAIProvider(attempt: number = 0) {
             if (OPENAI_KEY) {
                 return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT Primary' };
             }
-            // If no OpenAI key, try Gemini fallback again or original
             return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Fallback (No GPT Key)' };
         case 3:
         default:
@@ -53,17 +52,41 @@ export function getAIProvider(attempt: number = 0) {
 }
 
 /**
+ * Checks if OpenAI is properly configured in the environment.
+ */
+export function isOpenAIConfigured(): boolean {
+    return !!process.env.OPENAI_API_KEY;
+}
+
+/**
  * Helper to determine if an error should trigger a provider fallback.
- * (e.g., 503 Service Unavailable, 429 Too Many Requests)
  */
 export function isRetryableAIError(error: any): boolean {
-    const msg = error?.message || String(error);
+    if (!error) return false;
+
+    // 1. Check SDK's own retryable flag
+    if (error.isRetryable === true) return true;
+
+    // 2. Extract underlying error if this is an AI_RetryError
+    const lastError = error.lastError || (error.errors ? error.errors[error.errors.length - 1] : null);
+    const targetError = lastError || error;
+
+    // 3. Check status codes
+    const statusCode = targetError.statusCode || targetError.status;
+    if (statusCode === 503 || statusCode === 429 || statusCode === 500 || statusCode === 504) {
+        return true;
+    }
+
+    // 4. Check error message strings
+    const msg = (targetError.message || String(targetError)).toLowerCase();
     return (
         msg.includes('503') || 
-        msg.includes('Service Unavailable') || 
+        msg.includes('unavailable') || 
         msg.includes('429') || 
-        msg.includes('Too Many Requests') ||
+        msg.includes('requests') ||
         msg.includes('overloaded') ||
-        msg.includes('high demand')
+        msg.includes('high demand') ||
+        msg.includes('rate limit') ||
+        msg.includes('deadline exceeded')
     );
 }
