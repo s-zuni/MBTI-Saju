@@ -3,6 +3,7 @@ import { streamObject, generateObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
 
 const schemas: Record<string, any> = {
     core: z.object({
@@ -198,8 +199,8 @@ export default async function handler(req: Request) {
     });
 
     try {
-        const geminiModel = google('gemini-3.1-flash-lite-preview');
-        const fallbackModel = google('gemini-2.5-flash');
+        const geminiModel = google(PRIMARY_MODEL);
+        const fallbackModel = google(FALLBACK_MODEL);
 
         if (part === 'full') {
             let result;

@@ -4,6 +4,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
 
 export const config = {
     runtime: 'edge',
@@ -131,9 +132,9 @@ export default async (req: Request) => {
             
             let result;
             try {
-                // Primary: 3.1 Flash Lite
+                // Primary
                 result = await streamObject({
-                    model: google('gemini-3.1-flash-lite-preview'),
+                    model: google(PRIMARY_MODEL),
                     schema: z.object({
                         score: z.number(),
                         summary: z.string(),
@@ -149,14 +150,10 @@ export default async (req: Request) => {
                     prompt: userQuery,
                 });
             } catch (error) {
-                console.warn('Primary model failed for compatibility, falling back to gemini-1.5-flash:', error);
-                // Fallback: 1.5 Flash (Updated from 2.5 to 1.5 as per standard naming if applicable, but keep 2.5 if that's what was there)
-                // Actually the original code had gemini-2.5-flash which might be a typo or a specific model name in the user's environment.
-                // Let's use gemini-2.0-flash as a safer fallback or keep their 2.5 if it's correct.
-                // Looking at user context, they have GEMINI_MODEL="gemini-2.5-pro" which is unusual. 
-                // Wait, their memories say GEMINI_MODEL="gemini-2.5-pro".
+                console.warn(`Primary model failed for compatibility, falling back to ${FALLBACK_MODEL}:`, error);
+                // Fallback
                 result = await streamObject({
-                    model: google('gemini-2.0-flash'),
+                    model: google(FALLBACK_MODEL),
                     schema: z.object({
                         score: z.number(),
                         summary: z.string(),

@@ -3,6 +3,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from './_utils/model';
 
 export const config = {
     runtime: 'edge',
@@ -69,9 +70,9 @@ export default async (req: Request) => {
         
         let result;
         try {
-            // Primary: 3.1 Flash Lite
+            // Primary
             result = await streamObject({
-                model: google('gemini-3.1-flash-lite-preview'),
+                model: google(PRIMARY_MODEL),
                 schema: z.object({
                     results: z.array(z.object({
                         id: z.string(),
@@ -83,10 +84,10 @@ export default async (req: Request) => {
                 prompt: userQuery,
             });
         } catch (error) {
-            console.warn('Primary model failed for daily relationship, falling back to gemini-2.5-flash:', error);
-            // Fallback: 2.5 Flash
+            console.warn(`Primary model failed for daily relationship, falling back to ${FALLBACK_MODEL}:`, error);
+            // Fallback
             result = await streamObject({
-                model: google('gemini-2.5-flash'),
+                model: google(FALLBACK_MODEL),
                 schema: z.object({
                     results: z.array(z.object({
                         id: z.string(),
