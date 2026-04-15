@@ -548,9 +548,6 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none mt-4">
                                 KBO 팬 궁합
                             </h3>
-                            <p className="text-slate-400 text-xs font-bold mt-2">
-                                {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })} 기준
-                            </p>
                         </div>
                     </div>
                     <div className="h-[2px] w-full bg-slate-950 mt-6"></div>
