@@ -62,7 +62,11 @@ const schemas: Record<string, any> = {
         dimensions: z.array(z.object({
             label: z.string().describe("평가 척도 이름"),
             value: z.number().describe("해당 척도 점수 (0-100)")
-        })).length(5)
+        })).length(5),
+        date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
+        dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지 (예: '오늘은 직관 에너지가 최고조! 직관 가도 OK' 스타일)"),
+        tomorrowScore: z.number().describe("내일 예정 궁합 점수 (0-100)"),
+        tomorrowWinFairyScore: z.number().describe("내일 예정 승리 요정 지수 (0-100)")
     }),
     fortune: z.object({
         today: fortuneItemSchema,
@@ -88,8 +92,16 @@ function getDeterministicValue(seed: string, offset: number, min: number, max: n
     return min + (val % (max - min + 1));
 }
 
-function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string) {
-    const mainSeed = `${birthDate}-${mbti}`;
+function getDateString(offsetDays: number = 0): string {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+}
+
+function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
+    const dateStr = getDateString(dateOffset);
+    // Include today's date in the seed so scores change daily
+    const mainSeed = `${birthDate}-${mbti}-${dateStr}`;
     
     // 1. Team rankings based on mainSeed
     const teamScores = KBO_TEAMS.map(team => ({
@@ -114,6 +126,7 @@ function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam
     }));
 
     return {
+        date: dateStr,
         score: currentTeamScore,
         winFairyScore,
         bestTeam,
@@ -189,24 +202,29 @@ export default async function handler(req: Request) {
     } else if (type === 'trip') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'kbo') {
-        const kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음');
+        const kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 0);
+        const kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 1);
         
         userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}.
         현재 응원 구단: ${requirements || '없음'}.
         
         [중요: 결과 데이터 필수 준수]
-        아래의 데이터는 사주-MBTI 동기화 엔진을 통해 이미 확정된 결과입니다. JSON 응답 시 반드시 이 값을 사용하세요:
+        아래의 데이터는 사주-MBTI 일일 동기화 엔진을 통해 오늘(${kboFixed.date}) 기준으로 확정된 결과입니다. JSON 응답 시 반드시 이 값을 사용하세요:
+        - 오늘 날짜(date): "${kboFixed.date}"
         - 궁합 점수(score): ${kboFixed.score}
         - 승리 요정 지수(winFairyScore): ${kboFixed.winFairyScore}
-        - 최강 궁합 구단(bestTeam): ${kboFixed.bestTeam}
-        - 최악 궁합 구단(worstTeam): ${kboFixed.worstTeam}
+        - 최강 궁합 구단(bestTeam): "${kboFixed.bestTeam}"
+        - 최악 궁합 구단(worstTeam): "${kboFixed.worstTeam}"
         - 성향 파라미터(dimensions): ${JSON.stringify(kboFixed.dimensions)}
+        - 내일 궁합 점수(tomorrowScore): ${kboTomorrow.score}
+        - 내일 승리 요정 지수(tomorrowWinFairyScore): ${kboTomorrow.winFairyScore}
 
         [수행 작업]
         1. 위에서 확정된 결과를 바탕으로, 왜 이런 점수와 구단 매칭 결과가 나왔는지 사주와 MBTI 관점에서 논리적으로(때로는 팩트 폭격으로) 상세히 분석하세요. 
-        2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \\n\\n을 사용하여 줄바꿈을 확실히 하세요. 
+        2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \n\n을 사용하여 줄바꿈을 확실히 하세요. 
         3. 전체 내용은 공백 포함 400-500자 내외여야 합니다.
-        4. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.`;
+        4. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.
+        5. dailyMessage: 오늘의 KBO 운세를 담은 한 줄 짧은 메시지를 작성하세요. (예: '오늘은 직관 에너지 최고조! 경기장 가면 무조건 승리' 스타일)`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];

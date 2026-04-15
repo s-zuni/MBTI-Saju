@@ -125,7 +125,11 @@ export const kboSchema = z.object({
     dimensions: z.array(z.object({
         label: z.string(),
         value: z.number()
-    }))
+    })),
+    date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
+    dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지 (예: '오늘은 직관 에너지가 최고조! 직관 가도 OK')"),
+    tomorrowScore: z.number().describe("내일 예정 궁합 점수 (0-100)"),
+    tomorrowWinFairyScore: z.number().describe("내일 예정 승리 요정 지수 (0-100)")
 });
 
 // Special Analysis: Trip

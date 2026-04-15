@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, TrendingUp, Sparkles, X, Trophy, Share2, Instagram, Download } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles, X, Trophy, Share2, Instagram, Download, CalendarDays, ChevronRight, Zap } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { generateImage } from '../utils/exportUtils';
@@ -335,6 +335,29 @@ const KboContent: React.FC<{
             ) : result ? (
                 <div className="space-y-10 animate-fade-up py-4">
                     
+                    {/* Daily Date Badge + Message Banner */}
+                    {result.date && (
+                        <div className="rounded-[28px] overflow-hidden border border-indigo-100 shadow-md">
+                            {/* Date Header */}
+                            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="w-4 h-4 text-white/80" />
+                                    <span className="text-white font-black text-xs tracking-widest uppercase">오늘의 KBO 운세</span>
+                                </div>
+                                <span className="text-white/80 text-xs font-bold">
+                                    {result.date ? new Date(result.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : ''}
+                                </span>
+                            </div>
+                            {/* Daily Message */}
+                            {result.dailyMessage && (
+                                <div className="bg-indigo-50 px-5 py-4 flex items-start gap-3">
+                                    <Zap className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+                                    <p className="text-indigo-800 font-bold text-sm leading-relaxed">{result.dailyMessage}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Score section */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <section 
@@ -422,7 +445,40 @@ const KboContent: React.FC<{
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Tomorrow Preview Card */}
+                    {(result.tomorrowScore !== undefined || result.tomorrowWinFairyScore !== undefined) && (
+                        <div className="rounded-[28px] border border-amber-100 bg-gradient-to-br from-amber-50 to-yellow-50 overflow-hidden shadow-sm">
+                            <div className="px-6 pt-5 pb-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <ChevronRight className="w-4 h-4 text-amber-500" />
+                                        <span className="text-amber-700 font-black text-xs tracking-widest uppercase">내일 미리보기</span>
+                                    </div>
+                                    <span className="text-amber-500/70 text-[10px] font-bold">
+                                        {new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-amber-100">
+                                        <p className="text-amber-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 궁합</p>
+                                        <p className="text-3xl font-black text-amber-800">{result.tomorrowScore ?? '-'}<span className="text-sm text-amber-500 ml-0.5">점</span></p>
+                                        <div className="mt-2 h-1.5 w-full bg-amber-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all" style={{width: `${result.tomorrowScore ?? 0}%`}} />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-amber-100">
+                                        <p className="text-amber-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 승요</p>
+                                        <p className="text-3xl font-black text-amber-800">{result.tomorrowWinFairyScore ?? '-'}<span className="text-sm text-amber-500 ml-0.5">점</span></p>
+                                        <div className="mt-2 h-1.5 w-full bg-amber-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all" style={{width: `${result.tomorrowWinFairyScore ?? 0}%`}} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-amber-500 text-[10px] font-bold text-center mt-3">* 내일 점수는 오늘 자정 이후 갱신됩니다</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex flex-col items-center pt-12 border-t border-slate-100 gap-6 mt-12 bg-slate-50/50 rounded-[40px] p-8">
                         <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
                             <button
@@ -487,15 +543,19 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-2 text-blue-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5 border border-blue-200 bg-white px-2 py-1 rounded-full w-fit">
-                                <BaseballIcon className="w-3 h-3" /> BEST MATCH PREDICTION
+                                <BaseballIcon className="w-3 h-3" /> DAILY KBO FORTUNE
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none mt-4">
                                 KBO 팬 궁합
                             </h3>
+                            <p className="text-slate-400 text-xs font-bold mt-2">
+                                {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })} 기준
+                            </p>
                         </div>
                     </div>
-                    <div className="h-[2px] w-full bg-slate-950 mt-8"></div>
+                    <div className="h-[2px] w-full bg-slate-950 mt-6"></div>
                 </div>
+
 
                 <KboContent 
                     key={resetKey}
