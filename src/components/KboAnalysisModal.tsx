@@ -416,7 +416,7 @@ const KboContent: React.FC<{
                             <h5 className="font-black text-slate-900 text-lg flex items-center gap-2">
                                 <TrendingUp className="w-6 h-6 text-indigo-500" /> 성향 파라미터 그래프
                             </h5>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DNA Analysis</span>
+
                         </div>
                         <RadarChart data={result.dimensions || []} />
                     </section>
@@ -427,7 +427,7 @@ const KboContent: React.FC<{
                             <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
                                 <Trophy className="w-16 h-16 text-emerald-600" />
                             </div>
-                            <div className="text-emerald-700 font-black text-[10px] uppercase tracking-widest mb-2">Soulmate Team</div>
+
                             <h5 className="font-black text-emerald-900 text-xl mb-3">최강 궁합 구단</h5>
                             <p className="text-emerald-800 font-black text-2xl flex items-center gap-2">
                                 <Trophy className="w-6 h-6 text-emerald-500" /> {result.bestTeam}
@@ -437,7 +437,7 @@ const KboContent: React.FC<{
                             <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
                                 <X className="w-16 h-16 text-rose-600" />
                             </div>
-                            <div className="text-rose-700 font-black text-[10px] uppercase tracking-widest mb-2">Mismatch Team</div>
+
                             <h5 className="font-black text-rose-900 text-xl mb-3">최악 궁합 구단</h5>
                             <p className="text-rose-800 font-black text-2xl flex items-center gap-2">
                                 <X className="w-6 h-6 text-rose-500" /> {result.worstTeam}
@@ -543,7 +543,7 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-2 text-blue-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5 border border-blue-200 bg-white px-2 py-1 rounded-full w-fit">
-                                <BaseballIcon className="w-3 h-3" /> DAILY KBO FORTUNE
+                                <BaseballIcon className="w-3 h-3" /> 데일리 KBO 운세
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none mt-4">
                                 KBO 팬 궁합

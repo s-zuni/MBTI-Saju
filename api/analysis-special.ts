@@ -55,18 +55,18 @@ const schemas: Record<string, any> = {
     }),
     kbo: z.object({
         score: z.number().describe("선택한 구단과의 궁합 점수 (0-100)"),
-        supportedTeamAnalysis: z.string().describe("궁합 분석을 단호하고 친근한 어조로 약 400-500자 내외로 냉정하게 평가. 반드시 가독성을 위해 단락을 나누고 \\n\\n을 자주 사용하여 줄바꿈을 명확히 할 것."),
-        winFairyScore: z.number().describe("사용자의 기운(사주, MBTI)과 해당 구단 홈 구장의 기운(위치, 역사 등)을 분석해 도출한 승리 요정 지수 (0-100)"),
-        bestTeam: z.string().describe("나와 가장 궁합이 잘 맞는 KBO 구단"),
-        worstTeam: z.string().describe("나와 가장 궁합이 안 맞는 KBO 구단"),
+        supportedTeamAnalysis: z.string().describe("사주와 MBTI 기반 궁합 분석 (서버 생성)"),
+        winFairyScore: z.number().describe("승리 요정 지수 (0-100)"),
+        bestTeam: z.string().describe("최강 궁합 구단"),
+        worstTeam: z.string().describe("최악 궁합 구단"),
         dimensions: z.array(z.object({
             label: z.string().describe("평가 척도 이름"),
             value: z.number().describe("해당 척도 점수 (0-100)")
         })).length(5),
         date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
-        dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지 (예: '오늘은 직관 에너지가 최고조! 직관 가도 OK' 스타일)"),
-        tomorrowScore: z.number().describe("내일 예정 궁합 점수 (0-100)"),
-        tomorrowWinFairyScore: z.number().describe("내일 예정 승리 요정 지수 (0-100)")
+        dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지"),
+        tomorrowScore: z.number().describe("내일 궁합 점수"),
+        tomorrowWinFairyScore: z.number().describe("내일 승요지수")
     }),
     fortune: z.object({
         today: fortuneItemSchema,
@@ -96,6 +96,29 @@ function getDateString(offsetDays: number = 0): string {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
     return d.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+}
+
+function getScoreComment(score: number): string {
+    if (score >= 90) return '환상의 짝꿍';
+    if (score >= 80) return '찰떡 궁합';
+    if (score >= 70) return '좋은 인연';
+    if (score >= 60) return '나쁘지 않은 사이';
+    if (score >= 50) return '평범한 관계';
+    return '인연이 약함';
+}
+
+function generateAnalysisText(mbti: string, dayMaster: string, team: string, score: number, winFairyScore: number, bestTeam: string, worstTeam: string): string {
+    const scoreComment = getScoreComment(score);
+    const winComment = winFairyScore >= 80 ? '직관 갈 때마다 팀 승리를 부르는 강력한 기운을 가지고 있어요' 
+        : winFairyScore >= 65 ? '직관 가면 좋은 기운이 흐르는 편이에요'
+        : winFairyScore >= 50 ? '직관 가면 무승부 정도는 기대해볼 수 있어요'
+        : '지금은 직관보다 집관이 더 잘 맞는 시기예요';
+
+    const mbtiComment = mbti.includes('E') 
+        ? '외향적인 에너지가 구장의 열기와 시너지를 이뤄요'
+        : '내향적인 집중력이 경기에 몰입하는 힘을 만들어줘요';
+
+    return `${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이에요.\n\n${mbtiComment}. 일간 ${dayMaster || '?'}의 기운과 구단의 팀 컬러가 만나는 지점에서 오늘의 점수가 결정됐어요.\n\n승리 요정 지수는 ${winFairyScore}점 — ${winComment}.\n\n참고로 현재 기운상 가장 잘 맞는 구단은 ${bestTeam}, 가장 엇갈리는 구단은 ${worstTeam}이에요.`;
 }
 
 function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
@@ -204,27 +227,32 @@ export default async function handler(req: Request) {
     } else if (type === 'kbo') {
         const kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 0);
         const kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 1);
+        const analysisText = generateAnalysisText(
+            mbti || '알수없음',
+            saju?.dayMaster?.korean || '알수없음',
+            requirements || '없음',
+            kboFixed.score,
+            kboFixed.winFairyScore,
+            kboFixed.bestTeam,
+            kboFixed.worstTeam
+        );
         
-        userQuery = `이름: ${name || '사용자'}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}.
-        현재 응원 구단: ${requirements || '없음'}.
-        
-        [중요: 결과 데이터 필수 준수]
-        아래의 데이터는 사주-MBTI 일일 동기화 엔진을 통해 오늘(${kboFixed.date}) 기준으로 확정된 결과입니다. JSON 응답 시 반드시 이 값을 사용하세요:
-        - 오늘 날짜(date): "${kboFixed.date}"
-        - 궁합 점수(score): ${kboFixed.score}
-        - 승리 요정 지수(winFairyScore): ${kboFixed.winFairyScore}
-        - 최강 궁합 구단(bestTeam): "${kboFixed.bestTeam}"
-        - 최악 궁합 구단(worstTeam): "${kboFixed.worstTeam}"
-        - 성향 파라미터(dimensions): ${JSON.stringify(kboFixed.dimensions)}
-        - 내일 궁합 점수(tomorrowScore): ${kboTomorrow.score}
-        - 내일 승리 요정 지수(tomorrowWinFairyScore): ${kboTomorrow.winFairyScore}
+        // AI가 생성할 것은 dailyMessage (한 줄) 뿐. 나머지는 모두 서버에서 즉시 조합.
+        userQuery = `구단: ${requirements || '없음'}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오늘 궁합 점수: ${kboFixed.score}점, 승요지수: ${kboFixed.winFairyScore}점.
 
-        [수행 작업]
-        1. 위에서 확정된 결과를 바탕으로, 왜 이런 점수와 구단 매칭 결과가 나왔는지 사주와 MBTI 관점에서 논리적으로(때로는 팩트 폭격으로) 상세히 분석하세요. 
-        2. 가독성을 위해 반드시 3~4개의 단락으로 나누고, 단락 사이에는 \n\n을 사용하여 줄바꿈을 확실히 하세요. 
-        3. 전체 내용은 공백 포함 400-500자 내외여야 합니다.
-        4. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.
-        5. dailyMessage: 오늘의 KBO 운세를 담은 한 줄 짧은 메시지를 작성하세요. (예: '오늘은 직관 에너지 최고조! 경기장 가면 무조건 승리' 스타일)`;
+        [필수 준수 값 - 절대 변경 불가]
+        score: ${kboFixed.score}
+        supportedTeamAnalysis: "${analysisText.replace(/"/g, "'").replace(/\n/g, '\\n')}"
+        winFairyScore: ${kboFixed.winFairyScore}
+        bestTeam: "${kboFixed.bestTeam}"
+        worstTeam: "${kboFixed.worstTeam}"
+        dimensions: ${JSON.stringify(kboFixed.dimensions)}
+        date: "${kboFixed.date}"
+        tomorrowScore: ${kboTomorrow.score}
+        tomorrowWinFairyScore: ${kboTomorrow.winFairyScore}
+
+        [유일한 생성 작업]
+        dailyMessage 필드 하나만 창의적으로 작성하세요: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내). 예: '오늘은 직관 에너지 최고조! 경기장 가면 무조건 승리'`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
