@@ -90,7 +90,8 @@ export default async (req: Request) => {
                 lover: '연인 (Lover)',
                 friend: '친구 (Friend)',
                 family: '가족 (Family)',
-                colleague: '동료 (Colleague)',
+                boss: '직장 상사 (Boss)',
+                colleague: '직장 동료 (Colleague)',
                 other: '그 외 (Other)'
             };
             const relationshipStr = relationshipKoreanMap[relationshipType] || '연인';
@@ -102,32 +103,31 @@ export default async (req: Request) => {
                - 결론을 먼저 제시하고, 그 이유를 간략하고 명확하게 설명하세요.
             (2) 나의 사주와 어울리는 사주적 기운 및 인연 (약 200자)
                - 사주 용어(오행 등)는 반드시 한글과 한자를 병기하세요. (예: 목(木), 화(火))
-               - 영어 공용어(Wood, Fire 등) 사용은 절대 금지입니다.
-            (3) ${isPartnerMode ? '상대방과 나의 MBTI & 사주 심층 궁합' : '종합 이상 궁합 분석 및 관계 조언'} (약 500자)
+            (3) ${isPartnerMode ? `${relationshipStr} 관계 심층 분석` : '종합 이상 궁합 분석 및 관계 조언'} (약 500자)
                - 무조건 아래 3가지 항목으로 나누어 개조식(Bullet points)으로 작성하세요:
-                 (1) 전체적인 궁합: 두 사람의 에너지 결합 결과와 핵심 시너지
-                 (2) 주의해야 할 점: 갈등의 불씨가 될 수 있는 요소 (솔직하고 날카롭게)
-                 (3) 노력하는 법: 관계 개선을 위한 구체적이고 실천적인 액션 플랜
+                 (1) 전체적인 궁합/특징: ${isPartnerMode ? '두 사람의 에너지 결합 결과' : '당신에게 가장 필요한 에너지와 인연의 특징'}
+                 (2) 주의해야 할 점: ${isPartnerMode ? '갈등의 불씨나 주의사항 (솔직하고 날카롭게)' : '인연을 맺을 때 경계해야 할 태도'}
+                 (3) 개선/활용 방안: ${isPartnerMode ? '관계 개선을 위한 행동 지침' : '진정한 연인을 만나기 위한 실천 방안'}
 
             규칙:
-            1. 언어: MBTI 용어를 제외한 모든 내용은 한국어만 사용하세요. (영어 병기 절대 금지)
-            2. 가독성: 줄 바꿈을 자주 사용하고(\n\n), 문단별로 명확히 구분하여 가독성을 극대화하세요.
-            3. 서식: 마크다운 강조 기호(**)나 기울임(Italics)을 절대 사용하지 마세요. 강조는 이모지나 줄 바꿈으로 대신하세요.
-            4. 톤앤매너: 전문적이고 솔직하며, 군더더기 없는 문체를 사용하세요.`;
+            1. 언어: MBTI 용어를 제외한 모든 내용은 한국어만 사용하세요.
+            2. 가독성: 줄 바꿈을 매우 자주 사용하세요. 한 문장이 끝나면 가급적 줄을 바꿉니다. (\n\n)
+            3. 서식: 마크다운 강조 기호(**)나 기울임(Italics)을 절대 사용하지 마세요. 대신 개조식 기호(-)와 적절한 이모지를 사용하세요.
+            4. 톤앤매너: ${relationshipType === 'boss' ? '비즈니스 매너를 갖추되 정곡을 찌르는' : '전문적이고 솔직한'} 문체를 사용하세요.`;
 
             let userQuery = `[관계 목적]\n${relationshipStr}\n\n[대상 A (본인)]\n이름: ${myProfile.name}\nMBTI: ${myProfile.mbti}\n사주 일간: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})\n오행 분포: 목(${mySaju.elementRatio.wood}%), 화(${mySaju.elementRatio.fire}%), 토(${mySaju.elementRatio.earth}%), 금(${mySaju.elementRatio.metal}%), 수(${mySaju.elementRatio.water}%)\n\n`;
 
             if (isPartnerMode && partnerProfile && partnerSaju) {
-                userQuery += `[대상 B (상대방)]\n이름: ${partnerProfile.name}\nMBTI: ${partnerProfile.mbti}\n사주 일간: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})\n오행 분포: 목(${partnerSaju.elementRatio.wood}%), 화(${partnerSaju.elementRatio.fire}%), 토(${partnerSaju.elementRatio.earth}%), 금(${partnerSaju.elementRatio.metal}%), 수(${partnerSaju.elementRatio.water}%)\n\n위 정보를 바탕으로 두 사람의 심층 궁합 분석을 수행해 주세요.`;
+                userQuery += `[대상 B (상대방)]\n이름: ${partnerProfile.name}\nMBTI: ${partnerProfile.mbti}\n사주 일간: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})\n오행 분포: 목(${partnerSaju.elementRatio.wood}%), 화(${partnerSaju.elementRatio.fire}%), 토(${partnerSaju.elementRatio.earth}%), 금(${partnerSaju.elementRatio.metal}%), 수(${partnerSaju.elementRatio.water}%)\n\n위 정보를 바탕으로 두 사람의 '${relationshipStr}' 관점에서의 심층 궁합 분석을 수행해 주세요.`;
             } else {
-                userQuery += `위 정보를 바탕으로 본인의 이상형(궁합)과 관계 조언을 수행해 주세요. (상대방은 없습니다)`;
+                userQuery += `위 정보를 바탕으로 본인의 '이상형(궁합)'과 관계 조언을 수행해 주세요. 특히 ${relationshipStr} 관점에서 어떤 스타일의 사람을 만나야 성공적인지 분석해 주세요.`;
             }
 
             try {
                 let lastError;
                 for (let attempt = 0; attempt < 4; attempt++) {
                     try {
-                        const { model, name } = getAIProvider(attempt);
+                        const { model } = getAIProvider(attempt);
                         const result = await streamObject({
                             model,
                             schema: z.object({
@@ -142,12 +142,11 @@ export default async (req: Request) => {
                             }),
                             system: systemPrompt,
                             prompt: userQuery,
-                            maxRetries: 0, // Faster switching
+                            maxRetries: 0,
                         });
                         return result.toTextStreamResponse({ headers: corsHeaders });
                     } catch (error) {
                         lastError = error;
-                        console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for compatibility:`, error);
                         if (!isRetryableAIError(error)) break;
                     }
                 }

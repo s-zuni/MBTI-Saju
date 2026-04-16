@@ -8,6 +8,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tripSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 
 interface TripModalProps {
     isOpen: boolean;
@@ -48,6 +49,7 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
     const [selectedRegion, setSelectedRegion] = useState(DOMESTIC_REGIONS[16]); // Default: 제주
     const [duration, setDuration] = useState<number>(3);
     const [requirements, setRequirements] = useState('');
+    const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
     useEffect(() => {
         setSelectedRegion(tripType === 'domestic' ? DOMESTIC_REGIONS[16] : INTERNATIONAL_REGIONS[0]);
@@ -61,6 +63,18 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
             'Authorization': `Bearer ${session?.access_token || ''}`
         }
     });
+
+    // 로딩 메시지 순환 효과
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading && !result) {
+            setCurrentLoadingMessage(getRandomLoadingMessage('trip'));
+            interval = setInterval(() => {
+                setCurrentLoadingMessage(getRandomLoadingMessage('trip'));
+            }, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading, result]);
 
     const fetchRecommendation = useCallback(async () => {
         const cost = SERVICE_COSTS.TRIP;
@@ -199,9 +213,16 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
             ) : (
                 <div ref={reportRef} className="bg-white">
                 {isLoading && !result ? (
-                    <div className="flex flex-col justify-center items-center h-80 animate-fade-in">
-                        <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6" />
-                        <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">분석 중...</p>
+                    <div className="flex flex-col justify-center items-center h-80 px-6 text-center animate-fade-in">
+                        <Loader2 className="w-12 h-12 text-sky-300 animate-spin mb-8 stroke-[1px]" />
+                        <div className="space-y-3">
+                            <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                                {currentLoadingMessage}
+                            </p>
+                            <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                                분석에는 최대 30초 정도 소요될 수 있습니다
+                            </p>
+                        </div>
                     </div>
                 ) : error ? (
                     <div className="text-center py-20 bg-red-50 rounded-[32px] animate-fade-in">
@@ -217,8 +238,8 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                                     <div key={i} className="report-card">
                                         <h5 className="text-xl font-black text-slate-950 mb-2">0{i+1}. {place.name}</h5>
                                         <div className="space-y-3 text-sm leading-relaxed text-slate-600">
-                                            <p><strong className="text-slate-950">선정 이유:</strong> {stripMarkdown(place.reason)}</p>
-                                            <p><strong className="text-slate-950">추천 활동:</strong> {stripMarkdown(place.activity)}</p>
+                                            <p><strong className="text-slate-950">선정 이유:</strong> <span className="whitespace-pre-wrap">{stripMarkdown(place.reason)}</span></p>
+                                            <p><strong className="text-slate-950">추천 활동:</strong> <span className="whitespace-pre-wrap">{stripMarkdown(place.activity)}</span></p>
                                         </div>
                                     </div>
                                 ))}
@@ -233,7 +254,7 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                                         <h5 className="font-bold text-sky-600 mb-3">{day.day}</h5>
                                         <ul className="space-y-2">
                                             {day.schedule?.map((item: string, j: number) => (
-                                                <li key={j} className="text-sm text-slate-600">• {stripMarkdown(item)}</li>
+                                                <li key={j} className="text-sm text-slate-600 whitespace-pre-wrap">• {stripMarkdown(item)}</li>
                                             ))}
                                         </ul>
                                     </div>

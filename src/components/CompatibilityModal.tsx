@@ -7,6 +7,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 
 interface PrefillData {
     targetName: string;
@@ -68,6 +69,8 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const [targetBirthTime, setTargetBirthTime] = useState(prefillData?.targetBirthTime || '');
     const [targetMbti, setTargetMbti] = useState(prefillData?.targetMbti || '');
     const hasAutoStarted = useRef(false);
+    const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+
 
     // Streaming Hook
     const { object: result, submit, isLoading, error: analysisError } = useObject({
@@ -82,6 +85,18 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             }
         }
     });
+
+    // 로딩 메시지 순환 효과
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading && !result) {
+            setCurrentLoadingMessage(getRandomLoadingMessage('compatibility'));
+            interval = setInterval(() => {
+                setCurrentLoadingMessage(getRandomLoadingMessage('compatibility'));
+            }, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading, result]);
 
     const runAnalysis = async () => {
         // Validation for Partner Mode only if it's explicitly turned on
@@ -178,42 +193,47 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             {!result && !isLoading && (
                 <form onSubmit={handleFetchCompatibility} className="space-y-6 animate-fade-up">
                     
-                    {/* 분석 모드 선택: 통합된 인터페이스 */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isPartnerMode ? 'bg-pink-100 text-pink-600' : 'bg-slate-200 text-slate-500'}`}>
-                                    <Heart className={`w-5 h-5 ${isPartnerMode ? 'fill-pink-600' : ''}`} />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-900">상대방 정보 입력</p>
-                                    <p className="text-[10px] text-slate-500 font-medium">분석 대상이 있다면 켜주세요</p>
-                                </div>
-                            </div>
+                    {/* 분석 모드 선택: 탭 스타일 */}
+                    <div className="space-y-6">
+                        <div className="flex p-1 bg-slate-100 rounded-2xl">
                             <button
                                 type="button"
-                                onClick={() => setIsPartnerMode(!isPartnerMode)}
-                                className={`w-12 h-6 rounded-full transition-colors relative ${isPartnerMode ? 'bg-pink-400' : 'bg-slate-300'}`}
+                                onClick={() => setIsPartnerMode(true)}
+                                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${isPartnerMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPartnerMode ? 'left-7' : 'left-1'}`} />
+                                <Heart className={`w-3.5 h-3.5 ${isPartnerMode ? 'fill-pink-500 text-pink-500' : ''}`} />
+                                상대와 궁합 분석
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsPartnerMode(false)}
+                                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${!isPartnerMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <Heart className={`w-3.5 h-3.5 ${!isPartnerMode ? 'fill-pink-500 text-pink-500' : ''}`} />
+                                내 이상형 찾기 (솔로)
                             </button>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">관계 유형</label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {['lover', 'friend', 'colleague'].map((type) => (
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">관계 유형</label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[
+                                    { id: 'lover', label: '연인' },
+                                    { id: 'friend', label: '친구' },
+                                    { id: 'boss', label: '상사' },
+                                    { id: 'colleague', label: '동료' }
+                                ].map((type) => (
                                     <button
-                                        key={type}
+                                        key={type.id}
                                         type="button"
-                                        onClick={() => setRelationshipType(type)}
-                                        className={`py-3 rounded-xl text-xs font-bold transition-all border ${
-                                            relationshipType === type 
+                                        onClick={() => setRelationshipType(type.id)}
+                                        className={`py-3 rounded-xl text-[11px] font-bold transition-all border ${
+                                            relationshipType === type.id 
                                             ? 'bg-slate-950 text-white border-slate-950 shadow-md' 
                                             : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'
                                         }`}
                                     >
-                                        {type === 'lover' ? '연인' : type === 'friend' ? '친구' : '동료'}
+                                        {type.label}
                                     </button>
                                 ))}
                             </div>
@@ -303,9 +323,16 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             {(isLoading || result) && (
                 <div ref={reportRef} className="bg-white">
                     {isLoading && !result ? (
-                        <div className="flex flex-col justify-center items-center h-80">
-                            <Loader2 className="w-12 h-12 text-pink-300 animate-spin mb-6 stroke-[1px]" />
-                            <p className="text-slate-500 font-bold text-[10px] tracking-widest uppercase">당신의 인연을 분석하는 중입니다...</p>
+                        <div className="flex flex-col justify-center items-center h-80 px-6 text-center">
+                            <Loader2 className="w-12 h-12 text-pink-300 animate-spin mb-8 stroke-[1px]" />
+                            <div className="space-y-3">
+                                <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                                    {currentLoadingMessage}
+                                </p>
+                                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                                    분석에는 최대 30초 정도 소요될 수 있습니다
+                                </p>
+                            </div>
                         </div>
                     ) : (analysisError || localError) ? (
                         <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-up">
@@ -364,14 +391,14 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                                 <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
                                                 <h5 className="font-black text-lg">나의 MBTI와 어울리는 이상형</h5>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed">{stripMarkdown(result?.details?.ideal_mbti || '')}</p>
+                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{stripMarkdown(result?.details?.ideal_mbti || '')}</p>
                                         </div>
                                         <div className="report-card !border-pink-100 hover:border-pink-200 transition-colors">
                                             <div className="flex items-center gap-2 text-pink-500 mb-3">
                                                 <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
                                                 <h5 className="font-black text-lg">나의 사주와 어울리는 인연</h5>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed">{stripMarkdown(result?.details?.ideal_saju || '')}</p>
+                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{stripMarkdown(result?.details?.ideal_saju || '')}</p>
                                         </div>
                                         <div className="report-card bg-slate-950 text-white !border-none !shadow-2xl relative overflow-hidden group">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-pink-500/20 transition-colors"></div>
@@ -379,7 +406,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                                 <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
                                                 <h5 className="font-black text-lg">종합 궁합 분석 및 조언</h5>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-300 leading-relaxed relative z-10">{stripMarkdown(result?.details?.overall_compatibility || '')}</p>
+                                            <p className="text-[15px] font-medium text-slate-300 leading-relaxed relative z-10 whitespace-pre-wrap">{stripMarkdown(result?.details?.overall_compatibility || '')}</p>
                                         </div>
                                     </div>
                                 </section>

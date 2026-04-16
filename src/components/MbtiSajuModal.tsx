@@ -7,6 +7,7 @@ import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -48,6 +49,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isPurchasingDeep, setIsPurchasingDeep] = useState(false);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+
 
   // Streaming Hook
   const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading, error: analysisError } = useObject({
@@ -63,6 +66,18 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       console.error('MbtiSaju Analysis Error:', err);
     }
   });
+
+  // 로딩 메시지 순환 효과
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isAnalysisLoading && !analysis) {
+      setCurrentLoadingMessage(getRandomLoadingMessage('mbti'));
+      interval = setInterval(() => {
+        setCurrentLoadingMessage(getRandomLoadingMessage('mbti'));
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [isAnalysisLoading, analysis]);
 
   // Sync partial results
   useEffect(() => {
@@ -297,7 +312,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                       <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                       <h5 className="font-black text-slate-900 text-sm leading-snug">{stripMarkdown(p.subtitle)}</h5>
                     </div>
-                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line pl-8">{stripMarkdown(p.content)}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap pl-8">{stripMarkdown(p.content)}</p>
                   </div>
                 ))}
               </div>
@@ -386,7 +401,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <h4 className="report-section-title"><Calendar className="w-5 h-5" /> 2026년 운세 흐름</h4>
               <div className="report-card bg-gradient-to-br from-violet-900 to-slate-900 text-white">
                 <h5 className="text-xl font-black mb-4 italic text-violet-100">"{stripMarkdown(analysis.yearlyFortune.theme)}"</h5>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{stripMarkdown(analysis.yearlyFortune.overview)}</p>
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.yearlyFortune.overview)}</p>
                 {analysis.yearlyFortune.keywords && (
                   <div className="flex flex-wrap gap-2 mt-4">
                     {analysis.yearlyFortune.keywords.filter((k: any): k is string => !!k).map((kw: string, i: number) => (
@@ -441,7 +456,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                           <h5 className="font-black text-slate-950 text-sm">{stripMarkdown(data.subtitle)}</h5>
                         </div>
                       </div>
-                      <p className="text-slate-700 text-sm mb-3 leading-relaxed">{stripMarkdown(data.analysis)}</p>
+                      <p className="text-slate-700 text-sm mb-3 leading-relaxed whitespace-pre-wrap">{stripMarkdown(data.analysis)}</p>
                       <div className="bg-slate-50 rounded-xl p-3">
                         <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest mb-1">핵심 전략</p>
                         <p className="text-slate-800 text-xs font-bold leading-relaxed">{stripMarkdown(data.advice)}</p>
@@ -467,7 +482,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.warnings.avoid?.map((w: any, i: number) => (
                   <div key={i} className="report-card bg-red-50 border-red-100 !p-4">
                     <h5 className="font-black text-red-800 text-sm mb-1">🚫 {stripMarkdown(w.title)}</h5>
-                    <p className="text-red-700 text-xs leading-relaxed">{stripMarkdown(w.description)}</p>
+                    <p className="text-red-700 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(w.description)}</p>
                   </div>
                 ))}
               </div>
@@ -509,10 +524,17 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="h-[2px] w-full bg-slate-950 mt-6"></div>
         </div>
         <div className="px-8 pb-12 pt-4 overflow-y-auto grow custom-scrollbar">
-          {loading ? (
-            <div className="flex flex-col justify-center items-center h-64">
-              <Loader2 className="w-10 h-10 text-slate-200 animate-spin mb-4" />
-              <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">분석 중...</p>
+          {isAnalysisLoading && !analysis ? (
+            <div className="flex flex-col justify-center items-center h-80 px-6 text-center">
+              <Loader2 className="w-12 h-12 text-violet-300 animate-spin mb-8 stroke-[1px]" />
+              <div className="space-y-3">
+                <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                  {currentLoadingMessage}
+                </p>
+                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                  분석에는 최대 30초 정도 소요될 수 있습니다
+                </p>
+              </div>
             </div>
           ) : analysisError ? (
             <div className="flex flex-col justify-center items-center py-12 px-6 text-center animate-fade-up">

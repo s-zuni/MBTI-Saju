@@ -8,6 +8,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { namingSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 
 interface NamingModalProps {
     isOpen: boolean;
@@ -46,6 +47,7 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
     const [targetBirthDate, setTargetBirthDate] = useState('');
     const [targetBirthTime, setTargetBirthTime] = useState('');
     const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
+    const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
@@ -55,6 +57,18 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
             'Authorization': `Bearer ${session?.access_token || ''}`
         }
     });
+
+    // 로딩 메시지 순환 효과
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading && !result) {
+            setCurrentLoadingMessage(getRandomLoadingMessage('naming'));
+            interval = setInterval(() => {
+                setCurrentLoadingMessage(getRandomLoadingMessage('naming'));
+            }, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading, result]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,9 +146,16 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
             {(isLoading || result) && (
                 <div ref={reportRef} className="bg-white">
                     {isLoading && !result ? (
-                        <div className="flex flex-col justify-center items-center h-80">
-                            <Loader2 className="w-12 h-12 text-slate-200 animate-spin mb-6 stroke-[1px]" />
-                            <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">작명 분석 중입니다...</p>
+                        <div className="flex flex-col justify-center items-center h-80 px-6 text-center animate-fade-in">
+                            <Loader2 className="w-12 h-12 text-emerald-300 animate-spin mb-8 stroke-[1px]" />
+                            <div className="space-y-3">
+                                <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                                    {currentLoadingMessage}
+                                </p>
+                                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                                    분석에는 최대 30초 정도 소요될 수 있습니다
+                                </p>
+                            </div>
                         </div>
                     ) : error ? (
                         <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
@@ -156,8 +177,8 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
                                                 <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-emerald-600"><Sparkles className="w-6 h-6" /></div>
                                             </div>
                                             <div className="space-y-4 text-sm leading-relaxed">
-                                                <p className="text-slate-600"><strong className="text-slate-950 block mb-1">한자 의미</strong> {stripMarkdown(name.meaning)}</p>
-                                                <p className="text-slate-600"><strong className="text-slate-950 block mb-1">사주 조화</strong> {stripMarkdown(name.saju_compatibility)}</p>
+                                                <p className="text-slate-600"><strong className="text-slate-950 block mb-1">한자 의미</strong> <span className="whitespace-pre-wrap">{stripMarkdown(name.meaning)}</span></p>
+                                                <p className="text-slate-600"><strong className="text-slate-950 block mb-1">사주 조화</strong> <span className="whitespace-pre-wrap">{stripMarkdown(name.saju_compatibility)}</span></p>
                                             </div>
                                         </div>
                                     ))}

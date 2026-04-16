@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { stripMarkdown } from '../utils/textUtils';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { Coins, Lock } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -44,6 +45,19 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
   const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
   const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+
+  // 로딩 메시지 순환 효과
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading && !fortune) {
+      setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
+      interval = setInterval(() => {
+        setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [loading, fortune]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,9 +168,16 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
         {/* Content */}
         <div className="p-6 pt-2 overflow-y-auto custom-scrollbar flex-1">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mb-4"></div>
-              <p>운세를 불러오는 중입니다...</p>
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center text-slate-400">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mb-6"></div>
+              <div className="space-y-3">
+                <p className="text-slate-900 font-black text-lg tracking-tight">
+                  {currentLoadingMessage || '운세를 불러오는 중입니다...'}
+                </p>
+                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                  잠시만 기다려주세요
+                </p>
+              </div>
             </div>
           ) : tab === 'tomorrow' && !tomorrowUnlocked ? (
             // 내일 운세 잠금 상태
@@ -196,7 +217,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               )}
 
               <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 mb-6 group hover:bg-white hover:shadow-xl hover:shadow-amber-50 transition-all duration-500">
-                <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-line text-base">
+                <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-wrap text-base">
                   {stripMarkdown(activeData.fortune)}
                 </p>
               </div>

@@ -9,6 +9,7 @@ import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getTeamInfo } from '../config/teamConfig';
+import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from './KboShareCard';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
@@ -157,6 +158,7 @@ const KboContent: React.FC<{
     const [error, setError] = useState<string | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [hasStarted, setHasStarted] = useState(false);
+    const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
     const teamInfo = selectedTeam ? getTeamInfo(selectedTeam) : null;
     const userName = session?.user?.user_metadata?.full_name || '사용자';
@@ -181,6 +183,18 @@ const KboContent: React.FC<{
             setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. (크레딧은 차감되지 않았습니다)');
         }
     });
+
+    // 로딩 메시지 순환 효과
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading && !result) {
+            setCurrentLoadingMessage(getRandomLoadingMessage('kbo'));
+            interval = setInterval(() => {
+                setCurrentLoadingMessage(getRandomLoadingMessage('kbo'));
+            }, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading, result]);
 
     const startAnalysis = async () => {
         if (!selectedTeam) {
@@ -323,9 +337,16 @@ const KboContent: React.FC<{
                     </button>
                 </div>
             ) : isLoading && !result ? (
-                <div className="flex flex-col justify-center items-center h-80">
-                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6 stroke-[1px]" />
-                    <p className="text-blue-600 font-black text-[10px] tracking-[0.3em] uppercase">나와의 데스티니 구단 찾는 중...</p>
+                <div className="flex flex-col justify-center items-center h-80 px-6 text-center animate-fade-in">
+                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-8 stroke-[1px]" />
+                    <div className="space-y-3">
+                        <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                            {currentLoadingMessage}
+                        </p>
+                        <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                            분석에는 최대 30초 정도 소요될 수 있습니다
+                        </p>
+                    </div>
                 </div>
             ) : error ? (
                 <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
