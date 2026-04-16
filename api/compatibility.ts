@@ -15,8 +15,8 @@ export default async (req: Request) => {
     if (corsResponse) return corsResponse;
 
     try {
-        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
+        const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         // Authenticate user
@@ -116,7 +116,7 @@ export default async (req: Request) => {
             규칙:
             1. 한국어로 답변하세요.
             2. 절대적 금지 사항: 답변 어디에도 마크다운 강조 기호(**)를 사용하지 마세요. (강조는 이모지나 글머리표 활용)
-            3. 전문적이고 신뢰감 있는 어조를 사용하되, MZ세대에게 어필할 수 있는 트렌디한 감각을 유지하세요.`;
+            3. 전문적이고 신뢰감 있는어조를 사용하되, MZ세대에게 어필할 수 있는 트렌디한 감각을 유지하세요.`;
 
             let userQuery = `[관계 목적]\n${relationshipStr}\n\n[대상 A (본인)]\n이름: ${myProfile.name}\nMBTI: ${myProfile.mbti}\n사주 일간: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})\n오행 분포: 목(${mySaju.elementRatio.wood}%), 화(${mySaju.elementRatio.fire}%), 토(${mySaju.elementRatio.earth}%), 금(${mySaju.elementRatio.metal}%), 수(${mySaju.elementRatio.water}%)\n\n`;
 
@@ -134,7 +134,7 @@ export default async (req: Request) => {
                         const result = await streamObject({
                             model,
                             schema: z.object({
-                                score: z.number().optional(),
+                                score: z.number(),
                                 summary: z.string(),
                                 keywords: z.array(z.string()),
                                 details: z.object({
@@ -153,6 +153,7 @@ export default async (req: Request) => {
                         console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for compatibility:`, error);
                         if (!isRetryableAIError(error)) break;
                     }
+                }
                 throw lastError;
             } catch (err) {
                 throw err;

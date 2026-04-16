@@ -14,7 +14,7 @@ const luckySchema = z.object({
 const fortuneItemSchema = z.object({
     fortune: z.string().describe("상세 운세 분석 내용 (반드시 줄바꿈(\\n)을 2-3회 사용하여 가독성을 높일 것)"),
     lucky: luckySchema,
-    mission: z.string().optional().describe("오늘의 미션 (2-30대 여성이 좋아할 만한 재치 있고 센스 있는 미션/조언)"),
+    mission: z.string().describe("오늘의 미션 (2-30대 여성이 좋아할 만한 재치 있고 센스 있는 미션/조언)"),
     charm_stats: z.array(z.object({
         label: z.string().describe("매력 지수 항목 (예: 매력, 에너지, 연애운, 금전운 등)"),
         value: z.number().describe("수치 (0-100)")
@@ -95,7 +95,7 @@ function getDeterministicValue(seed: string, offset: number, min: number, max: n
 function getDateString(offsetDays: number = 0): string {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
-    return d.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+    return d.toISOString().split('T')[0]!; // YYYY-MM-DD in UTC
 }
 
 function getScoreComment(score: number): string {
@@ -132,8 +132,8 @@ function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam
         score: getDeterministicValue(mainSeed, team.length + team.charCodeAt(0), 40, 98)
     })).sort((a, b) => b.score - a.score);
 
-    const bestTeam = teamScores[0]?.team || KBO_TEAMS[0];
-    const worstTeam = teamScores[teamScores.length - 1]?.team || KBO_TEAMS[KBO_TEAMS.length - 1];
+    const bestTeam = teamScores[0]?.team || KBO_TEAMS[0]!;
+    const worstTeam = teamScores[teamScores.length - 1]?.team || KBO_TEAMS[KBO_TEAMS.length - 1]!;
 
     // 2. Specific score for currentTeam
     const currentTeamScore = teamScores.find(t => t.team === currentTeam)?.score || 50;
