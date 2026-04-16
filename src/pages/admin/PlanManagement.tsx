@@ -203,7 +203,7 @@ const PlanManagement: React.FC = () => {
                         });
                         setIsAdding(true);
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                    className="flex items-center gap-2 px-6 py-3 bg-slate-950 text-white font-black rounded-2xl hover:bg-black transition-all shadow-lg shadow-slate-200"
                 >
                     <Plus size={20} /> 새 요금제 추가
                 </button>
@@ -212,7 +212,7 @@ const PlanManagement: React.FC = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading && !isAdding && !editingPlan ? (
                     <div className="col-span-full py-20 text-center">
-                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                        <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                     </div>
                 ) : plans.map((plan) => (
                     <div
@@ -224,7 +224,7 @@ const PlanManagement: React.FC = () => {
                         )}
 
                         <div className="flex justify-between items-start mb-6">
-                            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-950">
                                 <Coins size={24} />
                             </div>
                             <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ const PlanManagement: React.FC = () => {
                                         setFormData(plan);
                                         setEditingPlan(plan);
                                     }}
-                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                    className="p-2 text-slate-400 hover:text-slate-950 hover:bg-slate-100 rounded-xl transition-all"
                                     title="수정"
                                 >
                                     <Edit3 size={18} />
@@ -254,7 +254,7 @@ const PlanManagement: React.FC = () => {
                         <div className="space-y-3 mb-8">
                             <div className="flex justify-between items-center bg-slate-50 px-4 py-3 rounded-2xl">
                                 <span className="text-xs font-bold text-slate-400">제공 크레딧</span>
-                                <span className="font-black text-indigo-600">{plan.credits?.toLocaleString()} C</span>
+                                <span className="font-black text-slate-950">{plan.credits?.toLocaleString()} C</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-50 px-4 py-3 rounded-2xl">
                                 <span className="text-xs font-bold text-slate-400">판매 가격</span>
@@ -268,7 +268,7 @@ const PlanManagement: React.FC = () => {
                         <button
                             onClick={() => toggleActive(plan.id, plan.is_active)}
                             className={`w-full py-4 rounded-2xl font-black transition-all border-2 ${plan.is_active
-                                ? 'border-indigo-600 text-indigo-600 hover:bg-indigo-50 shadow-sm'
+                                ? 'border-slate-950 text-slate-950 hover:bg-slate-50 shadow-sm'
                                 : 'border-slate-200 text-slate-400 hover:bg-slate-50'
                                 }`}
                         >
@@ -303,7 +303,7 @@ const PlanManagement: React.FC = () => {
                                     disabled={!!editingPlan}
                                     value={formData.id}
                                     onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none disabled:opacity-50"
+                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-bold text-slate-800 outline-none disabled:opacity-50"
                                     placeholder="starter_pack"
                                 />
                             </div>
@@ -313,7 +313,7 @@ const PlanManagement: React.FC = () => {
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none"
+                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-bold text-slate-800 outline-none"
                                     placeholder="스타터 패키지"
                                 />
                             </div>
@@ -325,7 +325,7 @@ const PlanManagement: React.FC = () => {
                                         type="number"
                                         value={formData.credits}
                                         onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-slate-50 border-none pl-12 pr-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-black text-slate-800 outline-none"
+                                        className="w-full bg-slate-50 border-none pl-12 pr-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-black text-slate-800 outline-none"
                                     />
                                 </div>
                             </div>
@@ -335,7 +335,7 @@ const PlanManagement: React.FC = () => {
                                     type="number"
                                     value={formData.original_price}
                                     onChange={(e) => setFormData({ ...formData, original_price: parseInt(e.target.value) || 0 })}
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none"
+                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-bold text-slate-800 outline-none"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -346,7 +346,7 @@ const PlanManagement: React.FC = () => {
                                         type="number"
                                         value={formData.price}
                                         onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-slate-50 border-none pl-12 pr-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-black text-slate-800 outline-none"
+                                        className="w-full bg-slate-50 border-none pl-12 pr-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-black text-slate-800 outline-none"
                                     />
                                 </div>
                             </div>
@@ -356,7 +356,7 @@ const PlanManagement: React.FC = () => {
                                     type="number"
                                     value={formData.sort_order}
                                     onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none"
+                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-bold text-slate-800 outline-none"
                                 />
                             </div>
                             <div className="md:col-span-2 space-y-2">
@@ -364,7 +364,7 @@ const PlanManagement: React.FC = () => {
                                 <textarea
                                     value={formData.description || ''}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-medium text-slate-600 outline-none min-h-[80px]"
+                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl focus:ring-2 focus:ring-slate-950 font-medium text-slate-600 outline-none min-h-[80px]"
                                     placeholder="상품에 대한 상세 설명을 입력하세요."
                                 />
                             </div>
@@ -372,7 +372,7 @@ const PlanManagement: React.FC = () => {
                                 <label className="flex items-center gap-3 cursor-pointer group">
                                     <div
                                         onClick={() => setFormData({ ...formData, is_popular: !formData.is_popular })}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${formData.is_popular ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${formData.is_popular ? 'bg-slate-900' : 'bg-slate-200'}`}
                                     >
                                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_popular ? 'left-7' : 'left-1'}`} />
                                     </div>
@@ -399,7 +399,7 @@ const PlanManagement: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="flex-1 py-5 bg-indigo-600 text-white font-black rounded-3xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2"
+                                className="flex-1 py-5 bg-slate-950 text-white font-black rounded-3xl hover:bg-black transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
                             >
                                 <Check size={24} />
                                 저장하기

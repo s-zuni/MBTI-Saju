@@ -247,7 +247,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
             >
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-1 text-white font-bold text-xl px-2">
-                        <Bot className="w-8 h-8 text-indigo-400" />
+                        <Bot className="w-8 h-8 text-violet-400" />
                         <span>{defaultService === 'tarot' ? '신비한 타로 상담' : defaultService === 'saju' ? '명리 심층 분석' : '운명 심층 상담'}</span>
                     </div>
                     <div className="px-2 mb-8 flex items-center gap-1.5">
@@ -257,7 +257,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
 
                     <button
                         onClick={handleNewSession}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl transition-colors mb-4 text-sm font-medium"
+                        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-3 rounded-xl transition-colors mb-4 text-sm font-medium"
                     >
                         <Plus className="w-4 h-4" />
                         새로운 상담 시작
@@ -340,7 +340,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                             <span>보유: <strong className="text-slate-900">{credits}</strong> 크레딧</span>
                         </div>
                         <div className="text-sm text-slate-500">
-                            남은 무료 메시지: <strong className="text-indigo-600">{remainingFreeMessages}회</strong>
+                            남은 무료 메시지: <strong className="text-violet-600">{remainingFreeMessages}회</strong>
                         </div>
                     </div>
                     <button
@@ -355,19 +355,19 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                 <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-slate-50">
                     {isLoadingHistory && (
                         <div className="flex justify-center py-10">
-                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                            <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
                         </div>
                     )}
 
                     {messages.map((msg, idx) => (
                         <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start max-w-3xl mx-auto'}`}>
                             <div className={`flex gap-4 max-w-[90%] md:max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-violet-600' : 'bg-emerald-600'}`}>
                                     {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                                 </div>
                                 <div className={`
                                     rounded-2xl p-4 shadow-sm text-sm md:text-base leading-relaxed whitespace-pre-wrap
-                                    ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-800 border border-slate-200'}
+                                    ${msg.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white text-slate-800 border border-slate-200'}
                                 `}>
                                     {msg.content}
                                 </div>
@@ -396,7 +396,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                         <div className="flex justify-between items-center mb-2 px-1">
                             <button 
                                 onClick={handleNewSession}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold hover:bg-indigo-100 active:scale-95 transition-all mb-1 border border-indigo-100 shadow-sm"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-600 rounded-full text-xs font-bold hover:bg-violet-100 active:scale-95 transition-all mb-1 border border-violet-100 shadow-sm"
                             >
                                 <Plus className="w-4 h-4" />
                                 <span>새 상담 시작</span>
@@ -415,13 +415,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                                 }}
                                 placeholder="운세, 사주, 고민거리를 물어보세요..."
                                 disabled={isTyping}
-                                className="w-full pl-4 md:pl-6 pr-12 md:pr-14 py-3 md:py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
+                                className="w-full pl-4 md:pl-6 pr-12 md:pr-14 py-3 md:py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
                             />
                             <button
                                 type="submit"
                                 onClick={() => setShouldAutoScroll(true)}
                                 disabled={!inputText.trim() || isTyping}
-                                className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200"
+                                className="absolute right-2 top-2 p-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 disabled:hover:bg-violet-600 transition-all shadow-lg shadow-violet-200"
                             >
                                 <Send className="w-5 h-5" />
                             </button>

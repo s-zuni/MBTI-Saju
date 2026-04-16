@@ -135,7 +135,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center pt-14 md:pt-20">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                <Loader2 className="w-8 h-8 text-slate-950 animate-spin" />
             </div>
         );
     }
@@ -172,7 +172,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
             {/* Discount Banner */}
             <div className="max-w-4xl mx-auto px-4 mt-6">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl p-4 flex items-center gap-3">
+                <div className="bg-gradient-to-r from-slate-800 to-slate-950 text-white rounded-2xl p-4 flex items-center gap-3">
                     <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse flex-shrink-0" />
                     <span className="font-bold text-sm">🎉 3개월 특별 할인 이벤트 진행중!</span>
                 </div>
@@ -264,23 +264,23 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                     <div className="grid md:grid-cols-3 gap-6 relative">
                         {/* Flow Steps */}
                         <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
-                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">1</div>
+                            <div className="w-10 h-10 bg-slate-950 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-slate-200">1</div>
                             <h4 className="font-bold text-slate-800 mb-1 text-sm">회원가입/로그인</h4>
                             <p className="text-xs text-slate-500">소셜 계정으로 3초 만에 간편 가입</p>
                         </div>
                         <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
-                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">2</div>
+                            <div className="w-10 h-10 bg-slate-950 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-slate-200">2</div>
                             <h4 className="font-bold text-slate-800 mb-1 text-sm">크레딧 충전</h4>
                             <p className="text-xs text-slate-500">원하는 패키지를 선택하여 결제</p>
                         </div>
                         <div className="flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl">
-                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-indigo-100">3</div>
+                            <div className="w-10 h-10 bg-slate-950 text-white rounded-full flex items-center justify-center font-bold mb-3 shadow-md shadow-slate-200">3</div>
                             <h4 className="font-bold text-slate-800 mb-1 text-sm">서비스 이용</h4>
                             <p className="text-xs text-slate-500">사주, MBTI, 타로 등 분석 확인</p>
                         </div>
                     </div>
-                    <div className="mt-8 p-4 bg-indigo-50/50 rounded-2xl text-xs text-slate-600 border border-indigo-100/50">
-                        <p className="font-bold text-indigo-700 mb-1">💡 충전한 크레딧으로 이용 가능한 대표 서비스</p>
+                    <div className="mt-8 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 border border-slate-200">
+                        <p className="font-bold text-slate-950 mb-1">💡 충전한 크레딧으로 이용 가능한 대표 서비스</p>
                         <ul className="list-disc pl-5 space-y-1">
                             <li>MBTI & 사주 심층 데이터 분석 (Soul Report)</li>
                             <li>신비한 셔플 타로 (운 흐름 및 연애운 등)</li>
@@ -295,7 +295,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
             <div className="max-w-4xl mx-auto px-6 py-8 pb-16">
                 <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-indigo-500" />
+                        <AlertCircle className="w-5 h-5 text-slate-950" />
                         결제 및 환불 상세 규정
                     </h3>
                     <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
@@ -308,7 +308,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                     </div>
                     <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                         <p>이용 중 불편한 점이 있으시다면 언제든 고객센터로 문의해주세요.</p>
-                        <button onClick={() => navigate('/support')} className="text-indigo-500 font-bold hover:underline">고객센터 바로가기 &rarr;</button>
+                        <button onClick={() => navigate('/support')} className="text-slate-950 font-bold hover:underline">고객센터 바로가기 &rarr;</button>
                     </div>
                 </div>
             </div>

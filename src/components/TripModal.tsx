@@ -125,18 +125,18 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                     {/* Form Input Section */}
                     <section className="space-y-4">
                         <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                            <Globe className="w-4 h-4 text-indigo-600" /> 대상 지역
+                            <Globe className="w-4 h-4 text-sky-500" /> 대상 지역
                         </label>
                         <div className="flex bg-slate-100 p-1 rounded-2xl w-full mb-4">
                             <button
                                 onClick={() => setTripType('domestic')}
-                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'domestic' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'domestic' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 국내여행
                             </button>
                             <button
                                 onClick={() => setTripType('international')}
-                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'international' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tripType === 'international' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 해외여행
                             </button>
@@ -144,7 +144,7 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                         <select 
                             value={selectedRegion}
                             onChange={(e) => setSelectedRegion(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 text-slate-950 text-base rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 block p-4 font-bold outline-none transition-all"
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-950 text-base rounded-2xl focus:ring-sky-500 focus:border-sky-500 block p-4 font-bold outline-none transition-all"
                         >
                             {(tripType === 'domestic' ? DOMESTIC_REGIONS : INTERNATIONAL_REGIONS).map(region => (
                                 <option key={region} value={region}>{region}</option>
@@ -155,7 +155,7 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                     <section className="space-y-4">
                         <label className="flex flex-col gap-2">
                             <span className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                                <CalendarDays className="w-4 h-4 text-indigo-600" /> 여행 일정 (최대 14일)
+                                <CalendarDays className="w-4 h-4 text-sky-500" /> 여행 일정 (최대 14일)
                             </span>
                         </label>
                         <div className="flex items-center gap-4">
@@ -165,9 +165,9 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                                 max="14" 
                                 value={duration} 
                                 onChange={(e) => setDuration(Number(e.target.value))}
-                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-500"
                             />
-                            <span className="shrink-0 w-16 text-center font-black text-indigo-600 text-lg bg-indigo-50 py-2 rounded-xl">
+                            <span className="shrink-0 w-16 text-center font-black text-sky-600 text-lg bg-sky-50 py-2 rounded-xl">
                                 {duration}일
                             </span>
                         </div>
@@ -175,21 +175,21 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
 
                     <section className="space-y-4">
                         <label className="flex items-center gap-2 text-sm font-black text-slate-950 uppercase tracking-widest">
-                            <PenLine className="w-4 h-4 text-indigo-600" /> 추가 요청사항
+                            <PenLine className="w-4 h-4 text-sky-500" /> 추가 요청사항
                         </label>
                         <textarea
                             rows={3}
                             placeholder="예: 뚜벅이 여행입니다, 맛집 탐방을 좋아해요, 휴양 목적입니다 등"
                             value={requirements}
                             onChange={(e) => setRequirements(e.target.value)}
-                            className="block p-4 w-full text-base text-slate-950 bg-slate-50 rounded-2xl border border-slate-200 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+                            className="block p-4 w-full text-base text-slate-950 bg-slate-50 rounded-2xl border border-slate-200 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all resize-none"
                         />
                     </section>
 
                     <div className="pt-6">
                         <button 
                             onClick={handleAnalyzeClick} 
-                            className="w-full sm:w-auto px-10 py-5 bg-slate-950 hover:bg-indigo-600 text-white rounded-full font-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all flex flex-col items-center justify-center gap-1 mx-auto"
+                            className="w-full sm:w-auto px-10 py-5 bg-slate-950 hover:bg-sky-500 text-white rounded-full font-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(14,165,233,0.3)] transition-all flex flex-col items-center justify-center gap-1 mx-auto"
                         >
                             <span className="text-lg">운명 맞춤 여행지 분석하기</span>
                             <span className="text-[10px] text-slate-300 font-medium tracking-widest">{SERVICE_COSTS.TRIP} 크레딧 차감</span>
@@ -211,7 +211,7 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                 ) : result ? (
                     <div className="space-y-12 animate-fade-up py-4">
                         <section className="report-section">
-                            <h4 className="report-section-title"><MapPin className="w-5 h-5 text-indigo-600" /> 추천 여행지 BEST 3</h4>
+                            <h4 className="report-section-title"><MapPin className="w-5 h-5 text-sky-500" /> 추천 여행지 BEST 3</h4>
                             <div className="grid gap-6">
                                 {result?.places?.map((place: any, i: number) => (
                                     <div key={i} className="report-card">
@@ -226,11 +226,11 @@ const TripModalContent: React.FC<TripContentProps> = ({ onUseCredit, credits, se
                         </section>
 
                         <section className="report-section">
-                            <h4 className="report-section-title"><Calendar className="w-5 h-5 text-indigo-600" /> 추천 일정 가이드</h4>
+                            <h4 className="report-section-title"><Calendar className="w-5 h-5 text-sky-500" /> 추천 일정 가이드</h4>
                             <div className="space-y-4">
                                 {result?.itinerary?.map((day: any, i: number) => (
                                     <div key={i} className="report-card bg-slate-50">
-                                        <h5 className="font-bold text-indigo-600 mb-3">{day.day}</h5>
+                                        <h5 className="font-bold text-sky-600 mb-3">{day.day}</h5>
                                         <ul className="space-y-2">
                                             {day.schedule?.map((item: string, j: number) => (
                                                 <li key={j} className="text-sm text-slate-600">• {stripMarkdown(item)}</li>
@@ -284,8 +284,8 @@ const TripModal: React.FC<TripModalProps> = ({ isOpen, onClose, onNavigate, onUs
 
                 <div className="bg-white px-8 sm:px-12 pt-10 pb-4 shrink-0">
                     <div className="flex justify-between items-end">
-                        <div className="flex items-center gap-2 text-indigo-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
-                            <Plane className="w-4 h-4" /> Travel Destination
+                        <div className="flex items-center gap-2 text-sky-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
+                            <Plane className="w-4 h-4 text-sky-400" /> Travel Destination
                         </div>
                         <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">맞춤 여행지 분석</h3>
                     </div>

@@ -38,7 +38,7 @@ const ReviewsSection: React.FC = () => {
                     {reviews.map((review, i) => (
                         <div 
                             key={i} 
-                            className="bg-slate-50/50 p-8 rounded-[32px] border border-slate-100 hover:border-indigo-100 hover:bg-white hover:shadow-xl hover:shadow-indigo-50/50 transition-all duration-300 group"
+                            className="bg-slate-50/50 p-8 rounded-[32px] border border-slate-100 hover:border-slate-300 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group"
                         >
                             <div className="flex gap-1 mb-6">
                                 {[...Array(review.rating)].map((_, j) => (
@@ -47,7 +47,7 @@ const ReviewsSection: React.FC = () => {
                             </div>
                             
                             <div className="relative">
-                                <Quote className="absolute -top-4 -left-2 w-8 h-8 text-indigo-500/10" />
+                                <Quote className="absolute -top-4 -left-2 w-8 h-8 text-slate-500/10" />
                                 <p className="text-slate-700 leading-relaxed font-medium mb-6 relative z-10">
                                     "{review.content}"
                                 </p>
@@ -56,7 +56,7 @@ const ReviewsSection: React.FC = () => {
                             <div className="flex justify-between items-end border-t border-slate-100 pt-6">
                                 <div>
                                     <p className="font-black text-slate-950 text-sm mb-0.5">{review.name}님</p>
-                                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{review.service}</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{review.service}</p>
                                 </div>
                                 <span className="text-[10px] text-slate-400 font-medium">{review.date}</span>
                             </div>

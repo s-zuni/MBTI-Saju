@@ -56,14 +56,14 @@ const BottomNav: React.FC<BottomNavProps> = () => {
                                 onClick={item.onClick}
                                 className="relative flex flex-col items-center justify-center -mt-8"
                             >
-                                <div className="w-14 h-14 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-200 flex items-center justify-center transform active:scale-95 transition-all text-white border-4 border-white">
+                                <div className="w-14 h-14 bg-slate-950 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center transform active:scale-95 transition-all text-white border-4 border-white">
                                     <MessagesSquare className="w-6 h-6" />
                                     {/* HIT Badge */}
                                     <div className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
                                         HIT
                                     </div>
                                 </div>
-                                <span className="text-[10px] font-bold text-indigo-900 mt-2">{item.label}</span>
+                                <span className="text-[10px] font-bold text-slate-900 mt-2">{item.label}</span>
                             </button>
                         );
                     }
@@ -72,11 +72,11 @@ const BottomNav: React.FC<BottomNavProps> = () => {
                         <button
                             key={index}
                             onClick={item.onClick}
-                            className={`flex flex-col items-center justify-center py-2 px-3 rounded-2xl gap-1 transition-all duration-300 ${isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'} active:scale-90`}
+                            className={`flex flex-col items-center justify-center py-2 px-3 rounded-2xl gap-1 transition-all duration-300 ${isActive ? 'bg-slate-100 text-slate-950' : 'text-slate-400 hover:text-slate-600'} active:scale-90`}
                         >
-                            <item.icon className={`w-5 h-5 ${isActive ? 'fill-indigo-600/10' : ''}`} />
+                            <item.icon className={`w-5 h-5 ${isActive ? 'fill-slate-950/10' : ''}`} />
                             <span className="text-[10px] font-bold">{item.label}</span>
-                            {isActive && <div className="w-1 h-1 bg-indigo-600 rounded-full"></div>}
+                            {isActive && <div className="w-1 h-1 bg-slate-950 rounded-full"></div>}
                         </button>
                     );
                 })}

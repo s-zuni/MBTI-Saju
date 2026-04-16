@@ -145,14 +145,13 @@ export const namingSchema = z.object({
 
 // Special Analysis: Compatibility
 export const compatibilitySchema = z.object({
-    score: z.number(),
+    score: z.number().optional(),
     summary: z.string(),
     keywords: z.array(z.string()),
     details: z.object({
-        mbti_harmony: z.string(),
-        saju_harmony: z.string(),
-        synergy: z.string(),
-        advice: z.string()
+        ideal_mbti: z.string(),
+        ideal_saju: z.string(),
+        overall_compatibility: z.string()
     })
 });
 

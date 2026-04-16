@@ -81,7 +81,7 @@ const PaymentSuccess: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+                <Loader2 className="w-12 h-12 text-slate-950 animate-spin mb-4" />
                 <h2 className="text-xl font-bold text-slate-900">결제 승인을 완료하는 중...</h2>
                 <p className="text-slate-500 mt-2 font-medium">크레딧을 안전하게 충전하고 있습니다.</p>
             </div>
@@ -107,7 +107,7 @@ const PaymentSuccess: React.FC = () => {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
-            <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-indigo-100 animate-fade-in">
+            <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-100 animate-fade-in">
                 <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
@@ -117,7 +117,7 @@ const PaymentSuccess: React.FC = () => {
                 <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
                     <div className="flex justify-between text-sm font-bold">
                         <span className="text-slate-400">결제 금액</span>
-                        <span className="text-indigo-600">₩{Number(amount).toLocaleString()}</span>
+                        <span className="text-slate-950">₩{Number(amount).toLocaleString()}</span>
                     </div>
                 </div>
 
@@ -125,7 +125,7 @@ const PaymentSuccess: React.FC = () => {
                     <button onClick={() => navigate('/')} className="flex items-center justify-center gap-2 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm">
                         <Home size={18} /> 홈으로
                     </button>
-                    <button onClick={() => navigate('/usage-history')} className="flex items-center justify-center gap-2 bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all text-sm">
+                    <button onClick={() => navigate('/usage-history')} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
                         <Receipt size={18} /> 내역 확인
                     </button>
                 </div>

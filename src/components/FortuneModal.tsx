@@ -120,7 +120,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
             <button
               onClick={() => setTab('today')}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tab === 'today'
-                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                ? 'bg-white text-amber-600 shadow-sm ring-1 ring-slate-100'
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
@@ -130,7 +130,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               onClick={handleTomorrowClick}
               disabled={isUnlocking}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${tab === 'tomorrow'
-                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                ? 'bg-white text-amber-600 shadow-sm ring-1 ring-slate-100'
                 : 'text-slate-500 hover:text-slate-700'
                 } ${isUnlocking ? 'opacity-50' : ''}`}
             >
@@ -155,7 +155,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
         <div className="p-6 pt-2 overflow-y-auto custom-scrollbar flex-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mb-4"></div>
               <p>운세를 불러오는 중입니다...</p>
             </div>
           ) : tab === 'tomorrow' && !tomorrowUnlocked ? (
@@ -171,9 +171,9 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               <button
                 onClick={handleTomorrowClick}
                 disabled={isUnlocking}
-                className="px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-slate-950 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 transition-all flex items-center gap-2"
               >
-                <Coins className="w-5 h-5" />
+                <Coins className="w-5 h-5 text-amber-400" />
                 {credits >= tomorrowCost ? `${tomorrowCost}크레딧으로 잠금 해제` : '크레딧 충전하기'}
               </button>
             </div>
@@ -182,12 +182,12 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
               {/* MISSION CARD */}
               {activeData.mission && (
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-lg mb-6 text-white relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-20 transform translate-x-3 -translate-y-3">
+                <div className="bg-slate-950 p-5 rounded-2xl shadow-lg mb-6 text-white relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-20 transform translate-x-3 -translate-y-3 text-amber-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v8" /><path d="m4.93 10.93 1.41 1.41" /><path d="M2 18h2" /><path d="M20 18h2" /><path d="m19.07 10.93-1.41 1.41" /><path d="M22 22H2" /><path d="m8 22 4-10 4 10" /></svg>
                   </div>
                   <div className="relative z-10">
-                    <h4 className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">오늘의 미션</h4>
+                    <h4 className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-1">오늘의 미션</h4>
                     <p className="text-lg font-bold leading-tight drop-shadow-sm">
                       {stripMarkdown(activeData.mission)}
                     </p>
@@ -195,7 +195,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                 </div>
               )}
 
-              <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 mb-6 group hover:bg-white hover:shadow-xl hover:shadow-indigo-50 transition-all duration-500">
+              <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 mb-6 group hover:bg-white hover:shadow-xl hover:shadow-amber-50 transition-all duration-500">
                 <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-line text-base">
                   {stripMarkdown(activeData.fortune)}
                 </p>
@@ -205,7 +205,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               {activeData.charm_stats && (
                 <div className="mb-6 bg-white border border-slate-100 p-6 rounded-[32px] shadow-sm">
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-pink-400 rounded-full animate-ping"></span>
+                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping"></span>
                     오늘의 매력 스탯
                   </h4>
                   <div className="space-y-4">
@@ -213,11 +213,11 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                       <div key={idx} className="space-y-1.5">
                         <div className="flex justify-between text-xs font-black text-slate-600">
                           <span>{stat.label}</span>
-                          <span className="text-pink-500">{stat.value}%</span>
+                          <span className="text-amber-500">{stat.value}%</span>
                         </div>
                         <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-gradient-to-r from-pink-200 to-pink-400 rounded-full transition-all duration-1000 ease-out"
+                            className="h-full bg-gradient-to-r from-amber-200 to-amber-400 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${stat.value}%` }}
                           ></div>
                         </div>
@@ -229,8 +229,8 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
               {/* OOTD RECOMMENDATION */}
               {activeData.lucky_ootd && (
-                <div className="mb-6 bg-gradient-to-br from-indigo-50 to-pink-50 border border-indigo-100 p-6 rounded-[32px] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                <div className="mb-6 bg-slate-50 border border-slate-100 p-6 rounded-[32px] relative overflow-hidden group hover:border-amber-200 hover:bg-white transition-all duration-500">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 text-amber-500 group-hover:scale-110 transition-transform">
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M20 12V8H16V12H20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M4 12V8H8V12H4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -238,7 +238,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                       <path d="M12 21C16.9706 21 21 16.9706 21 12H3C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Lucky OOTD</h4>
+                  <h4 className="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em] mb-2">Lucky OOTD</h4>
                   <p className="text-slate-800 font-bold text-lg leading-snug">
                     {activeData.lucky_ootd}
                   </p>
@@ -247,19 +247,19 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
               {activeData.lucky && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center">
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-center">
                     <div className="text-2xl mb-1">🎨</div>
-                    <div className="text-xs text-orange-400 font-bold mb-1">행운의 컬러</div>
+                    <div className="text-xs text-amber-400 font-bold mb-1">행운의 컬러</div>
                     <div className="text-slate-800 font-bold text-sm break-words">{activeData.lucky.color}</div>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-center">
                     <div className="text-2xl mb-1">🔢</div>
-                    <div className="text-xs text-blue-400 font-bold mb-1">행운의 숫자</div>
+                    <div className="text-xs text-amber-400 font-bold mb-1">행운의 숫자</div>
                     <div className="text-slate-800 font-bold text-sm">{activeData.lucky.number}</div>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-2xl border border-purple-100 text-center">
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-center">
                     <div className="text-2xl mb-1">🧭</div>
-                    <div className="text-xs text-purple-400 font-bold mb-1">행운의 방향</div>
+                    <div className="text-xs text-amber-400 font-bold mb-1">행운의 방향</div>
                     <div className="text-slate-800 font-bold text-sm break-words">{activeData.lucky.direction}</div>
                   </div>
                 </div>

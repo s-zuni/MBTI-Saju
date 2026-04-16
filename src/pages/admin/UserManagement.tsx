@@ -115,7 +115,7 @@ const UserManagement: React.FC = () => {
                         placeholder="이름 또는 이메일 검색"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all w-64 font-medium"
+                        className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-slate-950 focus:border-transparent outline-none transition-all w-64 font-medium"
                     />
                 </div>
             </div>
@@ -136,7 +136,7 @@ const UserManagement: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
-                                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                                        <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
@@ -148,7 +148,7 @@ const UserManagement: React.FC = () => {
                                     <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                                                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-950">
                                                     <UserIcon size={20} />
                                                 </div>
                                                 <div>
@@ -164,7 +164,7 @@ const UserManagement: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-lg text-xs font-black tracking-tight ${user.role === 'admin' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
+                                            <span className={`px-3 py-1 rounded-lg text-xs font-black tracking-tight ${user.role === 'admin' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'
                                                 }`}>
                                                 {user.role === 'admin' ? 'ADMIN' : 'USER'}
                                             </span>
@@ -180,7 +180,7 @@ const UserManagement: React.FC = () => {
                                                         setNewCredits(user.credits ?? 0);
                                                         setNewRole(user.role || 'user');
                                                     }}
-                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    className="p-2 text-slate-400 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-all"
                                                 >
                                                     <Edit2 size={18} />
                                                 </button>
@@ -234,7 +234,7 @@ const UserManagement: React.FC = () => {
                                         type="number"
                                         value={newCredits}
                                         onChange={(e) => setNewCredits(parseInt(e.target.value) || 0)}
-                                        className="w-full bg-slate-50 border-none pl-12 pr-4 py-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 outline-none"
+                                        className="w-full bg-slate-50 border-none pl-12 pr-4 py-3 rounded-2xl focus:ring-2 focus:ring-slate-950 font-bold text-slate-800 outline-none"
                                     />
                                 </div>
                             </div>
@@ -247,7 +247,7 @@ const UserManagement: React.FC = () => {
                                             key={role}
                                             onClick={() => setNewRole(role)}
                                             className={`flex-1 py-3 rounded-2xl font-bold transition-all ${newRole === role
-                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200/50'
+                                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-200/50'
                                                 : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                                                 }`}
                                         >
@@ -267,7 +267,7 @@ const UserManagement: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleUpdateUser}
-                                className="flex-1 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                                className="flex-1 py-4 bg-slate-950 text-white font-black rounded-2xl hover:bg-black transition-all shadow-lg shadow-slate-200 flex items-center justify-center gap-2"
                             >
                                 <Check size={20} />
                                 저장하기

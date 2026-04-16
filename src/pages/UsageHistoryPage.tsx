@@ -81,7 +81,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
 
     if (loading) return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-slate-950 animate-spin" />
         </div>
     );
 
@@ -89,13 +89,13 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
         <div className="min-h-screen bg-slate-50 pb-24 pt-14 md:pt-20">
             <div className="max-w-4xl mx-auto px-4">
                 <div className="flex items-center gap-3 mb-6">
-                    <Receipt className="w-6 h-6 text-indigo-600" />
+                    <Receipt className="w-6 h-6 text-slate-950" />
                     <h1 className="text-2xl font-black text-slate-900">이용 내역</h1>
                 </div>
 
                 <div className="flex bg-white rounded-2xl p-1 mb-6 border border-slate-100 shadow-sm">
-                    <button onClick={() => setActiveTab('purchases')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'purchases' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>구매 내역</button>
-                    <button onClick={() => setActiveTab('usages')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'usages' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>사용 내역</button>
+                    <button onClick={() => setActiveTab('purchases')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'purchases' ? 'bg-slate-950 text-white' : 'text-slate-500'}`}>구매 내역</button>
+                    <button onClick={() => setActiveTab('usages')} className={`flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all ${activeTab === 'usages' ? 'bg-slate-950 text-white' : 'text-slate-500'}`}>사용 내역</button>
                 </div>
 
                 <div className="space-y-3">
@@ -130,7 +130,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
                 </div>
 
                 <div className="text-center mt-8">
-                    <button onClick={fetchData} className="text-slate-400 hover:text-indigo-600 flex items-center gap-1 mx-auto transition-all text-sm font-bold">
+                    <button onClick={fetchData} className="text-slate-400 hover:text-slate-950 flex items-center gap-1 mx-auto transition-all text-sm font-bold">
                         <RefreshCw className="w-4 h-4" /> 새로고침
                     </button>
                 </div>

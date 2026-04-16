@@ -37,8 +37,8 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
         <h1 className="text-3xl font-light text-white mb-3 tracking-[0.3em] font-sans drop-shadow-md">
           MBTIJU
         </h1>
-        <div className="h-[1px] w-12 bg-indigo-300/50 mb-3"></div>
-        <p className="text-indigo-200/80 text-[10px] tracking-[0.4em] uppercase font-light">
+        <div className="h-[1px] w-12 bg-white/30 mb-3"></div>
+        <p className="text-white/60 text-[10px] tracking-[0.4em] uppercase font-light">
           Discover Your Destiny
         </p>
       </div>

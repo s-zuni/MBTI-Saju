@@ -95,8 +95,8 @@ const SHISHEN_COLORS: Record<string, string> = {
   '정재': 'text-amber-500 bg-amber-50/50',
   '편관': 'text-emerald-700 bg-emerald-50',
   '정관': 'text-emerald-600 bg-emerald-50/50',
-  '편인': 'text-indigo-600 bg-indigo-50',
-  '정인': 'text-indigo-500 bg-indigo-50/50',
+  '편인': 'text-slate-700 bg-slate-100',
+  '정인': 'text-slate-600 bg-slate-100/50',
   'default': 'text-slate-500 bg-slate-50'
 };
 
@@ -177,7 +177,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-100 bg-slate-50/50">
         <div className="p-3 border-r border-slate-100"></div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-indigo-50/50 text-indigo-600' : ''}`}>
+          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-950 text-white' : ''}`}>
             {p.label}
           </div>
         ))}
@@ -201,7 +201,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
           const ko = p.key === 'day' ? '비견' : translateShiShen(raw);
           const style = getShiShenStyle(ko);
           return (
-            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
                <span className={`px-1.5 py-0.5 rounded text-[10px] md:text-xs font-black ${style}`}>
                  {ko}
                </span>
@@ -214,7 +214,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지지</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/30 shadow-inner' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center ${p.key === 'day' ? 'bg-slate-50 shadow-inner' : ''}`}>
             {renderCell(saju.pillars[p.key].zhi, 'zhi')}
           </div>
         ))}
@@ -228,7 +228,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
           const ko = translateShiShen(raw);
           const style = getShiShenStyle(ko);
           return (
-            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
                <span className={`px-1.5 py-0.5 rounded text-[9px] md:text-[11px] font-bold ${style}`}>
                  {ko}
                </span>
@@ -241,7 +241,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지장간</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter ${p.key === 'day' ? 'bg-indigo-50/10' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
             {formatHiddenStems(saju.pillars[p.key].hiddenStems)}
           </div>
         ))}
@@ -251,7 +251,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12운성</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-indigo-600/80 ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-700 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
             {saju.pillars[p.key].twelveStages}
           </div>
         ))}
@@ -261,7 +261,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12신살</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-indigo-50/20' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
             {saju.pillars[p.key].twelveSpirits}
           </div>
         ))}
@@ -524,7 +524,7 @@ const MyPage: React.FC<MyPageProps> = ({
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 p-6">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+        <Loader2 className="w-10 h-10 text-slate-950 animate-spin mb-4" />
         <span className="text-lg font-bold text-slate-700">마이페이지 정보를 불러오는 중입니다...</span>
       </div>
     );
@@ -572,44 +572,44 @@ const MyPage: React.FC<MyPageProps> = ({
             <div className="flex-1">
               <p className="text-lg font-semibold text-slate-700 mb-4">{profile.name}님의 분석 리포트</p>
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 font-medium mb-6">
-                <span>MBTI: <span className="font-bold text-indigo-600">{profile.mbti}</span></span>
-                <span>성별: <span className="font-bold text-indigo-600">{formattedGender}</span></span>
-                <span>생년월일: <span className="font-bold text-indigo-600">{profile.birth_date}</span></span>
-                <span>태어난 시간: <span className="font-bold text-indigo-600">{profile.birth_time || '모름'}</span></span>
+                <span>MBTI: <span className="font-bold text-slate-950">{profile.mbti}</span></span>
+                <span>성별: <span className="font-bold text-slate-950">{formattedGender}</span></span>
+                <span>생년월일: <span className="font-bold text-slate-950">{profile.birth_date}</span></span>
+                <span>태어난 시간: <span className="font-bold text-slate-950">{profile.birth_time || '모름'}</span></span>
               </div>
             </div>
 
             {/* Credit & Account Management Card */}
             <div className="flex-1 space-y-4">
               {/* Credit Balance Card */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-200">
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Coins className="w-5 h-5 text-amber-600" />
+                    <Coins className="w-5 h-5 text-slate-950" />
                     <h3 className="font-bold text-slate-800">보유 크레딧</h3>
                   </div>
                   <button
                     onClick={() => setIsCreditModalOpen(true)}
-                    className="text-amber-600 text-xs font-bold hover:underline"
+                    className="text-slate-950 text-xs font-bold hover:underline"
                   >
                     충전하기
                   </button>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-amber-600">{credits}</span>
+                  <span className="text-3xl font-black text-slate-950">{credits}</span>
                   <span className="text-sm text-slate-500">크레딧</span>
                 </div>
 
                 {/* Quick Transaction History Summary */}
-                <div className="mt-4 pt-4 border-t border-amber-200/50">
-                  <div className="flex items-center justify-between text-xs text-amber-700/70 font-bold mb-2">
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
                     <span>최근 이용 내역</span>
-                    <button onClick={() => navigate('/usage-history')} className="hover:text-amber-800 hover:underline">전체보기</button>
+                    <button onClick={() => navigate('/usage-history')} className="hover:text-slate-950 hover:underline">전체보기</button>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg text-xs">
                       <span className="text-slate-600">결제 및 환불 문의</span>
-                      <button onClick={() => navigate('/support')} className="text-indigo-600 font-bold">고객센터</button>
+                      <button onClick={() => navigate('/support')} className="text-slate-950 font-bold">고객센터</button>
                     </div>
                   </div>
                 </div>
@@ -617,13 +617,13 @@ const MyPage: React.FC<MyPageProps> = ({
                 <div className="flex gap-2 w-full mt-4">
                   <button
                     onClick={() => setIsCreditModalOpen(true)}
-                    className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-bold text-sm hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm"
+                    className="flex-1 py-2.5 bg-slate-950 text-white rounded-lg font-bold text-sm hover:bg-black transition-colors shadow-sm"
                   >
                     크레딧 충전하기
                   </button>
                   <button
                     onClick={handleNavigateToHistory}
-                    className="flex-1 py-2.5 bg-white border border-amber-200 text-amber-700 rounded-lg font-bold text-sm hover:bg-amber-50 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center gap-1.5"
                   >
                     <FileText className="w-4 h-4" /> 내역 보기
                   </button>
@@ -639,10 +639,10 @@ const MyPage: React.FC<MyPageProps> = ({
           <div className="space-y-6 animate-fade-up">
             {/* Saju Type Section */}
             {(analysis.nature || (analysis as any).typeDescription) && (
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/50 p-8">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/50 p-8">
                 <div className="flex items-center gap-3 mb-8">
-                  <Sparkles className="w-6 h-6 text-indigo-600" />
-                  <h2 className="text-2xl font-bold text-indigo-900">운명 분석 리포트</h2>
+                  <Sparkles className="w-6 h-6 text-slate-950" />
+                  <h2 className="text-2xl font-bold text-slate-900">운명 분석 리포트</h2>
                 </div>
 
                 {/* Manseok Saju Grid */}
@@ -650,32 +650,32 @@ const MyPage: React.FC<MyPageProps> = ({
 
                 <div className="space-y-6">
                   {/* Day Master Analysis */}
-                  <div className='bg-white bg-opacity-60 rounded-xl p-5'>
-                    <h3 className="font-bold text-indigo-800 mb-2">💎 나의 천간 및 본성</h3>
-                    <p className="text-indigo-900 text-lg font-black mb-1">
+                  <div className='bg-white bg-opacity-60 rounded-xl p-5 border border-slate-100'>
+                    <h3 className="font-bold text-slate-600 mb-2">💎 나의 천간 및 본성</h3>
+                    <p className="text-slate-950 text-lg font-black mb-1">
                       {analysis.nature?.dayMasterAnalysis || (analysis as any).typeDescription}
                     </p>
                     {/* Show calculation details if available */}
                     {analysis.saju && (
-                      <div className="mt-4 pt-4 border-t border-indigo-100/50">
+                      <div className="mt-4 pt-4 border-t border-slate-200/50">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="inline-block bg-indigo-600 text-white px-2 py-1 rounded text-xs font-bold">
+                          <span className="inline-block bg-slate-950 text-white px-2 py-1 rounded text-xs font-bold">
                             {analysis.saju.dayMaster.korean}({analysis.saju.dayMaster.chinese})
                           </span>
-                          <span className="text-xs font-bold text-indigo-500">일간의 특징</span>
+                          <span className="text-xs font-bold text-slate-500">일간의 특징</span>
                         </div>
-                        <p className="text-sm text-indigo-800 leading-relaxed font-medium">
+                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
                           {analysis.saju.dayMaster.description}
                         </p>
                         {analysis.saju.pillars && (
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                             <div className="bg-gradient-to-br from-white to-indigo-50/30 p-2.5 rounded-xl text-center border border-indigo-100/50 shadow-sm">
-                                <span className="block text-[9px] text-indigo-400 font-black uppercase tracking-tight mb-1">12운성</span>
-                                <span className="text-sm font-black text-indigo-700">{analysis.saju.pillars.day?.twelveStages || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-slate-50/30 p-2.5 rounded-xl text-center border border-slate-200/50 shadow-sm">
+                                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-tight mb-1">12운성</span>
+                                <span className="text-sm font-black text-slate-900">{analysis.saju.pillars.day?.twelveStages || '-'}</span>
                              </div>
-                             <div className="bg-gradient-to-br from-white to-rose-50/30 p-2.5 rounded-xl text-center border border-rose-100/50 shadow-sm">
-                                <span className="block text-[9px] text-rose-400 font-black uppercase tracking-tight mb-1">12신살</span>
-                                <span className="text-sm font-black text-rose-700">{analysis.saju.pillars.day?.twelveSpirits || '-'}</span>
+                             <div className="bg-gradient-to-br from-white to-slate-50/30 p-2.5 rounded-xl text-center border border-slate-200/50 shadow-sm">
+                                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-tight mb-1">12신살</span>
+                                <span className="text-sm font-black text-slate-900">{analysis.saju.pillars.day?.twelveSpirits || '-'}</span>
                              </div>
                              <div className="bg-gradient-to-br from-white to-amber-50/30 p-2.5 rounded-xl text-center border border-amber-100/50 shadow-sm">
                                 <span className="block text-[9px] text-amber-500 font-black uppercase tracking-tight mb-1">지지십성</span>
@@ -694,8 +694,8 @@ const MyPage: React.FC<MyPageProps> = ({
                   {/* Five Elements Analysis */}
                   {(analysis.fiveElements || (analysis as any).elementAnalysis) && (
                     <div>
-                      <h3 className="font-bold text-indigo-800 mb-2">🌊 오행 분석</h3>
-                      <p className="text-indigo-700 leading-relaxed">
+                      <h3 className="font-bold text-slate-900 mb-2">🌊 오행 분석</h3>
+                      <p className="text-slate-700 leading-relaxed">
                         {analysis.fiveElements?.summary || (analysis as any).elementAnalysis}
                       </p>
                     </div>
@@ -743,12 +743,12 @@ const MyPage: React.FC<MyPageProps> = ({
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <button
                 onClick={onOpenMbtiSaju}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group"
+                className="bg-slate-950 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group"
               >
                 <span className="text-2xl mb-2">🔮</span>
                 <div>
                   <h3 className="text-xl font-bold mb-1">내 MBTI & 사주<br />심층 분석 보러가기</h3>
-                  <p className="text-indigo-100 text-sm opacity-0 group-hover:opacity-100 transition-opacity">나에 대해 더 깊이 알아보기 &rarr;</p>
+                  <p className="text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">나에 대해 더 깊이 알아보기 &rarr;</p>
                 </div>
               </button>
 
@@ -781,7 +781,7 @@ const MyPage: React.FC<MyPageProps> = ({
               <button
                 onClick={handleReAnalyze}
                 disabled={analysisLoading}
-                className="text-slate-400 hover:text-indigo-500 underline text-sm transition-colors"
+                className="text-slate-400 hover:text-slate-950 underline text-sm transition-colors"
               >
                 {analysisLoading ? '분석 중...' : '다시 분석하기'}
               </button>
@@ -789,7 +789,7 @@ const MyPage: React.FC<MyPageProps> = ({
           </div>
         ) : (
           <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-slate-100">
-            <Sparkles className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
+            <Sparkles className="w-12 h-12 text-slate-950 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-slate-800 mb-3">아직 분석 결과가 없습니다</h2>
             <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 종합 분석을 받아보세요.</p>
             <button

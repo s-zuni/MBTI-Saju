@@ -55,7 +55,7 @@ const AdminLayout: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                <Loader2 className="w-10 h-10 text-slate-950 animate-spin mb-4" />
                 <p className="text-slate-500 font-medium">관리자 권한 확인 중...</p>
             </div>
         );

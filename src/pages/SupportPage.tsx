@@ -192,7 +192,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <Loader2 className="animate-spin text-indigo-600" size={32} />
+                <Loader2 className="animate-spin text-slate-950" size={32} />
             </div>
         );
     }
@@ -235,7 +235,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                     )}
                     <button 
                         onClick={() => setView('list')}
-                        className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full"
+                        className="text-[10px] font-black uppercase text-slate-950 bg-slate-100 px-3 py-1.5 rounded-full"
                     >
                         나의 문의내역
                     </button>
@@ -252,9 +252,9 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
 
                         <button 
                             onClick={() => { setCategory('general'); setView('form'); }}
-                            className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-indigo-500 hover:shadow-md transition-all group"
+                            className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-slate-900 hover:shadow-md transition-all group"
                         >
-                            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-950 group-hover:bg-slate-950 group-hover:text-white transition-colors">
                                 <MessageCircle size={24} />
                             </div>
                             <div className="text-left flex-1">
@@ -294,16 +294,16 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
 
                         <button 
                             onClick={() => setView('list')}
-                            className="w-full p-6 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100 flex items-center gap-4 hover:bg-indigo-700 transition-all group"
+                            className="w-full p-6 bg-slate-950 rounded-3xl shadow-xl shadow-slate-100 flex items-center gap-4 hover:bg-black transition-all group"
                         >
                             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
                                 <Inbox size={24} />
                             </div>
                             <div className="text-left flex-1">
                                 <h3 className="font-black text-white">나의 문의 내역 확인</h3>
-                                <p className="text-xs text-indigo-100 font-medium mt-0.5">이전에 남기신 문의와 답변을 확인하세요.</p>
+                                <p className="text-xs text-slate-300 font-medium mt-0.5">이전에 남기신 문의와 답변을 확인하세요.</p>
                             </div>
-                            <ChevronRight className="text-indigo-200" size={20} />
+                            <ChevronRight className="text-slate-500" size={20} />
                         </button>
                     </div>
                 )}
@@ -313,7 +313,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                         <div className="mb-8">
                             <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter mb-2 inline-block ${
                                 category === 'refund' ? 'bg-rose-50 text-rose-600' : 
-                                category === 'bug' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'
+                                category === 'bug' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-950'
                             }`}>
                                 {category === 'refund' ? '환불 요청' : category === 'bug' ? '버그 리포트' : '일반 문의'}
                             </span>
@@ -334,7 +334,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                                     onClick={() => setSelectedPurchaseId(p.id)}
                                                     className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center ${
                                                         selectedPurchaseId === p.id 
-                                                        ? 'border-indigo-500 bg-indigo-50/50' 
+                                                        ? 'border-slate-950 bg-slate-50' 
                                                         : 'border-slate-100 bg-white hover:border-slate-200'
                                                     }`}
                                                 >
@@ -342,7 +342,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                                         <p className="text-sm font-black text-slate-800">{p.purchased_credits} 크레딧 충전</p>
                                                         <p className="text-[10px] text-slate-400 font-bold">{new Date(formatSafariDate(p.purchased_at)).toLocaleDateString()} • {p.price_paid.toLocaleString()}원</p>
                                                     </div>
-                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPurchaseId === p.id ? 'border-indigo-600 bg-indigo-600' : 'border-slate-200'}`}>
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPurchaseId === p.id ? 'border-slate-950 bg-slate-950' : 'border-slate-200'}`}>
                                                         {selectedPurchaseId === p.id && <div className="w-2 h-2 bg-white rounded-full" />}
                                                     </div>
                                                 </div>
@@ -356,7 +356,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">제목</label>
                                 <input 
                                     required
-                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all text-sm font-medium"
+                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-slate-950 outline-none transition-all text-sm font-medium"
                                     placeholder="궁금하신 내용을 한 줄로 요약해 주세요."
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
@@ -368,7 +368,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                 <textarea 
                                     required
                                     rows={6}
-                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all text-sm font-medium resize-none"
+                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:border-slate-950 outline-none transition-all text-sm font-medium resize-none"
                                     placeholder="상황을 자세히 설명해 주시면 더 정확한 답변이 가능합니다."
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
@@ -409,7 +409,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                                             fetchMessages(i.id);
                                             setView('detail');
                                         }}
-                                        className="bg-white p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:border-indigo-500 hover:shadow-sm transition-all cursor-pointer group"
+                                        className="bg-white p-5 rounded-3xl border border-slate-100 flex justify-between items-center hover:border-slate-950 hover:shadow-sm transition-all cursor-pointer group"
                                     >
                                         <div className="flex-1 min-w-0 pr-4">
                                             <div className="flex items-center gap-2 mb-1">
@@ -437,26 +437,26 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                 {view === 'detail' && selectedInquiry && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-[70vh]">
                         <div className="mb-6 shrink-0">
-                            <span className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase mb-2 inline-block">상담 스레드</span>
+                            <span className="bg-slate-100 text-slate-950 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase mb-2 inline-block">상담 스레드</span>
                             <h2 className="text-2xl font-black text-slate-900 leading-tight">{selectedInquiry.title}</h2>
                         </div>
 
                         {/* Thread View */}
                         <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-6">
                             {loadingMessages ? (
-                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-indigo-600" /></div>
+                                    <div className={`flex justify-center p-8`}><Loader2 className="animate-spin text-slate-950" /></div>
                             ) : (
                                 messages.map((msg) => (
                                     <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-start' : 'items-end'}`}>
                                         <div className={`max-w-[85%] p-4 rounded-3xl text-sm leading-relaxed ${
                                             msg.sender_role === 'admin' 
                                             ? 'bg-slate-100 text-slate-700 rounded-tl-none' 
-                                            : 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-100'
+                                            : 'bg-slate-950 text-white rounded-tr-none shadow-lg shadow-slate-200'
                                         }`}>
                                             {msg.content}
                                         </div>
                                         <div className="flex items-center gap-1 mt-1.5 px-1">
-                                            {msg.sender_role === 'admin' && <CheckCircle2 size={10} className="text-indigo-500" />}
+                                            {msg.sender_role === 'admin' && <CheckCircle2 size={10} className="text-slate-950" />}
                                             <span className="text-[10px] text-slate-400 font-bold">
                                                 {msg.sender_role === 'admin' ? '운영진 답변' : '나의 메시지'} • {new Date(formatSafariDate(msg.created_at)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </span>
@@ -478,7 +478,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                             <button 
                                 onClick={handleSendReply}
                                 disabled={submitting || !replyText.trim()}
-                                className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:opacity-30 shrink-0"
+                                className="w-12 h-12 bg-slate-950 text-white rounded-2xl flex items-center justify-center hover:bg-black transition-colors disabled:opacity-30 shrink-0"
                             >
                                 {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={20} />}
                             </button>

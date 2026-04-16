@@ -142,7 +142,7 @@ const PaymentManagement: React.FC = () => {
                             placeholder="이름, 이메일, 주문번호 검색"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all w-80 font-medium"
+                            className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-slate-950 focus:border-transparent outline-none transition-all w-80 font-medium"
                         />
                     </div>
                     <button className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors text-slate-500">
@@ -167,7 +167,7 @@ const PaymentManagement: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
-                                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                                        <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                                     </td>
                                 </tr>
                             ) : filteredPayments.length === 0 ? (
@@ -186,7 +186,7 @@ const PaymentManagement: React.FC = () => {
                                             <span className="text-slate-900 font-black">{p.price_paid?.toLocaleString()}원</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-indigo-600 font-black">{p.purchased_credits?.toLocaleString()} C</span>
+                                            <span className="text-slate-950 font-black">{p.purchased_credits?.toLocaleString()} C</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             {getStatusBadge(p)}

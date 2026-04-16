@@ -31,14 +31,14 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             icon: Compass,
             label: '운세 보기',
             sub: '오늘의 운세 & 토정비결',
-            bg: 'from-violet-500 to-indigo-600',
+            bg: 'from-amber-400 to-orange-500',
             action: () => navigate('/fortune'),
         },
         {
             icon: MessageSquare,
             label: '운명 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
-            bg: 'from-amber-400 to-orange-500',
+            bg: 'from-violet-500 to-violet-700',
             action: () => {
                 if (!session) {
                     openModal('analysis', 'login');
@@ -55,7 +55,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             icon: Sparkles,
             label: '운세템 상점',
             sub: '부적 & 굿즈 쇼핑',
-            bg: 'from-purple-500 to-pink-600',
+            bg: 'from-rose-400 to-pink-500',
             action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
         },
         {
@@ -69,7 +69,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             icon: Layers,
             label: '타로',
             sub: '카드로 보는 미래',
-            bg: 'from-cyan-500 to-blue-600',
+            bg: 'from-purple-500 to-purple-700',
             action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
     ];

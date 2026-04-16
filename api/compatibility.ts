@@ -39,7 +39,6 @@ export default async (req: Request) => {
 
         if (req.method === 'POST') {
             const body = await req.json();
-            // Handle both flat and nested structures
             const myProfile = body.myProfile || {
                 name: body.userName,
                 birthDate: body.userBirthDate,
@@ -47,32 +46,40 @@ export default async (req: Request) => {
                 mbti: body.userMbti,
                 gender: body.userGender
             };
-            const partnerProfile = body.partnerProfile || {
-                name: body.targetName,
-                birthDate: body.targetBirthDate,
-                birthTime: body.targetBirthTime,
-                mbti: body.targetMbti
-            };
+            const isPartnerMode = body.isPartnerMode !== false;
             const relationshipType = body.relationshipType || 'lover';
 
-            if (!myProfile.birthDate || !partnerProfile.birthDate) {
+            let partnerProfile: any = null;
+            if (isPartnerMode) {
+                partnerProfile = body.partnerProfile || {
+                    name: body.targetName,
+                    birthDate: body.targetBirthDate,
+                    birthTime: body.targetBirthTime,
+                    mbti: body.targetMbti
+                };
+            }
+
+            if (!myProfile.birthDate || (isPartnerMode && !partnerProfile?.birthDate)) {
                 return new Response(JSON.stringify({ error: 'Missing profile information.' }), { 
                     status: 400, 
                     headers: corsHeaders 
                 });
             }
 
-            // Use provided sajuData or calculate
             let mySaju = body.mySajuData || body.sajuData;
             if (!mySaju && myProfile.birthDate) {
                 mySaju = calculateSaju(myProfile.birthDate, myProfile.birthTime);
             }
-            let partnerSaju = body.partnerSajuData || body.targetSajuData;
-            if (!partnerSaju && partnerProfile.birthDate) {
-                partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
+            
+            let partnerSaju: any = null;
+            if (isPartnerMode) {
+                partnerSaju = body.partnerSajuData || body.targetSajuData;
+                if (!partnerSaju && partnerProfile?.birthDate) {
+                    partnerSaju = calculateSaju(partnerProfile.birthDate, partnerProfile.birthTime);
+                }
             }
 
-            if (!mySaju || !partnerSaju) {
+            if (!mySaju || (isPartnerMode && !partnerSaju)) {
                 return new Response(JSON.stringify({ error: 'Saju data missing for analysis.' }), { 
                     status: 400, 
                     headers: corsHeaders 
@@ -90,37 +97,34 @@ export default async (req: Request) => {
 
             const systemPrompt = `당신은 MBTI와 Saju(사주명리학)를 결합하여 깊이 있는 관계 분석을 제공하는 전문 '관계 컨설턴트'입니다.
             
-            분석 대상 필드 지침:
-            1. score: 0~100 사이의 숫자로 전체적인 궁합 점수를 산출하세요.
-            2. summary: 전체 분석을 관통하는 한 줄 요약을 작성하세요.
-            3. keywords: 관계의 특징을 나타내는 키워드 3개를 배열로 제공하세요.
+            분석 결과 구성 지침 (반드시 아래 순서와 분량을 지키세요):
+            (1) 나의 MBTI와 어울리는 MBTI, 이상형 (약 200자)
+            (2) 나의 사주와 어울리는 사주 (약 200자)
+            (3) ${isPartnerMode ? '상상대방과 나와의 MBTI & 사주 궁합' : '종합 이상 궁합 및 조언, 주의점'} (약 500자)
+               - ${isPartnerMode ? '어울리는 궁합과 그 이유' : '가장 잘 어울리는 유형과 그 이유'}
+               - 피해야 할 행동 및 주의점
+
+            분석 데이터 필드:
+            1. score: 0~100 사이의 숫자로 종합 점수를 산출하세요.
+            2. summary: 핵심을 찌르는 한 줄 요약을 작성하세요.
+            3. keywords: 특징을 나타내는 키워드 3개를 배열로 제공하세요.
             4. details:
-               - mbti_harmony: 두 사람의 MBTI 유형 간의 심리적, 행동적 조화를 분석하세요. 서로의 강점이 어떻게 보완되는지 또는 어떤 가치관의 차이가 있는지 3-4문장으로 상세히 설명하세요.
-               - saju_harmony: 제공된 일간(Day Master)과 오행 데이터를 바탕으로 명리학적 조화를 분석하세요. 음양오행의 균형과 서로에게 부족한 기운을 어떻게 채워주는지 3-4문장으로 논리적으로 설명하세요.
-               - synergy: 두 사람이 만났을 때 발생하는 긍정적인 에너지와 동반 성장 가능성을 분석하세요. 함께 있을 때 어떤 시너지가 나는지 구체적인 예시와 함께 3-4문장으로 작성하세요.
-               - advice: 관계를 더 건강하게 유지하기 위한 실질적인 조언과 주의사항을 작성하세요. 서로 배려해야 할 점이나 갈등 발생 시 대처법을 3-4문장으로 따뜻하고 명확하게 제시하세요.
+               - ideal_mbti: 위 (1)번 내용을 작성하세요.
+               - ideal_saju: 위 (2)번 내용을 작성하세요.
+               - overall_compatibility: 위 (3)번 내용을 작성하세요. (1, 2번 하부 항목 포함)
 
             규칙:
             1. 한국어로 답변하세요.
             2. 절대적 금지 사항: 답변 어디에도 마크다운 강조 기호(**)를 사용하지 마세요. (강조는 이모지나 글머리표 활용)
-            3. 각 필드는 반드시 비어있지 않은 상세한 내용을 포함해야 합니다.`;
+            3. 전문적이고 신뢰감 있는 어조를 사용하되, MZ세대에게 어필할 수 있는 트렌디한 감각을 유지하세요.`;
 
-            const userQuery = `[관계 유형]
-            ${relationshipStr}
+            let userQuery = `[관계 목적]\n${relationshipStr}\n\n[대상 A (본인)]\n이름: ${myProfile.name}\nMBTI: ${myProfile.mbti}\n사주 일간: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})\n오행 분포: 목(${mySaju.elementRatio.wood}%), 화(${mySaju.elementRatio.fire}%), 토(${mySaju.elementRatio.earth}%), 금(${mySaju.elementRatio.metal}%), 수(${mySaju.elementRatio.water}%)\n\n`;
 
-            [대상 A]
-            이름: ${myProfile.name}
-            MBTI: ${myProfile.mbti}
-            사주 일간: ${mySaju.dayMaster.korean} (${mySaju.dayMaster.description})
-            오행 분포: 목(${mySaju.elementRatio.wood}%), 화(${mySaju.elementRatio.fire}%), 토(${mySaju.elementRatio.earth}%), 금(${mySaju.elementRatio.metal}%), 수(${mySaju.elementRatio.water}%)
-
-            [대상 B]
-            이름: ${partnerProfile.name}
-            MBTI: ${partnerProfile.mbti}
-            사주 일간: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})
-            오행 분포: 목(${partnerSaju.elementRatio.wood}%), 화(${partnerSaju.elementRatio.fire}%), 토(${partnerSaju.elementRatio.earth}%), 금(${partnerSaju.elementRatio.metal}%), 수(${partnerSaju.elementRatio.water}%)
-
-            위 정보를 바탕으로 두 사람의 심층 궁합 분석을 수행해 주세요. 각 섹션은 충분히 길고 상세하게 작성되어야 합니다.`;
+            if (isPartnerMode && partnerProfile && partnerSaju) {
+                userQuery += `[대상 B (상대방)]\n이름: ${partnerProfile.name}\nMBTI: ${partnerProfile.mbti}\n사주 일간: ${partnerSaju.dayMaster.korean} (${partnerSaju.dayMaster.description})\n오행 분포: 목(${partnerSaju.elementRatio.wood}%), 화(${partnerSaju.elementRatio.fire}%), 토(${partnerSaju.elementRatio.earth}%), 금(${partnerSaju.elementRatio.metal}%), 수(${partnerSaju.elementRatio.water}%)\n\n위 정보를 바탕으로 두 사람의 심층 궁합 분석을 수행해 주세요.`;
+            } else {
+                userQuery += `위 정보를 바탕으로 본인의 이상형(궁합)과 관계 조언을 수행해 주세요. (상대방은 없습니다)`;
+            }
 
             try {
                 let lastError;
@@ -130,14 +134,13 @@ export default async (req: Request) => {
                         const result = await streamObject({
                             model,
                             schema: z.object({
-                                score: z.number(),
+                                score: z.number().optional(),
                                 summary: z.string(),
                                 keywords: z.array(z.string()),
                                 details: z.object({
-                                    mbti_harmony: z.string(),
-                                    saju_harmony: z.string(),
-                                    synergy: z.string(),
-                                    advice: z.string()
+                                    ideal_mbti: z.string(),
+                                    ideal_saju: z.string(),
+                                    overall_compatibility: z.string()
                                 })
                             }),
                             system: systemPrompt,

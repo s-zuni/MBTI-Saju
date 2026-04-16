@@ -6,13 +6,13 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 
 // 각 카테고리별 크레딧 비용 및 이용자 수
 const subCategories = [
-    { id: 'fortune', img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 행운 확인', cost: SERVICE_COSTS.FORTUNE_TODAY, userCount: '12,000+', isPopular: false },
-    { id: 'mbti', img: '/assets/icons/3d_mbti.png', label: '융합 분석', sub: '사주×MBTI 융합', cost: SERVICE_COSTS.MBTI_SAJU, userCount: '5,300+', isPopular: true },
-    { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true },
-    { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false },
-    { id: 'naming', img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '행운의 이름 찾기', cost: SERVICE_COSTS.NAMING, userCount: '1,200+', isPopular: false },
-    { id: 'kbo', img: '/assets/icons/3d_kbo.png', label: 'KBO 팬 궁합', sub: '사주×야구 궁합', cost: SERVICE_COSTS.KBO, userCount: '1,500+', isPopular: true, isNew: true },
-    { id: 'relationship', img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', cost: SERVICE_COSTS.RELATIONSHIP_ADD, userCount: '3,300+', isPopular: true },
+    { id: 'fortune', img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 행운 확인', cost: SERVICE_COSTS.FORTUNE_TODAY, userCount: '12,000+', isPopular: false, colorClass: 'amber' },
+    { id: 'mbti', img: '/assets/icons/3d_mbti.png', label: '융합 분석', sub: '사주×MBTI 융합', cost: SERVICE_COSTS.MBTI_SAJU, userCount: '5,300+', isPopular: true, colorClass: 'violet' },
+    { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true, colorClass: 'purple' },
+    { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false, colorClass: 'sky' },
+    { id: 'naming', img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '행운의 이름 찾기', cost: SERVICE_COSTS.NAMING, userCount: '1,200+', isPopular: false, colorClass: 'emerald' },
+    { id: 'kbo', img: '/assets/icons/3d_kbo.png', label: 'KBO 팬 궁합', sub: '사주×야구 궁합', cost: SERVICE_COSTS.KBO, userCount: '1,500+', isPopular: true, isNew: true, colorClass: 'blue' },
+    { id: 'relationship', img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', cost: SERVICE_COSTS.RELATIONSHIP_ADD, userCount: '3,300+', isPopular: true, colorClass: 'pink' },
 ];
 
 interface FortunePageProps {
@@ -68,7 +68,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                     <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-rose-100">HOT</span>
                                 )}
                                 {cat.isNew && (
-                                    <span className="px-2 py-0.5 bg-indigo-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-indigo-100">NEW</span>
+                                    <span className={`px-2 py-0.5 bg-${cat.colorClass}-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-${cat.colorClass}-100`}>NEW</span>
                                 )}
                             </div>
 
@@ -82,7 +82,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                             </div>
 
                             <div className="w-full">
-                                <h4 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors mb-1">
+                                <h4 className={`text-lg font-black text-slate-900 group-hover:text-${cat.colorClass}-600 transition-colors mb-1`}>
                                     {cat.label}
                                 </h4>
                                 <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
@@ -98,7 +98,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                         flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest
                                         ${cat.cost === 0
                                             ? 'bg-emerald-50 text-emerald-600'
-                                            : 'bg-indigo-50 text-indigo-600'
+                                            : `bg-${cat.colorClass}-50 text-${cat.colorClass}-600`
                                         } transition-all group-hover:px-4
                                     `}>
                                         {cat.cost === 0 ? (
@@ -115,7 +115,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
 
                             {/* Action Indicator */}
                             <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
-                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                                <div className={`w-8 h-8 rounded-full bg-${cat.colorClass}-600 flex items-center justify-center text-white shadow-lg`}>
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                                     </svg>

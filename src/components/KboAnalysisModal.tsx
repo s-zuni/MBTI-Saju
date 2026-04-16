@@ -66,20 +66,20 @@ const RadarChart = ({ data }: { data: any[] }) => {
                     d={dataPath}
                     fill="url(#radarGradient)"
                     fillOpacity="0.4"
-                    stroke="#4f46e5"
+                    stroke="#2563eb"
                     strokeWidth="3"
                     className="animate-pulse-slow"
                 />
                 <defs>
                     <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#4f46e5" />
+                        <stop offset="0%" stopColor="#2563eb" />
                         <stop offset="100%" stopColor="#3b82f6" />
                     </linearGradient>
                 </defs>
 
                 {/* Data points */}
                 {dataPoints.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#4f46e5" stroke="white" strokeWidth="2" />
+                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#2563eb" stroke="white" strokeWidth="2" />
                 ))}
 
                 {/* Labels */}
@@ -107,7 +107,7 @@ const RadarChart = ({ data }: { data: any[] }) => {
                                     x={labelX}
                                     y={labelY + 14}
                                     textAnchor={textAnchor}
-                                    className="text-[10px] font-bold fill-indigo-600"
+                                    className="text-[10px] font-bold fill-blue-600"
                                 >
                                     {data[i].value}%
                                 </text>
@@ -337,11 +337,11 @@ const KboContent: React.FC<{
                     
                     {/* Daily Date Badge + Message Banner */}
                     {result.date && (
-                        <div className="rounded-[28px] overflow-hidden border border-indigo-100 shadow-md">
+                        <div className="rounded-[28px] overflow-hidden border border-slate-100 shadow-md">
                             {/* Date Header */}
-                            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3 flex items-center justify-between">
+                            <div className="bg-slate-950 px-5 py-3 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <CalendarDays className="w-4 h-4 text-white/80" />
+                                    <CalendarDays className="w-4 h-4 text-blue-400" />
                                     <span className="text-white font-black text-xs tracking-widest uppercase">오늘의 KBO 운세</span>
                                 </div>
                                 <span className="text-white/80 text-xs font-bold">
@@ -350,9 +350,9 @@ const KboContent: React.FC<{
                             </div>
                             {/* Daily Message */}
                             {result.dailyMessage && (
-                                <div className="bg-indigo-50 px-5 py-4 flex items-start gap-3">
-                                    <Zap className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-                                    <p className="text-indigo-800 font-bold text-sm leading-relaxed">{result.dailyMessage}</p>
+                                <div className="bg-slate-50 px-5 py-4 flex items-start gap-3">
+                                    <Zap className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                    <p className="text-slate-800 font-bold text-sm leading-relaxed">{result.dailyMessage}</p>
                                 </div>
                             )}
                         </div>
@@ -383,15 +383,15 @@ const KboContent: React.FC<{
                             </div>
                         </section>
 
-                        <section className="bg-gradient-to-br from-amber-400 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                        <section className="bg-slate-950 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600 opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10">
-                                <h4 className="font-black text-amber-50 mb-4 tracking-tight text-lg flex items-center gap-2">
-                                    <Trophy className="w-5 h-5"/> 승리 요정 지수
+                                <h4 className="font-black text-blue-400 mb-4 tracking-tight text-lg flex items-center gap-2">
+                                    <Trophy className="w-5 h-5 text-blue-400"/> 승리 요정 지수
                                 </h4>
                                 <div className="flex items-end gap-1">
-                                    <span className="text-7xl font-black tracking-tighter">{result.winFairyScore || 0}</span>
-                                    <span className="text-2xl font-bold text-amber-100 mb-2">점</span>
+                                    <span className="text-7xl font-black tracking-tighter text-white">{result.winFairyScore || 0}</span>
+                                    <span className="text-2xl font-bold text-slate-400 mb-2">점</span>
                                 </div>
                             </div>
                         </section>
@@ -403,7 +403,7 @@ const KboContent: React.FC<{
                             <Sparkles className="w-32 h-32 text-slate-900" />
                         </div>
                         <h5 className="font-black text-slate-900 mb-8 text-xl tracking-tight border-b-2 border-slate-200 pb-5 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-indigo-500" /> 팩트 폭격 심층 분석
+                            <Sparkles className="w-5 h-5 text-blue-500" /> 팩트 폭격 심층 분석
                         </h5>
                         <div className="text-slate-700 text-[16px] leading-[1.9] font-medium whitespace-pre-wrap">
                             {result.supportedTeamAnalysis}
@@ -414,7 +414,7 @@ const KboContent: React.FC<{
                     <section className="pt-4">
                         <div className="flex items-center justify-between mb-8">
                             <h5 className="font-black text-slate-900 text-lg flex items-center gap-2">
-                                <TrendingUp className="w-6 h-6 text-indigo-500" /> 성향 파라미터 그래프
+                                <TrendingUp className="w-6 h-6 text-blue-500" /> 성향 파라미터 그래프
                             </h5>
 
                         </div>
@@ -423,58 +423,58 @@ const KboContent: React.FC<{
 
                     {/* Best & Worst Match */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-8 bg-emerald-50 rounded-[32px] border border-emerald-100 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                                <Trophy className="w-16 h-16 text-emerald-600" />
+                        <div className="p-8 bg-blue-50 rounded-[32px] border border-blue-100 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform text-blue-600">
+                                <Trophy className="w-16 h-16" />
                             </div>
 
-                            <h5 className="font-black text-emerald-900 text-xl mb-3">최강 궁합 구단</h5>
-                            <p className="text-emerald-800 font-black text-2xl flex items-center gap-2">
-                                <Trophy className="w-6 h-6 text-emerald-500" /> {result.bestTeam}
+                            <h5 className="font-black text-blue-900 text-xl mb-3">최강 궁합 구단</h5>
+                            <p className="text-blue-600 font-black text-2xl flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-blue-500" /> {result.bestTeam}
                             </p>
                         </div>
-                        <div className="p-8 bg-rose-50 rounded-[32px] border border-rose-100 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                                <X className="w-16 h-16 text-rose-600" />
+                        <div className="p-8 bg-slate-50 rounded-[32px] border border-slate-100 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform text-slate-400">
+                                <X className="w-16 h-16" />
                             </div>
 
-                            <h5 className="font-black text-rose-900 text-xl mb-3">최악 궁합 구단</h5>
-                            <p className="text-rose-800 font-black text-2xl flex items-center gap-2">
-                                <X className="w-6 h-6 text-rose-500" /> {result.worstTeam}
+                            <h5 className="font-black text-slate-900 text-xl mb-3">최악 궁합 구단</h5>
+                            <p className="text-slate-500 font-black text-2xl flex items-center gap-2">
+                                <X className="w-6 h-6 text-slate-300" /> {result.worstTeam}
                             </p>
                         </div>
                     </div>
 
                     {/* Tomorrow Preview Card */}
                     {(result.tomorrowScore !== undefined || result.tomorrowWinFairyScore !== undefined) && (
-                        <div className="rounded-[28px] border border-amber-100 bg-gradient-to-br from-amber-50 to-yellow-50 overflow-hidden shadow-sm">
+                        <div className="rounded-[28px] border border-slate-100 bg-slate-50 overflow-hidden shadow-sm">
                             <div className="px-6 pt-5 pb-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
-                                        <ChevronRight className="w-4 h-4 text-amber-500" />
-                                        <span className="text-amber-700 font-black text-xs tracking-widest uppercase">내일 미리보기</span>
+                                        <ChevronRight className="w-4 h-4 text-blue-500" />
+                                        <span className="text-slate-950 font-black text-xs tracking-widest uppercase">내일 미리보기</span>
                                     </div>
-                                    <span className="text-amber-500/70 text-[10px] font-bold">
+                                    <span className="text-slate-400 text-[10px] font-bold">
                                         {new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-amber-100">
-                                        <p className="text-amber-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 궁합</p>
-                                        <p className="text-3xl font-black text-amber-800">{result.tomorrowScore ?? '-'}<span className="text-sm text-amber-500 ml-0.5">점</span></p>
-                                        <div className="mt-2 h-1.5 w-full bg-amber-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all" style={{width: `${result.tomorrowScore ?? 0}%`}} />
+                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-slate-100">
+                                        <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 궁합</p>
+                                        <p className="text-3xl font-black text-slate-900">{result.tomorrowScore ?? '-'}<span className="text-sm text-slate-400 ml-0.5">점</span></p>
+                                        <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-600 rounded-full transition-all" style={{width: `${result.tomorrowScore ?? 0}%`}} />
                                         </div>
                                     </div>
-                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-amber-100">
-                                        <p className="text-amber-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 승요</p>
-                                        <p className="text-3xl font-black text-amber-800">{result.tomorrowWinFairyScore ?? '-'}<span className="text-sm text-amber-500 ml-0.5">점</span></p>
-                                        <div className="mt-2 h-1.5 w-full bg-amber-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all" style={{width: `${result.tomorrowWinFairyScore ?? 0}%`}} />
+                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-slate-100">
+                                        <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 승요</p>
+                                        <p className="text-3xl font-black text-slate-900">{result.tomorrowWinFairyScore ?? '-'}<span className="text-sm text-slate-400 ml-0.5">점</span></p>
+                                        <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-600 rounded-full transition-all" style={{width: `${result.tomorrowWinFairyScore ?? 0}%`}} />
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-amber-500 text-[10px] font-bold text-center mt-3">* 내일 점수는 오늘 자정 이후 갱신됩니다</p>
+                                <p className="text-slate-400 text-[10px] font-bold text-center mt-3">* 내일 점수는 오늘 자정 이후 갱신됩니다</p>
                             </div>
                         </div>
                     )}

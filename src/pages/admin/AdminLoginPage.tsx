@@ -80,8 +80,8 @@ const AdminLoginPage: React.FC = () => {
 
             <div className="w-full max-w-md">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-6 shadow-xl shadow-indigo-900/40">
-                        <Lock className="text-white" size={32} />
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl mb-6 shadow-xl shadow-black/40">
+                        <Lock className="text-slate-950" size={32} />
                     </div>
                     <h1 className="text-3xl font-black text-white mb-2 tracking-tight">ADMIN LOGIN</h1>
                     <p className="text-slate-400 font-medium tracking-wide">관리자 계정으로 로그인해 주세요</p>
@@ -97,7 +97,7 @@ const AdminLoginPage: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="admin@example.com"
-                                className="w-full bg-slate-800 border border-slate-700 text-white pl-12 pr-4 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium"
+                                className="w-full bg-slate-800 border border-slate-700 text-white pl-12 pr-4 py-4 rounded-2xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all outline-none font-medium"
                                 required
                             />
                         </div>
@@ -112,7 +112,7 @@ const AdminLoginPage: React.FC = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full bg-slate-800 border border-slate-700 text-white pl-12 pr-4 py-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium"
+                                className="w-full bg-slate-800 border border-slate-700 text-white pl-12 pr-4 py-4 rounded-2xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all outline-none font-medium"
                                 required
                             />
                         </div>
@@ -121,9 +121,9 @@ const AdminLoginPage: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-2 mt-4 text-lg active:scale-[0.98]"
+                        className="w-full bg-white hover:bg-slate-100 text-slate-950 font-black py-4 rounded-2xl transition-all shadow-lg shadow-black/30 flex items-center justify-center gap-2 mt-4 text-lg active:scale-[0.98]"
                     >
-                        {loading ? <Loader2 className="animate-spin" size={24} /> : '로그인'}
+                        {loading ? <Loader2 className="animate-spin text-slate-950" size={24} /> : '로그인'}
                     </button>
                 </form>
             </div>

@@ -36,7 +36,7 @@ const AdminSidebar: React.FC = () => {
     return (
         <div className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-50">
             <div className="p-6 border-b border-slate-800">
-                <h1 className="text-xl font-black text-white tracking-tight">MBTIJU <span className="text-indigo-500">ADMIN</span></h1>
+                <h1 className="text-xl font-black text-white tracking-tight">MBTIJU <span className="text-slate-400">ADMIN</span></h1>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
@@ -47,7 +47,7 @@ const AdminSidebar: React.FC = () => {
                         end={item.path === '/admin'}
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${isActive
-                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
+                                ? 'bg-white text-slate-900 shadow-lg shadow-black/20'
                                 : 'hover:bg-slate-800 hover:text-white'
                             }`
                         }

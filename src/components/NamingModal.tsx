@@ -108,18 +108,18 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
             {!result && !isLoading && (
                 <form onSubmit={handleSubmit} className="space-y-8 animate-fade-up">
                     <div className="grid grid-cols-2 gap-4">
-                        <button type="button" onClick={() => setTargetGender('male')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'male' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>남성</button>
-                        <button type="button" onClick={() => setTargetGender('female')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'female' ? 'bg-rose-500 border-rose-500 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>여성</button>
+                        <button type="button" onClick={() => setTargetGender('male')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'male' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>남성</button>
+                        <button type="button" onClick={() => setTargetGender('female')} className={`py-4 rounded-2xl font-bold border-2 transition-all ${targetGender === 'female' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}>여성</button>
                     </div>
 
                     <div className="space-y-4">
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">대상자 생년월일</label>
-                        <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-600 transition-all" />
+                        <input type="date" value={targetBirthDate} onChange={(e) => setTargetBirthDate(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-emerald-600 transition-all" />
                     </div>
 
                     <div className="space-y-4">
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">태어난 시간 (선택)</label>
-                        <select value={targetBirthTime} onChange={(e) => setTargetBirthTime(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-600 appearance-none">
+                        <select value={targetBirthTime} onChange={(e) => setTargetBirthTime(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-emerald-600 appearance-none">
                             <option value="">태어난 시간 선택 (모름 가능)</option>
                             {BIRTH_TIME_SLOTS.map((slot) => (<option key={slot.value} value={slot.value}>{slot.label}</option>))}
                         </select>
@@ -144,16 +144,16 @@ const NamingModalContent: React.FC<NamingContentProps> = ({ onUseCredit, credits
                     ) : result ? (
                         <div className="space-y-12 animate-fade-up">
                             <section className="report-section">
-                                <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-indigo-600" /> 추천 이름 BEST 3</h4>
+                                <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-emerald-600" /> 추천 이름 BEST 3</h4>
                                 <div className="grid gap-6">
                                     {result?.names?.map((name: any, i: number) => (
-                                        <div key={i} className="report-card !p-8 border-slate-100 hover:border-indigo-200 transition-all">
+                                        <div key={i} className="report-card !p-8 border-slate-100 hover:border-emerald-200 transition-all">
                                             <div className="flex justify-between items-start mb-6">
                                                 <div>
-                                                    <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1 block">추천 작명 {i+1}</span>
+                                                    <span className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-1 block">추천 작명 {i+1}</span>
                                                     <h5 className="text-3xl font-black text-slate-950">{name.hangul} <span className="text-xl font-medium text-slate-400 ml-2">{name.hanja}</span></h5>
                                                 </div>
-                                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-indigo-600"><Sparkles className="w-6 h-6" /></div>
+                                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-emerald-600"><Sparkles className="w-6 h-6" /></div>
                                             </div>
                                             <div className="space-y-4 text-sm leading-relaxed">
                                                 <p className="text-slate-600"><strong className="text-slate-950 block mb-1">한자 의미</strong> {stripMarkdown(name.meaning)}</p>
@@ -208,7 +208,7 @@ const NamingModal: React.FC<NamingModalProps> = ({ isOpen, onClose, onNavigate, 
                 <div className="p-8 sm:p-12 pb-4 shrink-0 bg-white">
                     <div className="flex justify-between items-end">
                         <div>
-                            <div className="flex items-center gap-2 text-indigo-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
+                            <div className="flex items-center gap-2 text-emerald-600 font-black tracking-widest text-[10px] uppercase mb-1.5">
                                 <UserPlus className="w-4 h-4" /> Professional Naming
                             </div>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter uppercase">명리학 작명</h3>

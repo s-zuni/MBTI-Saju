@@ -166,7 +166,7 @@ const AdminInquiries: React.FC = () => {
                         
                         <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             {loadingMessages ? (
-                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-indigo-600" /></div>
+                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-slate-950" /></div>
                             ) : (
                                 messages.map((msg) => (
                                     <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-end' : 'items-start'}`}>
@@ -191,7 +191,7 @@ const AdminInquiries: React.FC = () => {
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">답변 작성하기</h3>
                         <div className="flex-1 flex flex-col space-y-4">
                             <textarea
-                                className="flex-1 w-full p-6 rounded-3xl border border-slate-200 focus:border-indigo-500 outline-none transition-all text-sm resize-none"
+                                className="flex-1 w-full p-6 rounded-3xl border border-slate-200 focus:border-slate-950 outline-none transition-all text-sm resize-none"
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
                                 placeholder="사용자에게 보낼 상세한 답변을 입력하세요..."
@@ -199,7 +199,7 @@ const AdminInquiries: React.FC = () => {
                             <button
                                 onClick={handleSendReply}
                                 disabled={sending || !replyText.trim()}
-                                className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-indigo-100"
+                                className="w-full py-5 bg-slate-950 text-white rounded-2xl font-black hover:bg-black transition-all flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-slate-200"
                             >
                                 {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                                 답변 전송하기
@@ -215,7 +215,7 @@ const AdminInquiries: React.FC = () => {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div>
                 <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
-                    <MessageCircle className="w-8 h-8 text-indigo-600" /> 고객문의 관리
+                    <MessageCircle className="w-8 h-8 text-slate-950" /> 고객문의 관리
                 </h2>
                 <p className="text-slate-500 font-medium">서비스 이용 관련 일반 문의 및 기술 지원 요청을 관리합니다.</p>
             </div>
@@ -236,7 +236,7 @@ const AdminInquiries: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
-                                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                                        <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                                     </td>
                                 </tr>
                             ) : inquiries.length === 0 ? (

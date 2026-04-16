@@ -26,7 +26,7 @@
   }
 
   .btn-celestial {
-    @apply px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black tracking-tight transition-all hover:bg-indigo-700 active:scale-95 shadow-xl shadow-indigo-100 flex items-center justify-center gap-2;
+    @apply px-8 py-4 bg-slate-950 text-white rounded-[24px] font-black tracking-tight transition-all hover:bg-black active:scale-95 shadow-xl shadow-slate-100 flex items-center justify-center gap-2;
   }
 
   .glass-card {
@@ -38,7 +38,7 @@
   }
 
   .nav-link {
-    @apply text-slate-500 hover:text-indigo-600 transition-colors font-semibold text-sm;
+    @apply text-slate-500 hover:text-slate-950 transition-colors font-semibold text-sm;
   }
 
   .section-container {
@@ -46,7 +46,7 @@
   }
 
   .input-field {
-    @apply w-full px-5 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-sm;
+    @apply w-full px-5 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-slate-950/10 focus:border-slate-950 outline-none transition-all shadow-sm;
   }
 
   /* Professional Report Styles */
@@ -143,7 +143,7 @@
 .pdf-report-container {
   width: 820px !important;
   padding: 60px !important;
-  font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
+  font-family: 'Pretendard', sans-serif !important;
   background: #ffffff !important;
   color: #0f172a !important; /* Extremely dark slate */
 }

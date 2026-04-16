@@ -241,22 +241,22 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     if (!hasDeepData) {
       return (
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-fade-up">
-          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-            <Zap className="w-10 h-10 text-indigo-600 animate-pulse" />
+          <div className="w-20 h-20 bg-violet-50 rounded-full flex items-center justify-center mb-6">
+            <Zap className="w-10 h-10 text-violet-600 animate-pulse" />
           </div>
           <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">심층 융합 분석이 필요합니다</h3>
           <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석 외에 MBTI와 사주를 결합한 상세 융합 진단, 2026년 운세 흐름, 분야별 전략은 유료 서비스입니다.</p>
           <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100 shadow-inner">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-bold text-slate-600">서비스 비용</span>
-              <span className="text-lg font-black text-indigo-600">{SERVICE_COSTS.MBTI_SAJU} 크레딧</span>
+              <span className="text-lg font-black text-violet-600">{SERVICE_COSTS.MBTI_SAJU} 크레딧</span>
             </div>
             <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
               <span>보유 크레딧</span>
               <span>{credits || 0} 크레딧</span>
             </div>
           </div>
-          <button onClick={handleStartDeepAnalysis} disabled={isPurchasingDeep} className="w-full max-w-xs py-4 bg-indigo-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2">
+          <button onClick={handleStartDeepAnalysis} disabled={isPurchasingDeep} className="w-full max-w-xs py-4 bg-violet-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2">
             {isPurchasingDeep ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
             심층 분석 시작하기
           </button>
@@ -268,12 +268,12 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       <div className="space-y-6 animate-fade-up">
         {/* 헤더: 운명 별명 */}
         {analysis.fusionNickname && (
-          <div className="text-center mb-6 py-8 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 30% 50%, #6366f1 0%, transparent 60%), radial-gradient(circle at 70% 50%, #8b5cf6 0%, transparent 60%)'}} />
+          <div className="text-center mb-6 py-8 bg-gradient-to-br from-slate-900 to-violet-950 rounded-2xl relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 30% 50%, #8b5cf6 0%, transparent 60%), radial-gradient(circle at 70% 50%, #a78bfa 0%, transparent 60%)'}} />
             <div className="relative z-10">
-              <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2">MBTI × 사주 융합 별명</p>
+              <p className="text-[10px] font-black text-violet-300 uppercase tracking-widest mb-2">MBTI × 사주 융합 별명</p>
               <h3 className="text-2xl sm:text-3xl font-black text-white mb-3">✨ {stripMarkdown(analysis.fusionNickname)} ✨</h3>
-              <p className="text-xs text-indigo-300">{analysis.mbti} × 사주 명리학 교차 분석</p>
+              <p className="text-xs text-violet-300">{analysis.mbti} × 사주 명리학 교차 분석</p>
             </div>
           </div>
         )}
@@ -288,13 +288,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           {/* [1순위] 심층 융합 진단 - MBTI×사주 교차 분석의 핵심 */}
           {analysis.deepIntegration?.integrationPoints && (
             <section className="report-section">
-              <h4 className="report-section-title"><Zap className="w-5 h-5 text-indigo-600" /> MBTI × 사주 심층 융합 진단</h4>
+              <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-violet-600" /> MBTI × 사주 심층 융합 진단</h4>
               <p className="text-xs text-slate-400 font-bold mb-4 pl-1">두 시스템의 교차점에서 발견된 핵심 통찰입니다.</p>
               <div className="space-y-4">
                 {analysis.deepIntegration.integrationPoints.map((p: any, i: number) => (
-                  <div key={i} className="report-card border-l-4 border-indigo-500 !pl-5">
+                  <div key={i} className="report-card border-l-4 border-violet-500 !pl-5">
                     <div className="flex items-start gap-2 mb-3">
-                      <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                      <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                       <h5 className="font-black text-slate-900 text-sm leading-snug">{stripMarkdown(p.subtitle)}</h5>
                     </div>
                     <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line pl-8">{stripMarkdown(p.content)}</p>
@@ -313,19 +313,19 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
                   {analysis.nature.dayMasterAnalysis && (
                     <div className="flex gap-2">
-                      <span className="text-indigo-500 font-black shrink-0">일간</span>
+                      <span className="text-violet-500 font-black shrink-0">일간</span>
                       <p>{stripMarkdown(analysis.nature.dayMasterAnalysis)}</p>
                     </div>
                   )}
                   {analysis.nature.dayBranchAnalysis && (
                     <div className="flex gap-2">
-                      <span className="text-indigo-500 font-black shrink-0">일지</span>
+                      <span className="text-violet-500 font-black shrink-0">일지</span>
                       <p>{stripMarkdown(analysis.nature.dayBranchAnalysis)}</p>
                     </div>
                   )}
                   {analysis.nature.monthBranchAnalysis && (
                     <div className="flex gap-2">
-                      <span className="text-indigo-500 font-black shrink-0">월지</span>
+                      <span className="text-violet-500 font-black shrink-0">월지</span>
                       <p>{stripMarkdown(analysis.nature.monthBranchAnalysis)}</p>
                     </div>
                   )}
@@ -368,11 +368,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 <h5 className="font-black text-white mb-4 text-lg">{stripMarkdown(analysis.persona.mbtiNickname)}</h5>
                 <div className="space-y-4 text-slate-300 text-sm">
                   <div>
-                    <strong className="block mb-1 text-indigo-300 text-xs uppercase tracking-widest">주기능 — 핵심 에너지</strong>
+                    <strong className="block mb-1 text-violet-300 text-xs uppercase tracking-widest">주기능 — 핵심 에너지</strong>
                     <p className="leading-relaxed">{stripMarkdown(analysis.persona.dominantFunction)}</p>
                   </div>
                   <div>
-                    <strong className="block mb-1 text-indigo-300 text-xs uppercase tracking-widest">부기능 — 사회적 상호작용</strong>
+                    <strong className="block mb-1 text-violet-300 text-xs uppercase tracking-widest">부기능 — 사회적 상호작용</strong>
                     <p className="leading-relaxed">{stripMarkdown(analysis.persona.auxiliaryFunction)}</p>
                   </div>
                 </div>
@@ -384,13 +384,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           {analysis.yearlyFortune && (
             <section className="report-section">
               <h4 className="report-section-title"><Calendar className="w-5 h-5" /> 2026년 운세 흐름</h4>
-              <div className="report-card bg-gradient-to-br from-indigo-900 to-slate-900 text-white">
-                <h5 className="text-xl font-black mb-4 italic text-indigo-100">"{stripMarkdown(analysis.yearlyFortune.theme)}"</h5>
+              <div className="report-card bg-gradient-to-br from-violet-900 to-slate-900 text-white">
+                <h5 className="text-xl font-black mb-4 italic text-violet-100">"{stripMarkdown(analysis.yearlyFortune.theme)}"</h5>
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{stripMarkdown(analysis.yearlyFortune.overview)}</p>
                 {analysis.yearlyFortune.keywords && (
                   <div className="flex flex-wrap gap-2 mt-4">
                     {analysis.yearlyFortune.keywords.filter((k: any): k is string => !!k).map((kw: string, i: number) => (
-                      <span key={i} className="px-3 py-1 bg-white/10 text-indigo-200 rounded-full text-xs font-bold border border-white/20">#{kw}</span>
+                      <span key={i} className="px-3 py-1 bg-white/10 text-violet-200 rounded-full text-xs font-bold border border-white/20">#{kw}</span>
                     ))}
                   </div>
                 )}
@@ -406,7 +406,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 {analysis.monthlyFortune.months.map((m: any, i: number) => (
                   <div key={i} className="report-card !p-4 flex gap-4 items-start">
                     <div className="shrink-0 w-12 text-center">
-                      <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg block">{m.period}</span>
+                      <span className="text-xs font-black text-violet-600 bg-violet-50 px-2 py-1 rounded-lg block">{m.period}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-500 mb-1">{stripMarkdown(m.energy)}</p>
@@ -443,7 +443,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                       </div>
                       <p className="text-slate-700 text-sm mb-3 leading-relaxed">{stripMarkdown(data.analysis)}</p>
                       <div className="bg-slate-50 rounded-xl p-3">
-                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">핵심 전략</p>
+                        <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest mb-1">핵심 전략</p>
                         <p className="text-slate-800 text-xs font-bold leading-relaxed">{stripMarkdown(data.advice)}</p>
                       </div>
                     </div>
@@ -523,7 +523,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
                 {analysisError?.message || "일시적인 서버 부하로 분석이 중단되었습니다."}
                 <br />
-                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-indigo-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
+                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-violet-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
               </p>
               <button 
                 onClick={() => { setAnalysis(null); loadAnalysis(); }} 

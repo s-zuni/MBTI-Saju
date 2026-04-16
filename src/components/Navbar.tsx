@@ -71,7 +71,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   // Dynamic styles: Aura Ethereal high-contrast style
   const textColor = "text-slate-800"; // #30323a equivalent
   const iconColor = "text-slate-700";
-  const buttonHover = "hover:text-indigo-600";
+  const buttonHover = "hover:text-slate-950";
   const navBg = 'bg-white/70 backdrop-blur-xl border-b border-slate-100/50 py-3 shadow-sm';
 
   return (
@@ -87,19 +87,19 @@ const Navbar: React.FC<NavbarProps> = () => {
 
         {/* Center Navigation Menu (Hidden on Home) */}
         <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운세 보기
           </button>
-          <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운명 심층 상담
           </button>
-          <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             타로
           </button>
-          <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={() => navigate('/community')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             커뮤니티
           </button>
-          <button onClick={() => openModal('creditPurchase')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-indigo-600`}>
+          <button onClick={() => openModal('creditPurchase')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             요금제
           </button>
         </div>
@@ -133,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openModal('analysis', 'login')}
-                    className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-all text-sm active:scale-95"
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-slate-950 text-white font-semibold rounded-full shadow-md hover:bg-slate-800 transition-all text-sm active:scale-95"
                     disabled={loading}
                   >
                     시작하기
@@ -160,11 +160,11 @@ const Navbar: React.FC<NavbarProps> = () => {
         <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
           <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
             <div className="flex flex-col gap-2">
-              <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운세 보기</button>
-              <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">운명 심층 상담</button>
-              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">타로</button>
-              <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">커뮤니티</button>
-              <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-indigo-600">요금제</button>
+              <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
+              <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
+              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
+              <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">커뮤니티</button>
+              <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">요금제</button>
             </div>
 
             <div className="border-t border-slate-200 pt-4">
@@ -189,7 +189,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                       openModal('analysis', 'login');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-full shadow-md hover:bg-indigo-700 transition-colors text-sm"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-950 text-white font-semibold rounded-full shadow-md hover:bg-slate-800 transition-colors text-sm"
                     disabled={loading}
                   >
                     시작하기

@@ -240,7 +240,7 @@ const RefundManagement: React.FC = () => {
                                                 <div key={msg.id} className={`flex flex-col ${msg.sender_role === 'admin' ? 'items-end' : 'items-start'}`}>
                                                     <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
                                                         msg.sender_role === 'admin' 
-                                                        ? 'bg-indigo-600 text-white rounded-tr-none' 
+                                                        ? 'bg-slate-900 text-white rounded-tr-none' 
                                                         : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none shadow-sm'
                                                     }`}>
                                                         {msg.content}
@@ -259,8 +259,8 @@ const RefundManagement: React.FC = () => {
 
                     <div className="space-y-6">
                         {selectedInquiry.linked_purchase && (
-                            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
-                                <h4 className="text-xs font-black text-indigo-600 uppercase mb-4 flex items-center gap-2">
+                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h4 className="text-xs font-black text-slate-900 uppercase mb-4 flex items-center gap-2">
                                     <RotateCcw size={14} /> 환불 정책 검토
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-6">
@@ -316,7 +316,7 @@ const RefundManagement: React.FC = () => {
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">답변 보내기</h3>
                             <div className="space-y-4">
                                 <textarea
-                                    className="w-full p-4 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none h-40 transition-all text-sm resize-none"
+                                    className="w-full p-4 rounded-2xl border border-slate-200 focus:border-slate-950 outline-none h-40 transition-all text-sm resize-none"
                                     value={answerText}
                                     onChange={(e) => setAnswerText(e.target.value)}
                                     placeholder="사용자에게 보낼 메시지를 입력하세요..."
@@ -362,7 +362,7 @@ const RefundManagement: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
-                                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                                        <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                                     </td>
                                 </tr>
                             ) : inquiries.length === 0 ? (
@@ -382,7 +382,7 @@ const RefundManagement: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-slate-900 font-black">{si.linked_purchase?.price_paid?.toLocaleString()}원</div>
-                                            <div className="text-[10px] text-indigo-500 font-black">{si.linked_purchase?.purchased_credits} C</div>
+                                            <div className="text-[10px] text-slate-500 font-black">{si.linked_purchase?.purchased_credits} C</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-tighter ${

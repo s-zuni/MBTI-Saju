@@ -56,7 +56,7 @@ const PopupModal: React.FC = () => {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-slide-up border border-slate-100">
                 {/* Header with Icon */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 text-white relative">
+                <div className="bg-slate-950 p-8 text-white relative">
                     <button 
                         onClick={handleClose}
                         className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
@@ -91,7 +91,7 @@ const PopupModal: React.FC = () => {
                             <label className="flex items-center gap-2 cursor-pointer group py-2">
                                 <input 
                                     type="checkbox" 
-                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    className="w-4 h-4 rounded border-slate-300 text-slate-950 focus:ring-slate-950 cursor-pointer"
                                     checked={dontShowToday}
                                     onChange={(e) => setDontShowToday(e.target.checked)}
                                 />

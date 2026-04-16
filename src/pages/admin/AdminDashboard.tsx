@@ -235,7 +235,7 @@ const AdminDashboard: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="animate-spin text-indigo-600" size={32} />
+                <Loader2 className="animate-spin text-slate-950" size={32} />
             </div>
         );
     }
@@ -253,7 +253,7 @@ const AdminDashboard: React.FC = () => {
     const activityCards = [
         { name: '오늘 신규 가입', value: stats.todayNewUsers + '명', icon: <UserCheck size={20} />, color: 'text-emerald-600 bg-emerald-50' },
         { name: '이번 주 신규', value: stats.weekNewUsers + '명', icon: <TrendingUp size={20} />, color: 'text-blue-600 bg-blue-50' },
-        { name: '이번 주 서비스 이용', value: stats.serviceUsage.total + '건', icon: <Activity size={20} />, color: 'text-indigo-600 bg-indigo-50' },
+        { name: '이번 주 서비스 이용', value: stats.serviceUsage.total + '건', icon: <Activity size={20} />, color: 'text-slate-950 bg-slate-50' },
         { name: '미처리 환불', value: stats.pendingRefunds + '건', icon: <BarChart2 size={20} />, color: 'text-amber-600 bg-amber-50' },
     ];
 
@@ -308,7 +308,7 @@ const AdminDashboard: React.FC = () => {
             {/* 활성도 지표 섹션 */}
             <div>
                 <h3 className="text-lg font-black text-slate-800 mb-4 tracking-tight flex items-center gap-2">
-                    <Activity size={18} className="text-indigo-500" />
+                    <Activity size={18} className="text-slate-950" />
                     서비스 활성도 지표
                 </h3>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -335,10 +335,10 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex items-end gap-2 h-32">
                                 {stats.dailyUserTrend.map((d, i) => (
                                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                        <span className="text-[10px] font-black text-indigo-600">{d.count || ''}</span>
+                                        <span className="text-[10px] font-black text-slate-950">{d.count || ''}</span>
                                         <div className="w-full relative flex items-end justify-center" style={{ height: '80px' }}>
                                             <div
-                                                className="w-full rounded-t-lg transition-all duration-700 bg-indigo-500"
+                                                className="w-full rounded-t-lg transition-all duration-700 bg-slate-900"
                                                 style={{
                                                     height: `${Math.max((d.count / maxTrendCount) * 80, d.count > 0 ? 6 : 2)}px`,
                                                     opacity: d.count > 0 ? 1 : 0.2,
@@ -358,7 +358,7 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">이번 주 서비스별 사용 현황</p>
                             <div className="space-y-3">
                                 {[
-                                    { label: 'MBTI × 사주 융합분석', count: stats.serviceUsage.mbtiSaju, color: 'bg-indigo-500' },
+                                    { label: 'MBTI × 사주 융합분석', count: stats.serviceUsage.mbtiSaju, color: 'bg-slate-950' },
                                     { label: '궁합 분석', count: stats.serviceUsage.compatibility, color: 'bg-rose-500' },
                                     { label: '일일 운세', count: stats.serviceUsage.fortune, color: 'bg-amber-500' },
                                 ].map((s, i) => {
@@ -396,7 +396,7 @@ const AdminDashboard: React.FC = () => {
                                         checked={siteSettings.popup_enabled}
                                         onChange={(e) => setSiteSettings({ ...siteSettings, popup_enabled: e.target.checked })}
                                     />
-                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-950"></div>
                                 </label>
                             </div>
 
@@ -405,7 +405,7 @@ const AdminDashboard: React.FC = () => {
                                     <label className="block text-sm font-bold text-slate-700 mb-2">팝업 제목</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none text-sm"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-slate-950 focus:border-transparent transition-all outline-none text-sm"
                                         placeholder="팝업 제목을 입력하세요"
                                         value={siteSettings.popup_title}
                                         onChange={(e) => setSiteSettings({ ...siteSettings, popup_title: e.target.value })}
@@ -414,7 +414,7 @@ const AdminDashboard: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">팝업 내용</label>
                                     <textarea
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none text-sm min-h-[120px]"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-slate-950 focus:border-transparent transition-all outline-none text-sm min-h-[120px]"
                                         placeholder="팝업 내용을 입력하세요"
                                         value={siteSettings.popup_content}
                                         onChange={(e) => setSiteSettings({ ...siteSettings, popup_content: e.target.value })}
@@ -440,7 +440,7 @@ const AdminDashboard: React.FC = () => {
                             {stats.recentUsers.length > 0 ? (
                                 stats.recentUsers.map((u, i) => (
                                     <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xs shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">
                                             {((u.full_name ?? u.email ?? '?')[0] ?? '?').toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -474,19 +474,19 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* 오늘 현황 요약 카드 */}
-                    <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-3xl text-white">
-                        <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-3">오늘 현황</p>
+                    <div className="bg-gradient-to-br from-slate-900 to-black p-6 rounded-3xl text-white">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">오늘 현황</p>
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-indigo-100">신규 가입자</span>
+                                <span className="text-sm font-medium text-slate-300">신규 가입자</span>
                                 <span className="text-xl font-black">{stats.todayNewUsers}명</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-indigo-100">이번 주 서비스 이용</span>
+                                <span className="text-sm font-medium text-slate-300">이번 주 서비스 이용</span>
                                 <span className="text-xl font-black">{stats.serviceUsage.total}건</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-indigo-100">전체 회원</span>
+                                <span className="text-sm font-medium text-slate-300">전체 회원</span>
                                 <span className="text-xl font-black">{stats.totalUsers.toLocaleString()}명</span>
                             </div>
                         </div>

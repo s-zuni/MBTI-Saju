@@ -27,13 +27,13 @@ const RecommendationModal: React.FC<RecommendationModalProps> = ({ isOpen, onClo
                     <div className="flex bg-slate-100 p-1 rounded-xl">
                         <button
                             onClick={() => setActiveTab('travel')}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'travel' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'travel' ? 'bg-white shadow-sm text-slate-950' : 'text-slate-500'}`}
                         >
                             맞춤 여행지
                         </button>
                         <button
                             onClick={() => setActiveTab('career')}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'career' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'career' ? 'bg-white shadow-sm text-slate-950' : 'text-slate-500'}`}
                         >
                             추천 커리어
                         </button>
@@ -84,11 +84,11 @@ const RecommendationModal: React.FC<RecommendationModalProps> = ({ isOpen, onClo
                             </div>
 
                             <div className="space-y-4">
-                                <div className="p-5 border border-slate-100 rounded-2xl hover:border-indigo-200 transition-colors hover:shadow-md bg-slate-50">
+                                <div className="p-5 border border-slate-100 rounded-2xl hover:border-slate-300 transition-colors hover:shadow-md bg-slate-50">
                                     <h4 className="font-bold text-lg text-slate-800 mb-1">크리에이티브 디렉터</h4>
                                     <p className="text-sm text-slate-600">창의적인 아이디어를 현실로 만드는 능력이 탁월합니다.</p>
                                 </div>
-                                <div className="p-5 border border-slate-100 rounded-2xl hover:border-indigo-200 transition-colors hover:shadow-md bg-slate-50">
+                                <div className="p-5 border border-slate-100 rounded-2xl hover:border-slate-300 transition-colors hover:shadow-md bg-slate-50">
                                     <h4 className="font-bold text-lg text-slate-800 mb-1">스타트업 창업가</h4>
                                     <p className="text-sm text-slate-600">위험을 감수하고 새로운 가치를 창출하는 데 강점이 있습니다.</p>
                                 </div>
