@@ -36,7 +36,7 @@ import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { dailyFortuneSchema as fortuneSchema } from './config/schemas';
+import { dailyFortuneSchema, singleDayFortuneSchema } from './config/schemas';
 import { calculateSaju } from './utils/sajuUtils';
 
 // Lazy load modals for better initial performance
@@ -69,13 +69,31 @@ function App() {
   const { modals, openModal, closeModal, closeAllModals } = useModalStore();
 
 
-  // Streaming fortune
+  // Streaming today's fortune
   const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
-    api: '/api/fortune',
-    schema: fortuneSchema,
+    api: '/api/fortune?scope=today',
+    schema: singleDayFortuneSchema,
     headers: {
       'Authorization': `Bearer ${session?.access_token || ''}`,
     },
+  });
+
+  // Streaming tomorrow's fortune
+  const { object: tomorrowFortune, submit: fetchTomorrow, isLoading: isTomorrowLoading } = useObject({
+    api: '/api/fortune?scope=tomorrow',
+    schema: singleDayFortuneSchema,
+    headers: {
+      'Authorization': `Bearer ${session?.access_token || ''}`,
+    },
+    onFinish: async () => {
+        // Only deduct credits when generation is successfully finished
+        await consumeCredits('FORTUNE_TOMORROW');
+        console.log('[App] Tomorrow fortune generation finished and credits deducted.');
+    },
+    onError: (error) => {
+        console.error('[App] Tomorrow fortune generation failed:', error);
+        alert('내일 운세를 불러오는 중 오류가 발생했습니다. 크레딧은 차감되지 않았습니다.');
+    }
   });
 
   // Syncing with legacy state if necessary, but recommended to use 'fortune' directly
@@ -125,8 +143,28 @@ function App() {
     fetchFortune({ 
       birthDate: session.user.user_metadata.birth_date, 
       mbti: session.user.user_metadata.mbti,
-      sajuData
+      sajuData,
+      scope: 'today' // Explicitly request today only
     });
+  };
+
+  const handleFetchTomorrowFortune = async () => {
+    const cost = SERVICE_COSTS.FORTUNE_TOMORROW;
+    if (credits < cost) {
+      openModal('creditPurchase', undefined, { requiredCredits: cost });
+      return false;
+    }
+
+    if (!session) return false;
+    
+    const sajuData = calculateSaju(session.user.user_metadata.birth_date, session.user.user_metadata.birth_time);
+    fetchTomorrow({ 
+      birthDate: session.user.user_metadata.birth_date, 
+      mbti: session.user.user_metadata.mbti,
+      sajuData,
+      scope: 'tomorrow'
+    });
+    return true;
   };
 
   // handleSwitchService and checkCreditsAndOpen removed as components now handle their own navigation and credit checks
@@ -156,7 +194,10 @@ function App() {
         tier={tier}
         fortune={fortune}
         isFortuneLoading={isFortuneLoading}
+        tomorrowFortune={tomorrowFortune}
+        isTomorrowLoading={isTomorrowLoading}
         handleFetchFortune={handleFetchFortune}
+        handleFetchTomorrowFortune={handleFetchTomorrowFortune}
         handleStart={handleStart}
         showPremiumBanner={showPremiumBanner}
         setShowPremiumBanner={setShowPremiumBanner}
@@ -172,7 +213,7 @@ function App() {
 function AppContent({ 
   session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
   checkSufficientCredits, getCost, debugInfo,
-  tier, fortune, isFortuneLoading, handleFetchFortune, handleStart, 
+  tier, fortune, isFortuneLoading, tomorrowFortune, isTomorrowLoading, handleFetchFortune, handleFetchTomorrowFortune, handleStart, 
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {
   const location = useLocation();
@@ -387,6 +428,9 @@ function AppContent({
                 onClose={() => closeModal('fortune')}
                 fortune={fortune}
                 loading={isFortuneLoading}
+                tomorrowFortune={tomorrowFortune}
+                isTomorrowLoading={isTomorrowLoading}
+                onFetchTomorrow={handleFetchTomorrowFortune}
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();

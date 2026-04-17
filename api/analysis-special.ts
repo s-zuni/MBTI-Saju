@@ -22,6 +22,11 @@ const fortuneItemSchema = z.object({
     lucky_ootd: z.string().describe("오늘의 추천 OOTD 스타일 (예: '청량한 크롭탑과 와이드 데님 팬츠')")
 });
 
+const fortuneSchemaSingle = z.object({
+    fortune: fortuneItemSchema,
+    date: z.string().describe("날짜 (YYYY-MM-DD)")
+});
+
 const schemas: Record<string, any> = {
     healing: z.object({
         place: z.string(),
@@ -73,7 +78,9 @@ const schemas: Record<string, any> = {
         today_date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
         tomorrow: fortuneItemSchema,
         tomorrow_date: z.string().describe("내일 날짜 (YYYY-MM-DD)")
-    })
+    }),
+    fortune_today: fortuneSchemaSingle,
+    fortune_tomorrow: fortuneSchemaSingle
 };
 
 const KBO_TEAMS = [
@@ -176,7 +183,15 @@ export default async function handler(req: Request) {
     const url = new URL(req.url, 'http://localhost');
     const body = await req.json();
     const type = url.searchParams.get('type') || body.type;
-    const currentSchema = schemas[type as string];
+    const scope = url.searchParams.get('scope') || body.scope;
+    
+    let targetType = type as string;
+    if (type === 'fortune') {
+        if (scope === 'today') targetType = 'fortune_today';
+        else if (scope === 'tomorrow') targetType = 'fortune_tomorrow';
+    }
+    
+    const currentSchema = schemas[targetType];
 
     if (!currentSchema) {
         return new Response(JSON.stringify({ error: `Invalid analysis type: ${type}` }), { 
@@ -257,7 +272,8 @@ export default async function handler(req: Request) {
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
-        userQuery = `띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
+        const dateTag = scope === 'tomorrow' ? '내일' : '오늘';
+        userQuery = `[대상 날짜: ${dateTag}] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}. 반드시 '${dateTag}'의 운세만 생성하세요.`;
     }
 
     try {

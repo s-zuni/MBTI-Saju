@@ -9,24 +9,11 @@ interface FortuneModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
-  fortune: {
-    today: { 
-      fortune: string; 
-      lucky: { color: string; number: string; direction: string }; 
-      mission?: string;
-      charm_stats?: { label: string; value: number }[];
-      lucky_ootd?: string;
-    };
-    tomorrow: { 
-      fortune: string; 
-      lucky: { color: string; number: string; direction: string }; 
-      mission?: string;
-      charm_stats?: { label: string; value: number }[];
-      lucky_ootd?: string;
-    };
-  } | null;
+  fortune: any; // 오늘 운세 객체
   loading: boolean;
-  // 크레딧 관련 props
+  tomorrowFortune?: any; // 내일 운세 객체
+  isTomorrowLoading?: boolean;
+  onFetchTomorrow?: () => Promise<boolean>;
   credits: number;
   onUseCredit: (serviceType: 'FORTUNE_TOMORROW') => Promise<boolean>;
   onOpenCreditPurchase: (requiredCredits: number) => void;
@@ -38,26 +25,29 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
   onNavigate,
   fortune,
   loading,
+  tomorrowFortune,
+  isTomorrowLoading,
+  onFetchTomorrow,
   credits,
-  onUseCredit,
   onOpenCreditPurchase
 }) => {
   const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
   const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
-  const [isUnlocking, setIsUnlocking] = useState(false);
   const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
   // 로딩 메시지 순환 효과
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (loading && !fortune) {
+    const isLoading = tab === 'today' ? (loading && !fortune) : (isTomorrowLoading && !tomorrowFortune);
+    
+    if (isLoading) {
       setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
       interval = setInterval(() => {
         setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
       }, 5000);
     }
     return () => clearInterval(interval);
-  }, [loading, fortune]);
+  }, [loading, isTomorrowLoading, fortune, tomorrowFortune, tab]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -76,7 +66,8 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeData = fortune ? fortune[tab] : null;
+  const activeData = tab === 'today' ? fortune?.fortune : tomorrowFortune?.fortune;
+  const activeDate = tab === 'today' ? fortune?.date : tomorrowFortune?.date;
   const tomorrowCost = SERVICE_COSTS.FORTUNE_TOMORROW;
 
   const handleTomorrowClick = async () => {
@@ -85,25 +76,21 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
       return;
     }
 
-    // 이미 내일 운세 탭인데 잠금 해제 안됨 -> 크레딧 차감 시도
     if (credits < tomorrowCost) {
       onOpenCreditPurchase(tomorrowCost);
       return;
     }
 
-    if (!window.confirm(`내일의 운세를 확인하시겠습니까? ${tomorrowCost}크레딧이 차감됩니다.`)) {
+    if (!window.confirm(`내일의 운세를 확인하시겠습니까? ${tomorrowCost}크레딧이 사용됩니다. (생성 오류 시 차감되지 않습니다.)`)) {
       return;
     }
 
-    setIsUnlocking(true);
-    const success = await onUseCredit('FORTUNE_TOMORROW');
-    setIsUnlocking(false);
-
-    if (success) {
-      setTomorrowUnlocked(true);
-      setTab('tomorrow');
-    } else {
-      alert('크레딧 차감에 실패했습니다. 다시 시도해주세요.');
+    if (onFetchTomorrow) {
+      const started = await onFetchTomorrow();
+      if (started) {
+        setTomorrowUnlocked(true);
+        setTab('tomorrow');
+      }
     }
   };
 
@@ -119,7 +106,8 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
             <div>
               <h3 className="text-2xl font-black text-slate-900">당신의 운세</h3>
               <p className="text-slate-500 font-medium text-sm mt-1">
-                {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                {activeDate ? new Date(activeDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }) : 
+                 new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
               </p>
             </div>
             {/* 크레딧 표시 */}
@@ -142,14 +130,14 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
             </button>
             <button
               onClick={handleTomorrowClick}
-              disabled={isUnlocking}
+              disabled={isTomorrowLoading}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${tab === 'tomorrow'
                 ? 'bg-white text-amber-600 shadow-sm ring-1 ring-slate-100'
                 : 'text-slate-500 hover:text-slate-700'
-                } ${isUnlocking ? 'opacity-50' : ''}`}
+                } ${isTomorrowLoading ? 'opacity-50' : ''}`}
             >
-              {isUnlocking ? (
-                <span className="animate-pulse">잠금 해제 중...</span>
+              {isTomorrowLoading && !tomorrowFortune ? (
+                <span className="animate-pulse">생성 중...</span>
               ) : tomorrowUnlocked ? (
                 '내일의 운세'
               ) : (
@@ -167,7 +155,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
 
         {/* Content */}
         <div className="p-6 pt-2 overflow-y-auto custom-scrollbar flex-1">
-          {loading ? (
+          {((tab === 'today' && loading && !fortune) || (tab === 'tomorrow' && isTomorrowLoading && !tomorrowFortune)) ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center text-slate-400">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mb-6"></div>
               <div className="space-y-3">
@@ -191,7 +179,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
               </p>
               <button
                 onClick={handleTomorrowClick}
-                disabled={isUnlocking}
+                disabled={isTomorrowLoading}
                 className="px-6 py-3 bg-slate-950 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 transition-all flex items-center gap-2"
               >
                 <Coins className="w-5 h-5 text-amber-400" />
@@ -230,7 +218,7 @@ const FortuneModal: React.FC<FortuneModalProps> = ({
                     오늘의 매력 스탯
                   </h4>
                   <div className="space-y-4">
-                    {activeData.charm_stats.map((stat, idx) => (
+                    {activeData.charm_stats.map((stat: { label: string; value: number }, idx: number) => (
                       <div key={idx} className="space-y-1.5">
                         <div className="flex justify-between text-xs font-black text-slate-600">
                           <span>{stat.label}</span>

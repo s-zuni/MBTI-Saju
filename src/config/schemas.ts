@@ -68,35 +68,31 @@ export const fullAnalysisSchema = z.intersection(
 );
 
 // Quick Fortune (Daily/Tomorrow)
-export const dailyFortuneSchema = z.object({
-    today: z.object({
-        fortune: z.string(),
-        lucky: z.object({
-            color: z.string(),
-            number: z.string(),
-            direction: z.string()
-        }),
-        mission: z.string().optional(),
-        charm_stats: z.array(z.object({
-            label: z.string(),
-            value: z.number()
-        })).optional(),
-        lucky_ootd: z.string().optional()
+const fortuneItemSchema = z.object({
+    fortune: z.string(),
+    lucky: z.object({
+        color: z.string(),
+        number: z.string(),
+        direction: z.string()
     }),
-    tomorrow: z.object({
-        fortune: z.string(),
-        lucky: z.object({
-            color: z.string(),
-            number: z.string(),
-            direction: z.string()
-        }),
-        mission: z.string().optional(),
-        charm_stats: z.array(z.object({
-            label: z.string(),
-            value: z.number()
-        })).optional(),
-        lucky_ootd: z.string().optional()
-    })
+    mission: z.string().optional(),
+    charm_stats: z.array(z.object({
+        label: z.string(),
+        value: z.number()
+    })).optional(),
+    lucky_ootd: z.string().optional()
+});
+
+export const dailyFortuneSchema = z.object({
+    today: fortuneItemSchema,
+    today_date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
+    tomorrow: fortuneItemSchema,
+    tomorrow_date: z.string().describe("내일 날짜 (YYYY-MM-DD)")
+});
+
+export const singleDayFortuneSchema = z.object({
+    fortune: fortuneItemSchema,
+    date: z.string().describe("날짜 (YYYY-MM-DD)")
 });
 
 // Special Analysis: Trip
