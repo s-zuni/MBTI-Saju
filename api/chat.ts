@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText, convertToModelMessages } from 'ai';
+import { streamText } from 'ai';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
 import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
@@ -71,7 +71,12 @@ ${pastContext ? `[이전 상담 요약]\n${pastContext}\n` : ''}
 
 
         
-        const coreMessages = messages ? await convertToModelMessages(messages.slice(-10)) : [];
+        // Manual conversion to CoreMessage format to avoid 'parts' related TypeError in v6 SDK
+        const coreMessages = messages ? messages.slice(-10).map((m: any) => ({
+            role: m.role,
+            content: m.content
+        })) : [];
+
         if (coreMessages.length === 0 || (coreMessages[coreMessages.length - 1] as any).role !== 'user') {
             (coreMessages as any).push({ role: 'user', content: message });
         }
