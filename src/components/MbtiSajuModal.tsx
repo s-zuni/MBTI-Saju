@@ -43,7 +43,6 @@ const getElementColor = (element: string): ElementColor => {
 
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
   const [analysis, setAnalysis] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -94,10 +93,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
   // Loading state consolidation
   useEffect(() => {
-    if (isAnalysisLoading) {
-      setLoading(true);
-    } else if (fullObj) {
-      setLoading(false);
+    if (!isAnalysisLoading && fullObj) {
       const finalizeSave = async () => {
         await supabase.auth.updateUser({
           data: { ...initialSession?.user?.user_metadata, analysis: fullObj }
@@ -108,8 +104,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   }, [isAnalysisLoading, fullObj, initialSession]);
 
   const loadAnalysis = React.useCallback(async () => {
-    setLoading(true);
-    const timeoutId = setTimeout(() => setLoading(false), 5000);
     try {
       let currentSession = initialSession;
       if (!currentSession) {
@@ -129,8 +123,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     } catch (err) {
       console.error('MbtiSajuModal loadAnalysis error:', err);
     } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
+      // No more loading state to clear
     }
   }, [initialSession]);
 
