@@ -56,6 +56,7 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
+const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -366,6 +367,7 @@ function AppContent({
                     />
                   } />
                   <Route path="/community" element={<CommunityPage session={session} />} />
+                  <Route path="/community/post/:id" element={<PostDetailPage />} />
                   <Route path="/fortune" element={
                     <FortunePage
                       onFortuneClick={handleFetchFortune}

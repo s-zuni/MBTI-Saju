@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { formatSafariDate } from '../utils/textUtils';
-// import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface Comment {
     id: string;
@@ -250,10 +250,10 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                             <div className="text-center py-10 text-slate-500">아직 게시글이 없습니다. 첫 글을 작성해보세요!</div>
                         )}
                         {posts.map(post => (
-                            <div
+                            <Link
                                 key={post.id}
-                                onClick={() => setSelectedPost(post)}
-                                className="celestial-card cursor-pointer group"
+                                to={`/community/post/${post.id}`}
+                                className="celestial-card block group no-underline"
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
@@ -301,7 +301,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
 
                         {/* Pagination UI */}
