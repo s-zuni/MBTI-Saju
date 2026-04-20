@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../supabaseClient';
-import { MessageSquare, ThumbsUp, ArrowLeft, Send, Trash2, Edit2, AlertTriangle, Loader2 } from 'lucide-react';
+import { MessageSquare, ThumbsUp, ArrowLeft, Send, Loader2 } from 'lucide-react';
 import { formatSafariDate } from '../utils/textUtils';
 
 interface Comment {

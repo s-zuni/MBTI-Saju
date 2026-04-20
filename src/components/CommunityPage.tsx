@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search, Trash2, Edit2, AlertTriangle } from 'lucide-react';
+import { MessageSquare, ThumbsUp, PenSquare, X, Send, Search } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { formatSafariDate } from '../utils/textUtils';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface Comment {
     id: string;
