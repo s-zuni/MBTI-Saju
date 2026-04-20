@@ -293,7 +293,7 @@ const MyPage: React.FC<MyPageProps> = ({
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // ⭐️ Task 2: redundant useCredits 제거 (props 사용)
+
 
   const fetchProfileData = React.useCallback(async () => {
     let attempts = 0;
@@ -303,11 +303,9 @@ const MyPage: React.FC<MyPageProps> = ({
     while (attempts < maxProfileRetries && !success) {
       try {
         attempts++;
-        // ⭐️ Task 2: Props 세션을 최우선 신뢰하고, 없을 때만 타임아웃 기반 탐색
         let activeSession = initialSession;
         
         if (!activeSession) {
-            // Task 1: 타임아웃 보호 처리된 세션 조회유틸 사용
             activeSession = await ensureValidSession();
         }
 
@@ -340,7 +338,6 @@ const MyPage: React.FC<MyPageProps> = ({
         }
         
         if (refreshCredits) {
-          // ⭐️ Task 3: 이미 확보한 세션 데이터를 전달하여 내부 getSession 경합 방지
           refreshCredits(true, activeSession).catch(console.error);
         }
 
@@ -394,7 +391,6 @@ const MyPage: React.FC<MyPageProps> = ({
     setError(null);
 
     try {
-      // ⭐️ Task 1: 세션 조회 시 타임아웃 적용
       const activeSession = await ensureValidSession() || initialSession;
       
       if (!activeSession) {

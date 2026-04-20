@@ -53,8 +53,6 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ session: initialSession }
     const [reportTarget, setReportTarget] = useState<{ type: 'post' | 'comment', id: string } | null>(null);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-    // const navigate = useNavigate();
-
     const tags = ['전체', '사주', 'MBTI', '궁합', '기타'];
 
     const checkUser = React.useCallback(async () => {

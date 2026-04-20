@@ -52,7 +52,7 @@ const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
-// const SocialProofToast = lazy(() => import('./components/SocialProofToast'));
+
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
@@ -281,7 +281,7 @@ function AppContent({
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} />
                       <FeatureGrids />
-                      {/* <SocialProofToast /> */}
+
 
                       <ReviewsSection />
                       
@@ -416,7 +416,7 @@ function AppContent({
 
               {!isChatPage && <Footer />}
               {!isChatPage && <BottomNav />}
-              {/* <SocialProofToast /> */}
+
 
               {/* Modals are now lazy loaded and managed by openModal store */}
               <AnalysisModal
