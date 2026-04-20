@@ -6,6 +6,7 @@
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.52",
     "@ai-sdk/react": "^3.0.140",
+    "@apps-in-toss/web-framework": "^2.4.7",
     "@craco/craco": "^7.1.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.89.0",
@@ -24,9 +25,11 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "ait build",
     "test": "craco test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "granite dev",
+    "deploy": "ait deploy"
   },
   "eslintConfig": {
     "extends": [
