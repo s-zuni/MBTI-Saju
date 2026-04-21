@@ -16,6 +16,7 @@ interface MbtiSajuModalProps {
   onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
   credits?: number;
   session: any;
+  onOpenDeepReport?: () => void;
 }
 
 interface ElementColor {
@@ -41,7 +42,7 @@ const getElementColor = (element: string): ElementColor => {
   return DEFAULT_COLOR;
 };
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession, onOpenDeepReport }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -252,21 +253,21 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           <div className="w-20 h-20 bg-violet-50 rounded-full flex items-center justify-center mb-6">
             <Zap className="w-10 h-10 text-violet-600 animate-pulse" />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">심층 융합 분석이 필요합니다</h3>
-          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석 외에 MBTI와 사주를 결합한 상세 융합 진단, 2026년 운세 흐름, 분야별 전략은 유료 서비스입니다.</p>
+          <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">전문가의 심층 리포트가 필요합니다</h3>
+          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석을 넘어, 10년차 전문가가 당신의 MBTI와 사주를 직접 대조하여 분석한 5페이지 분량의 심층 리포트를 받아보세요.</p>
           <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100 shadow-inner">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-bold text-slate-600">서비스 비용</span>
-              <span className="text-lg font-black text-violet-600">{SERVICE_COSTS.MBTI_SAJU} 크레딧</span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-bold text-slate-600">서비스 유형</span>
+              <span className="text-sm font-black text-violet-600">전문가 수기 리포트</span>
             </div>
-            <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-              <span>보유 크레딧</span>
-              <span>{credits || 0} 크레딧</span>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-bold text-slate-600">결제 금액</span>
+              <span className="text-lg font-black text-rose-600">49,000원</span>
             </div>
           </div>
-          <button onClick={handleStartDeepAnalysis} disabled={isPurchasingDeep} className="w-full max-w-xs py-4 bg-violet-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2">
-            {isPurchasingDeep ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-            심층 분석 시작하기
+          <button onClick={onOpenDeepReport} className="w-full max-w-xs py-4 bg-violet-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2 hover:bg-violet-700 transition-colors">
+            <Sparkles className="w-5 h-5" />
+            프리미엄 심층 리포트 신청하기
           </button>
         </div>
       );

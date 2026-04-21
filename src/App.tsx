@@ -300,7 +300,7 @@ function AppContent({
                           <div className="grid md:grid-cols-3 gap-8">
                             <button
                               onClick={() => {
-                                if (session) openModal('mbtiSaju');
+                                if (session) openModal('deepReport');
                                 else openModal('analysis', 'login');
                               }}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
@@ -376,7 +376,7 @@ function AppContent({
                     <FortunePage
                       onFortuneClick={handleFetchFortune}
                       onMbtiSajuClick={() => {
-                        if (session) openModal('mbtiSaju');
+                        if (session) openModal('deepReport');
                         else openModal('analysis', 'login');
                       }}
                       onTarotClick={() => openModal('tarot')}
@@ -440,7 +440,7 @@ function AppContent({
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
+                  else openModal((service === 'mbti' ? 'deepReport' : service) as any);
                 }}
                 credits={credits}
                 onUseCredit={async (serviceType) => {
@@ -457,7 +457,7 @@ function AppContent({
                 onNavigate={(service) => {
                   closeAllModals();
                   if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
+                  else openModal((service === 'mbti' ? 'deepReport' : service) as any);
                 }}
                 onUseCredit={async (isRegenerate?: boolean) => {
                   if (!session?.user?.id) return false;
@@ -465,6 +465,7 @@ function AppContent({
                 }}
                 credits={credits}
                 session={session}
+                onOpenDeepReport={() => openModal('deepReport')}
               />
               <DeepReportModal
                 isOpen={modals?.deepReport?.isOpen || false}
