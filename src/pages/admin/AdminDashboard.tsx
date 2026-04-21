@@ -22,7 +22,7 @@ interface DashboardStats {
     pendingInquiries: number;
     todayNewUsers: number;
     weekNewUsers: number;
-    recentUsers: Array<{ email: string; created_at: string; full_name?: string }>;
+    recentUsers: Array<{ email: string; created_at: string; name?: string }>;
     serviceUsage: {
         mbtiSaju: number;
         compatibility: number;
@@ -83,7 +83,7 @@ const AdminDashboard: React.FC = () => {
                 // 4. 이번 주 신규 가입자
                 supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekISO),
                 // 5. 최근 가입자 5명 (이름 + 이메일 + 가입일)
-                supabase.from('profiles').select('email, created_at, full_name').order('created_at', { ascending: false }).limit(5),
+                supabase.from('profiles').select('email, created_at, name').order('created_at', { ascending: false }).limit(5),
                 // 6. 서비스별 크레딧 사용 내역 (usage_history 테이블 있다고 가정, 없으면 패스)
                 supabase.from('usage_history').select('service_type', { count: 'exact' }).gte('created_at', weekISO),
             ]);
@@ -119,9 +119,9 @@ const AdminDashboard: React.FC = () => {
                 ? (weekUsersResult.value.count ?? 0) 
                 : 0;
             // 최근 가입자
-            const recent: Array<{ email: string; created_at: string; full_name?: string }> =
+            const recent: Array<{ email: string; created_at: string; name?: string }> =
                 (recentUsersResult.status === 'fulfilled' && Array.isArray(recentUsersResult.value.data))
-                    ? (recentUsersResult.value.data as Array<{ email: string; created_at: string; full_name?: string }>)
+                    ? (recentUsersResult.value.data as Array<{ email: string; created_at: string; name?: string }>)
                     : [];
 
             // 서비스 사용 집계
@@ -441,10 +441,10 @@ const AdminDashboard: React.FC = () => {
                                 stats.recentUsers.map((u, i) => (
                                     <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
                                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">
-                                            {((u.full_name ?? u.email ?? '?')[0] ?? '?').toUpperCase()}
+                                            {((u.name ?? u.email ?? '?')[0] ?? '?').toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-slate-800 truncate">{u.full_name || '이름 없음'}</p>
+                                            <p className="text-sm font-bold text-slate-800 truncate">{u.name || '이름 없음'}</p>
                                             <p className="text-[10px] text-slate-400 truncate">{u.email}</p>
                                         </div>
                                         <p className="text-[10px] text-slate-400 font-medium shrink-0">

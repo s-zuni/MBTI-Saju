@@ -17,7 +17,7 @@ interface DeepReportRequest {
   reservation_date: string;
   created_at: string;
   profiles?: {
-    full_name: string;
+    name: string;
   };
 }
 
@@ -39,7 +39,7 @@ const AdminDeepReports: React.FC = () => {
         .from('deep_report_requests')
         .select(`
           *,
-          profiles:user_id (id, full_name, role)
+          profiles:user_id (id, name, role)
         `)
         .neq('status', 'pending_payment')
         .order('created_at', { ascending: false });
@@ -81,14 +81,14 @@ const AdminDeepReports: React.FC = () => {
   const generateAIReport = async (req: DeepReportRequest) => {
     setGeneratingId(req.id);
     let generatedText = '';
-    setReportModal({ isOpen: true, content: '', title: `${req.profiles?.full_name || '내담자'}님의 리포트 생성 중...` });
+    setReportModal({ isOpen: true, content: '', title: `${req.profiles?.name || '내담자'}님의 리포트 생성 중...` });
 
     try {
       const response = await fetch('/api/generate-deep-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: req.profiles?.full_name,
+          name: req.profiles?.name,
           mbti: req.mbti,
           birthInfo: req.birth_info,
           reportType: req.report_type,
@@ -104,7 +104,7 @@ const AdminDeepReports: React.FC = () => {
       const decoder = new TextDecoder();
 
       if (reader) {
-        setReportModal(prev => ({ ...prev, title: `${req.profiles?.full_name || '내담자'}님의 심층 리포트 (완료 시 복사 가능)` }));
+        setReportModal(prev => ({ ...prev, title: `${req.profiles?.name || '내담자'}님의 심층 리포트 (완료 시 복사 가능)` }));
         
         const setModalContent = (content: string) => {
           setReportModal(prev => ({ ...prev, content }));
@@ -130,7 +130,7 @@ const AdminDeepReports: React.FC = () => {
   const filteredRequests = requests.filter(req => 
     req.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (req.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    (req.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -189,7 +189,7 @@ const AdminDeepReports: React.FC = () => {
                          <span className="font-black text-violet-700 bg-violet-50 px-2 py-1 rounded-md">{req.reservation_date || '미정'}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-bold text-slate-900">{req.profiles?.full_name || '이름없음'}</div>
+                        <div className="font-bold text-slate-900">{req.profiles?.name || '이름없음'}</div>
                         <div className="text-sm text-slate-500">{req.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
