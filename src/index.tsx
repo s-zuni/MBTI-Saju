@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 
+import { TDSMobileAITProvider } from '@toss/tds-mobile-ait';
 import { HelmetProvider } from 'react-helmet-async';
 
 const rootElement = document.getElementById('root');
@@ -12,7 +13,9 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <HelmetProvider>
-    <App />
-  </HelmetProvider>
+  <TDSMobileAITProvider>
+    <HelmetProvider>
+      <App />
+    </HelmetProvider>
+  </TDSMobileAITProvider>
 );
