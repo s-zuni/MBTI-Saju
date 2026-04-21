@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, Bot, X, Download, Mail, MessageCircle } from 'lucide-react';
+import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -347,6 +347,20 @@ const AdminDeepReports: React.FC = () => {
   const generateAIReport = async (req: DeepReportRequest) => {
     setGeneratingId(req.id);
     let generatedText = '';
+    
+    // To satisfy ESLint no-loop-func, we declare these updaters here
+    const updateModalContent = (content: string) => {
+      setReportModal(prev => ({ ...prev, content }));
+    };
+
+    const updateModalSajuData = (sajuData: any) => {
+      setReportModal(prev => ({ ...prev, sajuData }));
+    };
+
+    const setModalTitle = (title: string) => {
+      setReportModal(prev => ({ ...prev, title }));
+    };
+
     setReportModal({ 
       isOpen: true, 
       content: '', 
@@ -363,7 +377,7 @@ const AdminDeepReports: React.FC = () => {
           name: req.profiles?.name,
           mbti: req.mbti,
           birthInfo: req.birth_info,
-          reportType: req.report_type,
+          report_type: req.report_type,
           specialRequest: req.special_requests,
           partnerInfo: req.partner_info
         })
@@ -375,7 +389,7 @@ const AdminDeepReports: React.FC = () => {
       const decoder = new TextDecoder();
 
       if (reader) {
-        setReportModal(prev => ({ ...prev, title: `${req.profiles?.name || '내담자'}님의 심층 리포트` }));
+        setModalTitle(`${req.profiles?.name || '내담자'}님의 심층 리포트`);
         
         while (true) {
           const { done, value } = await reader.read();
@@ -391,12 +405,12 @@ const AdminDeepReports: React.FC = () => {
                 try {
                    const jsonStr = generatedText.substring(startIdx, endIdx);
                    const sajuData = JSON.parse(jsonStr);
-                   setReportModal(prev => ({ ...prev, sajuData }));
+                   updateModalSajuData(sajuData);
                 } catch (e) { /* partial json */ }
              }
           }
 
-          setReportModal(prev => ({ ...prev, content: generatedText }));
+          updateModalContent(generatedText);
         }
       }
     } catch (error) {
