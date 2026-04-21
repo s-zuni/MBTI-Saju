@@ -8,11 +8,15 @@ import React from 'react';
 interface DeepReportPDFTemplateProps {
   sajuData: any; 
   parsedContent: {
+    congenitalSummary?: string;
     wealthAnalysis?: string;
     relationshipAnalysis?: string;
     healthAnalysis?: string;
-    timelineRoadmap?: string;
-    congenitalSummary?: string;
+    macroDecadeTrend?: string;
+    monthlyLuckDetail?: string;
+    riskAnalysis?: string;
+    coreLifeMission?: string;
+    strategicDirective?: string;
   };
   clientName: string;
 }
@@ -115,15 +119,20 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
           
           <div className="flex flex-col gap-8 mt-10">
             {[
-              { num: '01', title: '선천적 기질 요약 (오행 & MBTI)' },
-              { num: '02', title: '재물 및 직업 분석' },
-              { num: '03', title: '대인관계 및 연애 분석' },
-              { num: '04', title: '건강 및 개선점' },
-              { num: '05', title: '인생 타임라인 및 분기별 행동 지침' }
+              { num: '01', title: '선천적 기질 및 사주 원국 분석' },
+              { num: '02', title: '재물적 성취 및 자산 운용 전략' },
+              { num: '03', title: '사회적 관계 및 네트워크 역학' },
+              { num: '04', title: '생체 리듬 및 건강 최적화 전략' },
+              { num: '05', title: '거시적 흐름: 향후 10년의 대운 분석' },
+              { num: '06', title: '미시적 흐름: 당해년도 12개월 상세 운세' },
+              { num: '07', title: '리스크 관리: 최악의 시나리오 및 방어' },
+              { num: '08', title: '우주적 미션: 삶의 근본적 과업' },
+              { num: '09', title: '분기별 핵심 행동 지침(Action Plan)' },
+              { num: '10', title: '최종 전략 제언 및 결론' }
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-6 border-b border-slate-100 pb-6">
-                <span className="text-4xl font-black text-violet-200">{item.num}</span>
-                <span className="text-xl font-bold text-slate-800">{item.title}</span>
+              <div key={idx} className="flex items-center gap-6 border-b border-slate-100 pb-5">
+                <span className="text-3xl font-black text-violet-200">{item.num}</span>
+                <span className="text-lg font-bold text-slate-800">{item.title}</span>
               </div>
             ))}
           </div>
@@ -169,10 +178,10 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       {/* 4. Wealth & Career */}
       <PageWrapper>
         <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">02. 재물 및 직업 분석</h2>
-          <div className="bg-violet-50/50 rounded-3xl p-8 border border-violet-100 flex-1">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-6 border border-violet-100">💰</div>
-            <p className="text-slate-800 text-[16px] leading-[2.2] text-justify break-keep tracking-[-0.01em]">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">02. 재물적 성취 및 직업 전략</h2>
+          <div className="bg-slate-50 rounded-3xl p-10 border border-slate-200 flex-1">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-8 border border-slate-100">💰</div>
+            <p className="text-slate-800 text-[15px] leading-[2.1] text-justify break-keep tracking-[-0.01em]">
                {parsedContent.wealthAnalysis || "분석 결과를 대기 중입니다."}
             </p>
           </div>
@@ -182,53 +191,114 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       {/* 5. Relationship */}
       <PageWrapper>
         <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">03. 대인관계 및 연애 분석</h2>
-          <div className="bg-rose-50/50 rounded-3xl p-8 border border-rose-100 flex-1">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-6 border border-rose-100">💖</div>
-            <p className="text-slate-800 text-[16px] leading-[2.2] text-justify break-keep tracking-[-0.01em]">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">03. 사회적 관계 및 대인 역학</h2>
+          <div className="bg-slate-50 rounded-3xl p-10 border border-slate-200 flex-1">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-8 border border-slate-100">🤝</div>
+            <p className="text-slate-800 text-[15px] leading-[2.1] text-justify break-keep tracking-[-0.01em]">
                {parsedContent.relationshipAnalysis || "분석 결과를 대기 중입니다."}
             </p>
           </div>
         </div>
       </PageWrapper>
 
-      {/* 6. Health & Improvement */}
+      {/* 6. Health & Resilience */}
       <PageWrapper>
         <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">04. 건강 및 개선점</h2>
-          <div className="bg-teal-50/50 rounded-3xl p-8 border border-teal-100 flex-1">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-6 border border-teal-100">🍃</div>
-            <p className="text-slate-800 text-[16px] leading-[2.2] text-justify break-keep tracking-[-0.01em]">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">04. 생체 리듬 및 건강 최적화</h2>
+          <div className="bg-slate-50 rounded-3xl p-10 border border-slate-200 flex-1">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-8 border border-slate-100">⚕️</div>
+            <p className="text-slate-800 text-[15px] leading-[2.1] text-justify break-keep tracking-[-0.01em]">
                {parsedContent.healthAnalysis || "분석 결과를 대기 중입니다."}
             </p>
           </div>
         </div>
       </PageWrapper>
 
-      {/* 7. Roadmap & Quarters */}
+      {/* 7. Macro Decade Trend */}
       <PageWrapper>
         <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">05. 인생 타임라인 및 행동 지침</h2>
-          
-          <div className="mb-10">
-             <h3 className="text-lg font-black text-violet-700 mb-6">향후 1년 분기별 핵심 운세</h3>
-             <div className="grid grid-cols-2 gap-4">
-                {sajuData?.quarterlyLuck?.map((q: any, i: number) => (
-                  <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                     <div className="inline-block px-3 py-1 bg-slate-900 text-white text-[11px] font-black rounded-lg mb-3">{q.period}</div>
-                     <p className="text-sm font-bold text-slate-800 mb-3 leading-relaxed">{q.summary}</p>
-                     <p className="text-xs font-semibold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100"><span className="text-violet-600 mr-1">T.</span> {q.point}</p>
-                  </div>
-                ))}
-             </div>
-          </div>
-
-          <div className="flex-1 mt-auto bg-slate-900 text-white rounded-3xl p-8 shadow-xl">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl mb-6">🎯</div>
-            <h3 className="text-lg font-black text-white mb-4">최종 행동 지침 (Action Roadmap)</h3>
-            <p className="text-slate-300 text-[15px] leading-relaxed text-justify break-keep">
-               {parsedContent.timelineRoadmap || "분석 결과를 대기 중입니다."}
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">05. 거시적 흐름: 향후 10년의 대운</h2>
+          <div className="bg-violet-950 text-white rounded-3xl p-10 flex-1 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 blur-[100px] rounded-full"></div>
+            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl mb-8">🔭</div>
+            <p className="text-slate-200 text-[15px] leading-[2.1] text-justify break-keep relative z-10">
+               {parsedContent.macroDecadeTrend || "분석 결과를 대기 중입니다."}
             </p>
+          </div>
+        </div>
+      </PageWrapper>
+
+      {/* 8. Monthly Luck Detail */}
+      <PageWrapper>
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">06. 미시적 흐름: 당해년도 12개월</h2>
+          <div className="bg-slate-50 rounded-3xl p-10 border border-slate-200 flex-1">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-8 border border-slate-100">📅</div>
+            <p className="text-slate-800 text-[15px] leading-[2.1] text-justify break-keep tracking-[-0.01em]">
+               {parsedContent.monthlyLuckDetail || "분석 결과를 대기 중입니다."}
+            </p>
+          </div>
+        </div>
+      </PageWrapper>
+
+      {/* 9. Risk Analysis */}
+      <PageWrapper>
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">07. 리스크 관리: 최악의 시나리오</h2>
+          <div className="bg-rose-50 rounded-3xl p-10 border border-rose-100 flex-1">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-8 border border-rose-200">⚠️</div>
+            <p className="text-slate-900 text-[15px] leading-[2.1] text-justify break-keep">
+               {parsedContent.riskAnalysis || "분석 결과를 대기 중입니다."}
+            </p>
+          </div>
+        </div>
+      </PageWrapper>
+
+      {/* 10. Core Life Mission */}
+      <PageWrapper>
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">08. 우주적 미션: 근본적 과업</h2>
+          <div className="bg-slate-900 text-white rounded-3xl p-10 flex-1">
+            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl mb-8">✨</div>
+            <p className="text-slate-300 text-[15px] leading-[2.1] text-justify break-keep">
+               {parsedContent.coreLifeMission || "분석 결과를 대기 중입니다."}
+            </p>
+          </div>
+        </div>
+      </PageWrapper>
+
+      {/* 11. Quarterly Action Plan */}
+      <PageWrapper>
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-black text-slate-900 border-b-2 border-slate-900 pb-4 mb-8">09. 분기별 핵심 행동 지침</h2>
+          
+          <div className="grid grid-cols-2 gap-6 mb-8 flex-1">
+            {sajuData?.quarterlyLuck?.map((q: any, i: number) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col">
+                 <div className="inline-block px-3 py-1 bg-slate-900 text-white text-[11px] font-black rounded-lg mb-4 self-start">{q.period}</div>
+                 <p className="text-base font-bold text-slate-800 mb-4 leading-relaxed">{q.summary}</p>
+                 <div className="mt-auto bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase">Action Point</p>
+                    <p className="text-sm font-semibold text-slate-700 leading-relaxed">{q.point}</p>
+                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </PageWrapper>
+
+      {/* 12. Final Directive */}
+      <PageWrapper bg="bg-slate-950" extraClass="text-white">
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-black text-amber-500 border-b-2 border-amber-500/30 pb-4 mb-10 text-center">10. 최종 전략 제언 및 결론</h2>
+          <div className="flex-1 border border-slate-800 rounded-3xl p-10 backdrop-blur-sm relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+             <p className="text-slate-300 text-[16px] leading-[2.3] text-justify break-keep tracking-wide">
+                {parsedContent.strategicDirective || "분석 결과를 대기 중입니다."}
+             </p>
+          </div>
+          <div className="mt-12 text-center">
+            <p className="text-[10px] font-black tracking-[0.4em] text-slate-600 uppercase">End of Premium Deep Analysis</p>
           </div>
         </div>
       </PageWrapper>
