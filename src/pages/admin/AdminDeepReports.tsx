@@ -44,11 +44,14 @@ const AdminDeepReports: React.FC = () => {
         .neq('status', 'pending_payment')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Detailed fetch error:', error);
+        throw error;
+      }
       setRequests(data || []);
-    } catch (error) {
-      console.error('Error fetching deep reports:', error);
-      alert('신청 내역을 불러오는 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      console.error('Error fetching requests:', err);
+      alert(`신청 내역을 불러오는 중 오류가 발생했습니다: ${err.message || '알 수 없는 오류'}`);
     } finally {
       setLoading(false);
     }

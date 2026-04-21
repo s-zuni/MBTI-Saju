@@ -84,6 +84,16 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
                 throw updateError;
             }
 
+            // 구매 내역에도 기록하여 사용자가 마이페이지에서 확인 가능하게 함
+            await supabaseAdmin.from('credit_purchases').insert({
+                user_id: userId,
+                purchased_credits: 0,
+                price_paid: amount,
+                payment_id: paymentKey,
+                plan_id: 'deep_report',
+                status: 'active'
+            });
+
             return res.status(200).json({
                 success: true,
                 message: '심층 결합 분석 리포트 결제 성공',

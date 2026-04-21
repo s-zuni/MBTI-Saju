@@ -34,7 +34,7 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
             // fetch with individual error handling for robustness
             const [pRes, uRes] = await Promise.all([
                 supabase.from('credit_purchases')
-                    .select('id, purchased_credits, price_paid, purchased_at, status')
+                    .select('id, purchased_credits, price_paid, purchased_at, status, plan_id')
                     .eq('user_id', currentSession.user.id)
                     .order('purchased_at', { ascending: false }),
                 supabase.from('credit_usages')
@@ -106,7 +106,9 @@ const UsageHistoryPage: React.FC<UsageHistoryPageProps> = ({ session: initialSes
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-slate-900">{p.purchased_credits} 크레딧</span>
+                                            <span className="font-bold text-slate-900">
+                                                {p.plan_id === 'deep_report' ? '운명 심층 분석 리포트' : `${p.purchased_credits} 크레딧`}
+                                            </span>
                                             {getStatusBadge(p.status)}
                                         </div>
                                         <p className="text-xs text-slate-400 font-medium">{formatDate(p.purchased_at)}</p>
