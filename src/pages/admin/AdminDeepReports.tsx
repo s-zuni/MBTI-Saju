@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { generateHighResPDF } from '../../utils/pdfGenerator';
+import { DeepReportPDFTemplate } from '../../components/pdf/DeepReportPDFTemplate';
 
 interface DeepReportRequest {
   id: string;
@@ -105,242 +105,18 @@ const AdminDeepReports: React.FC = () => {
     alert('클립보드에 복사되었습니다.');
   };
 
-  const renderSajuTableHtml = (saju: any, title: string = "사주 원국 (四柱 元局)") => {
-    if (!saju || !saju.pillars) return '';
-
-    const cols = [
-      { key: 'hour', label: '시주(時柱)' },
-      { key: 'day', label: '일주(日柱)' },
-      { key: 'month', label: '월주(月柱)' },
-      { key: 'year', label: '년주(年柱)' },
-    ];
-
-    const getPillar = (key: string) => saju.pillars[key];
-
-    return `
-      <div style="margin-bottom: 40px;">
-        <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-left: 5px solid ${POINT_COLOR}; padding-left: 12px;">${title}</h4>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #1e293b; table-layout: fixed; text-align: center; background-color: #ffffff;">
-          <thead>
-            <tr style="background-color: #f8fafc; border-bottom: 1px solid #1e293b;">
-              ${cols.map(c => `<th style="padding: 12px; border-right: 1px solid #e2e8f0; font-size: 13px; font-weight: 800; color: #64748b;">${c.label}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Gan -->
-            <tr>
-              ${cols.map(c => {
-                const p = getPillar(c.key);
-                return `<td style="padding: 15px 5px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9;">
-                  <div style="font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1;">${p.gan}</div>
-                  <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px;">${ELEMENT_LABELS[p.ganElement] || ''}</div>
-                </td>`;
-              }).join('')}
-            </tr>
-            <!-- Gan ShiShen -->
-            <tr style="background-color: #fafafa;">
-              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).ganShiShen}</td>`).join('')}
-            </tr>
-            <!-- Zhi -->
-            <tr>
-              ${cols.map(c => {
-                const p = getPillar(c.key);
-                return `<td style="padding: 15px 5px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9;">
-                  <div style="font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1;">${p.zhi}</div>
-                  <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px;">${ELEMENT_LABELS[p.zhiElement] || ''}</div>
-                </td>`;
-              }).join('')}
-            </tr>
-            <!-- Zhi ShiShen -->
-            <tr style="background-color: #fafafa;">
-              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).zhiShiShen}</td>`).join('')}
-            </tr>
-            <!-- Hidden Stems -->
-            <tr>
-              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 600; color: #94a3b8;">${getPillar(c.key).hiddenStems.join(', ')}</td>`).join('')}
-            </tr>
-            <!-- Unseong / Sinsal -->
-            <tr style="background-color: #f8fafc;">
-               ${cols.map(c => `
-                 <td style="padding: 10px; border-right: 1px solid #e2e8f0;">
-                    <div style="font-size: 12px; font-weight: 800; color: ${POINT_COLOR};">${getPillar(c.key).twelveStages}</div>
-                    <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 2px;">${getPillar(c.key).twelveSpirits}</div>
-                 </td>
-               `).join('')}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-  };
-
-  const renderElementBarsHtml = (ratio: any) => {
-    if (!ratio) return '';
-    const elements = ['wood', 'fire', 'earth', 'metal', 'water'];
-    
-    return `
-      <div style="margin-bottom: 40px; background-color: #ffffff; padding: 24px; border: 1px solid #e2e8f0;">
-        <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center;">
-          <span style="width: 4px; height: 16px; background-color: #1e293b; margin-right: 10px;"></span>
-          오행 분포도 (五行 比例)
-        </h4>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-          ${elements.map(e => {
-            const val = ratio[e] || 0;
-            return `
-              <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="width: 60px; font-size: 13px; font-weight: 800; color: #475569;">${ELEMENT_LABELS[e]}</div>
-                <div style="flex: 1; height: 8px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden; position: relative;">
-                  <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${val}%; background-color: #1e293b; transition: width 1s ease;"></div>
-                </div>
-                <div style="width: 40px; text-align: right; font-size: 13px; font-weight: 900; color: #0f172a;">${val}%</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  };
-
-  const renderQuarterlyGridHtml = (luck: any[]) => {
-    if (!luck || !Array.isArray(luck)) return '';
-    
-    return `
-      <div style="margin-top: 40px; page-break-before: always;">
-        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 30px; color: #1e293b; border-bottom: 4px solid ${POINT_COLOR}; padding-bottom: 10px;">📉 향후 1년 분기별 핵심 운세 흐름</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          ${luck.map(q => `
-            <div style="border: 1px solid #e2e8f0; padding: 20px; background-color: #ffffff; border-radius: 12px; border-top: 4px solid ${POINT_COLOR};">
-              <h4 style="font-size: 16px; font-weight: 900; color: ${POINT_COLOR}; margin-bottom: 12px;">${q.period}</h4>
-              <p style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px; line-height: 1.6;">[핵심 요약]<br/>${q.summary}</p>
-              <div style="font-size: 13px; font-weight: 600; color: #64748b; background-color: ${POINT_COLOR_LIGHT}; padding: 10px; border-radius: 8px;">
-                💡 <strong>조언:</strong> ${q.point}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  };
-
-
   const handleDownloadPDF = async () => {
-    if (!reportModal.content) return;
+    if (!reportModal.sajuData) return;
     setIsExporting(true);
 
     try {
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '800px';
-      container.style.backgroundColor = '#ffffff';
-      container.style.padding = '0';
-      document.body.appendChild(container);
-
-      // Helper to add a page
-      const createPage = () => {
-        const page = document.createElement('div');
-        page.style.width = '800px';
-        page.style.minHeight = '1120px'; // A4 Aspect ratio approx
-        page.style.padding = '80px 70px';
-        page.style.boxSizing = 'border-box';
-        page.style.backgroundColor = '#ffffff';
-        page.style.position = 'relative';
-        page.style.color = '#1e293b';
-        page.style.fontFamily = "'Pretendard', 'Inter', sans-serif";
-        return page;
-      };
-
-      // 1. Cover Page
-      const coverPage = createPage();
-      coverPage.innerHTML = `
-        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px solid #1e293b; padding: 60px; margin: 20px;">
-          <div style="width: 80px; height: 4px; background-color: ${POINT_COLOR}; margin-bottom: 40px;"></div>
-          <p style="font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 0.5em; margin-bottom: 25px; text-transform: uppercase;">Premium Professional Report</p>
-          <h1 style="font-size: 52px; font-weight: 900; color: #0f172a; margin: 0; line-height: 1.1; letter-spacing: -0.02em;">심층 분석 리포트</h1>
-          <div style="margin: 80px 0; font-size: 22px; font-weight: 700; color: #334155;">
-            <span style="color: #94a3b8; font-weight: 500;">Client.</span> ${reportModal.currentReq?.profiles?.name || '관리자'}님
-          </div>
-          <div style="margin-top: auto; color: #1e293b; font-size: 13px; font-weight: 700; letter-spacing: 0.1em;">
-            ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}<br/>
-            <span style="color: ${POINT_COLOR};">MBTI-SAJU SYNERGY SOLUTIONS</span>
-          </div>
-        </div>
-      `;
-      container.appendChild(coverPage);
-
-      // 2. Data Page (Tables & Bars)
-      const dataPage = createPage();
-      const headerHtml = `
-        <div style="border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <h2 style="font-size: 24px; font-weight: 900; margin: 0; color: #0f172a;">핵심 역학 분석 데이터</h2>
-          </div>
-        </div>
-      `;
-      dataPage.innerHTML = `
-        ${headerHtml}
-        ${renderSajuTableHtml(reportModal.sajuData?.userSaju, `${reportModal.currentReq?.profiles?.name || '본인'}의 사주 원국`)}
-        ${renderElementBarsHtml(reportModal.sajuData?.userSaju?.elementRatio)}
-        ${reportModal.sajuData?.partnerSaju ? renderSajuTableHtml(reportModal.sajuData.partnerSaju, `상대방(${reportModal.currentReq?.partner_info?.name})의 사주 원국`) : ''}
-        ${reportModal.sajuData?.quarterlyLuck ? renderQuarterlyGridHtml(reportModal.sajuData.quarterlyLuck) : ''}
-      `;
-      container.appendChild(dataPage);
-
-      // 3. Content Pages (AI Text)
-      // Process markdown-ish content
-      let cleanContent = reportModal.content.replace(/\[SAJU_DATA_JSON:[\s\S]*?\]/g, '').trim();
-      let htmlContent = cleanContent
-        .replace(/^# (.*$)/gm, `<h1 style="font-size: 32px; font-weight: 900; margin-top: 60px; margin-bottom: 30px; color: #0f172a; border-bottom: 5px solid ${POINT_COLOR}; padding-bottom: 10px;">$1</h1>`)
-        .replace(/^## (.*$)/gm, `<h2 style="font-size: 24px; font-weight: 800; margin-top: 50px; margin-bottom: 25px; color: #1e293b; background-color: #fafbfc; padding: 15px 20px; border-radius: 8px; border-left: 8px solid ${POINT_COLOR}; border: 1px solid #e2e8f0; border-left-width: 8px;">$1</h2>`)
-        .replace(/^### (.*$)/gm, `<h3 style="font-size: 20px; font-weight: 800; margin-top: 35px; margin-bottom: 15px; color: #334155; display: flex; align-items: center;"><span style="color: ${POINT_COLOR}; margin-right: 12px;">■</span> $1</h3>`)
-        .replace(/^\* (.*$)/gm, `<li style="margin-bottom: 12px; font-size: 16px; line-height: 1.8; color: #334155; list-style: none; padding-left: 25px; position: relative;"><span style="position: absolute; left: 0; color: ${POINT_COLOR}; font-weight: 900;">-</span> $1</li>`)
-        .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 900; color: #0f172a; border-bottom: 1px solid #1e293b;">$1</strong>')
-        .replace(/\n\n/g, '</div><div style="margin-bottom: 20px; line-height: 2.0; font-size: 16px; color: #334155; text-align: justify;">')
-        .replace(/\n/g, '<br/>');
-
-
-      const contentWrapper = document.createElement('div');
-      contentWrapper.innerHTML = `<div style="line-height: 2.0; font-size: 16px; color: #334155;">${htmlContent}</div>`;
+      const targetElement = document.getElementById('deep-report-pdf-wrapper');
+      if (!targetElement) throw new Error('PDF 템플릿을 찾을 수 없습니다.');
       
-      const contentPage = createPage();
-      contentPage.innerHTML = `${contentWrapper.innerHTML}`;
-      container.appendChild(contentPage);
-
-      const canvas = await html2canvas(container, { 
-        scale: 2, 
-        useCORS: true, 
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // Add pages sequentially
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      pdf.save(`프리미엄_심층리포트_${reportModal.currentReq?.profiles?.name || '내담자'}_${new Date().toISOString().split('T')[0]}.pdf`);
-      document.body.removeChild(container);
+      await generateHighResPDF(
+        targetElement, 
+        `프리미엄_심층리포트_${reportModal.currentReq?.profiles?.name || '내담자'}_${new Date().toISOString().split('T')[0]}.pdf`
+      );
     } catch (err) {
       console.error('PDF generation error:', err);
       alert('PDF 생성 중 오류가 발생했습니다.');
@@ -451,7 +227,9 @@ const AdminDeepReports: React.FC = () => {
     (req.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const displayContent = reportModal.content.replace(/\[SAJU_DATA_JSON:[\s\S]*?\]/g, '').trim();
+  const displayContent = reportModal.sajuData ? 
+    `🔮 [분석 데이터 구조화 완료]\n- 재물운: ${reportModal.sajuData.wealthAnalysis?.substring(0, 50) || '분석 중...'}...\n- 애정운: ${reportModal.sajuData.relationshipAnalysis?.substring(0, 50) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)` 
+    : "리포트 생성이 진행중입니다. 완료 후 다운로드가 가능합니다. (구조화된 데이터로 처리됨)";
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
@@ -729,6 +507,17 @@ const AdminDeepReports: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}} />
+
+      {/* Hidden PDF Template Container */}
+      {reportModal.isOpen && reportModal.sajuData && (
+        <div id="deep-report-pdf-wrapper" className="absolute" style={{ top: '-99999px', left: '-99999px', zIndex: -50 }}>
+          <DeepReportPDFTemplate 
+            sajuData={reportModal.sajuData} 
+            parsedContent={reportModal.sajuData} 
+            clientName={reportModal.currentReq?.profiles?.name || '내담자'} 
+          />
+        </div>
+      )}
     </div>
   );
 };
