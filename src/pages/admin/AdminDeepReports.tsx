@@ -29,13 +29,7 @@ interface DeepReportRequest {
   };
 }
 
-const ELEMENT_COLORS: Record<string, string> = {
-  wood: '#334155', // slate-700
-  fire: '#334155', 
-  earth: '#334155', 
-  metal: '#334155', 
-  water: '#334155', 
-};
+
 
 // 포인트 컬러 (Violet)
 const POINT_COLOR = '#7c3aed'; 
