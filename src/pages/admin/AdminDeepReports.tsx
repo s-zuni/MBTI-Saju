@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Loader2, Search, Mail, Sparkles, CheckCircle2, ChevronDown, ChevronUp, Copy, Bot, X } from 'lucide-react';
+import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, Bot, X } from 'lucide-react';
 
 interface DeepReportRequest {
   id: string;
@@ -102,12 +102,17 @@ const AdminDeepReports: React.FC = () => {
 
       if (reader) {
         setReportModal(prev => ({ ...prev, title: `${req.profiles?.full_name || '내담자'}님의 심층 리포트 (완료 시 복사 가능)` }));
+        
+        const setModalContent = (content: string) => {
+          setReportModal(prev => ({ ...prev, content }));
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
-          setReportModal(prev => ({ ...prev, content: generatedText }));
+          setModalContent(generatedText);
         }
       }
     } catch (error) {
