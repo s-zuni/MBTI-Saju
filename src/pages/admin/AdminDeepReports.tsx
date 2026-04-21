@@ -30,12 +30,17 @@ interface DeepReportRequest {
 }
 
 const ELEMENT_COLORS: Record<string, string> = {
-  wood: '#15803d', // green-700
-  fire: '#dc2626', // red-600
-  earth: '#d97706', // amber-600
-  metal: '#475569', // slate-600
-  water: '#0f172a', // slate-900
+  wood: '#334155', // slate-700
+  fire: '#334155', 
+  earth: '#334155', 
+  metal: '#334155', 
+  water: '#334155', 
 };
+
+// 포인트 컬러 (Violet)
+const POINT_COLOR = '#7c3aed'; 
+const POINT_COLOR_LIGHT = '#f5f3ff';
+
 
 const ELEMENT_LABELS: Record<string, string> = {
   wood: '목(木)',
@@ -120,11 +125,11 @@ const AdminDeepReports: React.FC = () => {
 
     return `
       <div style="margin-bottom: 40px;">
-        <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-left: 4px solid #8b5cf6; padding-left: 10px;">${title}</h4>
-        <table style="width: 100%; border-collapse: collapse; border: 2px solid #e2e8f0; table-layout: fixed; text-align: center; background-color: #ffffff;">
+        <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-left: 5px solid ${POINT_COLOR}; padding-left: 12px;">${title}</h4>
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #1e293b; table-layout: fixed; text-align: center; background-color: #ffffff;">
           <thead>
-            <tr style="background-color: #f8fafc;">
-              ${cols.map(c => `<th style="padding: 12px; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 800; color: #64748b;">${c.label}</th>`).join('')}
+            <tr style="background-color: #f8fafc; border-bottom: 1px solid #1e293b;">
+              ${cols.map(c => `<th style="padding: 12px; border-right: 1px solid #e2e8f0; font-size: 13px; font-weight: 800; color: #64748b;">${c.label}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -132,41 +137,39 @@ const AdminDeepReports: React.FC = () => {
             <tr>
               ${cols.map(c => {
                 const p = getPillar(c.key);
-                const color = ELEMENT_COLORS[p.ganElement] || '#64748b';
-                return `<td style="padding: 15px 5px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 28px; font-weight: 900; color: ${color}; line-height: 1;">${p.gan}</div>
+                return `<td style="padding: 15px 5px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9;">
+                  <div style="font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1;">${p.gan}</div>
                   <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px;">${ELEMENT_LABELS[p.ganElement] || ''}</div>
                 </td>`;
               }).join('')}
             </tr>
             <!-- Gan ShiShen -->
-            <tr style="background-color: #fcfcfd;">
-              ${cols.map(c => `<td style="padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).ganShiShen}</td>`).join('')}
+            <tr style="background-color: #fafafa;">
+              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).ganShiShen}</td>`).join('')}
             </tr>
             <!-- Zhi -->
             <tr>
               ${cols.map(c => {
                 const p = getPillar(c.key);
-                const color = ELEMENT_COLORS[p.zhiElement] || '#64748b';
-                return `<td style="padding: 15px 5px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 28px; font-weight: 900; color: ${color}; line-height: 1;">${p.zhi}</div>
+                return `<td style="padding: 15px 5px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9;">
+                  <div style="font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1;">${p.zhi}</div>
                   <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px;">${ELEMENT_LABELS[p.zhiElement] || ''}</div>
                 </td>`;
               }).join('')}
             </tr>
             <!-- Zhi ShiShen -->
-            <tr style="background-color: #fcfcfd;">
-              ${cols.map(c => `<td style="padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).zhiShiShen}</td>`).join('')}
+            <tr style="background-color: #fafafa;">
+              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 800; color: #475569;">${getPillar(c.key).zhiShiShen}</td>`).join('')}
             </tr>
             <!-- Hidden Stems -->
             <tr>
-              ${cols.map(c => `<td style="padding: 8px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 600; color: #94a3b8;">${getPillar(c.key).hiddenStems.join(', ')}</td>`).join('')}
+              ${cols.map(c => `<td style="padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 600; color: #94a3b8;">${getPillar(c.key).hiddenStems.join(', ')}</td>`).join('')}
             </tr>
             <!-- Unseong / Sinsal -->
             <tr style="background-color: #f8fafc;">
                ${cols.map(c => `
-                 <td style="padding: 10px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 12px; font-weight: 800; color: #6366f1;">${getPillar(c.key).twelveStages}</div>
+                 <td style="padding: 10px; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 12px; font-weight: 800; color: ${POINT_COLOR};">${getPillar(c.key).twelveStages}</div>
                     <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 2px;">${getPillar(c.key).twelveSpirits}</div>
                  </td>
                `).join('')}
@@ -182,19 +185,21 @@ const AdminDeepReports: React.FC = () => {
     const elements = ['wood', 'fire', 'earth', 'metal', 'water'];
     
     return `
-      <div style="margin-bottom: 40px; background-color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 20px;">오행 분포도 (五行 比例)</h4>
+      <div style="margin-bottom: 40px; background-color: #ffffff; padding: 24px; border: 1px solid #e2e8f0;">
+        <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center;">
+          <span style="width: 4px; height: 16px; background-color: #1e293b; margin-right: 10px;"></span>
+          오행 분포도 (五行 比例)
+        </h4>
         <div style="display: flex; flex-direction: column; gap: 15px;">
           ${elements.map(e => {
             const val = ratio[e] || 0;
-            const color = ELEMENT_COLORS[e];
             return `
               <div style="display: flex; align-items: center; gap: 15px;">
                 <div style="width: 60px; font-size: 13px; font-weight: 800; color: #475569;">${ELEMENT_LABELS[e]}</div>
-                <div style="flex: 1; height: 10px; background-color: #e2e8f0; border-radius: 5px; overflow: hidden; position: relative;">
-                  <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${val}%; background-color: ${color}; transition: width 1s ease;"></div>
+                <div style="flex: 1; height: 8px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${val}%; background-color: #1e293b; transition: width 1s ease;"></div>
                 </div>
-                <div style="width: 40px; text-align: right; font-size: 13px; font-weight: 800; color: ${color};">${val}%</div>
+                <div style="width: 40px; text-align: right; font-size: 13px; font-weight: 900; color: #0f172a;">${val}%</div>
               </div>
             `;
           }).join('')}
@@ -202,6 +207,28 @@ const AdminDeepReports: React.FC = () => {
       </div>
     `;
   };
+
+  const renderQuarterlyGridHtml = (luck: any[]) => {
+    if (!luck || !Array.isArray(luck)) return '';
+    
+    return `
+      <div style="margin-top: 40px; page-break-before: always;">
+        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 30px; color: #1e293b; border-bottom: 4px solid ${POINT_COLOR}; padding-bottom: 10px;">📉 향후 1년 분기별 핵심 운세 흐름</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          ${luck.map(q => `
+            <div style="border: 1px solid #e2e8f0; padding: 20px; background-color: #ffffff; border-radius: 12px; border-top: 4px solid ${POINT_COLOR};">
+              <h4 style="font-size: 16px; font-weight: 900; color: ${POINT_COLOR}; margin-bottom: 12px;">${q.period}</h4>
+              <p style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px; line-height: 1.6;">[핵심 요약]<br/>${q.summary}</p>
+              <div style="font-size: 13px; font-weight: 600; color: #64748b; background-color: ${POINT_COLOR_LIGHT}; padding: 10px; border-radius: 8px;">
+                💡 <strong>조언:</strong> ${q.point}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  };
+
 
   const handleDownloadPDF = async () => {
     if (!reportModal.content) return;
@@ -234,16 +261,16 @@ const AdminDeepReports: React.FC = () => {
       // 1. Cover Page
       const coverPage = createPage();
       coverPage.innerHTML = `
-        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 20px solid #f1f5f9; padding: 40px;">
-          <div style="width: 120px; height: 2px; background-color: #8b5cf6; margin-bottom: 40px;"></div>
-          <p style="font-size: 16px; font-weight: 800; color: #8b5cf6; letter-spacing: 0.3em; margin-bottom: 20px;">PREMIUM DESTINY ANALYSIS</p>
-          <h1 style="font-size: 56px; font-weight: 900; color: #0f172a; margin: 0; line-height: 1.2;">심층 분석 리포트</h1>
-          <div style="margin: 60px 0; font-size: 24px; font-weight: 700; color: #475569;">
-            내담자: <span style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px;">${reportModal.currentReq?.profiles?.name || '관리자'}님</span>
+        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px solid #1e293b; padding: 60px; margin: 20px;">
+          <div style="width: 80px; height: 4px; background-color: ${POINT_COLOR}; margin-bottom: 40px;"></div>
+          <p style="font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 0.5em; margin-bottom: 25px; text-transform: uppercase;">Premium Professional Report</p>
+          <h1 style="font-size: 52px; font-weight: 900; color: #0f172a; margin: 0; line-height: 1.1; letter-spacing: -0.02em;">심층 분석 리포트</h1>
+          <div style="margin: 80px 0; font-size: 22px; font-weight: 700; color: #334155;">
+            <span style="color: #94a3b8; font-weight: 500;">Client.</span> ${reportModal.currentReq?.profiles?.name || '관리자'}님
           </div>
-          <div style="margin-top: auto; color: #94a3b8; font-size: 14px; font-weight: 500;">
+          <div style="margin-top: auto; color: #1e293b; font-size: 13px; font-weight: 700; letter-spacing: 0.1em;">
             ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}<br/>
-            운명과 심리의 융합 솔루션 | MBTI-SAJU SERVICE
+            <span style="color: ${POINT_COLOR};">MBTI-SAJU SYNERGY SOLUTIONS</span>
           </div>
         </div>
       `;
@@ -263,20 +290,22 @@ const AdminDeepReports: React.FC = () => {
         ${renderSajuTableHtml(reportModal.sajuData?.userSaju, `${reportModal.currentReq?.profiles?.name || '본인'}의 사주 원국`)}
         ${renderElementBarsHtml(reportModal.sajuData?.userSaju?.elementRatio)}
         ${reportModal.sajuData?.partnerSaju ? renderSajuTableHtml(reportModal.sajuData.partnerSaju, `상대방(${reportModal.currentReq?.partner_info?.name})의 사주 원국`) : ''}
+        ${reportModal.sajuData?.quarterlyLuck ? renderQuarterlyGridHtml(reportModal.sajuData.quarterlyLuck) : ''}
       `;
       container.appendChild(dataPage);
 
       // 3. Content Pages (AI Text)
       // Process markdown-ish content
-      let cleanContent = reportModal.content.replace(/\[SAJU_DATA_JSON:.*?\]/g, '').trim();
+      let cleanContent = reportModal.content.replace(/\[SAJU_DATA_JSON:[\s\S]*?\]/g, '').trim();
       let htmlContent = cleanContent
-        .replace(/^# (.*$)/gm, '<h1 style="font-size: 32px; font-weight: 900; margin-top: 60px; margin-bottom: 30px; color: #0f172a; border-bottom: 4px solid #8b5cf6; padding-bottom: 10px;">$1</h1>')
-        .replace(/^## (.*$)/gm, '<h2 style="font-size: 24px; font-weight: 800; margin-top: 50px; margin-bottom: 25px; color: #1e293b; background-color: #f8fafc; padding: 15px 20px; border-radius: 12px; border-left: 8px solid #8b5cf6;">$1</h2>')
-        .replace(/^### (.*$)/gm, '<h3 style="font-size: 20px; font-weight: 800; margin-top: 35px; margin-bottom: 15px; color: #334155; display: flex; align-items: center;"><span style="color: #8b5cf6; margin-right: 12px;">◆</span> $1</h3>')
-        .replace(/^\* (.*$)/gm, '<li style="margin-bottom: 12px; font-size: 16px; line-height: 1.8; color: #334155; list-style: none; padding-left: 25px; position: relative;"><span style="position: absolute; left: 0; color: #8b5cf6; font-weight: 900;">•</span> $1</li>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 900; color: #0f172a; background-color: #fef9c3; padding: 0 4px;">$1</strong>')
+        .replace(/^# (.*$)/gm, `<h1 style="font-size: 32px; font-weight: 900; margin-top: 60px; margin-bottom: 30px; color: #0f172a; border-bottom: 5px solid ${POINT_COLOR}; padding-bottom: 10px;">$1</h1>`)
+        .replace(/^## (.*$)/gm, `<h2 style="font-size: 24px; font-weight: 800; margin-top: 50px; margin-bottom: 25px; color: #1e293b; background-color: #fafbfc; padding: 15px 20px; border-radius: 8px; border-left: 8px solid ${POINT_COLOR}; border: 1px solid #e2e8f0; border-left-width: 8px;">$1</h2>`)
+        .replace(/^### (.*$)/gm, `<h3 style="font-size: 20px; font-weight: 800; margin-top: 35px; margin-bottom: 15px; color: #334155; display: flex; align-items: center;"><span style="color: ${POINT_COLOR}; margin-right: 12px;">■</span> $1</h3>`)
+        .replace(/^\* (.*$)/gm, `<li style="margin-bottom: 12px; font-size: 16px; line-height: 1.8; color: #334155; list-style: none; padding-left: 25px; position: relative;"><span style="position: absolute; left: 0; color: ${POINT_COLOR}; font-weight: 900;">-</span> $1</li>`)
+        .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 900; color: #0f172a; border-bottom: 1px solid #1e293b;">$1</strong>')
         .replace(/\n\n/g, '</div><div style="margin-bottom: 20px; line-height: 2.0; font-size: 16px; color: #334155; text-align: justify;">')
         .replace(/\n/g, '<br/>');
+
 
       const contentWrapper = document.createElement('div');
       contentWrapper.innerHTML = `<div style="line-height: 2.0; font-size: 16px; color: #334155;">${htmlContent}</div>`;
@@ -428,7 +457,7 @@ const AdminDeepReports: React.FC = () => {
     (req.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const displayContent = reportModal.content.replace(/\[SAJU_DATA_JSON:.*?\]/g, '').trim();
+  const displayContent = reportModal.content.replace(/\[SAJU_DATA_JSON:[\s\S]*?\]/g, '').trim();
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
