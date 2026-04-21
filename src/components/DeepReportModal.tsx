@@ -20,6 +20,15 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
     reportType: 'mbti_saju', // 'saju' or 'mbti_saju'
     specialRequest: '',
     reservationDate: '',
+    partnerInfo: {
+      includePartner: false,
+      name: '',
+      birthDate: '',
+      birthTime: '',
+      mbti: '',
+      relationship: 'lover',
+      relationshipCustom: '',
+    }
   });
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
 
@@ -112,7 +121,6 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       const amount = 49000;
 
       // 1. DB에 임시 저장 (결제 대기)
-      // 만약 deep_report_requests 테이블이 아직 없다면 에러가 날 수 있음.
       const { error: insertError } = await supabase.from('deep_report_requests').insert({
         user_id: session.user.id,
         order_id: orderId,
@@ -124,7 +132,13 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         special_requests: formData.specialRequest,
         amount: amount,
         reservation_date: formData.reservationDate,
-        status: 'pending_payment'
+        status: 'pending_payment',
+        partner_info: formData.partnerInfo.includePartner ? {
+          name: formData.partnerInfo.name,
+          birth_info: `${formData.partnerInfo.birthDate} ${formData.partnerInfo.birthTime}`.trim(),
+          mbti: formData.partnerInfo.mbti,
+          relationship: formData.partnerInfo.relationship === 'custom' ? formData.partnerInfo.relationshipCustom : formData.partnerInfo.relationship
+        } : null
       });
 
       if (insertError) {
@@ -149,7 +163,6 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         throw new Error(response.error_msg || '결제창 호출에 실패했습니다.');
       }
       
-      // 결제가 성공하면 Toss가 successUrl로 이동시킵니다.
     } catch (err: any) {
         console.error('Payment Error:', err);
         alert(err.message || '결제 중 오류가 발생했습니다.');
@@ -171,8 +184,8 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
             </div>
           </div>
           <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
-          <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-xl font-medium">
-            <strong className="text-violet-300">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 5장 내외 분량의 정밀 리포트를 작성해 드립니다.
+          <p className="text-slate-400 text-base md:text-lg font-bold leading-relaxed max-w-2xl">
+            <strong className="text-violet-300">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-violet-300 underline font-black">A4 10장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -311,6 +324,95 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                      <p className="text-xs opacity-70 font-medium">다각도의 성향 교차 분석</p>
                   </button>
                </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+               <div className="flex items-center justify-between">
+                 <label className="text-sm font-black text-slate-800">상대방 정보 포함 (궁합 분석)</label>
+                 <button 
+                   onClick={() => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, includePartner: !prev.partnerInfo.includePartner}}))}
+                   className={`w-12 h-6 rounded-full transition-all relative ${formData.partnerInfo.includePartner ? 'bg-violet-600' : 'bg-slate-200'}`}
+                 >
+                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.partnerInfo.includePartner ? 'left-7' : 'left-1'}`} />
+                 </button>
+               </div>
+               
+               {formData.partnerInfo.includePartner && (
+                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500">상대방 이름</label>
+                        <input 
+                          type="text" 
+                          value={formData.partnerInfo.name}
+                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, name: e.target.value}}))}
+                          className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                          placeholder="이름"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500">관계</label>
+                        <select 
+                          value={formData.partnerInfo.relationship}
+                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, relationship: e.target.value}}))}
+                          className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                        >
+                          <option value="lover">연인/배우자</option>
+                          <option value="crush">짝사랑/썸</option>
+                          <option value="family">가족</option>
+                          <option value="friend">친구</option>
+                          <option value="colleague">직장동료</option>
+                          <option value="custom">기타(직접입력)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {formData.partnerInfo.relationship === 'custom' && (
+                      <div className="space-y-2">
+                        <input 
+                          type="text" 
+                          value={formData.partnerInfo.relationshipCustom}
+                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, relationshipCustom: e.target.value}}))}
+                          className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                          placeholder="상세 관계를 입력해주세요"
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500">상대방 생년월일</label>
+                        <input 
+                          type="date" 
+                          value={formData.partnerInfo.birthDate}
+                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, birthDate: e.target.value}}))}
+                          className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500">태어난 시간 (모름 가능)</label>
+                        <input 
+                          type="time" 
+                          value={formData.partnerInfo.birthTime}
+                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, birthTime: e.target.value}}))}
+                          className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-500">상대방 MBTI (선택)</label>
+                      <input 
+                        type="text" 
+                        value={formData.partnerInfo.mbti}
+                        onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, mbti: e.target.value.toUpperCase()}}))}
+                        className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500 uppercase"
+                        placeholder="예: INFJ"
+                        maxLength={4}
+                      />
+                    </div>
+                 </div>
+               )}
             </div>
 
             <div className="space-y-2 pt-4 border-t border-slate-100">
