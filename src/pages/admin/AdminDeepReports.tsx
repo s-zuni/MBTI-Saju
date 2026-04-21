@@ -180,7 +180,7 @@ const AdminDeepReports: React.FC = () => {
     const email = reportModal.currentReq?.email;
     if (!email) return alert('이메일 정보가 없습니다.');
     alert(`${email} 주소로 리포트 발송을 위한 연동 준비 중입니다. (추후 API 연결 필요)`);
-    if (confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
+    if (window.confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
       handleUpdateStatus(reportModal.currentReq!.id, 'completed');
     }
   };
@@ -189,7 +189,7 @@ const AdminDeepReports: React.FC = () => {
     const kakaoId = reportModal.currentReq?.kakao_id;
     if (!kakaoId) return alert('카카오톡 ID 정보가 없습니다.');
     alert(`카카오톡 ID: ${kakaoId} 고객에게 발송을 위한 연동 준비 중입니다. (알리고/비즈엠 등 API 연결 필요)`);
-    if (confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
+    if (window.confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
       handleUpdateStatus(reportModal.currentReq!.id, 'completed');
     }
   };
