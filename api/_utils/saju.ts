@@ -39,6 +39,8 @@ export interface SajuResult {
 export interface PillarInfo {
     gan: string;
     zhi: string;
+    ganElement: string;
+    zhiElement: string;
     ganShiShen: string;
     zhiShiShen: string;
     hiddenStems: string[];
@@ -176,6 +178,8 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
         return {
             gan,
             zhi,
+            ganElement: GAN_MAP[gan]?.element || '',
+            zhiElement: ZHI_MAP[zhi]?.element || '',
             ganShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenGan`]() || '-',
             zhiShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenZhi`]() || '-',
             hiddenStems: isUnknown ? [] : (eightChar as any)[`get${type}HideGan`]() || [],
