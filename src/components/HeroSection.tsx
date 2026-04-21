@@ -38,7 +38,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
         <div className="flex">
           <Button 
             size="large"
-            type="primary"
+            color="primary"
+            variant="fill"
             onClick={() => {
               if (user) {
                 navigate('/fortune');

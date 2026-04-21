@@ -1,11 +1,11 @@
 import React from 'react';
-import { Compass, Users, MessageSquare, Layers, Sparkles } from 'lucide-react';
+import { Compass, Users, MessageSquare, Layers, Sparkles, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { ListRow, Chevron } from '@toss/tds-mobile';
+import { ListRow } from '@toss/tds-mobile';
 
 interface FeatureGridsProps { }
 
@@ -102,7 +102,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
                         }
                         right={
                             <div className="pr-4">
-                               <Chevron />
+                               <ChevronRight size={18} className="text-slate-300" />
                             </div>
                         }
                     />

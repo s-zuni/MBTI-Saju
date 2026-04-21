@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             <span className="text-xl font-bold tracking-tight text-slate-800">MBTIJU</span>
           </div>
         }
-        rightNode={
+        right={
           <div className="flex items-center gap-3">
             {session ? (
               <>
