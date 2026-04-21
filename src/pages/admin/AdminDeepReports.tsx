@@ -185,23 +185,42 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // Robust JSON extraction (Flexible with spaces and markdown)
-          const markerFound = generatedText.includes('[SAJU_DATA_JSON:');
-          if (markerFound && generatedText.includes(']')) {
-             const startIdx = generatedText.indexOf('[SAJU_DATA_JSON:') + 16;
-             const endIdx = generatedText.lastIndexOf(']');
-             
+          // --- IMPROVED ROBUST EXTRACTION ---
+          const markerStr = '[SAJU_DATA_JSON:';
+          const markerIdx = generatedText.indexOf(markerStr);
+          
+          if (markerIdx !== -1) {
+             const startIdx = markerIdx + markerStr.length;
+             // Find the last '}' that is followed by a ']' or is at the end of the string
+             let endIdx = generatedText.lastIndexOf('}]');
+             if (endIdx !== -1) endIdx += 1; // Include the '}'
+             else endIdx = generatedText.lastIndexOf('}'); // Fallback to last brace
+
              if (endIdx > startIdx) {
+                let jsonStr = generatedText.substring(startIdx, endIdx + 1).trim();
+                
+                // Smart Cleaning
+                if (jsonStr.startsWith('```')) {
+                   jsonStr = jsonStr.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+                }
+
                 try {
-                   let jsonStr = generatedText.substring(startIdx, endIdx).trim();
-                   // Strip markdown if AI added it
-                   if (jsonStr.startsWith('```')) {
-                      jsonStr = jsonStr.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
-                   }
-                   const sajuData = JSON.parse(jsonStr.trim());
+                   const sajuData = JSON.parse(jsonStr);
                    updateModalSajuData(sajuData);
-                } catch (e) { 
-                   // Partial/malformed JSON
+                } catch (e) {
+                   // Try to repair truncated JSON (common with long generations)
+                   try {
+                     let repaired = jsonStr;
+                     if (!repaired.endsWith('}')) repaired += '}';
+                     // Simple check for missing bracket in common schema
+                     if ((repaired.match(/{/g) || []).length > (repaired.match(/}/g) || []).length) {
+                        repaired += '}'.repeat((repaired.match(/{/g) || []).length - (repaired.match(/}/g) || []).length);
+                     }
+                     const sajuData = JSON.parse(repaired);
+                     updateModalSajuData(sajuData);
+                   } catch (repairError) {
+                     // Still failing, wait for more data or end of stream
+                   }
                 }
              }
           }
@@ -209,20 +228,52 @@ const AdminDeepReports: React.FC = () => {
           updateModalContent(generatedText);
         }
 
-        // Final Fallback Attempt: If sajuData is still null after stream ends
+        // --- FINAL RECOVERY ATTEMPT ---
         setReportModal(prev => {
           if (!prev.sajuData) {
-            console.log('Attempting final fallback parsing...');
-            const startIdx = generatedText.lastIndexOf('{');
-            const endIdx = generatedText.lastIndexOf('}');
-            if (startIdx !== -1 && endIdx > startIdx) {
-              try {
-                const potentialJson = generatedText.substring(startIdx, endIdx + 1);
-                const sajuData = JSON.parse(potentialJson);
-                return { ...prev, sajuData };
-              } catch (e) {
-                console.error('Final fallback parsing failed:', e);
+            console.warn('Standard parsing failed. Attempting deep recovery...');
+            
+            // Look for any large JSON-like block in the text
+            try {
+              const markerIdx = generatedText.indexOf('[SAJU_DATA_JSON:');
+              let rawJson = '';
+              if (markerIdx !== -1) {
+                rawJson = generatedText.substring(markerIdx + 16).trim();
+                if (rawJson.endsWith(']')) rawJson = rawJson.slice(0, -1);
+              } else {
+                // Last ditch: look for the last '{' that seems like a start of our schema
+                const allOpenBraces = [...generatedText.matchAll(/{/g)];
+                if (allOpenBraces.length > 0) {
+                   // Our schema is huge, so it's likely one of the early braces after text
+                   const potentialStart = generatedText.indexOf('{"congenitalSummary"');
+                   if (potentialStart !== -1) {
+                     rawJson = generatedText.substring(potentialStart);
+                   }
+                }
               }
+
+              if (rawJson) {
+                // Intensive Repair: Close all unclosed quotes and braces
+                let repaired = rawJson.trim();
+                if (repaired.startsWith('```')) {
+                   repaired = repaired.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+                }
+
+                // Balance braces
+                const openB = (repaired.match(/{/g) || []).length;
+                const closeB = (repaired.match(/}/g) || []).length;
+                if (openB > closeB) repaired += '}'.repeat(openB - closeB);
+                
+                const openArr = (repaired.match(/\[/g) || []).length;
+                const closeArr = (repaired.match(/\]/g) || []).length;
+                if (openArr > closeArr) repaired += ']'.repeat(openArr - closeArr);
+
+                console.log('Recovery JSON Preview:', repaired.substring(0, 50) + '...');
+                const sajuData = JSON.parse(repaired);
+                return { ...prev, sajuData };
+              }
+            } catch (err) {
+              console.error('Deep recovery failed globally:', err);
             }
           }
           return prev;
