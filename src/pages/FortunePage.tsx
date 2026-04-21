@@ -80,7 +80,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                     }
                                     topProps={{ color: 'grey900', fontWeight: 'bold' }}
                                     bottom={cat.sub}
-                                    bottomProps={{ color: 'grey500', size: 13 }}
+                                    bottomProps={{ color: 'grey500' }}
                                 />
                             }
                             right={
