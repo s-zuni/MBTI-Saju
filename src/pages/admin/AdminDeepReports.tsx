@@ -92,7 +92,10 @@ const AdminDeepReports: React.FC = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!reportModal.sajuData) return;
+    if (!reportModal.sajuData) {
+      alert('분석 데이터가 아직 완전히 구조화되지 않았거나 생성 중입니다. 잠시만 기다려주세요.');
+      return;
+    }
     setIsExporting(true);
 
     try {
@@ -182,16 +185,20 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // Check for JSON block
+          // Check for JSON block (Robust extraction using lastIndexOf for closing bracket)
           if (generatedText.includes('[SAJU_DATA_JSON: ') && generatedText.includes(']')) {
-             const startIdx = generatedText.indexOf('[SAJU_DATA_JSON: ') + 17;
-             const endIdx = generatedText.indexOf(']', startIdx);
+             const startMarker = '[SAJU_DATA_JSON: ';
+             const startIdx = generatedText.indexOf(startMarker) + startMarker.length;
+             const endIdx = generatedText.lastIndexOf(']');
+             
              if (endIdx > startIdx) {
                 try {
                    const jsonStr = generatedText.substring(startIdx, endIdx);
                    const sajuData = JSON.parse(jsonStr);
                    updateModalSajuData(sajuData);
-                } catch (e) { /* partial json */ }
+                } catch (e) { 
+                   // console.warn('Partial JSON parsing failed:', e);
+                }
              }
           }
 
