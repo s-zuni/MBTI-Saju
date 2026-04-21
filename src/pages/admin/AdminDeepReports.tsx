@@ -185,25 +185,48 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // Check for JSON block (Robust extraction using lastIndexOf for closing bracket)
-          if (generatedText.includes('[SAJU_DATA_JSON: ') && generatedText.includes(']')) {
-             const startMarker = '[SAJU_DATA_JSON: ';
-             const startIdx = generatedText.indexOf(startMarker) + startMarker.length;
+          // Robust JSON extraction (Flexible with spaces and markdown)
+          const markerFound = generatedText.includes('[SAJU_DATA_JSON:');
+          if (markerFound && generatedText.includes(']')) {
+             const startIdx = generatedText.indexOf('[SAJU_DATA_JSON:') + 16;
              const endIdx = generatedText.lastIndexOf(']');
              
              if (endIdx > startIdx) {
                 try {
-                   const jsonStr = generatedText.substring(startIdx, endIdx);
-                   const sajuData = JSON.parse(jsonStr);
+                   let jsonStr = generatedText.substring(startIdx, endIdx).trim();
+                   // Strip markdown if AI added it
+                   if (jsonStr.startsWith('```')) {
+                      jsonStr = jsonStr.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+                   }
+                   const sajuData = JSON.parse(jsonStr.trim());
                    updateModalSajuData(sajuData);
                 } catch (e) { 
-                   // console.warn('Partial JSON parsing failed:', e);
+                   // Partial/malformed JSON
                 }
              }
           }
 
           updateModalContent(generatedText);
         }
+
+        // Final Fallback Attempt: If sajuData is still null after stream ends
+        setReportModal(prev => {
+          if (!prev.sajuData) {
+            console.log('Attempting final fallback parsing...');
+            const startIdx = generatedText.lastIndexOf('{');
+            const endIdx = generatedText.lastIndexOf('}');
+            if (startIdx !== -1 && endIdx > startIdx) {
+              try {
+                const potentialJson = generatedText.substring(startIdx, endIdx + 1);
+                const sajuData = JSON.parse(potentialJson);
+                return { ...prev, sajuData };
+              } catch (e) {
+                console.error('Final fallback parsing failed:', e);
+              }
+            }
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error(error);
