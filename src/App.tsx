@@ -32,6 +32,7 @@ import PaymentManagement from './pages/admin/PaymentManagement';
 import RefundManagement from './pages/admin/RefundManagement';
 import PlanManagement from './pages/admin/PlanManagement';
 import AdminCommunity from './pages/admin/AdminCommunity';
+import AdminDeepReports from './pages/admin/AdminDeepReports';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
@@ -43,6 +44,7 @@ import { calculateSaju } from './utils/sajuUtils';
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
 const FortuneModal = lazy(() => import('./components/FortuneModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
+const DeepReportModal = lazy(() => import('./components/DeepReportModal'));
 const RecommendationModal = lazy(() => import('./components/RecommendationModal'));
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const TripModal = lazy(() => import('./components/TripModal'));
@@ -254,6 +256,7 @@ function AppContent({
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="community" element={<AdminCommunity />} />
+            <Route path="deep-reports" element={<AdminDeepReports />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="refunds" element={<RefundManagement />} />
@@ -354,6 +357,7 @@ function AppContent({
                   <Route path="/support" element={<SupportPage session={session} />} />
                   <Route path="/mypage" element={
                     <MyPage
+                      onOpenDeepReport={() => openModal('deepReport')}
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
                       onOpenNaming={() => openModal('naming')}
                       onOpenCompatibility={() => openModal('compatibility')}
@@ -460,6 +464,11 @@ function AppContent({
                   return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
                 }}
                 credits={credits}
+                session={session}
+              />
+              <DeepReportModal
+                isOpen={modals?.deepReport?.isOpen || false}
+                onClose={() => closeModal('deepReport')}
                 session={session}
               />
 

@@ -73,6 +73,24 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ success: false, message: '사용자 장치 식별에 실패했습니다.' });
         }
 
+        if (productId === 'deep_report') {
+            const { error: updateError } = await supabaseAdmin
+                .from('deep_report_requests')
+                .update({ status: 'paid' })
+                .eq('order_id', orderId);
+
+            if (updateError) {
+                console.error('Failed to update deep report status:', updateError);
+                throw updateError;
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: '심층 결합 분석 리포트 결제 성공',
+                data: { toss: tossData }
+            });
+        }
+
         let addCredits = 0;
         const { data: planData, error: planError } = await supabaseAdmin
             .from('pricing_plans')

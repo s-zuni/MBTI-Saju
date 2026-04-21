@@ -83,7 +83,7 @@ const PaymentSuccess: React.FC = () => {
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
                 <Loader2 className="w-12 h-12 text-slate-950 animate-spin mb-4" />
                 <h2 className="text-xl font-bold text-slate-900">결제 승인을 완료하는 중...</h2>
-                <p className="text-slate-500 mt-2 font-medium">크레딧을 안전하게 충전하고 있습니다.</p>
+                <p className="text-slate-500 mt-2 font-medium">안전하게 결제를 처리하고 있습니다.</p>
             </div>
         );
     }
@@ -111,8 +111,12 @@ const PaymentSuccess: React.FC = () => {
                 <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">충전 완료!</h2>
-                <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
+                <h2 className="text-2xl font-black text-slate-900 mb-2">결제 완료!</h2>
+                <p className="text-slate-500 mb-6 font-medium">
+                    {orderId?.startsWith('DEEPREPORT') 
+                        ? '결합 심층 리포트 신청이 성공적으로 완료되었습니다.'
+                        : '크레딧이 성공적으로 반영되었습니다.'}
+                </p>
                 
                 <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
                     <div className="flex justify-between text-sm font-bold">

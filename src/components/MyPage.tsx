@@ -128,6 +128,7 @@ const formatHiddenStems = (stems: string[] | undefined) => {
 };
 
 interface MyPageProps {
+  onOpenDeepReport: () => void;
   onOpenMbtiSaju: () => void;
   onOpenNaming: () => void;
   onOpenCompatibility: () => void;
@@ -271,6 +272,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
 };
 
 const MyPage: React.FC<MyPageProps> = ({ 
+  onOpenDeepReport,
   onOpenMbtiSaju, 
   onOpenNaming, 
   onOpenCompatibility, 
@@ -738,13 +740,19 @@ const MyPage: React.FC<MyPageProps> = ({
             {/* Navigation Buttons for Deep Analysis */}
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <button
-                onClick={onOpenMbtiSaju}
-                className="bg-slate-950 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group"
+                onClick={onOpenDeepReport}
+                className="relative overflow-hidden bg-slate-950 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group border border-slate-800"
               >
-                <span className="text-2xl mb-2">🔮</span>
-                <div>
-                  <h3 className="text-xl font-bold mb-1">내 MBTI & 사주<br />심층 분석 보러가기</h3>
-                  <p className="text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">나에 대해 더 깊이 알아보기 &rarr;</p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="flex justify-between items-start z-10">
+                  <span className="text-2xl mb-2">🔮</span>
+                  <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-tight">수기 작성 프리미엄</span>
+                </div>
+                <div className="z-10">
+                  <h3 className="text-xl font-bold mb-1">결합 심층 리포트 받기</h3>
+                  <p className="text-slate-400 text-sm opacity-100 transition-opacity flex justify-between items-center">
+                    전문가 직접 분석 <span className="opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                  </p>
                 </div>
               </button>
 
