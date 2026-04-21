@@ -30,20 +30,6 @@ interface DeepReportRequest {
 }
 
 
-
-// 포인트 컬러 (Violet)
-const POINT_COLOR = '#7c3aed'; 
-const POINT_COLOR_LIGHT = '#f5f3ff';
-
-
-const ELEMENT_LABELS: Record<string, string> = {
-  wood: '목(木)',
-  fire: '화(火)',
-  earth: '토(土)',
-  metal: '금(金)',
-  water: '수(水)',
-};
-
 const AdminDeepReports: React.FC = () => {
   const [requests, setRequests] = useState<DeepReportRequest[]>([]);
   const [loading, setLoading] = useState(true);

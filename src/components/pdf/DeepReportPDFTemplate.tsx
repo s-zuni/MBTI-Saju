@@ -45,7 +45,6 @@ const PageWrapper = ({ children, bg = "bg-white", extraClass = "" }: { children:
 
 export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sajuData, parsedContent, clientName }) => {
   const dateStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-  const pointColor = '#7c3aed'; // Violet
 
   const renderGaugeBar = (element: string, value: number) => {
     const widthPercentage = Math.min(100, Math.max(0, value));
