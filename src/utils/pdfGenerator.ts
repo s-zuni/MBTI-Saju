@@ -75,3 +75,28 @@ export const generateHighResPDF = async (element: HTMLElement, filename: string)
     throw error;
   }
 };
+
+/**
+ * Basic PDF generation for standard components.
+ * Restores the generatePDF function to prevent broken imports.
+ */
+export const generatePDF = async (element: HTMLElement, filename: string) => {
+  try {
+    const canvas = await html2canvas(element, { 
+      scale: 2, 
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${filename}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw error;
+  }
+};
