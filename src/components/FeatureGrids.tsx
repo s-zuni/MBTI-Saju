@@ -1,11 +1,10 @@
 import React from 'react';
-import { Compass, Users, MessageSquare, Layers, Sparkles, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Compass, Users, MessageSquare, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { ListRow } from '@toss/tds-mobile';
 
 interface FeatureGridsProps { }
 
@@ -32,14 +31,14 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             icon: Compass,
             label: '운세 보기',
             sub: '오늘의 운세 & 토정비결',
-            bg: 'bg-amber-100 text-amber-600',
+            bg: 'from-amber-400 to-orange-500',
             action: () => navigate('/fortune'),
         },
         {
             icon: MessageSquare,
             label: '운명 심층 상담',
             sub: 'MBTI x 사주 융합 분석',
-            bg: 'bg-violet-100 text-violet-600',
+            bg: 'from-violet-500 to-violet-700',
             action: () => {
                 if (!session) {
                     openModal('analysis', 'login');
@@ -56,56 +55,47 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             icon: Sparkles,
             label: '운세템 상점',
             sub: '부적 & 굿즈 쇼핑',
-            bg: 'bg-rose-100 text-rose-500',
+            bg: 'from-rose-400 to-pink-500',
             action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
-        },
-        {
-            icon: Layers,
-            label: '타로',
-            sub: '카드로 보는 미래',
-            bg: 'bg-purple-100 text-purple-600',
-            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
         {
             icon: Users,
             label: '커뮤니티',
             sub: '운명을 나누는 공간',
-            bg: 'bg-slate-100 text-slate-600',
+            bg: 'from-slate-600 to-slate-800',
             action: () => navigate('/community'),
+        },
+        {
+            icon: Layers,
+            label: '타로',
+            sub: '카드로 보는 미래',
+            bg: 'from-purple-500 to-purple-700',
+            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
     ];
 
     return (
-        <div className="bg-white rounded-t-3xl pt-2 pb-6 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] mt-4">
-            <div className="px-6 py-6 pb-2">
-                <h3 className="text-xl font-bold text-slate-800 tracking-tight">어떤 서비스가 필요하신가요?</h3>
-                <p className="text-sm text-slate-500 mt-1">원하는 운세 테마를 선택해주세요</p>
-            </div>
-            <div>
+        <div className="relative z-20 px-6 max-w-7xl mx-auto -mt-10 md:-mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {mainCategories.map((cat, i) => (
-                    <ListRow
+                    <button
                         key={i}
                         onClick={cat.action}
-                        left={
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${cat.bg}`}>
-                                <cat.icon className="w-6 h-6" />
-                            </div>
-                        }
-                        contents={
-                            <ListRow.Texts
-                                type="2RowTypeE"
-                                top={cat.label}
-                                topProps={{ color: 'grey900', fontWeight: 'bold' }}
-                                bottom={cat.sub}
-                                bottomProps={{ color: 'grey600' }}
-                            />
-                        }
-                        right={
-                            <div className="pr-4">
-                               <ChevronRight size={18} className="text-slate-300" />
-                            </div>
-                        }
-                    />
+                        className="group relative overflow-hidden bg-white p-8 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 text-left border-none"
+                    >
+                        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.bg} opacity-[0.03] rounded-bl-full -mr-8 -mt-8 transition-opacity group-hover:opacity-[0.08]`}></div>
+
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.bg} flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}>
+                            <cat.icon className="w-7 h-7" />
+                        </div>
+
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">{cat.label}</h3>
+                        <p className="text-sm font-medium text-slate-500 leading-relaxed">{cat.sub}</p>
+
+                        <div className="absolute bottom-6 right-6 transition-all duration-500 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100">
+                            <ArrowRight className="w-6 h-6 text-slate-300" />
+                        </div>
+                    </button>
                 ))}
             </div>
         </div>
