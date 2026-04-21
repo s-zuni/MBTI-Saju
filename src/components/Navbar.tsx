@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Top } from '@toss/tds-mobile';
 import { User, LogOut } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
 
@@ -11,7 +11,7 @@ interface NavbarProps { }
 const Navbar: React.FC<NavbarProps> = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+
 
   const { session } = useAuth();
   const { openModal, isAnyModalOpen } = useModalStore();
