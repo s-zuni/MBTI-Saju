@@ -48,7 +48,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isPurchasingDeep, setIsPurchasingDeep] = useState(false);
   const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
 
@@ -174,39 +173,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     }
   };
 
-  const handleStartDeepAnalysis = async () => {
-    const cost = SERVICE_COSTS.MBTI_SAJU;
-    if (credits !== undefined && credits < cost) {
-      onNavigate('creditPurchase' as any);
-      onClose();
-      return;
-    }
-    setIsPurchasingDeep(true);
-    try {
-      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-      const activeSession = fetchedSession || initialSession;
-      
-      const metadata = activeSession?.user?.user_metadata;
-      if (!metadata) throw new Error("로그인이 필요합니다.");
-      const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
-      const payload = {
-        name: metadata.full_name,
-        gender: metadata.gender,
-        birthDate: metadata.birth_date,
-        birthTime: metadata.birth_time,
-        mbti: metadata.mbti,
-        sajuData,
-      };
-      setAnalysis(null);
-      submitFull(payload);
-      // onUseCredit call moved to onFinish of useObject
-    } catch (error: any) {
-      console.error("Deep Analysis Error:", error);
-      alert(error.message || "심층 분석 중 오류가 발생했습니다.");
-    } finally {
-      setIsPurchasingDeep(false);
-    }
-  };
 
   const handleRegenerate = async () => {
     if (!window.confirm("기존 결과는 보존되지 않으며, 크레딧이 10회 차감됩니다. 계속하시겠습니까?")) return;
