@@ -1,7 +1,7 @@
 import React from 'react';
 import { Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ListRow } from '@toss/tds-mobile';
+
 import { SERVICE_COSTS } from '../config/creditConfig';
 
 // 각 카테고리별 크레딧 비용 및 이용자 수
@@ -47,59 +47,83 @@ const FortunePage: React.FC<FortunePageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-[#f2f4f6] pb-32 pt-16">
-            <div className="max-w-3xl mx-auto">
-                <div className="px-6 py-8">
-                    <h1 className="text-[28px] font-bold text-slate-900 tracking-tight mb-2">운명 서고</h1>
-                    <p className="text-slate-500 font-medium text-[15px]">사주와 타로로 엿보는 당신의 무한한 미래</p>
+        <div className="min-h-screen bg-slate-50 pb-32 pt-20 animate-fade-in">
+            <div className="max-w-7xl mx-auto px-6">
+                {/* Header Section */}
+                <div className="mb-12 text-center md:text-left">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">운명 서고</h1>
+                    <p className="text-slate-500 font-medium text-sm md:text-base">사주와 타로로 엿보는 당신의 무한한 미래</p>
                 </div>
 
-                <div className="bg-white mx-4 rounded-3xl overflow-hidden shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {subCategories.map((cat, i) => (
-                        <ListRow
+                        <button
                             key={i}
                             onClick={() => handleSubCategoryClick(cat)}
-                            left={
-                                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center p-2 relative">
-                                    <img
-                                        src={cat.img}
-                                        alt={cat.label}
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
-                            }
-                            contents={
-                                <ListRow.Texts
-                                    type="2RowTypeE"
-                                    top={
-                                        <div className="flex items-center gap-2">
-                                            {cat.label}
-                                            {cat.isPopular && <span className="px-1.5 py-[2px] bg-rose-50 text-rose-500 text-[9px] font-bold rounded">HOT</span>}
-                                            {cat.isNew && <span className="px-1.5 py-[2px] bg-violet-50 text-violet-600 text-[9px] font-bold rounded">NEW</span>}
-                                        </div>
-                                    }
-                                    topProps={{ color: 'grey900', fontWeight: 'bold' }}
-                                    bottom={cat.sub}
-                                    bottomProps={{ color: 'grey500' }}
+                            className="celestial-card group relative flex flex-col items-start gap-4 text-left"
+                        >
+                            {/* Status Badges */}
+                            <div className="absolute top-6 right-6 flex flex-col gap-2 z-10">
+                                {cat.isPopular && (
+                                    <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-rose-100">HOT</span>
+                                )}
+                                {cat.isNew && (
+                                    <span className={`px-2 py-0.5 bg-${cat.colorClass}-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-${cat.colorClass}-100`}>NEW</span>
+                                )}
+                            </div>
+
+                            {/* Icon Container */}
+                            <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center p-2 mb-2 group-hover:rotate-6 transition-transform duration-500">
+                                <img
+                                    src={cat.img}
+                                    alt={cat.label}
+                                    className="w-full h-full object-contain drop-shadow-xl"
                                 />
-                            }
-                            right={
-                                <div className="flex flex-col items-end gap-1 px-4">
-                                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-full">
+                            </div>
+
+                            <div className="w-full">
+                                <h4 className={`text-lg font-black text-slate-900 group-hover:text-${cat.colorClass}-600 transition-colors mb-1`}>
+                                    {cat.label}
+                                </h4>
+                                <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
+                                    {cat.sub}
+                                </p>
+                                
+                                <div className="flex justify-between items-center mt-auto">
+                                    <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                        {cat.userCount} USED
+                                    </div>
+                                    
+                                    <div className={`
+                                        flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest
+                                        ${cat.cost === 0
+                                            ? 'bg-emerald-50 text-emerald-600'
+                                            : `bg-${cat.colorClass}-50 text-${cat.colorClass}-600`
+                                        } transition-all group-hover:px-4
+                                    `}>
                                         {cat.cost === 0 ? (
-                                            '무료'
+                                            'FREE'
                                         ) : cat.id === 'mbti' ? (
-                                            '4.9만'
+                                            '49,000₩'
                                         ) : (
                                             <>
-                                                <Coins className="w-3.5 h-3.5 text-violet-500" />
+                                                <Coins className="w-3 h-3" />
                                                 {cat.cost}
                                             </>
                                         )}
                                     </div>
                                 </div>
-                            }
-                        />
+                            </div>
+
+                            {/* Action Indicator */}
+                            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
+                                <div className={`w-8 h-8 rounded-full bg-${cat.colorClass}-600 flex items-center justify-center text-white shadow-lg`}>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </button>
                     ))}
                 </div>
             </div>
