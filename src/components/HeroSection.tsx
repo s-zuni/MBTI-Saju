@@ -39,7 +39,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
           <Button 
             size="large"
             type="primary"
-            style={{ backgroundColor: '#7c3aed', color: '#fff', borderRadius: '12px' }}
             onClick={() => {
               if (user) {
                 navigate('/fortune');

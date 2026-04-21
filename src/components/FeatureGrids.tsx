@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { ListRow } from '@toss/tds-mobile';
+import { ListRow, Chevron } from '@toss/tds-mobile';
 
 interface FeatureGridsProps { }
 
@@ -102,7 +102,7 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
                         }
                         right={
                             <div className="pr-4">
-                               <ListRow.Arrow />
+                               <Chevron />
                             </div>
                         }
                     />

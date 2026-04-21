@@ -75,7 +75,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                         <div className="flex items-center gap-2">
                                             {cat.label}
                                             {cat.isPopular && <span className="px-1.5 py-[2px] bg-rose-50 text-rose-500 text-[9px] font-bold rounded">HOT</span>}
-                                            {cat.isNew && <span className="px-1.5 py-[2px] bg-blue-50 text-blue-500 text-[9px] font-bold rounded">NEW</span>}
+                                            {cat.isNew && <span className="px-1.5 py-[2px] bg-violet-50 text-violet-600 text-[9px] font-bold rounded">NEW</span>}
                                         </div>
                                     }
                                     topProps={{ color: 'grey900', fontWeight: 'bold' }}
@@ -85,14 +85,14 @@ const FortunePage: React.FC<FortunePageProps> = ({
                             }
                             right={
                                 <div className="flex flex-col items-end gap-1 px-4">
-                                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-full">
+                                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-full">
                                         {cat.cost === 0 ? (
-                                            'FREE'
+                                            '무료'
                                         ) : cat.id === 'mbti' ? (
-                                            '49,000₩'
+                                            '4.9만'
                                         ) : (
                                             <>
-                                                <Coins className="w-3 h-3 text-amber-500" />
+                                                <Coins className="w-3.5 h-3.5 text-violet-500" />
                                                 {cat.cost}
                                             </>
                                         )}

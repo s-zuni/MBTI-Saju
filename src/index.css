@@ -13,6 +13,13 @@
     --sky-blue: #B2E2F2;
     --clean-white: #FFFFFF;
     --slate-text: #0F172A;
+
+    /* TDS Custom Theme: Violet Override */
+    --adaptiveBlue50: #f5f3ff;
+    --adaptiveBlue100: #ede9fe;
+    --adaptiveBlue500: #7c3aed;
+    --adaptiveBlue600: #6d28d9;
+    --adaptiveBlue700: #5b21b6;
   }
 
   body {
