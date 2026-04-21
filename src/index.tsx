@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { TDSMobileAITProvider } from '@toss/tds-mobile-ait';
 import { HelmetProvider } from 'react-helmet-async';
@@ -13,9 +14,11 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <TDSMobileAITProvider>
-    <HelmetProvider>
-      <App />
-    </HelmetProvider>
-  </TDSMobileAITProvider>
+  <ErrorBoundary>
+    <TDSMobileAITProvider>
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
+    </TDSMobileAITProvider>
+  </ErrorBoundary>
 );

@@ -4,11 +4,15 @@ import { createClient, Session } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://www.mbtiju.com/backend';
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
+if (!supabaseAnonKey) {
+    console.error('[Supabase] REACT_APP_SUPABASE_ANON_KEY is missing. Check your environment variables.');
+}
+
 /**
  * 표준 Supabase 클라이언트 설정
  * 브라우저 통신 시 전용 프록시 경로(/backend)를 사용하여 광고 차단기 필터링을 회피합니다.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey || 'dummy_key', {
     auth: {
         persistSession: true,
         autoRefreshToken: true,
