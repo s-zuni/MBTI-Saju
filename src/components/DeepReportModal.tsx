@@ -198,7 +198,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                    <h3 className="text-3xl font-black text-slate-900">49,000원</h3>
                    <span className="text-base text-slate-400 line-through font-bold mb-1">98,000원</span>
                 </div>
-                <p className="text-xs font-bold text-slate-500 mt-2">※ 결제 완료 후 24시간 이내에 메일 및 카카오톡으로 리포트가 발송됩니다.</p>
+                <p className="text-xs font-bold text-slate-500 mt-2">※ 데이터 정밀 검증을 위해 빠르면 다음 날, 늦어도 2일 이내에 메일 및 카카오톡으로 발송됩니다.</p>
              </div>
              <div className="self-stretch w-full md:w-px bg-slate-200"></div>
              <div className="grid grid-cols-2 gap-4 w-full md:w-auto">

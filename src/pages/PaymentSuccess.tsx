@@ -112,11 +112,18 @@ const PaymentSuccess: React.FC = () => {
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-black text-slate-900 mb-2">결제 완료!</h2>
-                <p className="text-slate-500 mb-6 font-medium">
-                    {orderId?.startsWith('DEEPREPORT') 
-                        ? '결합 심층 리포트 신청이 성공적으로 완료되었습니다.'
-                        : '크레딧이 성공적으로 반영되었습니다.'}
-                </p>
+                {orderId?.startsWith('DEEPREPORT') ? (
+                    <div className="space-y-3 mb-6">
+                        <p className="text-slate-900 font-black text-lg">심층 리포트 신청 완료!</p>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                            전문가의 심층 분석 및 데이터 검증에 시간이 소요되어,<br/>
+                            <span className="text-violet-600 font-bold">빠르면 다음 날, 늦어도 2일 이내</span>에<br/>
+                            입력하신 메일과 카카오톡으로 발송됩니다.
+                        </p>
+                    </div>
+                ) : (
+                    <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
+                )}
                 
                 <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
                     <div className="flex justify-between text-sm font-bold">
