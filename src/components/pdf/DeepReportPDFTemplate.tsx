@@ -88,7 +88,6 @@ const SectionHeader = ({ num, title }: { num: string; title: string }) => (
 );
 
 export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sajuData, parsedContent, clientName }) => {
-  const dateStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
   const userSaju = sajuData?.userSaju;
   const lucky = sajuData?.luckyItems;
   const hasSpecial = !!(parsedContent.specialRequestAnalysis && parsedContent.specialRequestAnalysis.trim().length > 10);
