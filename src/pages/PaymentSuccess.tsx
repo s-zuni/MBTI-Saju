@@ -8,6 +8,7 @@ const PaymentSuccess: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
@@ -59,6 +60,18 @@ const PaymentSuccess: React.FC = () => {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                    await supabase.from('profiles').select('*').eq('id', user.id).single();
+                }
+
+                // 4. 심층 리포트인 경우 자동 생성 트리거
+                if (orderId?.startsWith('DEEPREPORT')) {
+                    setIsGenerating(true);
+                    // 비동기로 호출 (응답을 기다리지 않고 진행하거나, 사용자 경험을 위해 로딩 표시)
+                    fetch('/api/generate-and-save-report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId }),
+                    }).catch(err => console.error('Auto-generation trigger failed:', err))
+                      .finally(() => setIsGenerating(false));
                 }
 
                 setLoading(false);
@@ -120,6 +133,12 @@ const PaymentSuccess: React.FC = () => {
                             <span className="text-violet-600 font-bold">빠르면 다음 날, 늦어도 2일 이내</span>에<br/>
                             입력하신 메일과 카카오톡으로 발송됩니다.
                         </p>
+                        {isGenerating && (
+                            <div className="mt-4 flex items-center justify-center gap-2 bg-violet-50 py-3 px-4 rounded-xl text-violet-600 text-xs font-bold animate-pulse">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                인공지능이 분석 리포트 초안을 작성 중입니다...
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>

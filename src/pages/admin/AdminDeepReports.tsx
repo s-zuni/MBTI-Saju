@@ -24,6 +24,8 @@ interface DeepReportRequest {
     mbti: string;
     relationship: string;
   };
+  generated_data?: any;
+  generated_at?: string;
   profiles?: {
     name: string;
   };
@@ -185,47 +187,52 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // --- IMPROVED ROBUST EXTRACTION ---
+          // --- IMPROVED JSON-AT-START EXTRACTION ---
           const markerStr = '[SAJU_DATA_JSON:';
           const markerIdx = generatedText.indexOf(markerStr);
           
           if (markerIdx !== -1) {
              const startIdx = markerIdx + markerStr.length;
-             // Find the last '}' that is followed by a ']' or is at the end of the string
-             let endIdx = generatedText.lastIndexOf('}]');
-             if (endIdx !== -1) endIdx += 1; // Include the '}'
-             else endIdx = generatedText.lastIndexOf('}'); // Fallback to last brace
-
-             if (endIdx > startIdx) {
-                let jsonStr = generatedText.substring(startIdx, endIdx + 1).trim();
-                
-                // Smart Cleaning
-                if (jsonStr.startsWith('```')) {
-                   jsonStr = jsonStr.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
-                }
-
-                try {
-                   const sajuData = JSON.parse(jsonStr);
-                   updateModalSajuData(sajuData);
-                } catch (e) {
-                   // Try to repair truncated JSON (common with long generations)
-                   try {
-                     let repaired = jsonStr;
-                     if (!repaired.endsWith('}')) repaired += '}';
-                     // Simple check for missing bracket in common schema
-                     if ((repaired.match(/{/g) || []).length > (repaired.match(/}/g) || []).length) {
-                        repaired += '}'.repeat((repaired.match(/{/g) || []).length - (repaired.match(/}/g) || []).length);
-                     }
-                     const sajuData = JSON.parse(repaired);
-                     updateModalSajuData(sajuData);
-                   } catch (repairError) {
-                     // Still failing, wait for more data or end of stream
+             // JSON is at the start, so we look for the closing bracket
+             let endIdx = -1;
+             
+             // Track nesting to find the correct closing bracket
+             let openBraces = 0;
+             let foundStart = false;
+             for (let i = startIdx; i < generatedText.length; i++) {
+                if (generatedText[i] === '{') {
+                   openBraces++;
+                   foundStart = true;
+                } else if (generatedText[i] === '}') {
+                   openBraces--;
+                   if (foundStart && openBraces === 0) {
+                      endIdx = i;
+                      break;
                    }
                 }
              }
-          }
 
-          updateModalContent(generatedText);
+             if (endIdx !== -1 && endIdx > startIdx) {
+                let jsonStr = generatedText.substring(startIdx, endIdx + 1).trim();
+                
+                try {
+                   const sajuData = JSON.parse(jsonStr);
+                   updateModalSajuData(sajuData);
+                   
+                   // Once we have full JSON at the start, we can consider the report "structured"
+                   // The text after the JSON block is the human-readable report
+                   const textAfterJson = generatedText.substring(generatedText.indexOf(']', endIdx) + 1).trim();
+                   if (textAfterJson) {
+                      updateModalContent(textAfterJson);
+                   }
+                } catch (e) {
+                   // Still streaming the JSON block
+                }
+             }
+          } else {
+             // Still looking for the marker or marker is not present (legacy or error)
+             updateModalContent(generatedText);
+          }
         }
 
         // --- FINAL RECOVERY ATTEMPT ---
@@ -295,8 +302,8 @@ const AdminDeepReports: React.FC = () => {
   );
 
   const displayContent = reportModal.sajuData ? 
-    `🔮 [분석 데이터 구조화 완료]\n- 재물운: ${reportModal.sajuData.wealthAnalysis?.substring(0, 50) || '분석 중...'}...\n- 애정운: ${reportModal.sajuData.relationshipAnalysis?.substring(0, 50) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)` 
-    : "리포트 생성이 진행중입니다. 완료 후 다운로드가 가능합니다. (구조화된 데이터로 처리됨)";
+    (reportModal.content || `🔮 [분석 데이터 구조화 완료]\n- 재물운: ${reportModal.sajuData.wealthAnalysis?.substring(0, 50) || '분석 중...'}...\n- 애정운: ${reportModal.sajuData.relationshipAnalysis?.substring(0, 50) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)`)
+    : "리포트 생성이 진행중입니다. 완료 후 다운로드가 가능합니다. (구조화된 데이터 우선 처리 중)";
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
@@ -392,16 +399,30 @@ const AdminDeepReports: React.FC = () => {
                              {expandedId === req.id ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
                            </button>
                            <button 
-                             onClick={() => generateAIReport(req)}
+                             onClick={() => {
+                               if (req.generated_data) {
+                                 setReportModal({
+                                   isOpen: true,
+                                   content: '', // Can be filled if we save text too, but sajuData is enough for PDF
+                                   title: `${req.profiles?.name || '내담자'}님의 저장된 리포트`,
+                                   currentReq: req,
+                                   sajuData: req.generated_data
+                                 });
+                               } else {
+                                 generateAIReport(req);
+                               }
+                             }}
                              disabled={generatingId !== null}
                              className={`flex items-center gap-2 text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-sm ${
                                 generatingId === req.id 
                                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                                  : 'bg-violet-600 text-white hover:bg-violet-700 hover:shadow-violet-200 hover:shadow-lg'
+                                  : req.generated_data 
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
+                                    : 'bg-violet-600 text-white hover:bg-violet-700 hover:shadow-violet-200 hover:shadow-lg'
                              }`}
                            >
                              {generatingId === req.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4" />}
-                             리포트 생성
+                             {req.generated_data ? '리포트 보기' : '리포트 생성'}
                            </button>
                         </div>
                       </td>
