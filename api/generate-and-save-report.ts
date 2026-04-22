@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { generateText } from 'ai';
+import { calculateSaju } from './_utils/saju';
 import { getAIProvider } from './_utils/ai-provider';
 
 type VercelRequest = any;
@@ -15,13 +16,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Missing orderId' });
     }
 
-    // Initialize Supabase Admin
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     try {
-        // 1. Fetch request details
         const { data: request, error: fetchError } = await supabase
             .from('deep_report_requests')
             .select('*, profiles:user_id(name)')
@@ -32,95 +31,91 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ message: 'Request not found' });
         }
 
-        // If already generated, return success
         if (request.generated_data) {
             return res.status(200).json({ success: true, message: 'Already generated' });
         }
 
-        // 2. Setup AI Prompt (Same as generate-deep-report.ts)
         const name = request.profiles?.name;
         const { mbti, birth_info, report_type, special_requests, partner_info } = request;
-        
-        // Simplified saju context for the background generator
-        const systemPrompt = `당신은 20년 경력의 명리학 대가이자 전략 컨설턴트입니다. 
-지금부터 결제 완료된 고객의 **1:1 프리미엄 심층 리포트** 데이터를 생성합니다.
+
+        let userSaju = null;
+        if (birth_info) {
+            const [bDate, bTime] = birth_info.split(' ');
+            userSaju = calculateSaju(bDate, bTime || '12:00');
+        }
+
+        const isMbtiMode = report_type && report_type.includes('MBTI');
+        const hasSpecialRequest = special_requests && special_requests.trim() !== '' && special_requests !== '없음';
+
+        const expertPersona = isMbtiMode
+            ? `당신은 명리학 35년 경력의 현직 역술인이자 공인 MBTI 전문가입니다.`
+            : `당신은 명리학 35년 경력의 현직 역술인입니다.`;
+
+        const specialRequestSchema = hasSpecialRequest
+            ? `  "specialRequestAnalysis": "(상세 분석)",\n  "specialRequestKeywords": ["핵심1", "핵심2", "핵심3"],`
+            : `  "specialRequestAnalysis": "",\n  "specialRequestKeywords": [],`;
+
+        const systemPrompt = `${expertPersona} 프리미엄 심층 리포트를 작성합니다.
 
 [핵심 요구사항]
-반드시 아래의 JSON 구조에 맞춰 **순수한 JSON 객체 하나만** 응답하세요. 
-설명이나 마크다운 코드 블록을 절대 포함하지 마세요.
+반드시 아래의 JSON 구조에 맞춰 **순수한 JSON 객체 하나만** 응답하세요.
 
 [JSON 스키마]
 {
-  "congenitalSummary": "(1,000자 이상) 분석",
-  "wealthAnalysis": "(1,000자 이상) 분석",
-  "relationshipAnalysis": "(1,000자 이상) 분석",
-  "healthAnalysis": "(1,000자 이상) 분석",
-  "macroDecadeTrend": "(1,000자 이상) 분석",
-  "monthlyLuckDetail": "(1,000자 이상) 분석",
-  "riskAnalysis": "(1,000자 이상) 분석",
-  "coreLifeMission": "(1,000자 이상) 분석",
-  "strategicDirective": "(1,000자 이상) 분석",
+  "luckyItems": {
+    "color": "행운의 색상과 활용법",
+    "number": "행운의 숫자와 의미",
+    "direction": "도움되는 방향",
+    "habit": "일상 습관 1가지"
+  },
+  "congenitalSummary": "▶ 소주제... (1,000자 이상)",
+  "congenitalKeywords": ["키워드1", "키워드2", "키워드3"],
+  "wealthAnalysis": "...",
+  "wealthKeywords": ["직업운", "재물축적", "투자성향"],
+  "relationshipAnalysis": "...",
+  "relationshipKeywords": ["인복", "연애운", "사회성"],
+  "healthAnalysis": "...",
+  "healthKeywords": ["주의기관", "에너지", "관리법"],
+  "macroDecadeTrend": "...",
+  "macroDecadeKeywords": ["대운흐름", "전성기", "준비기"],
+  "monthlyLuckDetail": "...",
+  "monthlyLuckKeywords": ["월별핵심", "상반기", "하반기"],
+  "riskAnalysis": "...",
+  "riskKeywords": ["주의사항", "방어기제", "해결책"],
+  "coreLifeMission": "...",
+  "coreLifeKeywords": ["사명", "목표", "가치"],
+${specialRequestSchema}
+  "strategicDirective": "▶ 지침... (체크리스트용 구체적 지침들)",
+  "strategicKeywords": ["핵심지침1", "핵심지침2", "핵심지침3"],
   "quarterlyLuck": [
-    { "period": "1분기", "summary": "분기 요약", "point": "지침" },
-    { "period": "2분기", "summary": "분기 요약", "point": "지침" },
-    { "period": "3분기", "summary": "분기 요약", "point": "지침" },
-    { "period": "4분기", "summary": "분기 요약", "point": "지침" }
+    { "period": "1분기", "summary": "흐름 요약", "point": "행동 지침" }
   ]
 }
 
 [작성 수칙]
-1. 모든 필드는 반드시 **1,000자 이상의 매우 방대한 분량**이어야 합니다.
-2. JSON 문법을 완벽히 준수하세요.`;
+1. 모든 필드는 매우 상세하게 작성.
+2. 각 필드별 'Keywords'는 해당 분석 내용을 관통하는 단어 3개 선정.
+3. 실질적이고 현실적인 행운 아이템 추천.
+4. 오직 JSON만 출력.`;
 
-        const userQuery = `내담자: ${name}\nMBTI: ${mbti}\n생년월일시: ${birth_info}\n요청: ${special_requests}\n궁합정보: ${JSON.stringify(partner_info)}`;
+        const sajuContext = userSaju ? `[사주] 일간: ${userSaju.dayMaster.chinese}, 오행: 목${userSaju.elementRatio.wood} 화${userSaju.elementRatio.fire} 토${userSaju.elementRatio.earth} 금${userSaju.elementRatio.metal} 수${userSaju.elementRatio.water}` : '';
+        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birth_info}, 유형: ${report_type}, 요청: ${special_requests}\n${sajuContext}`;
 
-        // 3. Generate Report
         const { model } = getAIProvider(0);
-        const { text } = await generateText({
-            model,
-            system: systemPrompt,
-            prompt: userQuery,
-            maxTokens: 8192,
-        } as any);
+        const { text } = await generateText({ model, system: systemPrompt, prompt: userQuery, maxTokens: 8192 } as any);
 
-        // 4. Extract & Parse JSON
-        let cleanText = text.trim();
-        if (cleanText.startsWith('```')) {
-            cleanText = cleanText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+        let cleanedText = text.trim();
+        if (cleanedText.startsWith('```')) {
+            cleanedText = cleanedText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
         }
 
-        try {
-            const sajuData = JSON.parse(cleanText);
+        const parsedData = JSON.parse(cleanedText);
+        const dataToSave = { ...parsedData, userSaju, reportType: report_type, mbti, clientName: name, birthInfo: birth_info };
 
-            // 5. Save to DB
-            const { error: updateError } = await supabase
-                .from('deep_report_requests')
-                .update({ 
-                    generated_data: sajuData,
-                    generated_at: new Date().toISOString(),
-                    status: 'paid' 
-                })
-                .eq('order_id', orderId);
+        await supabase.from('deep_report_requests').update({ generated_data: dataToSave, generated_at: new Date().toISOString(), status: 'paid' }).eq('order_id', orderId);
 
-            if (updateError) throw updateError;
-        } catch (jsonError) {
-            console.error('JSON Parsing failed in background:', jsonError);
-            // Fallback: save raw text if it looks like JSON
-            if (cleanText.includes('{') && cleanText.includes('}')) {
-                 // Try basic repair
-                 let repaired = cleanText;
-                 const openB = (repaired.match(/{/g) || []).length;
-                 const closeB = (repaired.match(/}/g) || []).length;
-                 if (openB > closeB) repaired += '}'.repeat(openB - closeB);
-                 
-                 const sajuData = JSON.parse(repaired);
-                 await supabase.from('deep_report_requests').update({ generated_data: sajuData }).eq('order_id', orderId);
-            }
-        }
-
-        return res.status(200).json({ success: true, message: 'Report generated and saved' });
+        return res.status(200).json({ success: true, message: 'Generated' });
     } catch (error: any) {
-        console.error('Background generation error:', error);
         return res.status(500).json({ success: false, message: error.message });
     }
 }

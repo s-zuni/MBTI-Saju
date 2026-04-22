@@ -19,19 +19,15 @@ export const generateHighResPDF = async (element: HTMLElement, filename: string)
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      y: window.scrollY,
-      x: window.scrollX,
-      // We don't want to capture scrollbars if any
-      windowWidth: document.documentElement.offsetWidth,
-      windowHeight: document.documentElement.offsetHeight,
+      width: 794, // Fixed A4 width at 96 DPI (~210mm)
       onclone: (clonedDoc) => {
-        // Any specific clone manipulations can be done here.
-        // E.g., making sure hidden things are visible in the clone
         const target = clonedDoc.getElementById(element.id);
         if (target) {
             target.style.display = 'block';
             target.style.position = 'relative';
             target.style.left = '0';
+            target.style.top = '0';
+            target.style.width = '210mm';
         }
       }
     });

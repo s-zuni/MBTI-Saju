@@ -203,33 +203,37 @@ const AdminDeepReports: React.FC = () => {
              cleanText = cleanText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
           }
 
-          try {
-             // 1. Try direct parse
-             const sajuData = JSON.parse(cleanText);
-             updateModalSajuData(sajuData);
-             updateModalContent(Object.values(sajuData).filter(v => typeof v === 'string' && v.length > 100).join('\n\n'));
-          } catch (e) {
-             // 2. Partial repair for streaming
-             try {
-                let repaired = cleanText;
-                // Basic balance for unclosed braces
-                const openB = (repaired.match(/{/g) || []).length;
-                const closeB = (repaired.match(/}/g) || []).length;
-                if (openB > closeB) repaired += '}'.repeat(openB - closeB);
-                
-                const openA = (repaired.match(/\[/g) || []).length;
-                const closeA = (repaired.match(/\]/g) || []).length;
-                if (openA > closeA) repaired += ']'.repeat(openA - closeA);
-
-                const sajuData = JSON.parse(repaired);
-                updateModalSajuData(sajuData);
-                // Preview the text content being generated inside the JSON
-                updateModalContent(Object.values(sajuData).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'));
-             } catch (repairErr) {
-                // Not enough data yet
-             }
+          const tryParse = (txt: string) => {
+            try { return JSON.parse(txt); } catch { return null; }
+          };
+          const tryRepair = (txt: string) => {
+            try {
+              let r = txt;
+              const ob = (r.match(/{/g)||[]).length, cb = (r.match(/}/g)||[]).length;
+              if (ob > cb) r += '}'.repeat(ob - cb);
+              const oa = (r.match(/\[/g)||[]).length, ca = (r.match(/\]/g)||[]).length;
+              if (oa > ca) r += ']'.repeat(oa - ca);
+              return JSON.parse(r);
+            } catch { return null; }
+          };
+          const parsed = tryParse(cleanText) || tryRepair(cleanText);
+          if (parsed) {
+            updateModalSajuData(parsed);
+            updateModalContent(Object.values(parsed).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'));
           }
         }
+        // After stream ends: enrich with req metadata for PDF template
+        setReportModal(prev => {
+          if (!prev.sajuData) return prev;
+          const enriched = {
+            ...prev.sajuData,
+            reportType: req.report_type,
+            mbti: req.mbti,
+            clientName: req.profiles?.name,
+            birthInfo: req.birth_info,
+          };
+          return { ...prev, sajuData: enriched };
+        });
       }
 
     } catch (error) {
@@ -544,7 +548,7 @@ const AdminDeepReports: React.FC = () => {
 
       {/* Hidden PDF Template Container */}
       {reportModal.isOpen && reportModal.sajuData && (
-        <div id="deep-report-pdf-wrapper" className="absolute" style={{ top: '-99999px', left: '-99999px', zIndex: -50 }}>
+        <div id="deep-report-pdf-wrapper" className="absolute" style={{ top: '-99999px', left: '-99999px', zIndex: -50, width: '210mm' }}>
           <DeepReportPDFTemplate 
             sajuData={reportModal.sajuData} 
             parsedContent={reportModal.sajuData} 
