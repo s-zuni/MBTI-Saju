@@ -52,34 +52,35 @@ export default async function handler(req: Request) {
         const systemPrompt = `${expertPersona} 프리미엄 심층 리포트를 작성합니다.
 
 [핵심 요구사항]
-반드시 아래의 JSON 구조에 맞춰 **순수한 JSON 객체 하나만** 응답하세요.
+반드시 아래의 JSON 구조에 맞춰 **순수한 JSON 객체 하나만** 응답하세요. 모든 분석은 '개조식(bullet points)'으로 작성하며, 각 섹션의 분량을 현재보다 1.5배 늘려 매우 상세하게 기술합니다.
 
 [JSON 스키마]
 {
+  "userSaju": { /* 전달된 사주 데이터를 그대로 포함 */ },
   "luckyItems": {
     "color": "행운의 색상과 활용법",
     "number": "행운의 숫자와 의미",
     "direction": "도움되는 방향",
     "habit": "일상 습관 1가지"
   },
-  "congenitalSummary": "▶ 소주제1\\n내용... (1,000자 이상)",
+  "congenitalSummary": "▶ 소주제\\n- 개조식 내용1...\\n- 개조식 내용2...",
   "congenitalKeywords": ["키워드1", "키워드2", "키워드3"],
-  "wealthAnalysis": "(전체 1,000자 이상)",
+  "wealthAnalysis": "▶ 재물 및 직업 상세 분석\\n- 내용...",
   "wealthKeywords": ["직업운", "재물축적", "투자성향"],
-  "relationshipAnalysis": "(전체 1,000자 이상)",
+  "relationshipAnalysis": "▶ 대인관계 및 애정 상세 분석\\n- 내용...",
   "relationshipKeywords": ["인복", "연애운", "사회성"],
-  "healthAnalysis": "(전체 1,000자 이상)",
+  "healthAnalysis": "▶ 건강 및 생체리듬 상세 분석\\n- 내용...",
   "healthKeywords": ["주의기관", "에너지", "관리법"],
-  "macroDecadeTrend": "(전체 1,000자 이상)",
+  "macroDecadeTrend": "▶ 대운의 흐름 분석\\n- 내용...",
   "macroDecadeKeywords": ["대운흐름", "전성기", "준비기"],
-  "yearlyLuckDetail": "(추후 3년 간의 연도별 상세 흐름 및 전략. 전체 1,000자 이상)",
+  "yearlyLuckDetail": "▶ 추후 3개년 상세 흐름\\n- 내용...",
   "yearlyLuckKeywords": ["내년운세", "내후년운세", "3년전략"],
-  "riskAnalysis": "(전체 1,000자 이상)",
+  "riskAnalysis": "▶ 리스크 관리 및 방어 전략\\n- 내용...",
   "riskKeywords": ["주의사항", "방어기제", "해결책"],
-  "coreLifeMission": "(전체 1,000자 이상)",
+  "coreLifeMission": "▶ 삶의 사명과 과업\\n- 내용...",
   "coreLifeKeywords": ["사명", "목표", "가치"],
 ${specialRequestSchema}
-  "strategicDirective": "▶ 지침1\\n내용... (체크리스트용 구체적 지침들)",
+  "strategicDirective": "▶ 마스터 핵심 지침\\n- 지침1\\n- 지침2...",
   "strategicKeywords": ["핵심지침1", "핵심지침2", "핵심지침3"],
   "quarterlyLuck": [
     { "period": "1분기", "summary": "흐름 요약", "point": "행동 지침" },
@@ -89,14 +90,19 @@ ${specialRequestSchema}
   ]
 }
 
-[작성 수칙]
-1. 모든 분석 필드는 1,000자 이상으로 매우 상세하게 작성.
-2. 각 필드별 'Keywords'는 해당 분석 내용을 관통하는 가장 중요한 단어 3개를 선정.
-3. 'luckyItems'는 내담자의 사주 오행과 MBTI를 고려하여 실질적으로 도움이 되는 것을 추천.
-4. 모든 텍스트는 전문적이면서도 내담자가 바로 실천할 수 있는 현실적인 조언 위주로 작성.
-5. 오직 JSON만 출력.`;
+[작성 수칙 - 엄수]
+1. **영어 사용 금지**: 제목, 부제목, 내용 모두 한글만 사용합니다. (예: 'Your Personal Lucky Totems' -> '나의 행운 요소')
+2. **메타 텍스트 출력 금지**: "(1,000자 이상)", "(상세 분석)" 등 요구사항 텍스트는 절대 출력하지 마세요.
+3. **분량 확대**: 각 분석 필드는 최소 1,500자 이상, 매우 구체적이고 깊이 있게 작성하세요.
+4. **개조식 작성**: 모든 내용은 '▶ 소주제'와 '- 불렛포인트'를 활용한 개조식으로 작성하여 가독성을 높이세요.
+5. **오행 표기**: Wood, Fire 등 영어 표기 대신 '목(木)', '화(火)', '토(土)', '금(金)', '수(水)' 한글(한자) 조합으로만 표기하세요.
+6. **사주 데이터**: 'userSaju' 필드에는 아래 제공되는 [사주 데이터] JSON을 그대로 복사해서 넣으세요.
+7. 오직 JSON만 출력하세요.`;
 
-        const sajuContext = `[사주] 일간: ${userSaju?.dayMaster?.chinese}(${userSaju?.dayMaster?.korean}), 오행분포: 목${userSaju?.elementRatio?.wood} 화${userSaju?.elementRatio?.fire} 토${userSaju?.elementRatio?.earth} 금${userSaju?.elementRatio?.metal} 수${userSaju?.elementRatio?.water}`;
+        const sajuContext = `[사주 데이터 JSON]
+${JSON.stringify(userSaju, null, 2)}
+
+[사주 요약] 일간: ${userSaju?.dayMaster?.chinese}(${userSaju?.dayMaster?.korean}), 오행분포: 목${userSaju?.elementRatio?.wood} 화${userSaju?.elementRatio?.fire} 토${userSaju?.elementRatio?.earth} 금${userSaju?.elementRatio?.metal} 수${userSaju?.elementRatio?.water}`;
         const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}, 유형: ${reportType}, 요청: ${specialRequest}\n${sajuContext}`;
 
         let lastError;
