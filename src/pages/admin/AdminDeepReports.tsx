@@ -117,20 +117,26 @@ const AdminDeepReports: React.FC = () => {
   };
 
   const handleSendEmail = () => {
-    const email = reportModal.currentReq?.email;
-    if (!email) return alert('이메일 정보가 없습니다.');
-    alert(`${email} 주소로 리포트 발송을 위한 연동 준비 중입니다.`);
+    const req = reportModal.currentReq;
+    if (!req || !req.email) return alert('이메일 정보가 없습니다.');
+    
+    const subject = encodeURIComponent(`[MBTI-Saju] ${req.profiles?.name || '내담자'}님의 프리미엄 심층 리포트가 완성되었습니다.`);
+    const body = encodeURIComponent(`안녕하세요, ${req.profiles?.name || '내담자'}님.\n\n요청하신 프리미엄 심층 리포트가 완성되어 전달드립니다.\n(이곳에 다운로드한 PDF 파일을 첨부해 주세요)\n\n감사합니다.`);
+    
+    window.location.href = `mailto:${req.email}?subject=${subject}&body=${body}`;
+    
     if (window.confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
-      handleUpdateStatus(reportModal.currentReq!.id, 'completed');
+      handleUpdateStatus(req.id, 'completed');
     }
   };
 
   const handleSendKakao = () => {
-    const kakaoId = reportModal.currentReq?.kakao_id;
-    if (!kakaoId) return alert('카카오톡 ID 정보가 없습니다.');
-    alert(`카카오톡 ID: ${kakaoId} 고객에게 발송을 위한 연동 준비 중입니다.`);
+    const req = reportModal.currentReq;
+    if (!req || !req.kakao_id) return alert('카카오톡 ID 정보가 없습니다.');
+    
+    alert(`카카오톡 ID: ${req.kakao_id} 고객에게 발송을 위한 연동 준비 중입니다.`);
     if (window.confirm('상태를 [발송완료]로 변경하시겠습니까?')) {
-      handleUpdateStatus(reportModal.currentReq!.id, 'completed');
+      handleUpdateStatus(req.id, 'completed');
     }
   };
 
@@ -187,105 +193,45 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // --- IMPROVED JSON-AT-START EXTRACTION ---
-          const markerStr = '[SAJU_DATA_JSON:';
-          const markerIdx = generatedText.indexOf(markerStr);
+          // --- SIMPLE & ROBUST JSON PARSING ---
+          // Since the AI outputs PURE JSON, we just try to parse it.
+          // We need to handle the streaming nature (partial JSON).
+          let cleanText = generatedText.trim();
           
-          if (markerIdx !== -1) {
-             const startIdx = markerIdx + markerStr.length;
-             // JSON is at the start, so we look for the closing bracket
-             let endIdx = -1;
-             
-             // Track nesting to find the correct closing bracket
-             let openBraces = 0;
-             let foundStart = false;
-             for (let i = startIdx; i < generatedText.length; i++) {
-                if (generatedText[i] === '{') {
-                   openBraces++;
-                   foundStart = true;
-                } else if (generatedText[i] === '}') {
-                   openBraces--;
-                   if (foundStart && openBraces === 0) {
-                      endIdx = i;
-                      break;
-                   }
-                }
-             }
-
-             if (endIdx !== -1 && endIdx > startIdx) {
-                let jsonStr = generatedText.substring(startIdx, endIdx + 1).trim();
-                
-                try {
-                   const sajuData = JSON.parse(jsonStr);
-                   updateModalSajuData(sajuData);
-                   
-                   // Once we have full JSON at the start, we can consider the report "structured"
-                   // The text after the JSON block is the human-readable report
-                   const textAfterJson = generatedText.substring(generatedText.indexOf(']', endIdx) + 1).trim();
-                   if (textAfterJson) {
-                      updateModalContent(textAfterJson);
-                   }
-                } catch (e) {
-                   // Still streaming the JSON block
-                }
-             }
-          } else {
-             // Still looking for the marker or marker is not present (legacy or error)
-             updateModalContent(generatedText);
+          // Remove any potential markdown wrappers if AI ignores instructions
+          if (cleanText.startsWith('```')) {
+             cleanText = cleanText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
           }
-        }
 
-        // --- FINAL RECOVERY ATTEMPT ---
-        setReportModal(prev => {
-          if (!prev.sajuData) {
-            console.warn('Standard parsing failed. Attempting deep recovery...');
-            
-            // Look for any large JSON-like block in the text
-            try {
-              const markerIdx = generatedText.indexOf('[SAJU_DATA_JSON:');
-              let rawJson = '';
-              if (markerIdx !== -1) {
-                rawJson = generatedText.substring(markerIdx + 16).trim();
-                if (rawJson.endsWith(']')) rawJson = rawJson.slice(0, -1);
-              } else {
-                // Last ditch: look for the last '{' that seems like a start of our schema
-                const allOpenBraces = [...generatedText.matchAll(/{/g)];
-                if (allOpenBraces.length > 0) {
-                   // Our schema is huge, so it's likely one of the early braces after text
-                   const potentialStart = generatedText.indexOf('{"congenitalSummary"');
-                   if (potentialStart !== -1) {
-                     rawJson = generatedText.substring(potentialStart);
-                   }
-                }
-              }
-
-              if (rawJson) {
-                // Intensive Repair: Close all unclosed quotes and braces
-                let repaired = rawJson.trim();
-                if (repaired.startsWith('```')) {
-                   repaired = repaired.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
-                }
-
-                // Balance braces
+          try {
+             // 1. Try direct parse
+             const sajuData = JSON.parse(cleanText);
+             updateModalSajuData(sajuData);
+             updateModalContent(Object.values(sajuData).filter(v => typeof v === 'string' && v.length > 100).join('\n\n'));
+          } catch (e) {
+             // 2. Partial repair for streaming
+             try {
+                let repaired = cleanText;
+                // Basic balance for unclosed braces
                 const openB = (repaired.match(/{/g) || []).length;
                 const closeB = (repaired.match(/}/g) || []).length;
                 if (openB > closeB) repaired += '}'.repeat(openB - closeB);
                 
-                const openArr = (repaired.match(/\[/g) || []).length;
-                const closeArr = (repaired.match(/\]/g) || []).length;
-                if (openArr > closeArr) repaired += ']'.repeat(openArr - closeArr);
+                const openA = (repaired.match(/\[/g) || []).length;
+                const closeA = (repaired.match(/\]/g) || []).length;
+                if (openA > closeA) repaired += ']'.repeat(openA - closeA);
 
-                console.log('Recovery JSON Preview:', repaired.substring(0, 50) + '...');
                 const sajuData = JSON.parse(repaired);
-                return { ...prev, sajuData };
-              }
-            } catch (err) {
-              console.error('Deep recovery failed globally:', err);
-            }
+                updateModalSajuData(sajuData);
+                // Preview the text content being generated inside the JSON
+                updateModalContent(Object.values(sajuData).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'));
+             } catch (repairErr) {
+                // Not enough data yet
+             }
           }
-          return prev;
-        });
+        }
       }
+
     } catch (error) {
       console.error(error);
       alert('리포트 생성 중 오류가 발생했습니다.');
@@ -403,8 +349,8 @@ const AdminDeepReports: React.FC = () => {
                                if (req.generated_data) {
                                  setReportModal({
                                    isOpen: true,
-                                   content: '', // Can be filled if we save text too, but sajuData is enough for PDF
-                                   title: `${req.profiles?.name || '내담자'}님의 저장된 리포트`,
+                                   content: Object.values(req.generated_data).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'),
+                                   title: `${req.profiles?.name || '내담자'}님의 심층 리포트`,
                                    currentReq: req,
                                    sajuData: req.generated_data
                                  });
