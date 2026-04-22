@@ -77,12 +77,11 @@ const PageWrapper = ({
   </div>
 );
 
-const SectionHeader = ({ num, title, sub }: { num: string; title: string; sub?: string }) => (
+const SectionHeader = ({ num, title }: { num: string; title: string }) => (
   <div className="w-full mb-6 pb-4 border-b border-slate-200 flex items-end gap-4">
     <span className="text-4xl font-black text-slate-100 leading-none tracking-tighter">{num}</span>
     <div className="flex-1">
       <p className="text-2xl font-black text-slate-900 leading-tight tracking-tight">{title}</p>
-      {sub && <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase mt-1">{sub}</p>}
     </div>
     <div className="w-12 h-12 rounded-full border-2 border-slate-50 flex items-center justify-center text-[10px] font-black text-slate-100 italic">VIP</div>
   </div>
@@ -119,26 +118,25 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
         </div>
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="w-12 h-px bg-amber-400 mb-10 opacity-50" />
-          <p className="text-[10px] font-black tracking-[0.6em] text-amber-400 uppercase mb-4">Premium Analysis Report</p>
+          <p className="text-[10px] font-black tracking-[0.6em] text-amber-400 uppercase mb-4">심층 분석 리포트</p>
           <h1 className="text-6xl font-black text-white mb-8 tracking-tighter leading-tight italic">Deep<br />Strategy</h1>
           <div className="h-px w-48 bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-10" />
-          <p className="text-sm font-bold text-slate-400 mb-2">Exclusively prepared for</p>
+          <p className="text-sm font-bold text-slate-400 mb-2">특별히 준비된</p>
           <p className="text-4xl font-black text-white tracking-tight">{clientName} 님</p>
           <p className="mt-4 px-4 py-1.5 rounded-full border border-slate-800 text-[10px] font-black tracking-widest text-slate-500 uppercase bg-slate-900/50">
             {sajuData?.reportType || '사주 명리학 심층 분석'}
           </p>
-          <div className="absolute bottom-[-100px] text-[10px] font-bold text-slate-700 tracking-widest">EST. 2024 · MBTI-SAJU ECOSYSTEM</div>
         </div>
       </PageWrapper>
 
-      {/* 2. Congenital + Lucky Items */}
+      {/* 2. 선천적 기질 + 행운 요소 */}
       <PageWrapper pageNumber={2} totalPages={TOTAL}>
-        <SectionHeader num="01" title="선천적 기질 및 행운의 요소" sub="Congenital Traits & Totems" />
+        <SectionHeader num="01" title="선천적 기질 및 행운의 요소" />
         <div className="grid grid-cols-12 gap-4 mb-6">
           <div className="col-span-8 bg-slate-50 rounded-2xl p-6 border border-slate-200">
              <div className="flex items-center gap-2 mb-4 text-violet-600">
                <div className="w-1 h-4 bg-current rounded-full" />
-               <p className="text-xs font-black uppercase tracking-widest">Personal Saju Grid</p>
+               <p className="text-xs font-black uppercase tracking-widest">사주 원국</p>
              </div>
              <div className="grid grid-cols-4 gap-2">
                {['year', 'month', 'day', 'hour'].map((k: any) => {
@@ -170,10 +168,10 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
           </div>
           <div className="grid grid-cols-4 gap-3">
             {[
-              { label: 'Color', val: lucky?.color || '분석 중', icon: '🎨' },
-              { label: 'Number', val: lucky?.number || '분석 중', icon: '🔢' },
-              { label: 'Direction', val: lucky?.direction || '분석 중', icon: '🧭' },
-              { label: 'Habit', val: lucky?.habit || '분석 중', icon: '✅' },
+              { label: '행운의 색', val: lucky?.color || '분석 중', icon: '🎨' },
+              { label: '행운의 숫자', val: lucky?.number || '분석 중', icon: '🔢' },
+              { label: '도움되는 방향', val: lucky?.direction || '분석 중', icon: '🧭' },
+              { label: '추천 습관', val: lucky?.habit || '분석 중', icon: '✅' },
             ].map((item, i) => (
               <div key={i} className="bg-white/80 p-3 rounded-xl border border-amber-100">
                 <p className="text-[9px] font-black text-amber-400 uppercase mb-1 tracking-tighter">{item.label}</p>
@@ -190,20 +188,19 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
 
       {/* Repeating pattern for other pages with keyword highlights */}
       {[
-        { num: '02', title: '재물적 성취 및 직업 전략', sub: 'Wealth & Career', content: parsedContent.wealthAnalysis, kw: sajuData?.wealthKeywords },
-        { num: '03', title: '사회적 관계 및 대인 역학', sub: 'Relationship Dynamics', content: parsedContent.relationshipAnalysis, kw: sajuData?.relationshipKeywords },
-        { num: '04', title: '생체 리듬 및 건강 최적화', sub: 'Health & Vitality', content: parsedContent.healthAnalysis, kw: sajuData?.healthKeywords },
-        { num: '05', title: '향후 10년의 대운 흐름', sub: 'Macro Decade Trend', content: parsedContent.macroDecadeTrend, kw: sajuData?.macroDecadeKeywords, dark: true },
-        { num: '06', title: '올해 12개월 월별 운세', sub: 'Monthly Luck Detail', content: parsedContent.monthlyLuckDetail, kw: sajuData?.monthlyLuckKeywords },
-        { num: '07', title: '리스크 관리 및 방어 전략', sub: 'Risk Analysis', content: parsedContent.riskAnalysis, kw: sajuData?.riskKeywords, alert: true },
-        { num: '08', title: '삶의 근본적 과업과 사명', sub: 'Core Life Mission', content: parsedContent.coreLifeMission, kw: sajuData?.coreLifeKeywords, dark: true },
+        { num: '02', title: '재물적 성취 및 직업 전략', content: parsedContent.wealthAnalysis, kw: sajuData?.wealthKeywords },
+        { num: '03', title: '사회적 관계 및 대인 역학', content: parsedContent.relationshipAnalysis, kw: sajuData?.relationshipKeywords },
+        { num: '04', title: '생체 리듬 및 건강 최적화', content: parsedContent.healthAnalysis, kw: sajuData?.healthKeywords },
+        { num: '05', title: '향후 10년의 대운 흐름', content: parsedContent.macroDecadeTrend, kw: sajuData?.macroDecadeKeywords, dark: true },
+        { num: '06', title: '추후 3개년 연도별 상세 흐름', content: parsedContent.yearlyLuckDetail, kw: sajuData?.yearlyLuckKeywords },
+        { num: '07', title: '리스크 관리 및 방어 전략', content: parsedContent.riskAnalysis, kw: sajuData?.riskKeywords, alert: true },
+        { num: '08', title: '삶의 근본적 과업과 사명', content: parsedContent.coreLifeMission, kw: sajuData?.coreLifeKeywords, dark: true },
       ].map((page, idx) => (
         <PageWrapper key={idx} pageNumber={idx + 3} totalPages={TOTAL} bg={page.dark ? 'bg-slate-950' : 'bg-white'} extraClass={page.dark ? 'text-white' : ''}>
           <div className={`w-full mb-6 pb-4 border-b flex items-end gap-4 ${page.dark ? 'border-slate-800' : 'border-slate-200'}`}>
             <span className={`text-4xl font-black leading-none tracking-tighter ${page.dark ? 'text-slate-800' : 'text-slate-100'}`}>{page.num}</span>
             <div className="flex-1">
               <p className={`text-2xl font-black leading-tight tracking-tight ${page.dark ? 'text-white' : 'text-slate-900'}`}>{page.title}</p>
-              <p className={`text-[10px] font-black tracking-[0.2em] uppercase mt-1 ${page.dark ? 'text-slate-600' : 'text-slate-400'}`}>{page.sub}</p>
             </div>
           </div>
           <div className={`rounded-2xl p-8 border flex-1 overflow-hidden ${page.dark ? 'bg-slate-900/50 border-slate-800' : page.alert ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-200'}`}>
@@ -215,7 +212,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       {/* Special Request */}
       {hasSpecial && (
         <PageWrapper pageNumber={TOTAL - 2} totalPages={TOTAL}>
-          <SectionHeader num="09" title="특별 요청 사항 분석" sub="Special Request Analysis" />
+          <SectionHeader num="09" title="특별 요청 사항 분석" />
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 flex-1 overflow-hidden">
             {renderStructured(parsedContent.specialRequestAnalysis, sajuData?.specialRequestKeywords)}
           </div>
@@ -224,7 +221,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
 
       {/* Quarterly */}
       <PageWrapper pageNumber={TOTAL - 1} totalPages={TOTAL}>
-        <SectionHeader num={hasSpecial ? '10' : '09'} title="분기별 핵심 행동 지침" sub="Quarterly Action Plan" />
+        <SectionHeader num={hasSpecial ? '10' : '09'} title="분기별 핵심 행동 지침" />
         <div className="grid grid-cols-2 gap-4 flex-1">
           {(sajuData?.quarterlyLuck || []).map((q: any, i: number) => (
             <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col">
@@ -243,8 +240,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       <PageWrapper bg="bg-slate-950" extraClass="text-white" pageNumber={TOTAL} totalPages={TOTAL}>
         <div className="w-full mb-8 pb-4 border-b border-amber-500/30 flex items-end justify-between">
           <div>
-            <p className="text-3xl font-black text-amber-400 tracking-tighter italic">Strategic Directive</p>
-            <p className="text-[10px] font-black text-slate-600 tracking-[0.2em] uppercase mt-1">Final Master Plan</p>
+            <p className="text-3xl font-black text-amber-400 tracking-tighter italic">마스터 핵심 지침</p>
           </div>
           <div className="w-16 h-16 border-2 border-amber-500/20 rounded-full flex items-center justify-center">
              <div className="w-12 h-12 border border-amber-500/40 rounded-full flex items-center justify-center text-[10px] font-black text-amber-400">SEAL</div>
@@ -258,7 +254,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
 
         <div className="mt-8 flex flex-col items-center">
           <div className="h-px w-24 bg-slate-800 mb-4" />
-          <p className="text-[10px] font-black tracking-[0.5em] text-slate-700 uppercase">Premium Certification</p>
+          <p className="text-[10px] font-black tracking-[0.5em] text-slate-700 uppercase">인증된 프리미엄 분석 리포트</p>
           <p className="text-[8px] text-slate-800 mt-2">© 2024 MBTI-SAJU SYNERGY. All Rights Reserved.</p>
         </div>
       </PageWrapper>
