@@ -32,12 +32,9 @@ yarn-error.log*
 
 .granite
 
-.granite
+# build artifacts
+/build
 
-.granite
-
-.granite
-
-.granite
-
-.granite
+# examples
+/apps-in-toss-examples-main
+/apps-in-toss-examples-main.zip

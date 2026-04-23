@@ -335,8 +335,8 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
         <SectionHeader num="07" title="맞춤 파트너 및 피해야 할 유형 분석" />
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 flex-1 overflow-hidden">
           {renderStructured(
-            parsedContent.partnerAnalysis || parsedContent.yearlyLuckDetail,
-            sajuData?.partnerKeywords || sajuData?.yearlyLuckKeywords
+            parsedContent.partnerAnalysis,
+            sajuData?.partnerKeywords
           )}
         </div>
       </PageWrapper>
