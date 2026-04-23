@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, Home, Receipt } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+
+const DeepReportEventModal = lazy(() => import('../components/DeepReportEventModal'));
 
 const PaymentSuccess: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -9,6 +11,8 @@ const PaymentSuccess: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showEventModal, setShowEventModal] = useState(false);
+    const [session, setSession] = useState<any>(null);
 
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
@@ -55,6 +59,8 @@ const PaymentSuccess: React.FC = () => {
 
                 // 3. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
                 await supabase.auth.refreshSession();
+                const { data: { session: refreshedSession } } = await supabase.auth.getSession();
+                setSession(refreshedSession);
                 
                 // 추가적으로 프로필 데이터를 다시 불러와서 UI 상태를 확실히 함
                 const { data: { user } } = await supabase.auth.getUser();
@@ -62,24 +68,40 @@ const PaymentSuccess: React.FC = () => {
                    await supabase.from('profiles').select('*').eq('id', user.id).single();
                 }
 
-                // 4. 심층 리포트인 경우 자동 생성 트리거
+                // 4. 심층 리포트인 경우 자동 생성 트리거 + 이벤트 팝업
                 if (orderId?.startsWith('DEEPREPORT')) {
                     setIsGenerating(true);
-                    // 비동기로 호출 (응답을 기다리지 않고 진행하거나, 사용자 경험을 위해 로딩 표시)
                     fetch('/api/generate-and-save-report', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId }),
                     }).catch(err => console.error('Auto-generation trigger failed:', err))
                       .finally(() => setIsGenerating(false));
+
+                    // 이벤트 참여 여부 확인 후 팝업 노출
+                    if (refreshedSession?.user?.id) {
+                        const { data: existingClaim } = await supabase
+                            .from('event_claims')
+                            .select('id')
+                            .eq('user_id', refreshedSession.user.id)
+                            .eq('event_type', 'deep_report_credit_500')
+                            .maybeSingle();
+
+                        if (!existingClaim) {
+                            // 약간의 딜레이 후 이벤트 팝업 표시 (결제 완료 UX 확인 후)
+                            setTimeout(() => setShowEventModal(true), 1500);
+                        }
+                    }
                 }
 
                 setLoading(false);
                 
-                // 3초 후 내역 페이지로 자동 이동
-                setTimeout(() => {
-                    navigate('/usage-history', { replace: true });
-                }, 3000);
+                // 이벤트 팝업이 없는 경우에만 자동 이동
+                if (!orderId?.startsWith('DEEPREPORT')) {
+                    setTimeout(() => {
+                        navigate('/usage-history', { replace: true });
+                    }, 3000);
+                }
 
             } catch (err: any) {
                 console.error('Payment Confirmation Error:', err);
@@ -140,6 +162,13 @@ const PaymentSuccess: React.FC = () => {
                             </div>
                         )}
                     </div>
+                ) : orderId?.startsWith('EVT500') ? (
+                    <div className="space-y-3 mb-6">
+                        <p className="text-slate-900 font-black text-lg">🎉 500크레딧이 지급되었습니다!</p>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                            이벤트 크레딧으로 다양한 운세 서비스를 마음껏 이용하세요.
+                        </p>
+                    </div>
                 ) : (
                     <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
                 )}
@@ -160,6 +189,15 @@ const PaymentSuccess: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* 심층 리포트 구매 고객 이벤트 팝업 */}
+            <Suspense fallback={null}>
+                <DeepReportEventModal
+                    isOpen={showEventModal}
+                    onClose={() => setShowEventModal(false)}
+                    session={session}
+                />
+            </Suspense>
         </div>
     );
 };

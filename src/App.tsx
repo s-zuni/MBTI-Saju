@@ -222,6 +222,7 @@ function AppContent({
   const location = useLocation();
   const navigate = useNavigate();
   const isChatPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/room');
+  const isAdminPage = location.pathname.startsWith('/admin');
   
   // Handle automatic modal opening from share link
   useEffect(() => {
@@ -282,7 +283,7 @@ function AppContent({
                 <Routes>
                   <Route path="/" element={
                     <>
-                      <HeroSection onStart={handleStart} user={session?.user} />
+                      <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => { if (session) openModal('deepReport'); else openModal('analysis', 'login'); }} />
                       <FeatureGrids />
 
 
@@ -419,7 +420,7 @@ function AppContent({
               )}
 
               {!isChatPage && <Footer />}
-              {!isChatPage && <BottomNav />}
+              {!isAdminPage && <BottomNav />}
 
 
               {/* Modals are now lazy loaded and managed by openModal store */}

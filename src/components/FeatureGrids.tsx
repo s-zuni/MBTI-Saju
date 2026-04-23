@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Compass, Users, MessageSquare, Layers } from 'lucide-react';
+import { Compass, MessageSquare, Layers, Users, Sparkles, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
@@ -26,19 +26,23 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
         }
     };
 
-    const mainCategories = [
+    const gridItems = [
         {
             icon: Compass,
             label: '운세 보기',
             sub: '오늘의 운세 & 토정비결',
-            bg: 'from-amber-400 to-orange-500',
+            color: 'from-amber-400 to-orange-500',
+            iconBg: 'bg-amber-50',
+            iconColor: 'text-amber-600',
             action: () => navigate('/fortune'),
         },
         {
             icon: MessageSquare,
             label: '운명 심층 상담',
-            sub: 'MBTI x 사주 융합 분석',
-            bg: 'from-violet-500 to-violet-700',
+            sub: 'AI 사주 상담',
+            color: 'from-violet-500 to-violet-700',
+            iconBg: 'bg-violet-50',
+            iconColor: 'text-violet-600',
             action: () => {
                 if (!session) {
                     openModal('analysis', 'login');
@@ -52,49 +56,74 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             },
         },
         {
-            icon: Sparkles,
-            label: '운세템 상점',
-            sub: '부적 & 굿즈 쇼핑',
-            bg: 'from-rose-400 to-pink-500',
-            action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
+            icon: Layers,
+            label: '타로',
+            sub: '카드로 보는 미래',
+            color: 'from-purple-500 to-purple-700',
+            iconBg: 'bg-purple-50',
+            iconColor: 'text-purple-600',
+            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
         {
             icon: Users,
             label: '커뮤니티',
             sub: '운명을 나누는 공간',
-            bg: 'from-slate-600 to-slate-800',
+            color: 'from-slate-600 to-slate-800',
+            iconBg: 'bg-slate-100',
+            iconColor: 'text-slate-600',
             action: () => navigate('/community'),
         },
         {
-            icon: Layers,
-            label: '타로',
-            sub: '카드로 보는 미래',
-            bg: 'from-purple-500 to-purple-700',
-            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
+            icon: Sparkles,
+            label: '운세템 상점',
+            sub: '부적 & 굿즈',
+            color: 'from-rose-400 to-pink-500',
+            iconBg: 'bg-rose-50',
+            iconColor: 'text-rose-500',
+            badge: 'SOON',
+            action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
+        },
+        {
+            icon: Trophy,
+            label: 'KBO 궁합',
+            sub: '나의 야구 운세',
+            color: 'from-blue-500 to-indigo-600',
+            iconBg: 'bg-blue-50',
+            iconColor: 'text-blue-600',
+            action: () => checkCreditsAndOpen(SERVICE_COSTS.KBO, () => openModal('kbo')),
         },
     ];
 
     return (
-        <div className="relative z-20 px-6 max-w-7xl mx-auto -mt-10 md:-mt-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {mainCategories.map((cat, i) => (
+        <div className="relative z-20 px-5 md:px-6 max-w-7xl mx-auto py-6 md:py-10">
+            {/* Mobile: 2-column square grid, Desktop: 3-column */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+                {gridItems.map((item, i) => (
                     <button
                         key={i}
-                        onClick={cat.action}
-                        className="group relative overflow-hidden bg-white p-8 rounded-[2rem] shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 text-left border-none"
+                        onClick={item.action}
+                        className="group relative aspect-square bg-white rounded-2xl md:rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex flex-col items-center justify-center gap-2.5 md:gap-3 p-4 overflow-hidden"
                     >
-                        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.bg} opacity-[0.03] rounded-bl-full -mr-8 -mt-8 transition-opacity group-hover:opacity-[0.08]`}></div>
+                        {/* Gradient background accent */}
+                        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${item.color} opacity-[0.04] rounded-bl-full -mr-4 -mt-4 transition-opacity group-hover:opacity-[0.1]`}></div>
 
-                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.bg} flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}>
-                            <cat.icon className="w-7 h-7" />
+                        {/* Icon */}
+                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${item.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                            <item.icon className={`w-6 h-6 md:w-7 md:h-7 ${item.iconColor}`} />
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">{cat.label}</h3>
-                        <p className="text-sm font-medium text-slate-500 leading-relaxed">{cat.sub}</p>
-
-                        <div className="absolute bottom-6 right-6 transition-all duration-500 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100">
-                            <ArrowRight className="w-6 h-6 text-slate-300" />
+                        {/* Label */}
+                        <div className="text-center relative z-10">
+                            <h3 className="text-sm md:text-base font-bold text-slate-800 mb-0.5">{item.label}</h3>
+                            <p className="text-[10px] md:text-xs font-medium text-slate-400 hidden md:block">{item.sub}</p>
                         </div>
+
+                        {/* Badge */}
+                        {item.badge && (
+                            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full shadow-sm">
+                                {item.badge}
+                            </span>
+                        )}
                     </button>
                 ))}
             </div>

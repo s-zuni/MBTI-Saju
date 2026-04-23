@@ -237,7 +237,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
     const remainingFreeMessages = MESSAGES_PER_COIN_CHARGE - (messageCount % MESSAGES_PER_COIN_CHARGE);
 
     return (
-        <div className="flex h-screen bg-white">
+        <div className="flex h-[calc(100dvh-4rem)] md:h-screen bg-white">
             {/* Sidebar */}
             <aside
                 className={`
@@ -391,7 +391,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                 </div>
 
                 {/* Input Area */}
-                <div className="sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-20 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+                <div className="sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
                     <div className="max-w-3xl mx-auto">
                         <div className="flex justify-between items-center mb-2 px-1">
                             <button 

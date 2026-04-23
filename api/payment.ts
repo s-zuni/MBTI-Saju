@@ -101,6 +101,50 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
             });
         }
 
+        // 이벤트 크레딧 패키지 (심층 리포트 구매 후 500크레딧 9,900원)
+        if (productId === 'event_credit_500') {
+            const eventType = tossData.metadata?.eventType || 'deep_report_credit_500';
+
+            // 중복 참여 방지
+            const { data: existingClaim } = await supabaseAdmin
+                .from('event_claims')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('event_type', eventType)
+                .maybeSingle();
+
+            if (existingClaim) {
+                return res.status(400).json({
+                    success: false,
+                    message: '이미 참여한 이벤트입니다.'
+                });
+            }
+
+            // 500 크레딧 부여
+            const { error: rpcError } = await supabaseAdmin.rpc('add_credits_after_payment', {
+                p_user_id: userId,
+                p_credits: 500,
+                p_amount: amount,
+                p_payment_id: paymentKey,
+                p_plan_id: productId
+            });
+
+            if (rpcError) throw rpcError;
+
+            // 이벤트 참여 기록
+            await supabaseAdmin.from('event_claims').insert({
+                user_id: userId,
+                event_type: eventType,
+                order_id: orderId,
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: '이벤트 크레딧 500개 지급 완료',
+                data: { credits: 500, toss: tossData }
+            });
+        }
+
         let addCredits = 0;
         const { data: planData, error: planError } = await supabaseAdmin
             .from('pricing_plans')

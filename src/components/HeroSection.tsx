@@ -1,63 +1,95 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, FileText, Star } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 
 interface HeroSectionProps {
   onStart: () => void;
   user?: User | null | undefined;
+  onOpenDeepReport?: () => void;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepReport }) => {
   const navigate = useNavigate();
 
+  const handleCTA = () => {
+    if (user) {
+      onOpenDeepReport?.();
+    } else {
+      onStart();
+    }
+  };
+
   return (
-    <div className="relative min-h-[500px] sm:min-h-[550px] flex items-start justify-center overflow-hidden bg-[#faf8fe] pt-32 pb-20 md:pt-40 md:pb-24">
-      {/* Aura Ethereal Background Blobs - Neutralized */}
+    <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950 pt-24 pb-10 md:pt-32 md:pb-16">
+      {/* Animated background elements */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-br from-slate-200/40 to-transparent rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-gradient-to-tl from-slate-200/30 to-transparent rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-slate-100/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-[-20%] left-[-15%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] bg-violet-400/5 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10 text-center text-slate-800">
+      <div className="max-w-7xl mx-auto px-5 relative z-10">
+        {/* Badge */}
+        <div className="flex justify-center mb-5 md:mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/10">
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 분석 · A4 10장</span>
+          </div>
+        </div>
 
-        <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tight mb-6 md:mb-10 leading-[1.05] animate-fade-up break-keep font-display">
+        {/* Main Title */}
+        <h1 className="text-center text-3xl sm:text-4xl md:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.15] text-white animate-fade-up">
           {user ? (
             <>
-              <span className="text-slate-900">{user.user_metadata?.full_name || '회원'}</span>님,<br />
-              오늘 <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-500 to-black">당신의 매력</span>을 확인하세요
+              <span className="text-violet-300">{user.user_metadata?.full_name || '회원'}</span>님의<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-amber-300">운명 심층 리포트</span>
             </>
           ) : (
             <>
-              나를 찾는<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-500 to-black">가장 투명한</span> 거울
+              당신만의<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-amber-300">운명 심층 리포트</span>
             </>
           )}
         </h1>
 
-        <p className="text-lg md:text-2xl text-slate-500/80 max-w-2xl mx-auto mb-10 md:mb-14 font-medium leading-relaxed animate-fade-up [animation-delay:200ms]">
-          MBTI 심리학과 사주 명리학의 만남.<br className="hidden md:block" />
-          오늘 너의 기분과 행운의 OOTD까지 챙겨줄게! ✨
+        <p className="text-center text-sm md:text-lg text-slate-400 max-w-xl mx-auto mb-6 md:mb-8 font-medium leading-relaxed animate-fade-up [animation-delay:200ms]">
+          MBTI 심리학과 사주 명리학의 만남.<br className="md:hidden" />
+          1,000만 건 데이터 기반 전문가 수기 분석
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up [animation-delay:400ms] pb-8 md:pb-0">
+        {/* Feature pills */}
+        <div className="flex flex-wrap justify-center gap-2 mb-7 md:mb-10 animate-fade-up [animation-delay:300ms]">
+          {[
+            { icon: FileText, label: '10페이지 분량' },
+            { icon: Star, label: '전문가 직접 분석' },
+            { icon: Sparkles, label: '맞춤 전략 제공' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
+              <item.icon className="w-3.5 h-3.5 text-violet-400" />
+              <span className="text-[11px] font-bold text-slate-300">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Button */}
+        <div className="flex flex-col items-center gap-3 animate-fade-up [animation-delay:400ms]">
           <button
-            onClick={() => {
-              if (user) {
-                navigate('/fortune');
-              } else {
-                onStart();
-              }
-            }}
-            className="group relative w-full sm:w-auto px-12 md:px-14 py-5 md:py-6 bg-slate-900 text-white rounded-full font-black text-xl md:text-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] hover:shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)] hover:-translate-y-2 active:scale-95 active:bg-black transition-all overflow-hidden"
+            onClick={handleCTA}
+            className="group relative w-full max-w-sm px-10 py-5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-2xl font-black text-lg shadow-[0_20px_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_25px_60px_-10px_rgba(124,58,237,0.6)] hover:-translate-y-1 active:scale-[0.98] transition-all overflow-hidden"
           >
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span className="relative flex items-center justify-center gap-3">
-              운명 확인하기
-              <ArrowRight className="w-7 h-7 group-hover:translate-x-2 transition-transform" />
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-violet-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span className="relative flex items-center justify-center gap-2">
+              심층 리포트 신청하기
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
+
+          <div className="flex items-center gap-2 text-slate-500">
+            <span className="text-xs font-bold line-through">98,000원</span>
+            <span className="text-sm font-black text-amber-400">49,000원</span>
+            <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[10px] font-bold rounded-full">50% OFF</span>
+          </div>
         </div>
       </div>
     </div>

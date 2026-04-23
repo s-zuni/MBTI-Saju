@@ -14,6 +14,15 @@ export const COIN_PACKAGES: CreditPackage[] = [
   { id: 'credit_10', credits: 10, originalPrice: 3000, price: 900, isDiscount: true }
 ];
 
+// 심층 리포트 구매 고객 전용 이벤트 패키지
+export const EVENT_CREDIT_PACKAGE = {
+  id: 'event_credit_500',
+  credits: 500,
+  price: 9900,
+  originalPrice: 49000,
+  eventType: 'deep_report_credit_500',
+} as const;
+
 export const SERVICE_COSTS = {
   FORTUNE_TODAY: 0,
   FORTUNE_TOMORROW: 3,

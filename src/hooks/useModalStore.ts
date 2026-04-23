@@ -12,7 +12,8 @@ export type ModalType =
     | 'tarot'
     | 'creditPurchase'
     | 'onboarding'
-    | 'deepReport';
+    | 'deepReport'
+    | 'kbo';
 
 export interface ModalState {
     isOpen: boolean;
@@ -34,6 +35,7 @@ let globalModals: Record<string, ModalState> = {
     creditPurchase: { isOpen: false },
     onboarding: { isOpen: false },
     deepReport: { isOpen: false },
+    kbo: { isOpen: false },
 };
 
 // Listeners to notify hooks of changes
