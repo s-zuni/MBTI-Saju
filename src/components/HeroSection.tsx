@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowRight, Sparkles, FileText, Star } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -10,8 +9,6 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepReport }) => {
-  const navigate = useNavigate();
-
   const handleCTA = () => {
     if (user) {
       onOpenDeepReport?.();
