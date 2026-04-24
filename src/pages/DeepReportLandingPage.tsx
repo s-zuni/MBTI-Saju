@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { ArrowRight, CheckCircle2, Star, Quote, ShieldCheck, Zap, Users, BarChart3, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 
 interface DeepReportLandingPageProps {
   onOpenDeepReport: () => void;
 }
 
 const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDeepReport }) => {
-  const navigate = useNavigate();
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
