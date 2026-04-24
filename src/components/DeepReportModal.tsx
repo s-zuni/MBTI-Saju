@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Info } from 'lucide-react';
+import { Loader2, Info, Clock } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
 
 interface DeepReportModalProps {
@@ -110,6 +110,14 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   if (!isOpen) return null;
 
   const handlePayment = async () => {
+    if (!session) {
+      alert('리포트 신청을 위해 로그인이 필요합니다.');
+      window.location.href = '/?login=true';
+      return;
+    }
+
+    setLoading(true);
+
     if (!formData.email.trim()) return alert('이메일을 입력해주세요.');
     if (!formData.birthDate.trim()) return alert('생년월일(및 시간)을 입력해주세요.');
     if (!formData.reservationDate) return alert('예약 일자를 선택해주세요.');
@@ -460,6 +468,11 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         </div>
 
         <div className="p-8 border-t border-slate-100 bg-slate-50 shrink-0">
+           <div className="flex justify-center mb-4">
+             <span className="px-3 py-1 bg-amber-50 text-amber-600 text-xs font-black rounded-full border border-amber-200 animate-pulse flex items-center gap-1">
+               <Clock className="w-3 h-3" /> 하루 10건 한정 판매! (현재 주문 폭주)
+             </span>
+           </div>
            <button 
              onClick={handlePayment} 
              disabled={loading}

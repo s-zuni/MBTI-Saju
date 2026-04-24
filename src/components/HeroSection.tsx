@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowRight, Sparkles, FileText, Star } from 'lucide-react';
+import { ArrowRight, FileText, BarChart3, Users, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 
 interface HeroSectionProps {
@@ -9,12 +9,10 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepReport }) => {
+  const navigate = useNavigate();
+
   const handleCTA = () => {
-    if (user) {
-      onOpenDeepReport?.();
-    } else {
-      onStart();
-    }
+    navigate('/premium');
   };
 
   return (
@@ -30,8 +28,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
         {/* Badge */}
         <div className="flex justify-center mb-5 md:mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/10">
-            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 분석 · A4 10장</span>
+            <BarChart3 className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 +1,000만 ↑ 데이터 분석 / 20장 내외</span>
           </div>
         </div>
 
@@ -58,9 +56,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-2 mb-7 md:mb-10 animate-fade-up [animation-delay:300ms]">
           {[
-            { icon: FileText, label: '10페이지 분량' },
-            { icon: Star, label: '전문가 직접 분석' },
-            { icon: Sparkles, label: '맞춤 전략 제공' },
+            { icon: FileText, label: '20페이지 분량' },
+            { icon: Users, label: '전문가 직접 분석' },
+            { icon: Zap, label: '맞춤 전략 제공' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
               <item.icon className="w-3.5 h-3.5 text-violet-400" />
@@ -86,6 +84,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
             <span className="text-xs font-bold line-through">98,000원</span>
             <span className="text-sm font-black text-amber-400">49,000원</span>
             <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[10px] font-bold rounded-full">50% OFF</span>
+            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 text-[10px] font-bold rounded-full border border-amber-500/20 animate-pulse">하루 10건 제한!</span>
           </div>
         </div>
       </div>

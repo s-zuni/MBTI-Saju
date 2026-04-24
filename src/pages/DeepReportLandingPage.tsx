@@ -17,7 +17,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
     {
       name: "김*현",
       tag: "30대 직장인",
-      content: "그동안 봤던 사주랑은 차원이 달라요. 10페이지가 넘는 분량에 제 성격부터 미래 3년 운세까지 정말 디테일하게 분석되어 있어서 놀랐습니다. 특히 MBTI랑 결합된 분석이 정말 정확해요.",
+      content: "그동안 봤던 사주랑은 차원이 달라요. 20페이지가 넘는 분량에 제 성격부터 미래 3년 운세까지 정말 디테일하게 분석되어 있어서 놀랐습니다. 특히 MBTI랑 결합된 분석이 정말 정확해요.",
       rating: 5
     },
     {

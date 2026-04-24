@@ -130,6 +130,16 @@ function App() {
     }
   }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen, modals?.onboarding?.isOpen]);
 
+  // Handle login trigger from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'true' && !session && !isAuthLoading) {
+      openModal('analysis', 'login');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [session, isAuthLoading, openModal]);
+
 
 
   const handleFetchFortune = async () => {
@@ -271,7 +281,7 @@ function AppContent({
             <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
               <Navbar />
 
-              {isAuthLoading && !session ? (
+              {isAuthLoading && !session && location.pathname !== '/premium' ? (
                 <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
                   <div className="relative mb-6">
                     <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
