@@ -4,16 +4,16 @@ import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line }
 Font.register({
   family: 'NanumMyungjo',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSerifKR/NotoSerifKR-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSerifKR/NotoSerifKR-Bold.ttf', fontWeight: 'bold' }
+    { src: 'https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncjmeM52.ttf' },
+    { src: 'https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncgBf852.ttf', fontWeight: 'bold' }
   ]
 });
 
 Font.register({
   family: 'NotoSansKR',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansKR/NotoSansKR-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansKR/NotoSansKR-Bold.ttf', fontWeight: 'bold' }
+    { src: 'https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLQ.ttf' },
+    { src: 'https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzg01eLQ.ttf', fontWeight: 'bold' }
   ]
 });
 
