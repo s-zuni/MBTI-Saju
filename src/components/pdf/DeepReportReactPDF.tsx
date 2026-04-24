@@ -176,23 +176,27 @@ interface Props {
   clientName: string;
 }
 
-const ELEMENT_COLORS: Record<string, string> = {
+const ELEMENT_COLORS = {
   wood: '#059669', fire: '#E11D48', earth: '#B45309', metal: '#475569', water: '#2563EB',
 };
 
-const getElementColor = (char: string | undefined): string => {
+const getElementColor = (char: string | undefined | null): string => {
   if (!char || char === '-') return '#334155';
+  
+  const target: string = char!; // Force non-null
+  
   const wood = ['甲', '乙', '寅', '卯'];
   const fire = ['丙', '丁', '巳', '午'];
   const earth = ['戊', '己', '辰', '戌', '丑', '未'];
   const metal = ['庚', '辛', '申', '酉'];
   const water = ['壬', '癸', '亥', '子'];
 
-  if (wood.includes(char)) return ELEMENT_COLORS.wood;
-  if (fire.includes(char)) return ELEMENT_COLORS.fire;
-  if (earth.includes(char)) return ELEMENT_COLORS.earth;
-  if (metal.includes(char)) return ELEMENT_COLORS.metal;
-  if (water.includes(char)) return ELEMENT_COLORS.water;
+  for (const c of wood) if (c === target) return ELEMENT_COLORS.wood;
+  for (const c of fire) if (c === target) return ELEMENT_COLORS.fire;
+  for (const c of earth) if (c === target) return ELEMENT_COLORS.earth;
+  for (const c of metal) if (c === target) return ELEMENT_COLORS.metal;
+  for (const c of water) if (c === target) return ELEMENT_COLORS.water;
+  
   return '#334155';
 };
 
@@ -272,7 +276,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
               {pList.map((p, i) => (
                 <View key={i} style={styles.tableCol}>
                   <Text style={styles.labelCell}>천간</Text>
-                  <Text style={[styles.mainChar, { color: getElementColor(p?.gan) }]}>{p?.gan || '-'}</Text>
+                  <Text style={[styles.mainChar, { color: getElementColor(p?.gan) as any }]}>{p?.gan || '-'}</Text>
                   <Text style={styles.subChar}>{p?.ganShiShen || '-'}</Text>
                 </View>
               ))}
@@ -281,7 +285,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
               {pList.map((p, i) => (
                 <View key={i} style={styles.tableCol}>
                   <Text style={styles.labelCell}>지지</Text>
-                  <Text style={[styles.mainChar, { color: getElementColor(p?.zhi) }]}>{p?.zhi || '-'}</Text>
+                  <Text style={[styles.mainChar, { color: getElementColor(p?.zhi) as any }]}>{p?.zhi || '-'}</Text>
                   <Text style={styles.subChar}>{p?.zhiShiShen || '-'}</Text>
                 </View>
               ))}
