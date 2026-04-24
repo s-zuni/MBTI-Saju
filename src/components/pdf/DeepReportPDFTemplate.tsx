@@ -199,23 +199,9 @@ const SectionHeader = ({ num, title, dark = false }: { num: string; title: strin
 
 export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sajuData, parsedContent, clientName }) => {
   const userSaju = sajuData?.userSaju;
-  const lucky = sajuData?.luckyItems;
   const hasSpecial = !!(parsedContent.specialRequestAnalysis && parsedContent.specialRequestAnalysis.trim().length > 10);
   // 페이지 순서: 1(표지) + 2(01선천기질) + 3(02재물) + 4(03관계) + 5(04건강) + 6(05대운흐름) + 7(분기별) + 8(06파트너) + 9(07리스크) + 10(08사명) + [11(특별)] + 12(마스터)
   const TOTAL = hasSpecial ? 13 : 12;
-
-  const GaugeBar = ({ el }: { el: string }) => {
-    const val = Math.min(100, Math.max(0, userSaju?.elementRatio?.[el] || 0));
-    return (
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-12 text-[11px] font-bold text-slate-500">{ELEMENT_LABELS[el]}</div>
-        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-100">
-          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${val}%`, backgroundColor: ELEMENT_COLORS[el] }} />
-        </div>
-        <div className="w-10 text-right text-[13px] font-black text-slate-800">{val}%</div>
-      </div>
-    );
-  };
 
   return (
     <div id="pdf-capture-zone" className="font-sans text-slate-900 bg-white" style={{ width: '210mm' }}>
