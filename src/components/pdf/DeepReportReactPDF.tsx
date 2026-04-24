@@ -185,18 +185,31 @@ interface PillarInfo {
   ganShiShen?: string;
   zhiShiShen?: string;
   twelveStages?: string;
+  twelveSpirits?: string;
+  hiddenStems?: string[];
 }
 
 interface Props {
   sajuData: {
     userSaju?: {
+      dayMaster?: {
+        chinese: string;
+        korean: string;
+        description: string;
+      };
+      elementRatio?: {
+        wood: number;
+        fire: number;
+        earth: number;
+        metal: number;
+        water: number;
+      };
       pillars?: {
         year?: PillarInfo;
         month?: PillarInfo;
         day?: PillarInfo;
         hour?: PillarInfo;
       };
-      elementRatio?: Record<string, number>;
     };
     reportType?: string;
   };
@@ -206,6 +219,36 @@ interface Props {
 
 const ELEMENT_COLORS = {
   wood: '#059669', fire: '#E11D48', earth: '#B45309', metal: '#475569', water: '#2563EB',
+};
+
+const GAN_KOREAN: Record<string, string> = {
+  '甲': '갑목(木)', '乙': '을목(木)', '丙': '병화(火)', '丁': '정화(火)',
+  '戊': '무토(土)', '己': '기토(土)', '庚': '경금(金)', '辛': '신금(金)',
+  '壬': '임수(水)', '癸': '계수(水)',
+};
+
+const ZHI_KOREAN: Record<string, string> = {
+  '子': '자(쥐·水)', '丑': '축(소·土)', '寅': '인(호랑이·木)', '卯': '묘(토끼·木)',
+  '辰': '진(용·土)', '巳': '사(뱀·火)', '午': '오(말·火)', '未': '미(양·土)',
+  '申': '신(원숭이·金)', '酉': '유(닭·金)', '戌': '술(개·土)', '亥': '해(돼지·水)',
+};
+
+const SHISHEN_KOREAN: Record<string, string> = {
+  '比肩': '비견', '劫財': '겁재', '劫财': '겁재',
+  '食神': '식신', '傷官': '상관', '伤官': '상관',
+  '偏財': '편재', '偏财': '편재', '正財': '정재', '正财': '정재',
+  '偏官': '편관', '七殺': '편관', '正官': '정관',
+  '偏印': '편인', '正印': '정인',
+};
+
+const translateShiShenPDF = (s: any): string => {
+  if (!s || s === '-') return '-';
+  let result = Array.isArray(s) ? s.join('') : String(s);
+  if (!result || result === '-') return '-';
+  for (const [zh, ko] of Object.entries(SHISHEN_KOREAN)) {
+    result = result.replace(new RegExp(zh, 'g'), ko);
+  }
+  return result.trim();
 };
 
 const getElementColor = (char: string | undefined | null): string => {
@@ -351,6 +394,47 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
   );
 };
 
+const ElementDistributionBar: React.FC<{ elementRatio: any }> = ({ elementRatio }) => {
+  if (!elementRatio) return null;
+  const elements = [
+    { label: '목(木)', value: elementRatio.wood || 0, color: '#059669' },
+    { label: '화(火)', value: elementRatio.fire || 0, color: '#E11D48' },
+    { label: '토(土)', value: elementRatio.earth || 0, color: '#B45309' },
+    { label: '금(金)', value: elementRatio.metal || 0, color: '#475569' },
+    { label: '수(水)', value: elementRatio.water || 0, color: '#2563EB' },
+  ];
+  return (
+    <View style={{ marginTop: 15, marginBottom: 10 }}>
+      <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#475569', marginBottom: 8, fontFamily: 'NotoSansKR' }}>오행(五行) 에너지 분포</Text>
+      {elements.map((el, i) => (
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+          <Text style={{ width: 50, fontSize: 8, fontWeight: 'bold', color: el.color, fontFamily: 'NotoSansKR' }}>{el.label}</Text>
+          <View style={{ flex: 1, height: 12, backgroundColor: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
+            <View style={{ width: `${Math.min(el.value, 100)}%`, height: 12, backgroundColor: el.color, borderRadius: 6, opacity: 0.75 }} />
+          </View>
+          <Text style={{ width: 32, fontSize: 8, color: '#64748B', textAlign: 'right', fontFamily: 'NotoSansKR' }}>{el.value}%</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const SajuSummaryBlock: React.FC<{ userSaju: any }> = ({ userSaju }) => {
+  if (!userSaju?.dayMaster) return null;
+  const dm = userSaju.dayMaster;
+  return (
+    <View style={{ marginTop: 12, padding: 12, backgroundColor: '#F0F4FF', borderRadius: 8, border: '1pt solid #DBEAFE' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'NanumMyungjo', color: '#1E3A8A', marginRight: 6 }}>{dm.chinese}</Text>
+        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#1E40AF', fontFamily: 'NotoSansKR' }}>{dm.korean} — 일간(日干)의 주인</Text>
+      </View>
+      <Text style={{ fontSize: 9, color: '#334155', lineHeight: 1.5, fontFamily: 'NotoSansKR' }}>
+        {dm.description || '이 분의 일간은 사주의 중심축으로, 타고난 성격과 운명의 방향을 결정짓습니다.'}
+      </Text>
+    </View>
+  );
+};
+
 const LuckyItems: React.FC<{ items: any }> = ({ items }) => {
   if (!items) return null;
   const list = [
@@ -363,7 +447,7 @@ const LuckyItems: React.FC<{ items: any }> = ({ items }) => {
   return (
     <View style={{ marginTop: 10, marginBottom: 20 }}>
       <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 15, color: '#1E293B', borderLeft: '3pt solid #FBBF24', paddingLeft: 8 }}>
-        개인별 행운의 요소 (Lucky Elements)
+        개인별 행운의 요소
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {list.map((item, i) => (
@@ -434,30 +518,54 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <Text style={{ flex: 1 }}>선천적 기질 및 행운의 요소</Text>
         </View>
         <View style={{ backgroundColor: '#F8FAFC', padding: 15, borderRadius: 10, marginBottom: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1E293B' }}>사주 원국 상세 분석</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1E293B', fontFamily: 'NanumMyungjo' }}>사주 원국(四柱 原局) 상세 분석</Text>
           <View style={styles.table}>
             <View style={styles.tableRow}>
               {pLabels.map((l, i) => <Text key={i} style={styles.tableColHeader}>{l}</Text>)}
             </View>
+            {/* 천간 (天干) Row */}
             <View style={styles.tableRow}>
               {pList.map((p, i) => (
-                <View key={i} style={styles.tableCol}>
-                  <Text style={styles.labelCell}>천간</Text>
+                <View key={i} style={[styles.tableCol, { paddingVertical: 10 }]}>
+                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 2, fontFamily: 'NotoSansKR' }}>천간(天干)</Text>
                   <Text style={[styles.mainChar, { color: getElementColor(p?.gan) as any }]}>{p?.gan || '-'}</Text>
-                  <Text style={styles.subChar}>{p?.ganShiShen || '-'}</Text>
+                  <Text style={{ fontSize: 8, color: '#475569', marginTop: 2, fontFamily: 'NotoSansKR' }}>{GAN_KOREAN[p?.gan || ''] || '-'}</Text>
+                  <Text style={{ fontSize: 7, color: '#6366F1', marginTop: 3, fontWeight: 'bold', fontFamily: 'NotoSansKR' }}>{translateShiShenPDF(p?.ganShiShen)}</Text>
                 </View>
               ))}
             </View>
+            {/* 지지 (地支) Row */}
             <View style={styles.tableRow}>
               {pList.map((p, i) => (
-                <View key={i} style={styles.tableCol}>
-                  <Text style={styles.labelCell}>지지</Text>
+                <View key={i} style={[styles.tableCol, { paddingVertical: 10 }]}>
+                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 2, fontFamily: 'NotoSansKR' }}>지지(地支)</Text>
                   <Text style={[styles.mainChar, { color: getElementColor(p?.zhi) as any }]}>{p?.zhi || '-'}</Text>
-                  <Text style={styles.subChar}>{p?.zhiShiShen || '-'}</Text>
+                  <Text style={{ fontSize: 8, color: '#475569', marginTop: 2, fontFamily: 'NotoSansKR' }}>{ZHI_KOREAN[p?.zhi || ''] || '-'}</Text>
+                  <Text style={{ fontSize: 7, color: '#6366F1', marginTop: 3, fontWeight: 'bold', fontFamily: 'NotoSansKR' }}>{translateShiShenPDF(p?.zhiShiShen)}</Text>
+                </View>
+              ))}
+            </View>
+            {/* 12운성 Row */}
+            <View style={styles.tableRow}>
+              {pList.map((p, i) => (
+                <View key={i} style={[styles.tableCol, { paddingVertical: 6 }]}>
+                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 1, fontFamily: 'NotoSansKR' }}>12운성</Text>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#1E293B', fontFamily: 'NotoSansKR' }}>{p?.twelveStages || '-'}</Text>
+                </View>
+              ))}
+            </View>
+            {/* 12신살 Row */}
+            <View style={styles.tableRow}>
+              {pList.map((p, i) => (
+                <View key={i} style={[styles.tableCol, { paddingVertical: 6 }]}>
+                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 1, fontFamily: 'NotoSansKR' }}>12신살</Text>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#64748B', fontFamily: 'NotoSansKR' }}>{p?.twelveSpirits || '-'}</Text>
                 </View>
               ))}
             </View>
           </View>
+          <SajuSummaryBlock userSaju={sajuData?.userSaju} />
+          <ElementDistributionBar elementRatio={sajuData?.userSaju?.elementRatio} />
         </View>
         <LuckyItems items={parsedContent.luckyItems} />
         {renderContent(parsedContent.congenitalSummary)}
