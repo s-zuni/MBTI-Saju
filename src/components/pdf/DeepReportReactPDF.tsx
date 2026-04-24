@@ -351,6 +351,61 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
   );
 };
 
+const LuckyItems: React.FC<{ items: any }> = ({ items }) => {
+  if (!items) return null;
+  const list = [
+    { label: '행운의 색상', value: items.color, icon: '🎨' },
+    { label: '행운의 숫자', value: items.number, icon: '🔢' },
+    { label: '도움되는 방향', value: items.direction, icon: '🧭' },
+    { label: '핵심 습관', value: items.habit, icon: '✨' },
+  ];
+
+  return (
+    <View style={{ marginTop: 10, marginBottom: 20 }}>
+      <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 15, color: '#1E293B', borderLeft: '3pt solid #FBBF24', paddingLeft: 8 }}>
+        개인별 행운의 요소 (Lucky Elements)
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {list.map((item, i) => (
+          <View key={i} style={{ width: '48%', backgroundColor: '#FFFBEB', padding: 12, borderRadius: 12, border: '1pt solid #FEF3C7' }}>
+            <Text style={{ fontSize: 8, color: '#B45309', fontWeight: 'bold', marginBottom: 4 }}>{item.icon} {item.label}</Text>
+            <Text style={{ fontSize: 10, color: '#92400E', lineHeight: 1.4 }}>{item.value}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const QuarterlyLuck: React.FC<{ data: any[] }> = ({ data }) => {
+  if (!data || data.length === 0) return null;
+  return (
+    <View style={{ marginTop: 20 }}>
+      <Text style={[styles.subTitle, { borderLeftColor: '#10B981' }]}>분기별 운세 흐름</Text>
+      <View style={styles.table}>
+        <View style={styles.tableRow}>
+          <Text style={[styles.tableColHeader, { width: '20%', backgroundColor: '#064E3B' }]}>시기</Text>
+          <Text style={[styles.tableColHeader, { width: '55%', backgroundColor: '#064E3B' }]}>운세 요약</Text>
+          <Text style={[styles.tableColHeader, { width: '25%', backgroundColor: '#064E3B' }]}>핵심 지침</Text>
+        </View>
+        {data.map((q, i) => (
+          <View key={i} style={styles.tableRow}>
+            <View style={[styles.tableCol, { width: '20%', backgroundColor: '#F0FDF4' }]}>
+              <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#166534' }}>{q.period}</Text>
+            </View>
+            <View style={[styles.tableCol, { width: '55%', textAlign: 'left' }]}>
+              <Text style={{ fontSize: 9, color: '#374151', lineHeight: 1.4 }}>{q.summary}</Text>
+            </View>
+            <View style={[styles.tableCol, { width: '25%', backgroundColor: '#F9FAFB' }]}>
+              <Text style={{ fontSize: 8, color: '#059669', fontWeight: 'bold' }}>{q.point}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const pillars = sajuData?.userSaju?.pillars;
   const pList = [pillars?.hour, pillars?.day, pillars?.month, pillars?.year];
@@ -404,6 +459,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
             </View>
           </View>
         </View>
+        <LuckyItems items={parsedContent.luckyItems} />
         {renderContent(parsedContent.congenitalSummary)}
         <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
@@ -454,8 +510,20 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
       <Page size="A4" style={styles.page}>
         <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>09</Text><Text style={{ flex: 1 }}>마스터 핵심 지침</Text></View>
         {renderContent(parsedContent.strategicDirective)}
+        <QuarterlyLuck data={parsedContent.quarterlyLuck} />
         <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
+
+      {parsedContent.specialRequestAnalysis && (
+        <Page size="A4" style={styles.page}>
+          <View style={styles.sectionTitle}>
+            <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>SP</Text>
+            <Text style={{ flex: 1 }}>특별 요청 사항 분석</Text>
+          </View>
+          {renderContent(parsedContent.specialRequestAnalysis)}
+          <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        </Page>
+      )}
     </Document>
   );
 };
