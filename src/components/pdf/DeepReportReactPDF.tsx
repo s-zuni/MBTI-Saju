@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ffffff',
+    fontFamily: 'NanumGothic',
   },
   coverTitle: {
     fontFamily: 'NanumMyeongjo',
@@ -77,10 +78,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderLeft: '3pt solid #6366F1',
     paddingLeft: 8,
+    fontFamily: 'NanumGothic',
   },
   paragraph: {
     marginBottom: 10,
     textAlign: 'justify',
+    fontFamily: 'NanumGothic',
   },
   bulletPoint: {
     flexDirection: 'row',
@@ -90,9 +93,11 @@ const styles = StyleSheet.create({
   bullet: {
     width: 10,
     fontSize: 12,
+    fontFamily: 'NanumGothic',
   },
   bulletText: {
     flex: 1,
+    fontFamily: 'NanumGothic',
   },
   table: {
     display: 'flex',
@@ -116,6 +121,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 9,
     fontWeight: 'bold',
+    fontFamily: 'NanumGothic',
   },
   tableCol: {
     width: '25%',
@@ -124,19 +130,23 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     padding: 8,
     textAlign: 'center',
+    fontFamily: 'NanumGothic',
   },
   labelCell: {
     fontSize: 8,
     color: '#94A3B8',
     marginBottom: 2,
+    fontFamily: 'NanumGothic',
   },
   mainChar: {
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: 'NanumGothic',
   },
   subChar: {
     fontSize: 10,
     color: '#64748B',
+    fontFamily: 'NanumGothic',
   },
   footer: {
     position: 'absolute',
@@ -149,6 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     fontSize: 8,
     color: '#94A3B8',
+    fontFamily: 'NanumGothic',
   },
   graphContainer: {
     marginTop: 20,
@@ -164,6 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#1E293B',
     textAlign: 'center',
+    fontFamily: 'NanumGothic',
   }
 });
 
@@ -218,7 +230,10 @@ const getElementColor = (char: string | undefined | null): string => {
 
 const cleanText = (text: any) => {
   if (typeof text !== 'string') return '';
-  return text.replace(/\(.*?이상\)\s*/g, '').trim();
+  return text
+    .replace(/\(.*?이상\)\s*/g, '')
+    .replace(/\(한글로 설명.*?\)\s*/g, '')
+    .trim();
 };
 
 const renderContent = (text: string | undefined) => {
@@ -331,7 +346,7 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const pillars = sajuData?.userSaju?.pillars;
   const pList = [pillars?.hour, pillars?.day, pillars?.month, pillars?.year];
-  const pLabels = ['시주 (時柱)', '일주 (일柱)', '월주 (月柱)', '년주 (年柱)'];
+  const pLabels = ['시주 (時柱)', '일주 (日柱)', '월주 (月柱)', '년주 (年柱)'];
 
   return (
     <Document>
