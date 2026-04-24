@@ -13,6 +13,22 @@ const ELEMENT_COLORS: Record<string, string> = {
   wood: '#0d9488', fire: '#e11d48', earth: '#b45309', metal: '#475569', water: '#2563eb',
 };
 
+const getElementColorClass = (char: string | undefined): string => {
+  if (!char) return 'text-slate-900';
+  const wood = ['甲', '乙', '寅', '卯'];
+  const fire = ['丙', '丁', '巳', '午'];
+  const earth = ['戊', '己', '辰', '戌', '丑', '未'];
+  const metal = ['庚', '辛', '申', '酉'];
+  const water = ['壬', '癸', '亥', '子'];
+
+  if (wood.includes(char)) return 'text-emerald-600';
+  if (fire.includes(char)) return 'text-rose-600';
+  if (earth.includes(char)) return 'text-amber-700';
+  if (metal.includes(char)) return 'text-slate-500';
+  if (water.includes(char)) return 'text-blue-600';
+  return 'text-slate-900';
+};
+
 const clean = (text: string | undefined): string => {
   if (!text) return '';
   return text
@@ -186,7 +202,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
   const lucky = sajuData?.luckyItems;
   const hasSpecial = !!(parsedContent.specialRequestAnalysis && parsedContent.specialRequestAnalysis.trim().length > 10);
   // 페이지 순서: 1(표지) + 2(01선천기질) + 3(02재물) + 4(03관계) + 5(04건강) + 6(05대운흐름) + 7(분기별) + 8(06파트너) + 9(07리스크) + 10(08사명) + [11(특별)] + 12(마스터)
-  const TOTAL = hasSpecial ? 12 : 11;
+  const TOTAL = hasSpecial ? 13 : 12;
 
   const GaugeBar = ({ el }: { el: string }) => {
     const val = Math.min(100, Math.max(0, userSaju?.elementRatio?.[el] || 0));
@@ -226,58 +242,73 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       {/* 2. 01 선천적 기질 + 행운 요소 */}
       <PageWrapper pageNumber={2} totalPages={TOTAL}>
         <SectionHeader num="01" title="선천적 기질 및 행운의 요소" />
-        <div className="grid grid-cols-12 gap-4 mb-6">
-          <div className="col-span-8 bg-slate-50 rounded-2xl p-6 border border-slate-200">
-             <div className="flex items-center gap-2 mb-4 text-violet-600">
-               <div className="w-1 h-4 bg-current rounded-full" />
-               <p className="text-xs font-black uppercase tracking-widest">사주 원국</p>
-             </div>
-             <div className="grid grid-cols-4 gap-2">
-               {(['year', 'month', 'day', 'hour'] as const).map((k) => {
-                 const p = userSaju?.pillars?.[k];
-                 const labels: Record<string, string> = { year: '생년', month: '생월', day: '생일', hour: '생시' };
-                 return p ? (
-                   <div key={k} className={`border rounded-xl p-3 flex flex-col items-center shadow-sm ${k === 'day' ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100'}`}>
-                     <p className={`text-[9px] font-bold mb-2 uppercase ${k === 'day' ? 'text-slate-500' : 'text-slate-400'}`}>{labels[k]}</p>
-                     <p className={`text-2xl font-black leading-none ${k === 'day' ? 'text-white' : 'text-slate-900'}`}>{p.gan}</p>
-                     <div className={`w-full h-px my-2 ${k === 'day' ? 'bg-slate-800' : 'bg-slate-100'}`} />
-                     <p className={`text-2xl font-black leading-none ${k === 'day' ? 'text-white' : 'text-slate-900'}`}>{p.zhi}</p>
-                   </div>
-                 ) : null;
-               })}
-             </div>
-          </div>
-          <div className="col-span-4 flex flex-col gap-4">
-            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 flex-1">
-              <p className="text-[11px] font-black text-slate-400 mb-4 uppercase tracking-tighter">오행 에너지 분포</p>
-              {['wood', 'fire', 'earth', 'metal', 'water'].map(el => <GaugeBar key={el} el={el} />)}
+        
+        <div className="flex flex-col gap-6 flex-1">
+          {/* Saju Table Section */}
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+            <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+              <div className="w-1.5 h-5 bg-indigo-600 mr-2.5 rounded-full"></div>
+              사주 원국 상세 분석 (四柱原局)
+            </h4>
+            
+            <div className="grid grid-cols-4 gap-1.5 mb-6">
+              {['시주 (時柱)', '일주 (日柱)', '월주 (月柱)', '년주 (年柱)'].map((header, idx) => (
+                <div key={idx} className="text-center py-1.5 bg-slate-800 text-white text-[11px] font-black rounded-t-lg tracking-widest">
+                  {header}
+                </div>
+              ))}
+
+              {[
+                { label: '천간', key: 'gan', isMain: true, bg: 'bg-white' },
+                { label: '십성', key: 'ganShiShen', isMain: false, bg: 'bg-slate-50' },
+                { label: '지지', key: 'zhi', isMain: true, bg: 'bg-white' },
+                { label: '십성', key: 'zhiShiShen', isMain: false, bg: 'bg-slate-50' },
+                { label: '지장간', key: 'hiddenStems', isMain: false, bg: 'bg-white' },
+                { label: '12운성', key: 'twelveStages', isMain: false, bg: 'bg-indigo-50', textClass: 'text-indigo-700 font-bold' },
+                { label: '12신살', key: 'twelveSpirits', isMain: false, bg: 'bg-white' }
+              ].map((row, rIdx) => (
+                <React.Fragment key={rIdx}>
+                  {[userSaju?.pillars?.hour, userSaju?.pillars?.day, userSaju?.pillars?.month, userSaju?.pillars?.year].map((p, pIdx) => (
+                    <div key={`${rIdx}-${pIdx}`} className={`text-center p-2 border-x border-b ${row.bg} ${rIdx === 6 ? 'rounded-b-lg' : ''}`}>
+                      <div className="text-[9px] text-slate-400 mb-0.5">{row.label}</div>
+                      <div className={`
+                        ${row.isMain ? 'text-2xl font-black' : 'text-[11px] font-bold text-slate-600'}
+                        ${row.isMain ? getElementColorClass(p?.[row.key as keyof typeof p] as string) : ''}
+                        ${row.textClass || ''}
+                      `}>
+                        {row.key === 'hiddenStems' ? (p?.hiddenStems?.join(' ') || '-') : (p?.[row.key as keyof typeof p] || '-')}
+                      </div>
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200">
+               <div className="flex items-center gap-2 mb-4">
+                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">오행 에너지 분포</p>
+                 <div className="flex-1 h-px bg-slate-100" />
+               </div>
+               <div className="grid grid-cols-5 gap-4">
+                 {['wood', 'fire', 'earth', 'metal', 'water'].map(el => {
+                   const val = Math.min(100, Math.max(0, userSaju?.elementRatio?.[el] || 0));
+                   return (
+                     <div key={el} className="flex flex-col items-center">
+                       <div className="text-[10px] font-bold text-slate-500 mb-1">{ELEMENT_LABELS[el]}</div>
+                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-1">
+                         <div className="h-full" style={{ width: `${val}%`, backgroundColor: ELEMENT_COLORS[el] }} />
+                       </div>
+                       <div className="text-[11px] font-black text-slate-800">{val}%</div>
+                     </div>
+                   );
+                 })}
+               </div>
             </div>
           </div>
-        </div>
 
-        {/* Lucky Items Box */}
-        <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-amber-400 rounded-lg text-white">✨</div>
-            <p className="text-lg font-black text-amber-900 tracking-tight">나의 행운 요소 분석</p>
+          <div className="flex-1 overflow-hidden">
+            {renderStructured(parsedContent.congenitalSummary, sajuData?.congenitalKeywords)}
           </div>
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { label: '행운의 색', val: lucky?.color || '분석 중', icon: '🎨' },
-              { label: '행운의 숫자', val: lucky?.number || '분석 중', icon: '🔢' },
-              { label: '도움되는 방향', val: lucky?.direction || '분석 중', icon: '🧭' },
-              { label: '추천 습관', val: lucky?.habit || '분석 중', icon: '✅' },
-            ].map((item, i) => (
-              <div key={i} className="bg-white/80 p-3 rounded-xl border border-amber-100">
-                <p className="text-[9px] font-black text-amber-400 uppercase mb-1 tracking-tighter">{item.label}</p>
-                <p className="text-[12px] font-bold text-amber-900 leading-snug">{item.val}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          {renderStructured(parsedContent.congenitalSummary, sajuData?.congenitalKeywords)}
         </div>
       </PageWrapper>
 
@@ -305,10 +336,16 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
         </div>
       </PageWrapper>
 
-      {/* 6. 05 향후 10년의 대운 흐름 (dark) */}
+      {/* 6. 05 향후 3년의 대운 흐름 (2027-2029) */}
       <PageWrapper pageNumber={6} totalPages={TOTAL} bg="bg-slate-950" extraClass="text-white">
-        <SectionHeader num="05" title="향후 10년의 대운 흐름" dark />
+        <SectionHeader num="05" title="향후 3년의 대운 흐름 (2027-2029)" dark />
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex-1 overflow-hidden">
+          <div className="mb-6 p-4 bg-indigo-900/30 border border-indigo-500/30 rounded-xl">
+             <p className="text-sm text-indigo-300 italic">
+               "인생의 거대한 흐름 속에서 다가올 3년은 당신에게 가장 중요한 전환점이 될 것입니다. 
+               각 연도별 기운의 변화를 정밀하게 분석하여 성공을 위한 마스터 플랜을 제시합니다."
+             </p>
+          </div>
           {renderStructured(parsedContent.macroDecadeTrend, sajuData?.macroDecadeKeywords, false)}
         </div>
       </PageWrapper>
@@ -368,6 +405,7 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
       )}
 
       {/* Final: 마스터 핵심 지침 */}
+      {/* Final: 마스터 핵심 지침 */}
       <PageWrapper bg="bg-slate-950" extraClass="text-white" pageNumber={TOTAL} totalPages={TOTAL}>
         <div className="w-full mb-8 pb-4 border-b border-amber-500/30 flex items-end justify-between">
           <div>
@@ -387,6 +425,25 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
           <div className="h-px w-24 bg-slate-800 mb-4" />
           <p className="text-[10px] font-black tracking-[0.5em] text-slate-700 uppercase">인증된 프리미엄 분석 리포트</p>
           <p className="text-[8px] text-slate-800 mt-2">© 2025 MBTI-사주 시너지. 모든 권리 보유.</p>
+        </div>
+      </PageWrapper>
+
+      {/* Disclaimer Page */}
+      <PageWrapper pageNumber={TOTAL} totalPages={TOTAL}>
+        <div className="flex-1 flex flex-col items-center justify-center p-12">
+          <div className="max-w-[160mm] text-center">
+            <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-[0.2em]">Disclaimer</p>
+            <p className="text-[12px] text-slate-500 leading-relaxed">
+              본 리포트는 사용자가 제공한 생년월일시와 MBTI 정보를 바탕으로 사주명리학의 통계적 원리와 AI 분석 모델을 결합하여 생성되었습니다. 
+              운세 분석 결과는 개인의 환경과 선택에 따라 차이가 발생할 수 있으며, 100% 정확한 미래 예측을 보장하지 않습니다. 
+              모든 분석 내용은 삶의 참고 지표로만 활용해 주시기 바라며, 중요한 의사결정은 반드시 본인의 신중한 판단 하에 진행하시기 바랍니다.
+            </p>
+            <div className="mt-8 flex items-center justify-center gap-3 grayscale opacity-30">
+              <div className="font-black text-slate-900 tracking-tighter text-sm italic">MBTIJU PREMIUM</div>
+              <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+              <div className="text-[10px] text-slate-500 font-medium">AI SYNERGY ANALYSIS</div>
+            </div>
+          </div>
         </div>
       </PageWrapper>
 

@@ -9,59 +9,38 @@ import { jsPDF } from 'jspdf';
  */
 export const generateHighResPDF = async (element: HTMLElement, filename: string) => {
   try {
-    // 1. Capture the exact dimensions of the A4 element wrapper
-    // DeepReportPDFTemplate wraps items into a single container
-    
-    // Scale 2 is usually enough for retina displays. 
-    // Setting too high might crash the browser due to canvas memory limits if there are many pages.
-    const canvas = await html2canvas(element, {
-      scale: 2, 
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: 794, // Fixed A4 width at 96 DPI (~210mm)
-      onclone: (clonedDoc) => {
-        const target = clonedDoc.getElementById(element.id);
-        if (target) {
-            target.style.display = 'block';
-            target.style.position = 'relative';
-            target.style.left = '0';
-            target.style.top = '0';
-            target.style.width = '210mm';
-        }
-      }
-    });
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-    // 2. Initialize jsPDF
-    // We captured the entire template which might contain multiple A4-sized div blocks.
-    // An A4 is 210mm x 297mm.
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth(); // Should be ~210
-    const pdfHeight = pdf.internal.pageSize.getHeight(); // Should be ~297
-
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+    const pages = element.querySelectorAll('.pdf-page');
     
-    const imgWidth = pdfWidth;
-    const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
+    if (pages.length === 0) {
+      // Fallback if no .pdf-page classes found
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
+      pdf.save(filename);
+      return true;
+    }
 
-    let heightLeft = imgHeight;
-    let position = 0;
+    for (let i = 0; i < pages.length; i++) {
+      const pageElement = pages[i] as HTMLElement;
+      
+      const canvas = await html2canvas(pageElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: 794, // Fixed A4 width at 96 DPI
+        height: 1123, // Fixed A4 height at 96 DPI
+      });
 
-    // 3. Add pages
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      // Precision margin to avoid blank extra page
-      if (heightLeft > 5) { 
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      }
-      heightLeft -= pdfHeight;
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     }
 
     pdf.save(filename);
