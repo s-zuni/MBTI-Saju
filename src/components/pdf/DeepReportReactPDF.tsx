@@ -1,20 +1,19 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line } from '@react-pdf/renderer';
 
-// Register Fonts (Using stable jsdelivr CDN)
 Font.register({
-  family: 'NanumMyeongjo',
+  family: 'NanumMyungjo',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf', fontWeight: 'bold' }
+    { src: 'https://raw.githubusercontent.com/googlefonts/nanum/master/fonts/NanumMyungjo-Regular.ttf' },
+    { src: 'https://raw.githubusercontent.com/googlefonts/nanum/master/fonts/NanumMyungjo-Bold.ttf', fontWeight: 'bold' }
   ]
 });
 
 Font.register({
-  family: 'NanumGothic',
+  family: 'NotoSansKR',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Bold.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansKR/NotoSansKR-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansKR/NotoSansKR-Bold.ttf', fontWeight: 'bold' }
   ]
 });
 
@@ -22,7 +21,7 @@ const styles = StyleSheet.create({
   page: {
     padding: '20mm',
     backgroundColor: '#ffffff',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
     fontSize: 11,
     lineHeight: 1.6,
     color: '#334155',
@@ -35,10 +34,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ffffff',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   coverTitle: {
-    fontFamily: 'NanumMyeongjo',
+    fontFamily: 'NanumMyungjo',
     fontSize: 42,
     marginBottom: 20,
     textAlign: 'center',
@@ -53,14 +52,14 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: 28,
-    fontFamily: 'NanumMyeongjo',
+    fontFamily: 'NanumMyungjo',
     marginTop: 20,
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontFamily: 'NanumMyeongjo',
+    fontFamily: 'NanumMyungjo',
     fontSize: 22,
     color: '#0F172A',
     borderBottom: '1pt solid #E2E8F0',
@@ -78,12 +77,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderLeft: '3pt solid #6366F1',
     paddingLeft: 8,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   paragraph: {
     marginBottom: 10,
     textAlign: 'justify',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   bulletPoint: {
     flexDirection: 'row',
@@ -93,11 +92,11 @@ const styles = StyleSheet.create({
   bullet: {
     width: 10,
     fontSize: 12,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   table: {
     display: 'flex',
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 9,
     fontWeight: 'bold',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   tableCol: {
     width: '25%',
@@ -130,23 +129,24 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     padding: 8,
     textAlign: 'center',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   labelCell: {
     fontSize: 8,
     color: '#94A3B8',
     marginBottom: 2,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   mainChar: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NanumMyungjo',
   },
   subChar: {
     fontSize: 10,
     color: '#64748B',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
+    marginTop: 2,
   },
   footer: {
     position: 'absolute',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     fontSize: 8,
     color: '#94A3B8',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   graphContainer: {
     marginTop: 20,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#1E293B',
     textAlign: 'center',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   }
 });
 
@@ -233,6 +233,9 @@ const cleanText = (text: any) => {
   return text
     .replace(/\(.*?이상\)\s*/g, '')
     .replace(/\(한글로 설명.*?\)\s*/g, '')
+    .replace(/\(분량.*?\)\s*/g, '')
+    .replace(/\(상세 분석.*?\)\s*/g, '')
+    .replace(/\[최종 확인\][\s\S]*/g, '')
     .trim();
 };
 
@@ -291,6 +294,8 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
     return acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`);
   }, '');
 
+  const areaData = pathData + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`;
+
   return (
     <View style={styles.graphContainer}>
       <Text style={styles.graphTitle}>향후 3개년 운세 에너지 흐름도</Text>
@@ -305,7 +310,7 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
             />
             <Text 
               x={padding - 5} y={height - padding - (v/100 * chartHeight) - 4} 
-              style={{ fontSize: 7, fill: '#94A3B8', textAlign: 'right' }}
+              style={{ fontSize: 7, fill: '#94A3B8', fontFamily: 'NotoSansKR' }}
             >
               {v}%
             </Text>
@@ -316,11 +321,14 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
         {points.map((p, i) => (
           <Text 
             key={i} x={p.x} y={height - padding + 15} 
-            style={{ fontSize: 9, fill: '#64748B', textAlign: 'center' }}
+            style={{ fontSize: 9, fill: '#64748B', fontFamily: 'NotoSansKR', textAnchor: 'middle' }}
           >
             {p.year}년
           </Text>
         ))}
+
+        {/* Area shading */}
+        <Path d={areaData} fill="#EEF2FF" />
 
         {/* The line */}
         <Path d={pathData} stroke="#6366F1" strokeWidth={2} fill="none" />
@@ -332,7 +340,7 @@ const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
             <Circle cx={p.x} cy={p.y} r={2} fill="#FFFFFF" />
             <Text 
               x={p.x} y={p.y - 12} 
-              style={{ fontSize: 8, fontWeight: 'bold', fill: '#4F46E5', textAlign: 'center' }}
+              style={{ fontSize: 8, fill: '#4F46E5', fontFamily: 'NotoSansKR', textAnchor: 'middle' }}
             >
               {p.label} ({p.score})
             </Text>

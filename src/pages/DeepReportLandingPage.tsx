@@ -37,34 +37,15 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
   return (
     <div className="premium-bg font-manrope min-h-screen overflow-x-hidden selection:bg-silver-200 selection:text-black">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-8 flex justify-between items-center mix-blend-difference">
-        <div 
-          className="font-newsreader text-2xl font-light tracking-tighter cursor-pointer text-white" 
-          onClick={() => navigate('/')}
-        >
-          MBTIJU <span className="text-sm tracking-widest uppercase ml-2 opacity-50">Premium</span>
-        </div>
-        <div className="flex gap-8 items-center">
-          <div className="hidden md:flex gap-8 text-white/50 text-xs font-bold uppercase tracking-widest">
-            <button onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Home</button>
-            <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Features</button>
-            <button onClick={() => document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Reviews</button>
-          </div>
-          <button 
-            onClick={onOpenDeepReport}
-            className="text-label-caps text-white border-b border-white/30 pb-1 hover:border-white transition-all"
-          >
-            리포트 신청하기
-          </button>
-        </div>
-      </nav>
+      {/* Navigation removed - handled by global Navbar */}
+
 
       {/* Hero Section */}
       <section id="hero" className="relative pt-40 pb-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full mb-8 animate-fade-up">
             <span className="material-symbols-outlined text-sm text-silver-400">auto_awesome</span>
-            <span className="text-label-caps text-silver-300">Advanced Destiny Analysis</span>
+            <span className="text-label-caps text-silver-300">정밀 운명 분석 솔루션</span>
           </div>
           
           <h1 className="text-display-lg mb-8 animate-fade-up [animation-delay:200ms]">
@@ -91,7 +72,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             <div className="flex items-center gap-4 text-slate-500">
               <span className="text-sm line-through opacity-50 font-light">₩98,000</span>
               <span className="text-lg font-bold text-white">₩49,000</span>
-              <span className="px-2 py-0.5 bg-white/10 text-white text-[10px] rounded uppercase font-bold">50% Off</span>
+              <span className="px-2 py-0.5 bg-white/10 text-white text-[10px] rounded uppercase font-bold">50% 할인</span>
             </div>
           </div>
         </div>
@@ -105,7 +86,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       <section id="features" className="py-20 px-6 bg-[#0F0F0F]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-headline-xl mb-4 italic text-white">The Premium Experience</h2>
+            <h2 className="text-headline-xl mb-4 italic text-white">프리미엄 리포트 경험</h2>
             <p className="text-slate-500">실제 제공되는 리포트의 고급스러운 디자인을 확인하세요.</p>
           </div>
           
@@ -138,7 +119,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
-              <div className="text-label-caps text-silver-400 mb-6">Why MBTIJU Premium?</div>
+            <div className="text-label-caps text-silver-400 mb-6">왜 MBTIJU 프리미엄인가?</div>
               <h2 className="text-headline-xl mb-10 text-white">
                 단순한 운세가 아닌,<br />
                 <span className="italic">데이터로 입증된</span> 인생 가이드
@@ -196,7 +177,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       <section id="reviews" className="py-32 px-6 bg-[#050505]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-headline-xl italic text-white">Trust of 50,000+ Users</h2>
+            <h2 className="text-headline-xl italic text-white">50,000명 이상의 내담자가 신뢰하는 분석</h2>
             <p className="text-slate-500 mt-4">이미 수많은 사용자들이 심층 리포트를 통해 자신의 인생을 설계하고 있습니다.</p>
           </div>
           

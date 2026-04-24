@@ -20,9 +20,9 @@ interface DeepReportRequest {
   created_at: string;
   partner_info?: {
     name: string;
-    birth_info: string;
-    mbti: string;
-    relationship: string;
+    birth_info?: string;
+    mbti?: string;
+    relationship?: string;
   };
   generated_data?: any;
   generated_at?: string;
@@ -212,11 +212,16 @@ const AdminDeepReports: React.FC = () => {
           };
           const tryRepair = (txt: string) => {
             try {
-              let r = txt;
+              let r = txt.trim();
+              
+              // Remove trailing commas before closing braces/brackets
+              r = r.replace(/,\s*([}\]])/g, '$1');
+              
               const ob = (r.match(/{/g)||[]).length, cb = (r.match(/}/g)||[]).length;
               if (ob > cb) r += '}'.repeat(ob - cb);
               const oa = (r.match(/\[/g)||[]).length, ca = (r.match(/\]/g)||[]).length;
               if (oa > ca) r += ']'.repeat(oa - ca);
+              
               return JSON.parse(r);
             } catch { return null; }
           };
@@ -416,7 +421,7 @@ const AdminDeepReports: React.FC = () => {
                                        <div className="bg-rose-50/20 p-6 rounded-2xl space-y-4">
                                           <div className="flex justify-between items-center">
                                              <span className="text-xs font-bold text-slate-400">이름 / 관계</span>
-                                             <span className="font-black text-slate-800">{req.partner_info.name} (${req.partner_info.relationship})</span>
+                                             <span className="font-black text-slate-800">{req.partner_info.name} ({req.partner_info.relationship})</span>
                                           </div>
                                           <div className="flex justify-between items-center">
                                              <span className="text-xs font-bold text-slate-400">생년월일 / MBTI</span>

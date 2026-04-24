@@ -16,6 +16,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
     kakaoId: '',
     birthDate: '',
     birthTime: '',
+    birthTimeLabel: '',
     mbti: '',
     reportType: 'mbti_saju', // 'saju' or 'mbti_saju'
     specialRequest: '',
@@ -25,6 +26,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       name: '',
       birthDate: '',
       birthTime: '',
+      birthTimeLabel: '',
       mbti: '',
       relationship: 'lover',
       relationshipCustom: '',
@@ -133,21 +135,21 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       const orderId = `DEEPREPORT_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const amount = 49000;
 
-      const { error: insertError } = await supabase.from('deep_reports').insert({
+      const { error: insertError } = await supabase.from('deep_report_requests').insert({
         order_id: orderId,
-        user_id: session?.user?.id || null, // null for guest
+        user_id: session?.user?.id || null,
         email: formData.email,
-        report_type: formData.reportType,
-        amount: amount,
-        status: 'pending',
-        reservation_date: formData.reservationDate,
-        birth_date: formData.birthDate,
-        birth_time: formData.birthTime,
+        kakao_id: formData.kakaoId,
+        birth_info: `${formData.birthDate} ${formData.birthTimeLabel || formData.birthTime}`,
         mbti: formData.mbti,
+        report_type: formData.reportType === 'mbti_saju' ? 'MBTI 사주 심층 리포트' : '사주 전용 심층 리포트',
+        special_requests: formData.specialRequest,
+        amount: amount,
+        status: 'pending_payment',
+        reservation_date: formData.reservationDate,
         partner_info: formData.reportType === 'mbti_saju' ? {
           name: formData.partnerInfo.name,
-          birthDate: formData.partnerInfo.birthDate,
-          birthTime: formData.partnerInfo.birthTime,
+          birth_info: `${formData.partnerInfo.birthDate} ${formData.partnerInfo.birthTime}`,
           mbti: formData.partnerInfo.mbti,
           relationship: formData.partnerInfo.relationship === 'custom' ? formData.partnerInfo.relationshipCustom : formData.partnerInfo.relationship
         } : null
@@ -206,17 +208,17 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
         <div className="px-8 md:px-10 py-8 overflow-y-auto custom-scrollbar">
           
-          <div className="bg-[#111111] rounded-2xl p-6 mb-8 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-r from-violet-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="bg-slate-900 rounded-3xl p-8 mb-8 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent)]"></div>
              <div className="relative z-10">
-                <p className="text-[10px] font-bold text-violet-400 bg-violet-400/10 px-2.5 py-1 rounded-full inline-block mb-3 uppercase tracking-widest border border-violet-400/20">기간 한정 50% 할인</p>
+                <p className="text-[10px] font-black text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full inline-block mb-4 uppercase tracking-widest border border-amber-400/20">기간 한정 50% 할인</p>
                 <div className="flex items-end gap-3">
-                   <h3 className="text-4xl font-manrope font-black text-white tracking-tighter">49,000원</h3>
-                   <span className="text-lg text-slate-600 line-through font-light mb-1.5 tracking-tighter">98,000원</span>
+                   <h3 className="text-5xl font-manrope font-black text-white tracking-tighter">49,000원</h3>
+                   <span className="text-xl text-slate-500 line-through font-light mb-2 tracking-tighter">98,000원</span>
                 </div>
-                <p className="text-[11px] font-bold text-slate-400 mt-2 flex items-center gap-1.5">
-                   <span className="w-1 h-1 bg-violet-500 rounded-full animate-pulse"></span>
-                   데이터 정밀 검증을 위해 1~2일 내로 발송됩니다.
+                <p className="text-xs font-bold text-slate-400 mt-3 flex items-center gap-1.5">
+                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+                   전문가 수기 작업으로 1~2일 내로 발송됩니다.
                 </p>
              </div>
              <div className="self-stretch w-full md:w-px bg-white/5 relative z-10"></div>
@@ -304,11 +306,15 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                       onChange={e => setFormData({...formData, birthDate: e.target.value})} 
                       className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
                     />
-                    <select 
-                      value={formData.birthTime} 
-                      onChange={e => setFormData({...formData, birthTime: e.target.value})} 
-                      className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
-                    >
+                      <select 
+                        value={formData.birthTime} 
+                        onChange={e => {
+                          const target = e.target as HTMLSelectElement;
+                          const label = target.options[target.selectedIndex]?.text || '';
+                          setFormData({...formData, birthTime: target.value, birthTimeLabel: label});
+                        }} 
+                        className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
+                      >
                       <option value="">태어난 시간 선택</option>
                       <option value="00:00">자시 (23:30 ~ 01:30)</option>
                       <option value="02:00">축시 (01:30 ~ 03:30)</option>
@@ -426,7 +432,18 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                         <label className="text-xs font-black text-slate-500">태어난 시간 (모름 가능)</label>
                         <select 
                           value={formData.partnerInfo.birthTime}
-                          onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, birthTime: e.target.value}}))}
+                          onChange={e => {
+                            const target = e.target as HTMLSelectElement;
+                            const label = target.options[target.selectedIndex]?.text || '';
+                            setFormData(prev => ({
+                              ...prev, 
+                              partnerInfo: {
+                                ...prev.partnerInfo, 
+                                birthTime: target.value, 
+                                birthTimeLabel: label
+                              }
+                            }));
+                          }}
                           className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
                         >
                           <option value="">태어난 시간 선택</option>

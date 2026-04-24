@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, BarChart3, Users, Zap } from 'lucide-react';
+import { ArrowRight, FileText, Sparkles, Users, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 
@@ -28,7 +28,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
         {/* Badge */}
         <div className="flex justify-center mb-5 md:mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/10">
-            <BarChart3 className="w-4 h-4 text-amber-400 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
             <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 +1,000만 ↑ 데이터 분석 / 20장 내외</span>
           </div>
         </div>
