@@ -4,17 +4,18 @@ import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/rendere
 // Register Fonts (Using public CDN for fonts that support Korean)
 Font.register({
   family: 'NanumMyeongjo',
-  src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf',
-  fontWeight: 'normal',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf' },
+    { src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf', fontWeight: 'bold' }
+  ]
 });
-Font.register({
-  family: 'NanumMyeongjoBold',
-  src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf', 
-  fontWeight: 'bold',
-});
+
 Font.register({
   family: 'NanumGothic',
-  src: 'https://fonts.gstatic.com/s/nanumgothic/v21/PN_oR7K9072Z7pD-Z-p3_OAt-B374H6O.ttf',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/nanumgothic/v21/PN_oR7K9072Z7pD-Z-p3_OAt-B374H6O.ttf' },
+    { src: 'https://fonts.gstatic.com/s/nanumgothic/v21/PN_oR7K9072Z7pD-Z-p3_OAt-B374H6O.ttf', fontWeight: 'bold' }
+  ]
 });
 
 const styles = StyleSheet.create({
@@ -200,8 +201,8 @@ const getElementColor = (char: string | undefined | null): string => {
   return '#334155';
 };
 
-const cleanText = (text: string | undefined) => {
-  if (!text) return '';
+const cleanText = (text: any) => {
+  if (typeof text !== 'string') return '';
   return text.replace(/\(.*?이상\)\s*/g, '').trim();
 };
 

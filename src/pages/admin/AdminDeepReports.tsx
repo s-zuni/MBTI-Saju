@@ -112,9 +112,9 @@ const AdminDeepReports: React.FC = () => {
       );
 
       await generateReactPDF(component, filename);
-    } catch (err) {
+    } catch (err: any) {
       console.error('PDF generation error:', err);
-      alert('PDF 생성 중 오류가 발생했습니다.');
+      alert(`PDF 생성 중 오류가 발생했습니다: ${err?.message || '알 수 없는 오류'}`);
     } finally {
       setIsExporting(false);
     }
