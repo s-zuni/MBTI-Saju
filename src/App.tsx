@@ -15,6 +15,7 @@ import FortunePage from './pages/FortunePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
+import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
 import { SERVICE_COSTS } from './config/creditConfig';
@@ -283,7 +284,7 @@ function AppContent({
                 <Routes>
                   <Route path="/" element={
                     <>
-                      <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => { if (session) openModal('deepReport'); else openModal('analysis', 'login'); }} />
+                      <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => navigate('/premium')} />
                       <FeatureGrids />
 
 
@@ -301,8 +302,7 @@ function AppContent({
                           <div className="grid md:grid-cols-3 gap-8">
                             <button
                               onClick={() => {
-                                if (session) openModal('deepReport');
-                                else openModal('analysis', 'login');
+                                navigate('/premium');
                               }}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
@@ -377,8 +377,7 @@ function AppContent({
                     <FortunePage
                       onFortuneClick={handleFetchFortune}
                       onMbtiSajuClick={() => {
-                        if (session) openModal('deepReport');
-                        else openModal('analysis', 'login');
+                        navigate('/premium');
                       }}
                       onTarotClick={() => openModal('tarot')}
                       onTripClick={() => openModal('trip')}
@@ -414,6 +413,7 @@ function AppContent({
                   <Route path="/room" element={<ChatPage session={session} />} />
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
+                  <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={() => openModal('deepReport')} />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>

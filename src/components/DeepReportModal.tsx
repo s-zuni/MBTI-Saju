@@ -177,46 +177,46 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
 
-        <div className="p-8 md:p-10 pb-6 shrink-0 bg-slate-950 text-white">
+        <div className="p-8 md:p-10 pb-6 shrink-0 bg-[#0A0A0A] text-white">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-600/30">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="material-symbols-outlined text-white text-3xl">auto_awesome</span>
             </div>
           </div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
-          <p className="text-slate-400 text-base md:text-lg font-bold leading-relaxed max-w-2xl">
-            <strong className="text-violet-300">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-violet-300 underline font-black">A4 10장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
+          <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
+          <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
+            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 10장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
         <div className="px-8 md:px-10 py-8 overflow-y-auto custom-scrollbar">
           
-          <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+          <div className="premium-glass-card rounded-2xl p-6 mb-8 border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 silver-glow">
              <div>
-                <p className="text-xs font-black text-rose-500 bg-rose-50 px-2 py-1 rounded inline-block mb-2 uppercase tracking-widest">기간 한정 50% 특별 할인</p>
+                <p className="text-[10px] font-bold text-white bg-white/10 px-2 py-1 rounded inline-block mb-2 uppercase tracking-[0.2em]">Limited Offer 50% OFF</p>
                 <div className="flex items-end gap-3">
-                   <h3 className="text-3xl font-black text-slate-900">49,000원</h3>
-                   <span className="text-base text-slate-400 line-through font-bold mb-1">98,000원</span>
+                   <h3 className="text-3xl font-manrope font-bold text-white">49,000원</h3>
+                   <span className="text-base text-slate-500 line-through font-light mb-1">98,000원</span>
                 </div>
-                <p className="text-xs font-bold text-slate-500 mt-2">※ 데이터 정밀 검증을 위해 빠르면 다음 날, 늦어도 2일 이내에 메일 및 카카오톡으로 발송됩니다.</p>
+                <p className="text-[11px] font-medium text-slate-500 mt-2">※ 데이터 정밀 검증을 위해 빠르면 다음 날, 늦어도 2일 이내에 발송됩니다.</p>
              </div>
-             <div className="self-stretch w-full md:w-px bg-slate-200"></div>
+             <div className="self-stretch w-full md:w-px bg-white/10"></div>
              <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-               <div className="bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
-                  <Mail className="w-5 h-5 mx-auto text-slate-700 mb-1" />
-                  <span className="text-xs font-bold text-slate-600">이메일 발송</span>
+               <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
+                  <span className="material-symbols-outlined text-slate-300 mb-1">mail</span>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</div>
                </div>
-               <div className="bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
-                  <MessageCircle className="w-5 h-5 mx-auto text-yellow-500 mb-1" />
-                  <span className="text-xs font-bold text-slate-600">카카오톡 발송</span>
+               <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
+                  <span className="material-symbols-outlined text-amber-400 mb-1">chat</span>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kakao</div>
                </div>
              </div>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-violet-50 p-5 rounded-2xl border border-violet-100">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                <div className="flex items-center gap-2 mb-3">
-                 <Calendar className="w-5 h-5 text-violet-600" />
+                 <span className="material-symbols-outlined text-slate-900">calendar_month</span>
                  <h3 className="text-sm font-black text-slate-900">리포트 예약 일자 선택 <span className="text-rose-500">*</span></h3>
                </div>
                <p className="text-xs text-slate-600 mb-4 font-bold flex items-center gap-1">
@@ -431,9 +431,9 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
            <button 
              onClick={handlePayment} 
              disabled={loading}
-             className="w-full py-5 bg-slate-950 text-white rounded-2xl font-black text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+             className="w-full py-5 bg-[#0A0A0A] text-white rounded-2xl font-manrope font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
            >
-             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
+             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="material-symbols-outlined">auto_awesome</span>}
              49,000원 결제하고 리포트 신청하기
            </button>
            <p className="text-center text-xs text-slate-400 mt-4 font-bold flex items-center justify-center gap-1">
