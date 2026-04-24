@@ -1,20 +1,20 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line } from '@react-pdf/renderer';
 
-// Register Fonts (Using public CDN for fonts that support Korean)
+// Register Fonts (Using stable jsdelivr CDN)
 Font.register({
   family: 'NanumMyeongjo',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf' },
-    { src: 'https://fonts.gstatic.com/s/nanummyeongjo/v21/6NUK8T6_o_yCpgicSm6_67VpPZ_T_nAtYySj.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf', fontWeight: 'bold' }
   ]
 });
 
 Font.register({
   family: 'NanumGothic',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/nanumgothic/v21/PN_oR7K9072Z7pD-Z-p3_OAt-B374H6O.ttf' },
-    { src: 'https://fonts.gstatic.com/s/nanumgothic/v21/PN_oR7K9072Z7pD-Z-p3_OAt-B374H6O.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanumgothic/NanumGothic-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanumgothic/NanumGothic-Bold.ttf', fontWeight: 'bold' }
   ]
 });
 
@@ -149,6 +149,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     fontSize: 8,
     color: '#94A3B8',
+  },
+  graphContainer: {
+    marginTop: 20,
+    marginBottom: 30,
+    padding: 20,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    border: '1pt solid #E2E8F0',
+  },
+  graphTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#1E293B',
+    textAlign: 'center',
   }
 });
 
@@ -240,6 +255,79 @@ const renderContent = (text: string | undefined) => {
   });
 };
 
+const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
+  if (!scores || scores.length === 0) return null;
+
+  const width = 450;
+  const height = 150;
+  const padding = 40;
+  
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+
+  // Map scores to points
+  const points = scores.map((s, i) => {
+    const x = padding + (i * (chartWidth / (scores.length - 1)));
+    const y = height - padding - (s.score / 100 * chartHeight);
+    return { x, y, ...s };
+  });
+
+  const pathData = points.reduce((acc, p, i) => {
+    return acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`);
+  }, '');
+
+  return (
+    <View style={styles.graphContainer}>
+      <Text style={styles.graphTitle}>향후 3개년 운세 에너지 흐름도</Text>
+      <Svg width={width} height={height}>
+        {/* Y-axis labels */}
+        {[0, 25, 50, 75, 100].map(v => (
+          <React.Fragment key={v}>
+            <Line 
+              x1={padding} y1={height - padding - (v/100 * chartHeight)} 
+              x2={width - padding} y2={height - padding - (v/100 * chartHeight)} 
+              stroke="#E2E8F0" strokeWidth={0.5} 
+            />
+            <Text 
+              x={padding - 5} y={height - padding - (v/100 * chartHeight) - 4} 
+              style={{ fontSize: 7, fill: '#94A3B8', textAlign: 'right' }}
+            >
+              {v}%
+            </Text>
+          </React.Fragment>
+        ))}
+
+        {/* X-axis labels */}
+        {points.map((p, i) => (
+          <Text 
+            key={i} x={p.x} y={height - padding + 15} 
+            style={{ fontSize: 9, fill: '#64748B', textAlign: 'center' }}
+          >
+            {p.year}년
+          </Text>
+        ))}
+
+        {/* The line */}
+        <Path d={pathData} stroke="#6366F1" strokeWidth={2} fill="none" />
+
+        {/* Data points */}
+        {points.map((p, i) => (
+          <React.Fragment key={i}>
+            <Circle cx={p.x} cy={p.y} r={4} fill="#6366F1" />
+            <Circle cx={p.x} cy={p.y} r={2} fill="#FFFFFF" />
+            <Text 
+              x={p.x} y={p.y - 12} 
+              style={{ fontSize: 8, fontWeight: 'bold', fill: '#4F46E5', textAlign: 'center' }}
+            >
+              {p.label} ({p.score})
+            </Text>
+          </React.Fragment>
+        ))}
+      </Svg>
+    </View>
+  );
+};
+
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const pillars = sajuData?.userSaju?.pillars;
   const pList = [pillars?.hour, pillars?.day, pillars?.month, pillars?.year];
@@ -317,6 +405,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
 
       <Page size="A4" style={styles.page}>
         <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>05</Text><Text style={{ flex: 1 }}>향후 3년의 대운 흐름 (2027-2029)</Text></View>
+        <FortuneGraph scores={parsedContent.yearlyScores} />
         {renderContent(parsedContent.macroDecadeTrend)}
         <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>

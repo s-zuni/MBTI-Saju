@@ -185,30 +185,34 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 10장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
         <div className="px-8 md:px-10 py-8 overflow-y-auto custom-scrollbar">
           
-          <div className="premium-glass-card rounded-2xl p-6 mb-8 border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 silver-glow">
-             <div>
-                <p className="text-[10px] font-bold text-white bg-white/10 px-2 py-1 rounded inline-block mb-2 uppercase tracking-[0.2em]">Limited Offer 50% OFF</p>
+          <div className="bg-[#111111] rounded-2xl p-6 mb-8 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-r from-violet-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+             <div className="relative z-10">
+                <p className="text-[10px] font-bold text-violet-400 bg-violet-400/10 px-2.5 py-1 rounded-full inline-block mb-3 uppercase tracking-widest border border-violet-400/20">기간 한정 50% 할인</p>
                 <div className="flex items-end gap-3">
-                   <h3 className="text-3xl font-manrope font-bold text-white">49,000원</h3>
-                   <span className="text-base text-slate-500 line-through font-light mb-1">98,000원</span>
+                   <h3 className="text-4xl font-manrope font-black text-white tracking-tighter">49,000원</h3>
+                   <span className="text-lg text-slate-600 line-through font-light mb-1.5 tracking-tighter">98,000원</span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500 mt-2">※ 데이터 정밀 검증을 위해 빠르면 다음 날, 늦어도 2일 이내에 발송됩니다.</p>
+                <p className="text-[11px] font-bold text-slate-400 mt-2 flex items-center gap-1.5">
+                   <span className="w-1 h-1 bg-violet-500 rounded-full animate-pulse"></span>
+                   데이터 정밀 검증을 위해 1~2일 내로 발송됩니다.
+                </p>
              </div>
-             <div className="self-stretch w-full md:w-px bg-white/10"></div>
-             <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-               <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
-                  <span className="material-symbols-outlined text-slate-300 mb-1">mail</span>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</div>
+             <div className="self-stretch w-full md:w-px bg-white/5 relative z-10"></div>
+             <div className="grid grid-cols-2 gap-3 w-full md:w-auto relative z-10">
+               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center flex flex-col items-center justify-center min-w-[80px]">
+                  <span className="material-symbols-outlined text-slate-400 mb-1.5 text-xl">mail</span>
+                  <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">E-mail</div>
                </div>
-               <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
-                  <span className="material-symbols-outlined text-amber-400 mb-1">chat</span>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kakao</div>
+               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center flex flex-col items-center justify-center min-w-[80px]">
+                  <span className="material-symbols-outlined text-amber-500 mb-1.5 text-xl">chat</span>
+                  <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Kakao</div>
                </div>
              </div>
           </div>
@@ -278,19 +282,33 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
             <div className="grid md:grid-cols-2 gap-6">
                <div className="space-y-2">
                  <label className="text-sm font-black text-slate-800">생년월일 및 태어난 시간 <span className="text-rose-500">*</span></label>
-                 <div className="flex gap-2">
+                 <div className="flex flex-col gap-2">
                     <input 
                       type="date" 
                       value={formData.birthDate} 
                       onChange={e => setFormData({...formData, birthDate: e.target.value})} 
-                      className="w-2/3 bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
+                      className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
                     />
-                    <input 
-                      type="time" 
+                    <select 
                       value={formData.birthTime} 
                       onChange={e => setFormData({...formData, birthTime: e.target.value})} 
-                      className="w-1/3 bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
-                    />
+                      className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm font-medium"
+                    >
+                      <option value="">태어난 시간 선택</option>
+                      <option value="00:00">자시 (23:30 ~ 01:30)</option>
+                      <option value="02:00">축시 (01:30 ~ 03:30)</option>
+                      <option value="04:00">인시 (03:30 ~ 05:30)</option>
+                      <option value="06:00">묘시 (05:30 ~ 07:30)</option>
+                      <option value="08:00">진시 (07:30 ~ 09:30)</option>
+                      <option value="10:00">사시 (09:30 ~ 11:30)</option>
+                      <option value="12:00">오시 (11:30 ~ 13:30)</option>
+                      <option value="14:00">미시 (13:30 ~ 15:30)</option>
+                      <option value="16:00">신시 (15:30 ~ 17:30)</option>
+                      <option value="18:00">유시 (17:30 ~ 19:30)</option>
+                      <option value="20:00">술시 (19:30 ~ 21:30)</option>
+                      <option value="22:00">해시 (21:30 ~ 23:30)</option>
+                      <option value="unknown">모름 / 입력안함</option>
+                    </select>
                  </div>
                </div>
                <div className="space-y-2">
@@ -391,12 +409,26 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-black text-slate-500">태어난 시간 (모름 가능)</label>
-                        <input 
-                          type="time" 
+                        <select 
                           value={formData.partnerInfo.birthTime}
                           onChange={e => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, birthTime: e.target.value}}))}
                           className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
-                        />
+                        >
+                          <option value="">태어난 시간 선택</option>
+                          <option value="00:00">자시 (23:30 ~ 01:30)</option>
+                          <option value="02:00">축시 (01:30 ~ 03:30)</option>
+                          <option value="04:00">인시 (03:30 ~ 05:30)</option>
+                          <option value="06:00">묘시 (05:30 ~ 07:30)</option>
+                          <option value="08:00">진시 (07:30 ~ 09:30)</option>
+                          <option value="10:00">사시 (09:30 ~ 11:30)</option>
+                          <option value="12:00">오시 (11:30 ~ 13:30)</option>
+                          <option value="14:00">미시 (13:30 ~ 15:30)</option>
+                          <option value="16:00">신시 (15:30 ~ 17:30)</option>
+                          <option value="18:00">유시 (17:30 ~ 19:30)</option>
+                          <option value="20:00">술시 (19:30 ~ 21:30)</option>
+                          <option value="22:00">해시 (21:30 ~ 23:30)</option>
+                          <option value="unknown">모름 / 입력안함</option>
+                        </select>
                       </div>
                     </div>
 

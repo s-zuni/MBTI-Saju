@@ -44,16 +44,23 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         >
           MBTIJU <span className="text-sm tracking-widest uppercase ml-2 opacity-50">Premium</span>
         </div>
-        <button 
-          onClick={onOpenDeepReport}
-          className="text-label-caps text-white border-b border-white/30 pb-1 hover:border-white transition-all"
-        >
-          Get Started
-        </button>
+        <div className="flex gap-8 items-center">
+          <div className="hidden md:flex gap-8 text-white/50 text-xs font-bold uppercase tracking-widest">
+            <button onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Home</button>
+            <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Features</button>
+            <button onClick={() => document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">Reviews</button>
+          </div>
+          <button 
+            onClick={onOpenDeepReport}
+            className="text-label-caps text-white border-b border-white/30 pb-1 hover:border-white transition-all"
+          >
+            리포트 신청하기
+          </button>
+        </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-20 px-6">
+      <section id="hero" className="relative pt-40 pb-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full mb-8 animate-fade-up">
             <span className="material-symbols-outlined text-sm text-silver-400">auto_awesome</span>
@@ -95,7 +102,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       </section>
 
       {/* Featured Images / Mockups */}
-      <section className="py-20 px-6 bg-[#0F0F0F]">
+      <section id="features" className="py-20 px-6 bg-[#0F0F0F]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-headline-xl mb-4 italic text-white">The Premium Experience</h2>
@@ -186,7 +193,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       </section>
 
       {/* Reviews Section */}
-      <section className="py-32 px-6 bg-[#050505]">
+      <section id="reviews" className="py-32 px-6 bg-[#050505]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-headline-xl italic text-white">Trust of 50,000+ Users</h2>
@@ -244,15 +251,15 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
           <div className="mt-12 flex flex-wrap justify-center gap-10 opacity-40">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">Secure Payment</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-white">안전한 보안 결제</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">Expert Analysis</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-white">전문가 정밀 분석</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">Satisfaction Guaranteed</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-white">100% 만족 보장</span>
             </div>
           </div>
         </div>
@@ -263,9 +270,9 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="font-newsreader text-xl font-light text-white">MBTIJU</div>
           <div className="flex gap-8 text-slate-500 text-xs font-medium">
-            <a href="/" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="/" className="hover:text-white transition-colors">Contact Us</a>
+            <a href="/" className="hover:text-white transition-colors">개인정보처리방침</a>
+            <a href="/" className="hover:text-white transition-colors">이용약관</a>
+            <a href="/" className="hover:text-white transition-colors">고객센터</a>
           </div>
           <div className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">
             © 2026 MBTIJU. ALL RIGHTS RESERVED.
