@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Mail, MessageCircle, Info, Calendar } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
 
 interface DeepReportModalProps {

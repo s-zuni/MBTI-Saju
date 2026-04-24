@@ -263,9 +263,9 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="font-newsreader text-xl font-light text-white">MBTIJU</div>
           <div className="flex gap-8 text-slate-500 text-xs font-medium">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Contact Us</a>
+            <a href="/" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="/" className="hover:text-white transition-colors">Contact Us</a>
           </div>
           <div className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">
             © 2026 MBTIJU. ALL RIGHTS RESERVED.
