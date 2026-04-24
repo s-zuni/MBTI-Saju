@@ -55,6 +55,7 @@ const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
+const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModal'));
 
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
@@ -137,6 +138,13 @@ function App() {
       openModal('analysis', 'login');
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // 심층 리포트 구매 후 비회원이 가입하고 돌아왔을 때 이벤트 모달 자동 노출
+    if (params.get('event_trigger') === 'true' && session && !isAuthLoading) {
+        openModal('deepReportEvent');
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [session, isAuthLoading, openModal]);
 
@@ -586,6 +594,12 @@ function AppContent({
                 onClose={handleCloseOnboarding}
                 onCheckPlans={() => openModal('creditPurchase')}
                 userName={session?.user?.user_metadata?.full_name}
+              />
+
+              <DeepReportEventModal
+                isOpen={modals?.deepReportEvent?.isOpen || false}
+                onClose={() => closeModal('deepReportEvent')}
+                session={session}
               />
 
 

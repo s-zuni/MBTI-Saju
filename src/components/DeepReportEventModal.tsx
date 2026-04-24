@@ -63,7 +63,12 @@ const DeepReportEventModal: React.FC<DeepReportEventModalProps> = ({ isOpen, onC
     }
 
     const handleEventPurchase = async () => {
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) {
+            // Guest logic: Redirect to signup with event flag
+            alert('이벤트 참여를 위해 먼저 간단한 회원가입이 필요합니다. 가입 후 자동으로 이벤트 페이지로 돌아옵니다.');
+            window.location.href = '/?login=true&event_trigger=true';
+            return;
+        }
 
         setLoading(true);
         try {
@@ -174,7 +179,7 @@ const DeepReportEventModal: React.FC<DeepReportEventModalProps> = ({ isOpen, onC
                         ) : (
                             <>
                                 <Sparkles className="w-5 h-5" />
-                                9,900원에 500크레딧 받기
+                                {!session ? '가입하고 500크레딧 받기' : '9,900원에 500크레딧 받기'}
                                 <ArrowRight className="w-5 h-5" />
                             </>
                         )}

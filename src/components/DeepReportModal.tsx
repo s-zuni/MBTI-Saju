@@ -110,40 +110,44 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   if (!isOpen) return null;
 
   const handlePayment = async () => {
-    if (!session) {
-      alert('리포트 신청을 위해 로그인이 필요합니다.');
-      window.location.href = '/?login=true';
-      return;
+    // Guest checkout is allowed. If session is missing, we proceed as guest.
+    // We will use a guest customer key for TOSS payments.
+    
+    setLoading(true);
+
+    if (!formData.email.trim()) {
+      setLoading(false);
+      return alert('이메일을 입력해주세요.');
+    }
+    if (!formData.birthDate.trim()) {
+      setLoading(false);
+      return alert('생년월일(및 시간)을 입력해주세요.');
+    }
+    if (!formData.reservationDate) {
+      setLoading(false);
+      return alert('예약 일자를 선택해주세요.');
     }
 
-    setLoading(true);
-
-    if (!formData.email.trim()) return alert('이메일을 입력해주세요.');
-    if (!formData.birthDate.trim()) return alert('생년월일(및 시간)을 입력해주세요.');
-    if (!formData.reservationDate) return alert('예약 일자를 선택해주세요.');
-    if (!session?.user?.id) return alert('로그인 세션이 만료되었습니다.');
-
-    setLoading(true);
     try {
+      // 1. 심층 리포트 요청 데이터 생성
       const orderId = `DEEPREPORT_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const amount = 49000;
 
-      // 1. DB에 임시 저장 (결제 대기)
-      const { error: insertError } = await supabase.from('deep_report_requests').insert({
-        user_id: session.user.id,
+      const { error: insertError } = await supabase.from('deep_reports').insert({
         order_id: orderId,
+        user_id: session?.user?.id || null, // null for guest
         email: formData.email,
-        kakao_id: formData.kakaoId,
-        birth_info: `${formData.birthDate} ${formData.birthTime}`.trim(),
-        mbti: formData.mbti,
-        report_type: formData.reportType === 'saju' ? '사주만' : 'MBTI & 사주 같이',
-        special_requests: formData.specialRequest,
+        report_type: formData.reportType,
         amount: amount,
+        status: 'pending',
         reservation_date: formData.reservationDate,
-        status: 'pending_payment',
-        partner_info: formData.partnerInfo.includePartner ? {
+        birth_date: formData.birthDate,
+        birth_time: formData.birthTime,
+        mbti: formData.mbti,
+        partner_info: formData.reportType === 'mbti_saju' ? {
           name: formData.partnerInfo.name,
-          birth_info: `${formData.partnerInfo.birthDate} ${formData.partnerInfo.birthTime}`.trim(),
+          birthDate: formData.partnerInfo.birthDate,
+          birthTime: formData.partnerInfo.birthTime,
           mbti: formData.partnerInfo.mbti,
           relationship: formData.partnerInfo.relationship === 'custom' ? formData.partnerInfo.relationshipCustom : formData.partnerInfo.relationship
         } : null
@@ -155,13 +159,16 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       }
 
       // 2. Toss 페이먼츠 호출
+      // Guest인 경우 session.user.id 대신 고유 식별자 생성하여 사용
+      const customerKey = session?.user?.id || `GUEST_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+      
       const response = await requestPayment({
         name: formData.reportType === 'saju' ? '심층 결합 분석 리포트 (사주)' : '심층 결합 분석 리포트 (MBTI+사주)',
         amount: amount,
         orderId: orderId,
-        customerKey: session.user.id,
+        customerKey: customerKey.replace(/[^a-zA-Z0-9_\-:]/g, '').substring(0, 50),
         customerEmail: formData.email,
-        customerName: session.user.user_metadata?.full_name || '이용자',
+        customerName: session?.user?.user_metadata?.full_name || '비회원 이용자',
         metadata: {
             productId: 'deep_report'
         }

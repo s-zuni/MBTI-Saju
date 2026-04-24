@@ -78,20 +78,9 @@ const PaymentSuccess: React.FC = () => {
                     }).catch(err => console.error('Auto-generation trigger failed:', err))
                       .finally(() => setIsGenerating(false));
 
-                    // 이벤트 참여 여부 확인 후 팝업 노출
-                    if (refreshedSession?.user?.id) {
-                        const { data: existingClaim } = await supabase
-                            .from('event_claims')
-                            .select('id')
-                            .eq('user_id', refreshedSession.user.id)
-                            .eq('event_type', 'deep_report_credit_500')
-                            .maybeSingle();
-
-                        if (!existingClaim) {
-                            // 약간의 딜레이 후 이벤트 팝업 표시 (결제 완료 UX 확인 후)
-                            setTimeout(() => setShowEventModal(true), 1500);
-                        }
-                    }
+                    // 이벤트 팝업 노출 (심층 리포트 구매 시 상시 노출)
+                    // 기존: session?.user?.id 체크 -> 수정: 상시 노출 후 내부에서 가입 유도
+                    setTimeout(() => setShowEventModal(true), 1500);
                 }
 
                 setLoading(false);
