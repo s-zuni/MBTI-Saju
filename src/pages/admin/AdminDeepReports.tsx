@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle } from 'lucide-react';
-import { generateHighResPDF } from '../../utils/pdfGenerator';
-import { DeepReportPDFTemplate } from '../../components/pdf/DeepReportPDFTemplate';
+import { generateReactPDF } from '../../utils/pdfGenerator';
+import { DeepReportReactPDF } from '../../components/pdf/DeepReportReactPDF';
 
 interface DeepReportRequest {
   id: string;
@@ -101,13 +101,17 @@ const AdminDeepReports: React.FC = () => {
     setIsExporting(true);
 
     try {
-      const targetElement = document.getElementById('deep-report-pdf-wrapper');
-      if (!targetElement) throw new Error('PDF 템플릿을 찾을 수 없습니다.');
+      const filename = `프리미엄_심층리포트_${reportModal.currentReq?.profiles?.name || '내담자'}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      await generateHighResPDF(
-        targetElement, 
-        `프리미엄_심층리포트_${reportModal.currentReq?.profiles?.name || '내담자'}_${new Date().toISOString().split('T')[0]}.pdf`
+      const component = (
+        <DeepReportReactPDF 
+          sajuData={reportModal.sajuData} 
+          parsedContent={reportModal.sajuData} 
+          clientName={reportModal.currentReq?.profiles?.name || '내담자'} 
+        />
       );
+
+      await generateReactPDF(component, filename);
     } catch (err) {
       console.error('PDF generation error:', err);
       alert('PDF 생성 중 오류가 발생했습니다.');
@@ -546,16 +550,6 @@ const AdminDeepReports: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}} />
 
-      {/* Hidden PDF Template Container */}
-      {reportModal.isOpen && reportModal.sajuData && (
-        <div id="deep-report-pdf-wrapper" className="absolute" style={{ top: '-99999px', left: '-99999px', zIndex: -50, width: '210mm' }}>
-          <DeepReportPDFTemplate 
-            sajuData={reportModal.sajuData} 
-            parsedContent={reportModal.sajuData} 
-            clientName={reportModal.currentReq?.profiles?.name || '내담자'} 
-          />
-        </div>
-      )}
     </div>
   );
 };

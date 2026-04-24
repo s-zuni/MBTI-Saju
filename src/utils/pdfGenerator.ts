@@ -1,5 +1,31 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { pdf } from '@react-pdf/renderer';
+import React from 'react';
+
+/**
+ * Generates a high-quality PDF using @react-pdf/renderer.
+ * 
+ * @param component The React-PDF component (Document)
+ * @param filename The output PDF filename
+ */
+export const generateReactPDF = async (component: React.ReactElement, filename: string) => {
+  try {
+    const blob = await pdf(component).toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('React-PDF Generation Error:', error);
+    throw error;
+  }
+};
 
 /**
  * Generates a high-quality PDF from a target DOM element.
