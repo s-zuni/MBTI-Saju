@@ -5,16 +5,16 @@ import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line }
 Font.register({
   family: 'NanumMyeongjo',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanummyeongjo/NanumMyeongjo-Regular.ttf', fontWeight: 'bold' }
   ]
 });
 
 Font.register({
   family: 'NanumGothic',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanumgothic/NanumGothic-Regular.ttf' },
-    { src: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nanumgothic/NanumGothic-Bold.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Bold.ttf', fontWeight: 'bold' }
   ]
 });
 
