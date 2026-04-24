@@ -4,8 +4,8 @@ import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line }
 Font.register({
   family: 'NanumMyungjo',
   fonts: [
-    { src: 'https://raw.githubusercontent.com/googlefonts/nanum/master/fonts/NanumMyungjo-Regular.ttf' },
-    { src: 'https://raw.githubusercontent.com/googlefonts/nanum/master/fonts/NanumMyungjo-Bold.ttf', fontWeight: 'bold' }
+    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSerifKR/NotoSerifKR-Regular.ttf' },
+    { src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSerifKR/NotoSerifKR-Bold.ttf', fontWeight: 'bold' }
   ]
 });
 
