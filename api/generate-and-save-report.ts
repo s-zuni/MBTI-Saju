@@ -184,7 +184,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 2. 오직 JSON만 출력. 마크다운 코드블록 금지.
 3. 메타 텍스트 금지.
 4. 문단 구분: 소주제 사이 \\n\\n, 불렛포인트 \\n- 구분.
-5. 각 필드 최소 분량: congenitalSummary 1500자, wealthAnalysis 1800자, relationshipAnalysis 3000자, healthAnalysis 2000자, macroDecadeTrend 2500자, partnerAnalysis 2500자, riskAnalysis 2500자, coreLifeMission 3500자, strategicDirective 2500자.
+5. 각 필드 최소 분량: 모든 분석 섹션은 공백 제외 최소 600자~1000자 내외로 상세히 작성하세요. (충분한 사주 근거 포함)
 6. 오직 JSON만 출력.
 
 [JSON 스키마]

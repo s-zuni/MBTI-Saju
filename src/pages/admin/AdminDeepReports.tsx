@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle } from 'lucide-react';
 import { generateReactPDF } from '../../utils/pdfGenerator';
 import { DeepReportReactPDF } from '../../components/pdf/DeepReportReactPDF';
+import { calculateSaju } from '../../utils/sajuUtils';
 
 interface DeepReportRequest {
   id: string;
@@ -161,12 +162,28 @@ const AdminDeepReports: React.FC = () => {
       setReportModal(prev => ({ ...prev, title }));
     };
 
+    let initialSaju = null;
+    try {
+      const parts = req.birth_info.split(' ');
+      const bDate = parts[0] || '';
+      const bTime = parts[1] || '12:00';
+      initialSaju = calculateSaju(bDate, bTime);
+    } catch (e) {
+      console.error('Initial saju calculation failed:', e);
+    }
+
     setReportModal({ 
       isOpen: true, 
       content: '', 
       title: `${req.profiles?.name || '내담자'}님의 리포트 생성 중...`, 
       currentReq: req,
-      sajuData: null
+      sajuData: {
+        userSaju: initialSaju,
+        reportType: req.report_type,
+        mbti: req.mbti,
+        clientName: req.profiles?.name,
+        birthInfo: req.birth_info,
+      }
     });
 
     try {
@@ -231,17 +248,19 @@ const AdminDeepReports: React.FC = () => {
             updateModalContent(Object.values(parsed).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'));
           }
         }
-        // After stream ends: enrich with req metadata for PDF template
+        // After stream ends: ensure everything is enriched
         setReportModal(prev => {
           if (!prev.sajuData) return prev;
-          const enriched = {
-            ...prev.sajuData,
-            reportType: req.report_type,
-            mbti: req.mbti,
-            clientName: req.profiles?.name,
-            birthInfo: req.birth_info,
+          return {
+            ...prev,
+            sajuData: {
+              ...prev.sajuData,
+              reportType: req.report_type,
+              mbti: req.mbti,
+              clientName: req.profiles?.name,
+              birthInfo: req.birth_info,
+            }
           };
-          return { ...prev, sajuData: enriched };
         });
       }
 
@@ -360,12 +379,23 @@ const AdminDeepReports: React.FC = () => {
                            <button 
                              onClick={() => {
                                if (req.generated_data) {
+                                 // Ensure userSaju exists even in legacy data
+                                 let data = req.generated_data;
+                                 if (!data.userSaju && req.birth_info) {
+                                   try {
+                                     const parts = req.birth_info.split(' ');
+                                     const bDate = parts[0] || '';
+                                     const bTime = parts[1] || '12:00';
+                                     data.userSaju = calculateSaju(bDate, bTime);
+                                   } catch (e) { console.error(e); }
+                                 }
+
                                  setReportModal({
                                    isOpen: true,
-                                   content: Object.values(req.generated_data).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'),
+                                   content: Object.values(data).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'),
                                    title: `${req.profiles?.name || '내담자'}님의 심층 리포트`,
                                    currentReq: req,
-                                   sajuData: req.generated_data
+                                   sajuData: data
                                  });
                                } else {
                                  generateAIReport(req);
