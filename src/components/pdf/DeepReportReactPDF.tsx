@@ -19,12 +19,12 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    padding: '20mm',
+    padding: '25mm',
     backgroundColor: '#ffffff',
     fontFamily: 'NotoSansKR',
-    fontSize: 11,
-    lineHeight: 1.6,
-    color: '#334155',
+    fontSize: 12,
+    lineHeight: 1.8,
+    color: '#1E293B',
   },
   coverPage: {
     padding: 0,
@@ -38,144 +38,134 @@ const styles = StyleSheet.create({
   },
   coverTitle: {
     fontFamily: 'NanumMyungjo',
-    fontSize: 42,
-    marginBottom: 20,
+    fontSize: 48,
+    marginBottom: 24,
     textAlign: 'center',
     letterSpacing: -1,
+    lineHeight: 1.2,
   },
   coverSubtitle: {
-    fontSize: 12,
-    letterSpacing: 8,
+    fontSize: 14,
+    letterSpacing: 10,
     color: '#FBBF24',
-    marginBottom: 40,
+    marginBottom: 48,
     textTransform: 'uppercase',
   },
   clientName: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'NanumMyungjo',
-    marginTop: 20,
+    marginTop: 24,
+    color: '#F8FAFC',
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 40,
   },
   sectionTitle: {
     fontFamily: 'NanumMyungjo',
-    fontSize: 22,
+    fontSize: 26,
     color: '#0F172A',
-    borderBottom: '1pt solid #E2E8F0',
-    paddingBottom: 8,
-    marginBottom: 20,
+    borderBottom: '2pt solid #E2E8F0',
+    paddingBottom: 12,
+    marginBottom: 30,
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   subTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1E293B',
-    marginTop: 15,
-    marginBottom: 10,
-    borderLeft: '3pt solid #6366F1',
-    paddingLeft: 8,
+    color: '#0F172A',
+    marginTop: 25,
+    marginBottom: 15,
+    borderLeft: '4pt solid #6366F1',
+    paddingLeft: 12,
     fontFamily: 'NotoSansKR',
   },
   paragraph: {
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'justify',
     fontFamily: 'NotoSansKR',
+    color: '#334155',
   },
   bulletPoint: {
     flexDirection: 'row',
-    marginBottom: 6,
-    paddingLeft: 10,
+    marginBottom: 10,
+    paddingLeft: 15,
   },
   bullet: {
-    width: 10,
-    fontSize: 12,
+    width: 15,
+    fontSize: 14,
+    color: '#6366F1',
     fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'NotoSansKR',
+    fontSize: 11.5,
   },
-  table: {
-    display: 'flex',
-    width: 'auto',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 20,
+  adviceBox: {
+    marginTop: 30,
+    padding: 20,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 12,
+    border: '1pt solid #C7D2FE',
   },
-  tableRow: {
-    flexDirection: 'row',
-  },
-  tableColHeader: {
-    width: '25%',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#1E293B',
-    color: '#ffffff',
-    padding: 5,
-    textAlign: 'center',
-    fontSize: 9,
+  adviceTitle: {
+    fontSize: 14,
     fontWeight: 'bold',
+    color: '#4338CA',
+    marginBottom: 8,
     fontFamily: 'NotoSansKR',
   },
-  tableCol: {
-    width: '25%',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 8,
-    textAlign: 'center',
-    fontFamily: 'NotoSansKR',
-  },
-  labelCell: {
-    fontSize: 8,
-    color: '#94A3B8',
-    marginBottom: 2,
-    fontFamily: 'NotoSansKR',
-  },
-  mainChar: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  adviceContent: {
+    fontSize: 12,
     fontFamily: 'NanumMyungjo',
+    color: '#312E81',
+    fontStyle: 'italic',
   },
-  subChar: {
-    fontSize: 10,
-    color: '#64748B',
+  watermark: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%) rotate(-45deg)',
+    fontSize: 60,
+    color: '#F1F5F9',
+    opacity: 0.3,
+    zIndex: -1,
     fontFamily: 'NotoSansKR',
-    marginTop: 2,
   },
   footer: {
     position: 'absolute',
     bottom: '10mm',
-    left: '20mm',
-    right: '20mm',
+    left: '25mm',
+    right: '25mm',
     borderTop: '0.5pt solid #E2E8F0',
-    paddingTop: 5,
+    paddingTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    fontSize: 8,
+    fontSize: 9,
     color: '#94A3B8',
     fontFamily: 'NotoSansKR',
   },
-  graphContainer: {
-    marginTop: 20,
-    marginBottom: 30,
-    padding: 20,
+  legalPage: {
+    padding: '40mm 25mm',
     backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    border: '1pt solid #E2E8F0',
-  },
-  graphTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#1E293B',
-    textAlign: 'center',
+    color: '#64748B',
     fontFamily: 'NotoSansKR',
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 2,
+  },
+  radarContainer: {
+    marginVertical: 30,
+    padding: 25,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    border: '1pt solid #E2E8F0',
+    alignItems: 'center',
   }
 });
 
@@ -218,7 +208,7 @@ interface Props {
 }
 
 const ELEMENT_COLORS = {
-  wood: '#059669', fire: '#E11D48', earth: '#B45309', metal: '#475569', water: '#2563EB',
+  wood: '#10B981', fire: '#EF4444', earth: '#F59E0B', metal: '#64748B', water: '#3B82F6',
 };
 
 const GAN_KOREAN: Record<string, string> = {
@@ -253,44 +243,26 @@ const translateShiShenPDF = (s: any): string => {
 
 const getElementColor = (char: string | undefined | null): string => {
   if (!char || char === '-') return '#334155';
-  
-  const target: string = char!; // Force non-null
-  
+  const target: string = char!;
   const wood = ['甲', '乙', '寅', '卯'];
   const fire = ['丙', '丁', '巳', '午'];
   const earth = ['戊', '己', '辰', '戌', '丑', '未'];
   const metal = ['庚', '辛', '申', '酉'];
   const water = ['壬', '癸', '亥', '子'];
-
   for (const c of wood) if (c === target) return ELEMENT_COLORS.wood;
   for (const c of fire) if (c === target) return ELEMENT_COLORS.fire;
   for (const c of earth) if (c === target) return ELEMENT_COLORS.earth;
   for (const c of metal) if (c === target) return ELEMENT_COLORS.metal;
   for (const c of water) if (c === target) return ELEMENT_COLORS.water;
-  
   return '#334155';
 };
 
-const cleanText = (text: any) => {
-  if (typeof text !== 'string') return '';
-  return text
-    .replace(/\(.*?이상\)\s*/g, '')
-    .replace(/\(한글로 설명.*?\)\s*/g, '')
-    .replace(/\(분량.*?\)\s*/g, '')
-    .replace(/\(상세 분석.*?\)\s*/g, '')
-    .replace(/\[최종 확인\][\s\S]*/g, '')
-    .trim();
-};
-
 const renderContent = (text: string | undefined) => {
-  const content = cleanText(text);
-  if (!content) return null;
-
-  const sections = content.split('\n');
+  if (!text) return null;
+  const sections = text.split('\n');
   return sections.map((line, idx) => {
     const trimmed = line.trim();
-    if (!trimmed) return <View key={idx} style={{ height: 10 }} />;
-
+    if (!trimmed) return <View key={idx} style={{ height: 12 }} />;
     if (trimmed.startsWith('▶')) {
       return (
         <Text key={idx} style={styles.subTitle} wrap={false}>
@@ -298,340 +270,159 @@ const renderContent = (text: string | undefined) => {
         </Text>
       );
     }
-
     if (trimmed.startsWith('- ')) {
       return (
         <View key={idx} style={styles.bulletPoint} wrap={false}>
-          <Text style={styles.bullet}>•</Text>
+          <Text style={styles.bullet}>■</Text>
           <Text style={styles.bulletText}>{trimmed.slice(2)}</Text>
         </View>
       );
     }
-
-    return (
-      <Text key={idx} style={styles.paragraph}>
-        {trimmed}
-      </Text>
-    );
+    return <Text key={idx} style={styles.paragraph}>{trimmed}</Text>;
   });
 };
 
-const FortuneGraph: React.FC<{ scores: any[] }> = ({ scores }) => {
-  if (!scores || scores.length === 0) return null;
-
-  const width = 450;
-  const height = 150;
-  const padding = 40;
-  
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-
-  // Map scores to points
-  const points = scores.map((s, i) => {
-    const x = padding + (i * (chartWidth / (scores.length - 1)));
-    const y = height - padding - (s.score / 100 * chartHeight);
-    return { x, y, ...s };
+const RadarChart: React.FC<{ ratio: any }> = ({ ratio }) => {
+  if (!ratio) return null;
+  const size = 300;
+  const center = size / 2;
+  const radius = 100;
+  const categories = [
+    { label: '목(木)', key: 'wood', angle: -90, color: ELEMENT_COLORS.wood },
+    { label: '화(火)', key: 'fire', angle: -18, color: ELEMENT_COLORS.fire },
+    { label: '토(土)', key: 'earth', angle: 54, color: ELEMENT_COLORS.earth },
+    { label: '금(金)', key: 'metal', angle: 126, color: ELEMENT_COLORS.metal },
+    { label: '수(水)', key: 'water', angle: 198, color: ELEMENT_COLORS.water },
+  ];
+  const points = categories.map(c => {
+    const val = (ratio[c.key] || 0) / 100;
+    const r = radius * val;
+    const rad = (c.angle * Math.PI) / 180;
+    return { x: center + r * Math.cos(rad), y: center + r * Math.sin(rad) };
   });
-
-  const pathData = points.reduce((acc, p, i) => {
-    return acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`);
-  }, '');
-
-  const areaData = pathData + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`;
-
+  const pathData = points.reduce((acc, p, i) => acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`), '') + ' Z';
   return (
-    <View style={styles.graphContainer}>
-      <Text style={styles.graphTitle}>향후 3개년 운세 에너지 흐름도</Text>
-      <Svg width={width} height={height}>
-        {/* Y-axis labels */}
-        {[0, 25, 50, 75, 100].map(v => (
-          <React.Fragment key={v}>
-            <Line 
-              x1={padding} y1={height - padding - (v/100 * chartHeight)} 
-              x2={width - padding} y2={height - padding - (v/100 * chartHeight)} 
-              stroke="#E2E8F0" strokeWidth={0.5} 
-            />
-            <Text 
-              x={padding - 5} y={height - padding - (v/100 * chartHeight) - 4} 
-              style={{ fontSize: 7, fill: '#94A3B8', fontFamily: 'NotoSansKR' }}
-            >
-              {v}%
-            </Text>
-          </React.Fragment>
+    <View style={styles.radarContainer}>
+      <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 20, fontFamily: 'NotoSansKR' }}>오행(五行) 에너지 밸런스</Text>
+      <Svg width={size} height={size}>
+        {[0.2, 0.4, 0.6, 0.8, 1.0].map((v, i) => (
+          <Circle key={i} cx={center} cy={center} r={radius * v} stroke="#E2E8F0" strokeWidth={0.5} fill="none" />
         ))}
-
-        {/* X-axis labels */}
-        {points.map((p, i) => (
-          <Text 
-            key={i} x={p.x} y={height - padding + 15} 
-            style={{ fontSize: 9, fill: '#64748B', fontFamily: 'NotoSansKR', textAnchor: 'middle' }}
-          >
-            {p.year}년
-          </Text>
-        ))}
-
-        {/* Area shading */}
-        <Path d={areaData} fill="#EEF2FF" />
-
-        {/* The line */}
-        <Path d={pathData} stroke="#6366F1" strokeWidth={2} fill="none" />
-
-        {/* Data points */}
-        {points.map((p, i) => (
-          <React.Fragment key={i}>
-            <Circle cx={p.x} cy={p.y} r={4} fill="#6366F1" />
-            <Circle cx={p.x} cy={p.y} r={2} fill="#FFFFFF" />
-            <Text 
-              x={p.x} y={p.y - 12} 
-              style={{ fontSize: 8, fill: '#4F46E5', fontFamily: 'NotoSansKR', textAnchor: 'middle' }}
-            >
-              {p.label} ({p.score})
-            </Text>
-          </React.Fragment>
-        ))}
+        {categories.map((c, i) => {
+          const rad = (c.angle * Math.PI) / 180;
+          return (
+            <React.Fragment key={i}>
+              <Line x1={center} y1={center} x2={center + radius * Math.cos(rad)} y2={center + radius * Math.sin(rad)} stroke="#E2E8F0" strokeWidth={0.5} />
+              <Text x={center + (radius + 20) * Math.cos(rad)} y={center + (radius + 20) * Math.sin(rad)} style={{ fontSize: 10, fill: c.color, fontFamily: 'NotoSansKR', textAnchor: 'middle' }}>{c.label}</Text>
+            </React.Fragment>
+          );
+        })}
+        <Path d={pathData} fill="#6366F1" fillOpacity={0.2} stroke="#6366F1" strokeWidth={2} />
       </Svg>
     </View>
   );
 };
 
-const ElementDistributionBar: React.FC<{ elementRatio: any }> = ({ elementRatio }) => {
-  if (!elementRatio) return null;
-  const elements = [
-    { label: '목(木)', value: elementRatio.wood || 0, color: '#059669' },
-    { label: '화(火)', value: elementRatio.fire || 0, color: '#E11D48' },
-    { label: '토(土)', value: elementRatio.earth || 0, color: '#B45309' },
-    { label: '금(金)', value: elementRatio.metal || 0, color: '#475569' },
-    { label: '수(水)', value: elementRatio.water || 0, color: '#2563EB' },
-  ];
-  return (
-    <View style={{ marginTop: 15, marginBottom: 10 }}>
-      <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#475569', marginBottom: 8, fontFamily: 'NotoSansKR' }}>오행(五行) 에너지 분포</Text>
-      {elements.map((el, i) => (
-        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
-          <Text style={{ width: 50, fontSize: 8, fontWeight: 'bold', color: el.color, fontFamily: 'NotoSansKR' }}>{el.label}</Text>
-          <View style={{ flex: 1, height: 12, backgroundColor: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
-            <View style={{ width: `${Math.min(el.value, 100)}%`, height: 12, backgroundColor: el.color, borderRadius: 6, opacity: 0.75 }} />
-          </View>
-          <Text style={{ width: 32, fontSize: 8, color: '#64748B', textAlign: 'right', fontFamily: 'NotoSansKR' }}>{el.value}%</Text>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-const SajuSummaryBlock: React.FC<{ userSaju: any }> = ({ userSaju }) => {
-  if (!userSaju?.dayMaster) return null;
-  const dm = userSaju.dayMaster;
-  return (
-    <View style={{ marginTop: 12, padding: 12, backgroundColor: '#F0F4FF', borderRadius: 8, border: '1pt solid #DBEAFE' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'NanumMyungjo', color: '#1E3A8A', marginRight: 6 }}>{dm.chinese}</Text>
-        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#1E40AF', fontFamily: 'NotoSansKR' }}>{dm.korean} — 일간(日干)의 주인</Text>
+const ThreeYearTimeline: React.FC<{ detail: any[] }> = ({ detail }) => {
+  if (!detail) return null;
+  return detail.map((yearData, idx) => (
+    <Page key={idx} size="A4" style={styles.page}>
+      <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+      <View style={styles.sectionTitle}>
+        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>{yearData.year}</Text>
+        <Text style={{ flex: 1 }}>{yearData.year}년 상세 운세 로드맵</Text>
       </View>
-      <Text style={{ fontSize: 9, color: '#334155', lineHeight: 1.5, fontFamily: 'NotoSansKR' }}>
-        {dm.description || '이 분의 일간은 사주의 중심축으로, 타고난 성격과 운명의 방향을 결정짓습니다.'}
-      </Text>
-    </View>
-  );
-};
-
-const LuckyItems: React.FC<{ items: any }> = ({ items }) => {
-  if (!items) return null;
-  const list = [
-    { label: '행운의 색상', value: items.color, icon: '🎨' },
-    { label: '행운의 숫자', value: items.number, icon: '🔢' },
-    { label: '도움되는 방향', value: items.direction, icon: '🧭' },
-    { label: '핵심 습관', value: items.habit, icon: '✨' },
-  ];
-
-  return (
-    <View style={{ marginTop: 10, marginBottom: 20 }}>
-      <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 15, color: '#1E293B', borderLeft: '3pt solid #FBBF24', paddingLeft: 8 }}>
-        개인별 행운의 요소
-      </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {list.map((item, i) => (
-          <View key={i} style={{ width: '48%', backgroundColor: '#FFFBEB', padding: 12, borderRadius: 12, border: '1pt solid #FEF3C7' }}>
-            <Text style={{ fontSize: 8, color: '#B45309', fontWeight: 'bold', marginBottom: 4 }}>{item.icon} {item.label}</Text>
-            <Text style={{ fontSize: 10, color: '#92400E', lineHeight: 1.4 }}>{item.value}</Text>
+      <Text style={[styles.paragraph, { fontSize: 13, fontWeight: 'bold', color: '#1E293B' }]}>{yearData.summary}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 15 }}>
+        {yearData.keywords?.map((k: string, i: number) => (
+          <Text key={i} style={{ backgroundColor: '#F1F5F9', padding: '4 10', borderRadius: 20, fontSize: 10, color: '#475569' }}>#{k}</Text>
+        ))}
+      </View>
+      <View style={{ marginTop: 20 }}>
+        {Object.entries(yearData.areas || {}).map(([key, val]: any, i) => (
+          <View key={i} style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#4338CA', marginBottom: 5 }}>[ {key.toUpperCase()} ]</Text>
+            <Text style={styles.paragraph}>{val}</Text>
           </View>
         ))}
       </View>
-    </View>
-  );
-};
-
-const QuarterlyLuck: React.FC<{ data: any[] }> = ({ data }) => {
-  if (!data || data.length === 0) return null;
-  return (
-    <View style={{ marginTop: 20 }}>
-      <Text style={[styles.subTitle, { borderLeftColor: '#10B981' }]}>분기별 운세 흐름</Text>
-      <View style={styles.table}>
-        <View style={styles.tableRow}>
-          <Text style={[styles.tableColHeader, { width: '20%', backgroundColor: '#064E3B' }]}>시기</Text>
-          <Text style={[styles.tableColHeader, { width: '55%', backgroundColor: '#064E3B' }]}>운세 요약</Text>
-          <Text style={[styles.tableColHeader, { width: '25%', backgroundColor: '#064E3B' }]}>핵심 지침</Text>
-        </View>
-        {data.map((q, i) => (
-          <View key={i} style={styles.tableRow}>
-            <View style={[styles.tableCol, { width: '20%', backgroundColor: '#F0FDF4' }]}>
-              <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#166534' }}>{q.period}</Text>
-            </View>
-            <View style={[styles.tableCol, { width: '55%', textAlign: 'left' }]}>
-              <Text style={{ fontSize: 9, color: '#374151', lineHeight: 1.4 }}>{q.summary}</Text>
-            </View>
-            <View style={[styles.tableCol, { width: '25%', backgroundColor: '#F9FAFB' }]}>
-              <Text style={{ fontSize: 8, color: '#059669', fontWeight: 'bold' }}>{q.point}</Text>
-            </View>
-          </View>
-        ))}
+      <View style={styles.adviceBox}>
+        <Text style={styles.adviceTitle}>마스터의 핵심 개운 행동 (Golden Action)</Text>
+        <Text style={styles.adviceContent}>{yearData.goldenAction}</Text>
       </View>
-    </View>
-  );
+      <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | {yearData.year} YEARLY DETAIL</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+    </Page>
+  ));
 };
 
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const pillars = sajuData?.userSaju?.pillars;
   const pList = [pillars?.hour, pillars?.day, pillars?.month, pillars?.year];
-  const pLabels = ['시주 (時柱)', '일주 (日柱)', '월주 (月柱)', '년주 (年柱)'];
+  const pLabels = ['시주 (時柱)', '일주 (日柱)', '월주 (월柱)', '년주 (年柱)'];
 
   return (
     <Document>
       <Page size="A4" style={styles.coverPage}>
-        <View style={{ width: 40, height: 1, backgroundColor: '#FBBF24', marginBottom: 30, opacity: 0.5 }} />
-        <Text style={styles.coverSubtitle}>심층 분석 리포트</Text>
-        <Text style={styles.coverTitle}>심층 전략 분석{'\n'}프리미엄 에디션</Text>
-        <View style={{ height: 1, width: 150, backgroundColor: '#334155', marginBottom: 30 }} />
-        <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10 }}>특별히 준비된</Text>
+        <Text style={styles.coverSubtitle}>PREMIUM SYNERGY REPORT</Text>
+        <Text style={styles.coverTitle}>심층 인생 전략 분석{'\n'}마스터 에디션</Text>
+        <View style={{ height: 2, width: 200, backgroundColor: '#FBBF24', marginVertical: 40 }} />
+        <Text style={{ fontSize: 14, color: '#94A3B8', marginBottom: 15 }}>귀하를 위한 운명의 기록</Text>
         <Text style={styles.clientName}>{clientName} 님</Text>
-        <Text style={{ marginTop: 20, fontSize: 10, color: '#64748B', letterSpacing: 2 }}>
+        <Text style={{ marginTop: 60, fontSize: 12, color: '#475569', letterSpacing: 3 }}>
           {sajuData?.reportType || '사주 명리학 심층 분석'}
         </Text>
-        <Text style={{ position: 'absolute', bottom: 40, fontSize: 8, color: '#475569' }}>
-          © 2025 MBTI-사주 시너지. ALL RIGHTS RESERVED.
+        <Text style={{ position: 'absolute', bottom: 50, fontSize: 10, color: '#64748B' }}>
+          © 2026 MBTI-사주 시너지 연구소. ALL RIGHTS RESERVED.
         </Text>
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}>
-          <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>01</Text>
-          <Text style={{ flex: 1 }}>선천적 기질 및 행운의 요소</Text>
-        </View>
-        <View style={{ backgroundColor: '#F8FAFC', padding: 15, borderRadius: 10, marginBottom: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1E293B', fontFamily: 'NanumMyungjo' }}>사주 원국(四柱 原局) 상세 분석</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              {pLabels.map((l, i) => <Text key={i} style={styles.tableColHeader}>{l}</Text>)}
-            </View>
-            {/* 천간 (天干) Row */}
-            <View style={styles.tableRow}>
-              {pList.map((p, i) => (
-                <View key={i} style={[styles.tableCol, { paddingVertical: 10 }]}>
-                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 2, fontFamily: 'NotoSansKR' }}>천간(天干)</Text>
-                  <Text style={[styles.mainChar, { color: getElementColor(p?.gan) as any }]}>{p?.gan || '-'}</Text>
-                  <Text style={{ fontSize: 8, color: '#475569', marginTop: 2, fontFamily: 'NotoSansKR' }}>{GAN_KOREAN[p?.gan || ''] || '-'}</Text>
-                  <Text style={{ fontSize: 7, color: '#6366F1', marginTop: 3, fontWeight: 'bold', fontFamily: 'NotoSansKR' }}>{translateShiShenPDF(p?.ganShiShen)}</Text>
-                </View>
-              ))}
-            </View>
-            {/* 지지 (地支) Row */}
-            <View style={styles.tableRow}>
-              {pList.map((p, i) => (
-                <View key={i} style={[styles.tableCol, { paddingVertical: 10 }]}>
-                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 2, fontFamily: 'NotoSansKR' }}>지지(地支)</Text>
-                  <Text style={[styles.mainChar, { color: getElementColor(p?.zhi) as any }]}>{p?.zhi || '-'}</Text>
-                  <Text style={{ fontSize: 8, color: '#475569', marginTop: 2, fontFamily: 'NotoSansKR' }}>{ZHI_KOREAN[p?.zhi || ''] || '-'}</Text>
-                  <Text style={{ fontSize: 7, color: '#6366F1', marginTop: 3, fontWeight: 'bold', fontFamily: 'NotoSansKR' }}>{translateShiShenPDF(p?.zhiShiShen)}</Text>
-                </View>
-              ))}
-            </View>
-            {/* 12운성 Row */}
-            <View style={styles.tableRow}>
-              {pList.map((p, i) => (
-                <View key={i} style={[styles.tableCol, { paddingVertical: 6 }]}>
-                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 1, fontFamily: 'NotoSansKR' }}>12운성</Text>
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#1E293B', fontFamily: 'NotoSansKR' }}>{p?.twelveStages || '-'}</Text>
-                </View>
-              ))}
-            </View>
-            {/* 12신살 Row */}
-            <View style={styles.tableRow}>
-              {pList.map((p, i) => (
-                <View key={i} style={[styles.tableCol, { paddingVertical: 6 }]}>
-                  <Text style={{ fontSize: 7, color: '#94A3B8', marginBottom: 1, fontFamily: 'NotoSansKR' }}>12신살</Text>
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#64748B', fontFamily: 'NotoSansKR' }}>{p?.twelveSpirits || '-'}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-          <SajuSummaryBlock userSaju={sajuData?.userSaju} />
-          <ElementDistributionBar elementRatio={sajuData?.userSaju?.elementRatio} />
-        </View>
-        <LuckyItems items={parsedContent.luckyItems} />
+        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>01</Text><Text style={{ flex: 1 }}>선천적 기질 및 운명적 도구</Text></View>
+        <RadarChart ratio={sajuData?.userSaju?.elementRatio} />
         {renderContent(parsedContent.congenitalSummary)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.adviceBox}>
+          <Text style={styles.adviceTitle}>마스터의 기질 총평</Text>
+          <Text style={styles.adviceContent}>{parsedContent.masterAdvice}</Text>
+        </View>
+        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | CORE ESSENCE</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>02</Text><Text style={{ flex: 1 }}>재물적 성취 및 직업 전략</Text></View>
+        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>02</Text><Text style={{ flex: 1 }}>재물적 성취 및 사회적 성공 전략</Text></View>
         {renderContent(parsedContent.wealthAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | WEALTH & CAREER</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>03</Text><Text style={{ flex: 1 }}>사회적 관계 및 대인 역학</Text></View>
+        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>03</Text><Text style={{ flex: 1 }}>사회적 관계 및 인간 역학</Text></View>
         {renderContent(parsedContent.relationshipAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | RELATIONSHIPS</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>04</Text><Text style={{ flex: 1 }}>생체 리듬 및 건강 최적화</Text></View>
+        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>04</Text><Text style={{ flex: 1 }}>에너지 리듬 및 생체 건강</Text></View>
         {renderContent(parsedContent.healthAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | HEALTH & VITALITY</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
-      <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>05</Text><Text style={{ flex: 1 }}>향후 3년의 대운 흐름 (2027-2029)</Text></View>
-        <FortuneGraph scores={parsedContent.yearlyScores} />
-        {renderContent(parsedContent.macroDecadeTrend)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
+      <ThreeYearTimeline detail={parsedContent.threeYearDetail} />
 
       <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>06</Text><Text style={{ flex: 1 }}>맞춤 파트너 및 피해야 할 유형 분석</Text></View>
-        {renderContent(parsedContent.partnerAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>07</Text><Text style={{ flex: 1 }}>리스크 관리 및 방어 전략</Text></View>
-        {renderContent(parsedContent.riskAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>08</Text><Text style={{ flex: 1 }}>삶의 근본적 과업과 사명</Text></View>
-        {renderContent(parsedContent.coreLifeMission)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>09</Text><Text style={{ flex: 1 }}>마스터 핵심 지침</Text></View>
+        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
+        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>09</Text><Text style={{ flex: 1 }}>인생 사명 및 마스터 가이드</Text></View>
         {renderContent(parsedContent.strategicDirective)}
-        <QuarterlyLuck data={parsedContent.quarterlyLuck} />
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | STRATEGIC DIRECTIVE</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
-      {parsedContent.specialRequestAnalysis && (
-        <Page size="A4" style={styles.page}>
-          <View style={styles.sectionTitle}>
-            <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F1F5F9', marginRight: 10 }}>SP</Text>
-            <Text style={{ flex: 1 }}>특별 요청 사항 분석</Text>
-          </View>
-          {renderContent(parsedContent.specialRequestAnalysis)}
-          <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-        </Page>
-      )}
+      <Page size="A4" style={styles.legalPage}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#334155', marginBottom: 40 }}>법적 고지 및 안내</Text>
+        <Text>본 리포트는 명리학적 데이터와 심리 분석을 바탕으로 한 통계적 분석 결과이며, 개인의 자유 의지와 환경에 따라 실제 삶과는 다를 수 있습니다. 인생의 참고 자료로 활용하시기 바랍니다. 모든 분석 내용은 학술적 견해를 포함하고 있으며, 특정 미래 사건에 대한 확정적 예고가 아님을 밝힙니다.</Text>
+        <Text style={{ marginTop: 60 }}>MBTI-사주 시너지 전략 연구소</Text>
+      </Page>
     </Document>
   );
 };
