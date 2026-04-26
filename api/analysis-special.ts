@@ -114,7 +114,7 @@ function getScoreComment(score: number): string {
     return '인연이 약함';
 }
 
-function generateAnalysisText(mbti: string, dayMaster: string, team: string, score: number, winFairyScore: number, bestTeam: string, worstTeam: string): string {
+function generateAnalysisText(mbti: string, dayMaster: string, team: string, score: number, winFairyScore: number, bestTeam: string, worstTeam: string, isRecommendation: boolean = false): string {
     const scoreComment = getScoreComment(score);
     const winComment = winFairyScore >= 80 ? '직관 갈 때마다 팀 승리를 부르는 강력한 기운을 가지고 있어요' 
         : winFairyScore >= 65 ? '직관 가면 좋은 기운이 흐르는 편이에요'
@@ -125,7 +125,11 @@ function generateAnalysisText(mbti: string, dayMaster: string, team: string, sco
         ? '외향적인 에너지가 구장의 열기와 시너지를 이뤄요'
         : '내향적인 집중력이 경기에 몰입하는 힘을 만들어줘요';
 
-    return `${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이에요.\n\n${mbtiComment}. 일간 ${dayMaster || '?'}의 기운과 구단의 팀 컬러가 만나는 지점에서 오늘의 점수가 결정됐어요.\n\n승리 요정 지수는 ${winFairyScore}점 — ${winComment}.\n\n참고로 현재 기운상 가장 잘 맞는 구단은 ${bestTeam}, 가장 엇갈리는 구단은 ${worstTeam}이에요.`;
+    const intro = isRecommendation 
+        ? `아직 응원하는 팀이 없으시군요! 사주와 MBTI 분석 결과, 당신과 가장 운명적으로 잘 맞는 구단은 **${team}**이에요.\n\n${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이며,`
+        : `${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이에요.`;
+
+    return `${intro}\n\n${mbtiComment}. 일간 ${dayMaster || '?'}의 기운과 구단의 팀 컬러가 만나는 지점에서 오늘의 점수가 결정됐어요.\n\n승리 요정 지수는 ${winFairyScore}점 — ${winComment}.\n\n참고로 현재 기운상 가장 잘 맞는 구단은 ${bestTeam}, 가장 엇갈리는 구단은 ${worstTeam}이에요.`;
 }
 
 function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
@@ -146,13 +150,13 @@ function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam
     const currentTeamScore = teamScores.find(t => t.team === currentTeam)?.score || 50;
     
     // 3. Win Fairy Score (User + Stadium synergy)
-    const winFairyScore = getDeterministicValue(mainSeed + currentTeam, 777, 30, 95);
+    const winFairyScore = getDeterministicValue(mainSeed + (currentTeam === '없음 (아직 없음)' ? bestTeam : currentTeam), 777, 30, 95);
 
     // 4. Dimensions
     const dimensionLabels = ['열정 수치', '직관 에너지', '응원 화력', '승리 행운', '팀 로열티'];
     const dimensions = dimensionLabels.map((label, i) => ({
         label,
-        value: getDeterministicValue(mainSeed + currentTeam, i + 999, 40, 100)
+        value: getDeterministicValue(mainSeed + (currentTeam === '없음 (아직 없음)' ? bestTeam : currentTeam), i + 999, 40, 100)
     }));
 
     return {
@@ -241,20 +245,35 @@ export default async function handler(req: Request) {
     } else if (type === 'trip') {
         userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'kbo') {
-        const kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 0);
-        const kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 1);
+        const isNoTeam = requirements === '없음 (아직 없음)';
+        
+        // 1. Get base results (best/worst team are calculated here regardless of input team)
+        let kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 0);
+        let kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 1);
+        
+        let teamToAnalyze = requirements || '없음';
+        
+        if (isNoTeam) {
+            // Use best team for analysis instead of 'None'
+            teamToAnalyze = kboFixed.bestTeam;
+            // Re-run for the specific best team to get correct scores/dimensions for that team
+            kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', teamToAnalyze, 0);
+            kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', teamToAnalyze, 1);
+        }
+
         const analysisText = generateAnalysisText(
             mbti || '알수없음',
             saju?.dayMaster?.korean || '알수없음',
-            requirements || '없음',
+            teamToAnalyze,
             kboFixed.score,
             kboFixed.winFairyScore,
             kboFixed.bestTeam,
-            kboFixed.worstTeam
+            kboFixed.worstTeam,
+            isNoTeam
         );
         
         // AI가 생성할 것은 dailyMessage (한 줄) 뿐. 나머지는 모두 서버에서 즉시 조합.
-        userQuery = `구단: ${requirements || '없음'}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오늘 궁합 점수: ${kboFixed.score}점, 승요지수: ${kboFixed.winFairyScore}점.
+        userQuery = `구단: ${teamToAnalyze}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오늘 궁합 점수: ${kboFixed.score}점, 승요지수: ${kboFixed.winFairyScore}점.
 
         [필수 준수 값 - 절대 변경 불가]
         score: ${kboFixed.score}

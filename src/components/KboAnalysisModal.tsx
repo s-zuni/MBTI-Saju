@@ -43,7 +43,7 @@ const RadarChart = ({ data }: { data: any[] }) => {
     const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
 
     return (
-        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-3xl border border-slate-100 shadow-sm">
+        <div className="flex flex-col items-center justify-center p-4">
             <svg viewBox="0 0 300 300" className="w-full max-w-[300px] h-auto overflow-visible">
                 {/* Background Grid */}
                 {gridPoints.map((points, i) => (
@@ -51,36 +51,27 @@ const RadarChart = ({ data }: { data: any[] }) => {
                         key={i}
                         d={points.map((p, pi) => `${pi === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'}
                         fill="none"
-                        stroke="#e2e8f0"
+                        stroke="#e5e5e5"
                         strokeWidth="1"
-                        strokeDasharray={i === 3 ? "0" : "4 4"}
                     />
                 ))}
                 
                 {/* Axes */}
                 {outerGrid.map((p, i) => (
-                    <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />
+                    <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e5e5e5" strokeWidth="1" />
                 ))}
 
                 {/* Data Area */}
                 <path
                     d={dataPath}
-                    fill="url(#radarGradient)"
-                    fillOpacity="0.4"
-                    stroke="#2563eb"
-                    strokeWidth="3"
-                    className="animate-pulse-slow"
+                    fill="none"
+                    stroke="#000000"
+                    strokeWidth="2"
                 />
-                <defs>
-                    <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#2563eb" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                    </linearGradient>
-                </defs>
 
                 {/* Data points */}
                 {dataPoints.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#2563eb" stroke="white" strokeWidth="2" />
+                    <circle key={i} cx={p.x} cy={p.y} r="3" fill="#000000" />
                 ))}
 
                 {/* Labels */}
@@ -99,7 +90,7 @@ const RadarChart = ({ data }: { data: any[] }) => {
                                 x={labelX}
                                 y={labelY}
                                 textAnchor={textAnchor}
-                                className="text-[12px] font-black fill-slate-900"
+                                className="text-[11px] font-medium fill-slate-500"
                             >
                                 {data[i]?.label || ''}
                             </text>
@@ -108,7 +99,7 @@ const RadarChart = ({ data }: { data: any[] }) => {
                                     x={labelX}
                                     y={labelY + 14}
                                     textAnchor={textAnchor}
-                                    className="text-[10px] font-bold fill-blue-600"
+                                    className="text-[10px] font-bold fill-black"
                                 >
                                     {data[i].value}%
                                 </text>
@@ -266,26 +257,28 @@ const KboContent: React.FC<{
         return (
             <div className="px-8 sm:px-12 pb-12 pt-8 overflow-y-auto custom-scrollbar grow bg-white">
                 <div className="max-w-md mx-auto">
-                    <h4 className="text-xl font-black text-slate-900 mb-6 text-center tracking-tight">당신의 현재 응원 구단을 알려주세요</h4>
-                    <div className="grid grid-cols-2 gap-3 mb-8">
+                    <h4 className="text-xl font-bold text-slate-900 mb-8 text-center tracking-tight">응원 구단을 선택해주세요</h4>
+                    <div className="grid grid-cols-2 gap-4 mb-8">
                         {KBO_TEAMS.map((team) => {
                             const info = getTeamInfo(team);
                             return (
                                 <button
                                     key={team}
                                     onClick={() => { setError(null); setSelectedTeam(team); }}
-                                    className={`px-4 py-4 rounded-2xl text-sm font-bold border-2 transition-all flex flex-col items-center gap-2 ${
+                                    className={`px-4 py-4 border transition-all flex flex-col items-center gap-3 ${
                                         selectedTeam === team
-                                        ? 'bg-slate-900 border-slate-900 text-white shadow-xl scale-[1.02]'
-                                        : 'bg-white border-slate-100 text-slate-600 hover:border-slate-300'
+                                        ? 'border-blue-600 bg-blue-50/30'
+                                        : 'border-slate-100 hover:border-slate-300'
                                     }`}
                                 >
                                     {info?.logo && (
-                                        <div className={`w-10 h-10 rounded-lg p-1 ${selectedTeam === team ? 'bg-white' : 'bg-slate-50'}`}>
-                                            <img src={info.logo} alt={team} crossOrigin="anonymous" className="w-full h-full object-contain" />
+                                        <div className="w-8 h-8 opacity-80">
+                                            <img src={info.logo} alt={team} crossOrigin="anonymous" className="w-full h-full object-contain filter grayscale-[0.5]" />
                                         </div>
                                     )}
-                                    {team}
+                                    <span className={`text-[13px] font-bold ${selectedTeam === team ? 'text-blue-600' : 'text-slate-500'}`}>
+                                        {team}
+                                    </span>
                                 </button>
                             );
                         })}
@@ -295,10 +288,11 @@ const KboContent: React.FC<{
                     )}
                     <button
                         onClick={startAnalysis}
-                        className="w-full py-5 bg-slate-950 text-white rounded-full font-black flex justify-center items-center gap-2 hover:bg-slate-800 transition-all shadow-2xl hover:scale-[1.01] active:scale-95"
+                        className="w-full py-5 bg-slate-950 text-white rounded-none font-bold text-sm flex justify-center items-center gap-2 hover:bg-slate-800 transition-all active:scale-95"
                     >
-                        <Trophy className="w-5 h-5" /> 5 크레딧으로 분석 시작
+                         분석 시작
                     </button>
+                    <p className="text-center text-[10px] text-slate-400 mt-4 font-medium tracking-widest uppercase">5 Credits will be used</p>
                 </div>
             </div>
         );
@@ -321,208 +315,142 @@ const KboContent: React.FC<{
             <div ref={reportRef} className="bg-white">
             {aiError && !result ? (
                 <div className="py-20 text-center">
-                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <X className="w-8 h-8 text-red-500" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">분석에 실패했습니다</h3>
-                    <p className="text-slate-500 mb-8 whitespace-pre-wrap">
+                    <X className="w-12 h-12 text-red-500 mx-auto mb-4 stroke-[1px]" />
+                    <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">분석에 실패했습니다</h3>
+                    <p className="text-slate-500 mb-8 whitespace-pre-wrap text-sm">
                         {aiError.message || '일시적인 오류가 발생했습니다.'}
                         {"\n"}크레딧은 차감되지 않았습니다.
                     </p>
                     <button
                         onClick={() => { setHasStarted(false); setError(null); }}
-                        className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold shadow-lg active:scale-95 transition-all"
+                        className="px-8 py-3 border border-slate-900 text-slate-900 rounded-full font-bold text-sm active:scale-95 transition-all"
                     >
                         뒤로 가기
                     </button>
                 </div>
             ) : isLoading && !result ? (
-                <div className="flex flex-col justify-center items-center h-80 px-6 text-center animate-fade-in">
-                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-8 stroke-[1px]" />
-                    <div className="space-y-3">
-                        <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
+                <div className="flex flex-col justify-center items-center h-80 px-6 text-center">
+                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-8 stroke-[1px]" />
+                    <div className="space-y-2">
+                        <p className="text-slate-900 font-bold text-lg tracking-tight">
                             {currentLoadingMessage}
                         </p>
-                        <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                        <p className="text-slate-400 font-medium text-[10px] tracking-widest uppercase">
                             분석에는 최대 30초 정도 소요될 수 있습니다
                         </p>
                     </div>
                 </div>
             ) : error ? (
-                <div className="text-center py-20 bg-red-50 rounded-[32px] border border-red-100">
-                    <p className="text-red-500 font-black mb-4">{error}</p>
-                    <button onClick={() => setHasStarted(false)} className="px-8 py-3 bg-slate-950 text-white rounded-full text-xs font-black">다시 선택하기</button>
+                <div className="text-center py-20 border border-red-100 rounded-2xl">
+                    <p className="text-red-500 font-bold mb-4">{error}</p>
+                    <button onClick={() => setHasStarted(false)} className="px-8 py-3 bg-slate-950 text-white rounded-full text-xs font-bold">다시 선택하기</button>
                 </div>
             ) : result ? (
-                <div className="space-y-10 animate-fade-up py-4">
+                <div className="animate-fade-up py-4 space-y-12">
                     
-                    {/* Daily Date Badge + Message Banner */}
-                    {result.date && (
-                        <div className="rounded-[28px] overflow-hidden border border-slate-100 shadow-md">
-                            {/* Date Header */}
-                            <div className="bg-slate-950 px-5 py-3 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <CalendarDays className="w-4 h-4 text-blue-400" />
-                                    <span className="text-white font-black text-xs tracking-widest uppercase">오늘의 KBO 운세</span>
-                                </div>
-                                <span className="text-white/80 text-xs font-bold">
-                                    {result.date ? new Date(result.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : ''}
-                                </span>
+                    {/* Header Info */}
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-100 pb-8">
+                        <div>
+                            <div className="flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-[0.1em] mb-3">
+                                <Zap className="w-3 h-3" /> {result.date ? new Date(result.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : ''}
                             </div>
-                            {/* Daily Message */}
-                            {result.dailyMessage && (
-                                <div className="bg-slate-50 px-5 py-4 flex items-start gap-3">
-                                    <Zap className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                                    <p className="text-slate-800 font-bold text-sm leading-relaxed">{result.dailyMessage}</p>
-                                </div>
-                            )}
+                            <h4 className="text-2xl font-black text-slate-900 tracking-tighter">
+                                {selectedTeam === '없음 (아직 없음)' ? '당신에게 어울리는 구단은?' : `${selectedTeam}과의 궁합`}
+                            </h4>
                         </div>
-                    )}
+                        <div className="text-right">
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">궁합 점수</p>
+                            <p className="text-5xl font-black text-blue-600 tracking-tighter">{result.score || 0}<span className="text-xl ml-1 text-slate-300">점</span></p>
+                        </div>
+                    </div>
 
-                    {/* Score section */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <section 
-                            className="rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]"
-                            style={{ background: teamInfo ? `linear-gradient(135deg, ${teamInfo.primaryColor} 0%, ${teamInfo.secondaryColor} 100%)` : 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)' }}
-                        >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-4">
-                                    {teamInfo?.logo && (
-                                        <div className="w-10 h-10 bg-white rounded-lg p-1.5 shadow-lg">
-                                            <img src={teamInfo.logo} alt={selectedTeam || ''} crossOrigin="anonymous" className="w-full h-full object-contain" />
-                                        </div>
-                                    )}
-                                    <h4 className="font-black text-white/90 tracking-tight text-lg">
-                                        {selectedTeam === '없음 (아직 없음)' ? '최적 매칭 구단' : `[${selectedTeam}]`} 궁합
-                                    </h4>
-                                </div>
-                                <div className="flex items-end gap-1">
-                                    <span className="text-7xl font-black tracking-tighter">{result.score || 0}</span>
-                                    <span className="text-2xl font-bold text-white/70 mb-2">점</span>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="bg-slate-950 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center min-h-[200px]">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600 opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="relative z-10">
-                                <h4 className="font-black text-blue-400 mb-4 tracking-tight text-lg flex items-center gap-2">
-                                    <Trophy className="w-5 h-5 text-blue-400"/> 승리 요정 지수
-                                </h4>
-                                <div className="flex items-end gap-1">
-                                    <span className="text-7xl font-black tracking-tighter text-white">{result.winFairyScore || 0}</span>
-                                    <span className="text-2xl font-bold text-slate-400 mb-2">점</span>
-                                </div>
-                            </div>
-                        </section>
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-2 gap-px bg-slate-100 border border-slate-100">
+                        <div className="bg-white p-6">
+                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">승리 요정 지수</h5>
+                            <p className="text-3xl font-black text-slate-900">{result.winFairyScore || 0}%</p>
+                        </div>
+                        <div className="bg-white p-6">
+                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">오늘의 운세</h5>
+                            <p className="text-sm font-bold text-slate-900 leading-snug">{result.dailyMessage}</p>
+                        </div>
                     </div>
 
                     {/* Detailed Analysis */}
-                    <section className="bg-slate-50 p-7 sm:p-10 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-                            <Sparkles className="w-32 h-32 text-slate-900" />
-                        </div>
-                        <h5 className="font-black text-slate-900 mb-8 text-xl tracking-tight border-b-2 border-slate-200 pb-5 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-blue-500" /> 팩트 폭격 심층 분석
+                    <section className="space-y-6">
+                        <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+                            <Sparkles className="w-3 h-3 text-blue-600" /> Deep Analysis
                         </h5>
-                        <div className="text-slate-700 text-[16px] leading-[1.9] font-medium whitespace-pre-wrap">
+                        <div className="text-slate-800 text-[15px] leading-[1.8] font-medium whitespace-pre-wrap">
                             {result.supportedTeamAnalysis}
                         </div>
                     </section>
 
-                    {/* Infographic 5 Dimensions */}
-                    <section className="pt-4">
-                        <div className="flex items-center justify-between mb-8">
-                            <h5 className="font-black text-slate-900 text-lg flex items-center gap-2">
-                                <TrendingUp className="w-6 h-6 text-blue-500" /> 성향 파라미터 그래프
-                            </h5>
-
-                        </div>
+                    {/* Radar Chart */}
+                    <section className="py-8">
+                        <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                            <TrendingUp className="w-3 h-3 text-blue-600" /> Tendency Map
+                        </h5>
                         <RadarChart data={result.dimensions || []} />
                     </section>
 
                     {/* Best & Worst Match */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-8 bg-blue-50 rounded-[32px] border border-blue-100 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform text-blue-600">
-                                <Trophy className="w-16 h-16" />
-                            </div>
-
-                            <h5 className="font-black text-blue-900 text-xl mb-3">최강 궁합 구단</h5>
-                            <p className="text-blue-600 font-black text-2xl flex items-center gap-2">
-                                <Trophy className="w-6 h-6 text-blue-500" /> {result.bestTeam}
-                            </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-slate-100">
+                        <div className="py-8 sm:pr-8 border-b sm:border-b-0 sm:border-r border-slate-100">
+                            <h5 className="font-bold text-blue-600 text-[10px] uppercase tracking-widest mb-3">Best Match</h5>
+                            <p className="text-xl font-black text-slate-900">{result.bestTeam}</p>
                         </div>
-                        <div className="p-8 bg-slate-50 rounded-[32px] border border-slate-100 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform text-slate-400">
-                                <X className="w-16 h-16" />
-                            </div>
-
-                            <h5 className="font-black text-slate-900 text-xl mb-3">최악 궁합 구단</h5>
-                            <p className="text-slate-500 font-black text-2xl flex items-center gap-2">
-                                <X className="w-6 h-6 text-slate-300" /> {result.worstTeam}
-                            </p>
+                        <div className="py-8 sm:pl-8">
+                            <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-3">Worst Match</h5>
+                            <p className="text-xl font-black text-slate-900">{result.worstTeam}</p>
                         </div>
                     </div>
 
-                    {/* Tomorrow Preview Card */}
+                    {/* Tomorrow Preview */}
                     {(result.tomorrowScore !== undefined || result.tomorrowWinFairyScore !== undefined) && (
-                        <div className="rounded-[28px] border border-slate-100 bg-slate-50 overflow-hidden shadow-sm">
-                            <div className="px-6 pt-5 pb-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <ChevronRight className="w-4 h-4 text-blue-500" />
-                                        <span className="text-slate-950 font-black text-xs tracking-widest uppercase">내일 미리보기</span>
-                                    </div>
-                                    <span className="text-slate-400 text-[10px] font-bold">
-                                        {new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-                                    </span>
+                        <div className="border border-slate-100 p-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest">Tomorrow Preview</h5>
+                                <span className="text-slate-400 text-[10px] font-medium">
+                                    {new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
+                                </span>
+                            </div>
+                            <div className="flex gap-12">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">궁합</p>
+                                    <p className="text-2xl font-black text-slate-900">{result.tomorrowScore ?? '-'}<span className="text-sm font-bold text-slate-300 ml-1">점</span></p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-slate-100">
-                                        <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 궁합</p>
-                                        <p className="text-3xl font-black text-slate-900">{result.tomorrowScore ?? '-'}<span className="text-sm text-slate-400 ml-0.5">점</span></p>
-                                        <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-blue-600 rounded-full transition-all" style={{width: `${result.tomorrowScore ?? 0}%`}} />
-                                        </div>
-                                    </div>
-                                    <div className="bg-white/70 rounded-2xl p-4 text-center border border-slate-100">
-                                        <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest mb-1">내일 승요</p>
-                                        <p className="text-3xl font-black text-slate-900">{result.tomorrowWinFairyScore ?? '-'}<span className="text-sm text-slate-400 ml-0.5">점</span></p>
-                                        <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-blue-600 rounded-full transition-all" style={{width: `${result.tomorrowWinFairyScore ?? 0}%`}} />
-                                        </div>
-                                    </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">승요</p>
+                                    <p className="text-2xl font-black text-slate-900">{result.tomorrowWinFairyScore ?? '-'}<span className="text-sm font-bold text-slate-300 ml-1">점</span></p>
                                 </div>
-                                <p className="text-slate-400 text-[10px] font-bold text-center mt-3">* 내일 점수는 오늘 자정 이후 갱신됩니다</p>
                             </div>
                         </div>
                     )}
 
-                    <div className="flex flex-col items-center pt-12 border-t border-slate-100 gap-6 mt-12 bg-slate-50/50 rounded-[40px] p-8">
-                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
+                    <div className="flex flex-col items-center pt-12 gap-6 mt-12 border-t border-slate-100">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                             <button
                                 onClick={handleShareInstagram}
                                 disabled={isSharing}
-                                className="flex-1 w-full px-8 py-5 bg-gradient-to-br from-purple-600 to-rose-500 text-white rounded-2xl text-md font-black shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                                className="flex-1 w-full px-8 py-4 bg-white border border-slate-900 text-slate-900 rounded-xl text-sm font-bold transition-all hover:bg-slate-50 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                                {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
                                 인스타 스토리 공유
                             </button>
                             <button
                                 onClick={handleDownloadPDF}
-                                className="flex-1 w-full px-8 py-5 bg-slate-900 text-white rounded-2xl text-md font-black shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                                className="flex-1 w-full px-8 py-4 bg-slate-900 text-white rounded-xl text-sm font-bold transition-all hover:bg-slate-800 active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <Download className="w-5 h-5" /> 리포트 다운로드
+                                <Download className="w-4 h-4" /> 리포트 다운로드
                             </button>
                         </div>
                         
                         <button
                             onClick={() => { setHasStarted(false); onReset(); }}
-                            className="flex items-center gap-2 text-slate-400 text-sm font-bold hover:text-slate-950 transition-colors py-2 px-4 rounded-full border border-transparent hover:border-slate-200"
+                            className="text-slate-400 text-xs font-bold hover:text-slate-950 transition-colors py-2"
                         >
-                            <Share2 className="w-4 h-4" /> 다른 구단 결과 확인하기
+                            다른 구단 결과 확인하기
                         </button>
                     </div>
                 </div>
@@ -555,25 +483,19 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl overflow-y-auto h-full w-full flex justify-center items-center z-[1000] animate-fade-in p-4 sm:p-6">
-            <div className="relative p-0 border-none w-full max-w-2xl shadow-[0_32px_128px_-12px_rgba(0,0,0,0.8)] rounded-[48px] bg-white max-h-[94vh] overflow-hidden flex flex-col border border-white/10">
+        <div className="fixed inset-0 bg-white sm:bg-slate-950/40 backdrop-blur-sm overflow-y-auto h-full w-full flex justify-center items-center z-[1000] p-0 sm:p-6">
+            <div className="relative p-0 w-full max-w-2xl bg-white sm:rounded-3xl h-full sm:h-auto sm:max-h-[94vh] overflow-hidden flex flex-col sm:border sm:border-slate-200">
                 <ServiceNavigation currentService="kbo" onNavigate={onNavigate} onClose={onClose} />
 
                 {/* Aesthetic Header */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 sm:px-12 pt-10 pb-4 shrink-0">
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <div className="flex items-center gap-2 text-blue-600 font-black tracking-[0.2em] text-[10px] uppercase mb-1.5 border border-blue-200 bg-white px-2 py-1 rounded-full w-fit">
-                                <BaseballIcon className="w-3 h-3" /> 데일리 KBO 운세
-                            </div>
-                            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tighter leading-none mt-4">
-                                KBO 팬 궁합
-                            </h3>
-                        </div>
+                <div className="px-8 sm:px-12 pt-10 pb-6 shrink-0 border-b border-slate-100">
+                    <div className="flex items-center gap-2 text-blue-600 font-bold tracking-[0.2em] text-[10px] uppercase mb-4">
+                        <BaseballIcon className="w-3 h-3" /> Daily KBO Fortune
                     </div>
-                    <div className="h-[2px] w-full bg-slate-950 mt-6"></div>
+                    <h3 className="text-3xl font-black text-slate-950 tracking-tighter leading-none">
+                        KBO 팬 궁합
+                    </h3>
                 </div>
-
 
                 <KboContent 
                     key={resetKey}
