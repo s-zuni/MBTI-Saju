@@ -114,23 +114,7 @@ function getScoreComment(score: number): string {
     return '인연이 약함';
 }
 
-function generateAnalysisText(mbti: string, dayMaster: string, team: string, score: number, winFairyScore: number, bestTeam: string, worstTeam: string, isRecommendation: boolean = false): string {
-    const scoreComment = getScoreComment(score);
-    const winComment = winFairyScore >= 80 ? '직관 갈 때마다 팀 승리를 부르는 강력한 기운을 가지고 있어요' 
-        : winFairyScore >= 65 ? '직관 가면 좋은 기운이 흐르는 편이에요'
-        : winFairyScore >= 50 ? '직관 가면 무승부 정도는 기대해볼 수 있어요'
-        : '지금은 직관보다 집관이 더 잘 맞는 시기예요';
-
-    const mbtiComment = mbti.includes('E') 
-        ? '외향적인 에너지가 구장의 열기와 시너지를 이뤄요'
-        : '내향적인 집중력이 경기에 몰입하는 힘을 만들어줘요';
-
-    const intro = isRecommendation 
-        ? `아직 응원하는 팀이 없으시군요! 사주와 MBTI 분석 결과, 당신과 가장 운명적으로 잘 맞는 구단은 **${team}**이에요.\n\n${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이며,`
-        : `${team}과의 궁합은 ${score}점으로 「${scoreComment}」 수준이에요.`;
-
-    return `${intro}\n\n${mbtiComment}. 일간 ${dayMaster || '?'}의 기운과 구단의 팀 컬러가 만나는 지점에서 오늘의 점수가 결정됐어요.\n\n승리 요정 지수는 ${winFairyScore}점 — ${winComment}.\n\n참고로 현재 기운상 가장 잘 맞는 구단은 ${bestTeam}, 가장 엇갈리는 구단은 ${worstTeam}이에요.`;
-}
+// Template-based analysis removed in favor of dynamic AI generation to satisfy "MBTI/Saju essential use" requirement.
 
 function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
     const dateStr = getDateString(dateOffset);
@@ -261,23 +245,19 @@ export default async function handler(req: Request) {
             kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', teamToAnalyze, 1);
         }
 
-        const analysisText = generateAnalysisText(
-            mbti || '알수없음',
-            saju?.dayMaster?.korean || '알수없음',
-            teamToAnalyze,
-            kboFixed.score,
-            kboFixed.winFairyScore,
-            kboFixed.bestTeam,
-            kboFixed.worstTeam,
-            isNoTeam
-        );
+        // AI will now generate the analysis dynamically based on the guidelines in userQuery
         
-        // AI가 생성할 것은 dailyMessage (한 줄) 뿐. 나머지는 모두 서버에서 즉시 조합.
-        userQuery = `구단: ${teamToAnalyze}, MBTI: ${mbti || '알수없음'}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오늘 궁합 점수: ${kboFixed.score}점, 승요지수: ${kboFixed.winFairyScore}점.
+        // Now letting AI generate the analysis text based on MBTI and Saju
+        userQuery = `[KBO 궁합 분석 요청]
+        구단: ${teamToAnalyze}
+        MBTI: ${mbti || '알수없음'}
+        사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
+        오행 분포: ${JSON.stringify(saju?.elementRatio || {})}
+        사용자 이름: ${name || '사용자'}
+        추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'}
 
-        [필수 준수 값 - 절대 변경 불가]
+        [데이터 데이터 - 절대 변경 불가]
         score: ${kboFixed.score}
-        supportedTeamAnalysis: "${analysisText.replace(/"/g, "'").replace(/\n/g, '\\n')}"
         winFairyScore: ${kboFixed.winFairyScore}
         bestTeam: "${kboFixed.bestTeam}"
         worstTeam: "${kboFixed.worstTeam}"
@@ -286,8 +266,12 @@ export default async function handler(req: Request) {
         tomorrowScore: ${kboTomorrow.score}
         tomorrowWinFairyScore: ${kboTomorrow.winFairyScore}
 
-        [유일한 생성 작업]
-        dailyMessage 필드 하나만 창의적으로 작성하세요: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내). 예: '오늘은 직관 에너지 최고조! 경기장 가면 무조건 승리'`;
+        [생성 작업 지침]
+        1. supportedTeamAnalysis: 이용자의 MBTI 성향과 사주(일간 및 오행)가 해당 구단의 팀 컬러, 응원 문화, 혹은 현재 분위기와 어떻게 '운명적으로' 맞아떨어지는지 상세히 분석하세요. 
+           - 반드시 MBTI의 특정 알파벳(예: E의 열정, J의 계획성 등)과 사주 일간(예: 갑목의 굳건함 등)을 언급해야 합니다.
+           - 점수가 높다면 왜 천생연분인지, 낮다면 어떤 점을 주의해야 하는지 사주학적으로 풀어내세요.
+           - 2-30대 여성이 좋아할 만한 감성적이고 세련된 문체를 유지하세요.
+        2. dailyMessage: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내).`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
