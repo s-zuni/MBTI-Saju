@@ -1,5 +1,4 @@
 import React from 'react';
-import { getTeamInfo } from '../config/teamConfig';
 
 
 interface KboShareCardProps {
