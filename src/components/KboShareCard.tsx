@@ -99,27 +99,30 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
     return (
         <div 
             ref={ref}
-            className="w-[1080px] h-[1080px] bg-white flex flex-col relative overflow-hidden p-20 font-sans"
+            className="w-[1080px] h-[1080px] bg-white flex flex-col relative overflow-hidden p-24 font-sans"
         >
-            {/* Minimalist Border */}
-            <div className="absolute inset-10 border border-slate-100 pointer-events-none" />
+            {/* Minimalist Grid Background */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                 style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '100px 100px' }} 
+            />
 
             {/* Top Brand Header */}
-            <div className="flex justify-between items-center mb-24 z-20">
-                <div className="flex items-center gap-3">
-                    <span className="text-slate-900 text-xl font-black tracking-widest uppercase">MBTIJU</span>
+            <div className="flex justify-between items-center mb-32 z-20">
+                <div className="flex flex-col gap-1">
+                    <span className="text-slate-900 text-2xl font-black tracking-[0.3em] uppercase">MBTIJU</span>
+                    <span className="text-slate-400 text-[10px] font-bold tracking-[0.5em] uppercase">Architectural Precision</span>
                 </div>
-                <div className="text-slate-400 text-xs tracking-widest font-bold uppercase">
-                    KBO FAN COMPATIBILITY
+                <div className="text-slate-400 text-xs tracking-widest font-bold uppercase border-l border-slate-200 pl-6">
+                    Sporting<br />Ledger
                 </div>
             </div>
 
             <div className="flex-1 flex flex-col z-10 relative">
                 
                 {/* User Info */}
-                <div className="mb-12">
-                    <p className="text-blue-600 font-bold text-sm tracking-widest uppercase mb-4">User Analysis</p>
-                    <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-tight">
+                <div className="mb-24">
+                    <p className="text-blue-600 font-bold text-xs tracking-[0.5em] uppercase mb-6">Analytical Record</p>
+                    <h1 className="text-8xl font-serif text-slate-900 tracking-tighter leading-[1.1]">
                         {userName}님의<br />
                         <span className="text-blue-600">
                              {selectedTeam === '없음 (아직 없음)' ? '추천 구단 분석' : `${selectedTeam} 궁합`}
@@ -128,48 +131,61 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                 </div>
 
                 {/* Score Section */}
-                <div className="grid grid-cols-2 gap-20 mb-20">
+                <div className="grid grid-cols-2 gap-24 mb-32 border-t border-b border-slate-100 py-16">
                     <div>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Harmony Score</p>
-                        <p className="text-9xl font-black text-slate-900 tracking-tighter">
-                            {result.score}<span className="text-2xl text-slate-300 ml-2">pts</span>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">Harmony Index</p>
+                        <p className="text-[160px] font-serif text-slate-900 tracking-[-0.05em] leading-none">
+                            {result.score}
                         </p>
                     </div>
-                    <div>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Win Fairy</p>
-                        <p className="text-9xl font-black text-slate-900 tracking-tighter">
-                            {result.winFairyScore}<span className="text-2xl text-slate-300 ml-2">%</span>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Radar Chart Area */}
-                <div className="flex-1 flex items-center justify-between border-t border-slate-100 pt-20">
-                    <div className="w-[400px] h-[400px]">
-                        <RadarChartSmall data={result.dimensions || []} />
-                    </div>
-                    <div className="max-w-[400px] text-right">
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Match Summary</p>
-                        <div className="space-y-4">
-                            <div className="flex justify-end items-center gap-4">
-                                <span className="text-slate-400 text-xs font-bold uppercase">Best Match</span>
-                                <span className="text-xl font-black text-slate-900">{result.bestTeam}</span>
+                    <div className="flex flex-col justify-between">
+                        <div>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">Win Probability</p>
+                            <p className="text-[120px] font-serif text-slate-900 tracking-[-0.05em] leading-none">
+                                {result.winFairyScore}<span className="text-2xl text-slate-300 ml-4">%</span>
+                            </p>
+                        </div>
+                        <div className="flex gap-12 mt-8">
+                            <div className="space-y-1">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Best</p>
+                                <p className="text-xl font-serif text-slate-900">{result.bestTeam}</p>
                             </div>
-                            <div className="flex justify-end items-center gap-4">
-                                <span className="text-slate-400 text-xs font-bold uppercase">Worst Match</span>
-                                <span className="text-xl font-black text-slate-900">{result.worstTeam}</span>
+                            <div className="space-y-1">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Worst</p>
+                                <p className="text-xl font-serif text-slate-900">{result.worstTeam}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Radar Chart Area */}
+                <div className="flex-1 flex items-center justify-between">
+                    <div className="w-[450px] h-[450px]">
+                        <RadarChartSmall data={result.dimensions || []} />
+                    </div>
+                    <div className="max-w-[400px] text-right space-y-12">
+                         <div className="space-y-4">
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em]">Disposition Analysis</p>
+                            <p className="text-xl font-serif text-slate-800 leading-relaxed italic opacity-80">
+                                "{result.supportedTeamAnalysis?.slice(0, 80)}..."
+                            </p>
+                         </div>
+                         <div className="pt-8 border-t border-slate-100">
+                            <p className="text-[10px] text-slate-400 font-bold tracking-[0.5em] uppercase">Verified Record</p>
+                         </div>
+                    </div>
+                </div>
+
                 {/* Footer */}
-                <div className="mt-20 pt-10 border-t border-slate-100 flex justify-between items-center opacity-50">
-                    <p className="text-sm text-slate-400 font-bold tracking-[0.2em] uppercase">
-                        {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-                    </p>
-                    <p className="text-sm text-slate-400 font-bold tracking-[0.2em] uppercase">
-                        WWW.MBTIJU.COM
+                <div className="mt-32 flex justify-between items-end opacity-40">
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs text-slate-950 font-black tracking-[0.5em] uppercase">AUTHENTIC DATA</p>
+                        <p className="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase">
+                            {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                    </div>
+                    <p className="text-xs text-slate-950 font-black tracking-[0.5em] uppercase">
+                        MBTIJU.COM
                     </p>
                 </div>
             </div>
