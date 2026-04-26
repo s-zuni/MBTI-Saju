@@ -1,6 +1,6 @@
 import React from 'react';
 import { getTeamInfo } from '../config/teamConfig';
-import { Sparkles, TrendingUp, Trophy, Star } from 'lucide-react';
+
 
 interface KboShareCardProps {
     result: any;
@@ -96,7 +96,6 @@ const RadarChartSmall = ({ data }: { data: any[] }) => {
 };
 
 const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ result, selectedTeam, userName }, ref) => {
-    const teamInfo = getTeamInfo(selectedTeam);
     
     return (
         <div 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, TrendingUp, Sparkles, X, Trophy, Share2, Instagram, Download, CalendarDays, ChevronRight, Zap } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles, X, Instagram, Download, Zap } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { generateImage } from '../utils/exportUtils';
@@ -151,7 +151,6 @@ const KboContent: React.FC<{
     const [hasStarted, setHasStarted] = useState(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
-    const teamInfo = selectedTeam ? getTeamInfo(selectedTeam) : null;
     const userName = session?.user?.user_metadata?.full_name || '사용자';
 
     // Streaming Hook
