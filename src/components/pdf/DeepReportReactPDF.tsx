@@ -213,15 +213,6 @@ const ELEMENT_COLORS = {
 
 
 
-const SHISHEN_KOREAN: Record<string, string> = {
-  '比肩': '비견', '劫財': '겁재', '劫财': '겁재',
-  '食神': '식신', '傷官': '상관', '伤官': '상관',
-  '偏財': '편재', '偏财': '편재', '正財': '정재', '正财': '정재',
-  '偏官': '편관', '七殺': '편관', '正官': '정관',
-  '偏印': '편인', '正印': '정인',
-};
-
-
 
 
 
@@ -324,9 +315,6 @@ const ThreeYearTimeline: React.FC<{ detail: any[] }> = ({ detail }) => {
 };
 
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
-  const pillars = sajuData?.userSaju?.pillars;
-
-
   return (
     <Document>
       <Page size="A4" style={styles.coverPage}>
