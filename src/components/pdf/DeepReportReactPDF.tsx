@@ -211,17 +211,7 @@ const ELEMENT_COLORS = {
   wood: '#10B981', fire: '#EF4444', earth: '#F59E0B', metal: '#64748B', water: '#3B82F6',
 };
 
-const GAN_KOREAN: Record<string, string> = {
-  '甲': '갑목(木)', '乙': '을목(木)', '丙': '병화(火)', '丁': '정화(火)',
-  '戊': '무토(土)', '己': '기토(土)', '庚': '경금(金)', '辛': '신금(金)',
-  '壬': '임수(水)', '癸': '계수(水)',
-};
 
-const ZHI_KOREAN: Record<string, string> = {
-  '子': '자(쥐·水)', '丑': '축(소·土)', '寅': '인(호랑이·木)', '卯': '묘(토끼·木)',
-  '辰': '진(용·土)', '巳': '사(뱀·火)', '午': '오(말·火)', '未': '미(양·土)',
-  '申': '신(원숭이·金)', '酉': '유(닭·金)', '戌': '술(개·土)', '亥': '해(돼지·水)',
-};
 
 const SHISHEN_KOREAN: Record<string, string> = {
   '比肩': '비견', '劫財': '겁재', '劫财': '겁재',
@@ -231,31 +221,9 @@ const SHISHEN_KOREAN: Record<string, string> = {
   '偏印': '편인', '正印': '정인',
 };
 
-const translateShiShenPDF = (s: any): string => {
-  if (!s || s === '-') return '-';
-  let result = Array.isArray(s) ? s.join('') : String(s);
-  if (!result || result === '-') return '-';
-  for (const [zh, ko] of Object.entries(SHISHEN_KOREAN)) {
-    result = result.replace(new RegExp(zh, 'g'), ko);
-  }
-  return result.trim();
-};
 
-const getElementColor = (char: string | undefined | null): string => {
-  if (!char || char === '-') return '#334155';
-  const target: string = char!;
-  const wood = ['甲', '乙', '寅', '卯'];
-  const fire = ['丙', '丁', '巳', '午'];
-  const earth = ['戊', '己', '辰', '戌', '丑', '未'];
-  const metal = ['庚', '辛', '申', '酉'];
-  const water = ['壬', '癸', '亥', '子'];
-  for (const c of wood) if (c === target) return ELEMENT_COLORS.wood;
-  for (const c of fire) if (c === target) return ELEMENT_COLORS.fire;
-  for (const c of earth) if (c === target) return ELEMENT_COLORS.earth;
-  for (const c of metal) if (c === target) return ELEMENT_COLORS.metal;
-  for (const c of water) if (c === target) return ELEMENT_COLORS.water;
-  return '#334155';
-};
+
+
 
 const renderContent = (text: string | undefined) => {
   if (!text) return null;
@@ -357,8 +325,7 @@ const ThreeYearTimeline: React.FC<{ detail: any[] }> = ({ detail }) => {
 
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const pillars = sajuData?.userSaju?.pillars;
-  const pList = [pillars?.hour, pillars?.day, pillars?.month, pillars?.year];
-  const pLabels = ['시주 (時柱)', '일주 (日柱)', '월주 (월柱)', '년주 (年柱)'];
+
 
   return (
     <Document>
