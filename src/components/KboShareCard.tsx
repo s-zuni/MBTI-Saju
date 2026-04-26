@@ -1,4 +1,5 @@
 import React from 'react';
+import { getTeamInfo } from '../config/teamConfig';
 
 
 interface KboShareCardProps {
@@ -95,25 +96,27 @@ const RadarChartSmall = ({ data }: { data: any[] }) => {
 };
 
 const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ result, selectedTeam, userName }, ref) => {
-    
+    const teamInfo = getTeamInfo(selectedTeam || '');
+    const accentColor = teamInfo?.primaryColor || '#000000';
+
     return (
         <div 
             ref={ref}
             className="w-[1080px] h-[1080px] bg-white flex flex-col relative overflow-hidden p-24 font-sans"
         >
             {/* Minimalist Grid Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                 style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '100px 100px' }} 
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
+                 style={{ backgroundImage: `linear-gradient(${accentColor} 1px, transparent 1px), linear-gradient(90deg, ${accentColor} 1px, transparent 1px)`, backgroundSize: '100px 100px' }} 
             />
 
             {/* Top Brand Header */}
             <div className="flex justify-between items-center mb-32 z-20">
                 <div className="flex flex-col gap-1">
                     <span className="text-slate-900 text-2xl font-black tracking-[0.3em] uppercase">MBTIJU</span>
-                    <span className="text-slate-400 text-[10px] font-bold tracking-[0.5em] uppercase">Architectural Precision</span>
+                    <span className="text-slate-400 text-[10px] font-bold tracking-[0.5em] uppercase">정교한 사주 분석 리포트</span>
                 </div>
                 <div className="text-slate-400 text-xs tracking-widest font-bold uppercase border-l border-slate-200 pl-6">
-                    Sporting<br />Ledger
+                    KBO 팬<br />궁합 분석
                 </div>
             </div>
 
@@ -121,10 +124,10 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                 
                 {/* User Info */}
                 <div className="mb-24">
-                    <p className="text-blue-600 font-bold text-xs tracking-[0.5em] uppercase mb-6">Analytical Record</p>
+                    <p className="font-bold text-xs tracking-[0.5em] uppercase mb-6" style={{ color: accentColor }}>ANALYTICAL RECORD</p>
                     <h1 className="text-8xl font-serif text-slate-900 tracking-tighter leading-[1.1]">
                         {userName}님의<br />
-                        <span className="text-blue-600">
+                        <span style={{ color: accentColor }}>
                              {selectedTeam === '없음 (아직 없음)' ? '추천 구단 분석' : `${selectedTeam} 궁합`}
                         </span>
                     </h1>
@@ -133,25 +136,25 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                 {/* Score Section */}
                 <div className="grid grid-cols-2 gap-24 mb-32 border-t border-b border-slate-100 py-16">
                     <div>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">Harmony Index</p>
-                        <p className="text-[160px] font-serif text-slate-900 tracking-[-0.05em] leading-none">
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">궁합 지수</p>
+                        <p className="text-[160px] font-serif tracking-[-0.05em] leading-none" style={{ color: accentColor }}>
                             {result.score}
                         </p>
                     </div>
                     <div className="flex flex-col justify-between">
                         <div>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">Win Probability</p>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mb-8">승리 요정 확률</p>
                             <p className="text-[120px] font-serif text-slate-900 tracking-[-0.05em] leading-none">
                                 {result.winFairyScore}<span className="text-2xl text-slate-300 ml-4">%</span>
                             </p>
                         </div>
                         <div className="flex gap-12 mt-8">
                             <div className="space-y-1">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Best</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>최고의 궁합</p>
                                 <p className="text-xl font-serif text-slate-900">{result.bestTeam}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Worst</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">주의할 궁합</p>
                                 <p className="text-xl font-serif text-slate-900">{result.worstTeam}</p>
                             </div>
                         </div>
@@ -165,13 +168,13 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                     </div>
                     <div className="max-w-[400px] text-right space-y-12">
                          <div className="space-y-4">
-                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em]">Disposition Analysis</p>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em]">성향 상세 분석</p>
                             <p className="text-xl font-serif text-slate-800 leading-relaxed italic opacity-80">
                                 "{result.supportedTeamAnalysis?.slice(0, 80)}..."
                             </p>
                          </div>
                          <div className="pt-8 border-t border-slate-100">
-                            <p className="text-[10px] text-slate-400 font-bold tracking-[0.5em] uppercase">Verified Record</p>
+                            <p className="text-[10px] text-slate-400 font-bold tracking-[0.5em] uppercase">검증된 사주 데이터</p>
                          </div>
                     </div>
                 </div>
@@ -179,9 +182,9 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                 {/* Footer */}
                 <div className="mt-32 flex justify-between items-end opacity-40">
                     <div className="flex flex-col gap-2">
-                        <p className="text-xs text-slate-950 font-black tracking-[0.5em] uppercase">AUTHENTIC DATA</p>
+                        <p className="text-xs text-slate-950 font-black tracking-[0.5em] uppercase">OFFICIAL ANALYSIS</p>
                         <p className="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase">
-                            {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
                     </div>
                     <p className="text-xs text-slate-950 font-black tracking-[0.5em] uppercase">

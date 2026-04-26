@@ -256,7 +256,7 @@ const KboContent: React.FC<{
         return (
             <div className="px-8 sm:px-12 pb-12 pt-8 overflow-y-auto custom-scrollbar grow bg-white">
                 <div className="max-w-md mx-auto">
-                    <h4 className="text-sm font-bold text-slate-400 mb-12 text-center tracking-[0.3em] uppercase">Select Your Club</h4>
+                    <h4 className="text-sm font-bold text-slate-400 mb-12 text-center tracking-[0.3em] uppercase">응원 구단을 선택해주세요</h4>
                     <div className="grid grid-cols-2 gap-px bg-slate-100 border border-slate-100">
                         {KBO_TEAMS.map((team) => {
                             const info = getTeamInfo(team);
@@ -266,16 +266,16 @@ const KboContent: React.FC<{
                                     onClick={() => { setError(null); setSelectedTeam(team); }}
                                     className={`px-4 py-8 bg-white transition-all flex flex-col items-center gap-4 ${
                                         selectedTeam === team
-                                        ? 'ring-1 ring-inset ring-blue-600 z-10'
+                                        ? 'ring-1 ring-inset ring-slate-900 z-10'
                                         : 'hover:bg-slate-50'
                                     }`}
                                 >
                                     {info?.logo && (
-                                        <div className="w-10 h-10 opacity-70 grayscale hover:grayscale-0 transition-all">
+                                        <div className="w-10 h-10 opacity-90 transition-all">
                                             <img src={info.logo} alt={team} crossOrigin="anonymous" className="w-full h-full object-contain" />
                                         </div>
                                     )}
-                                    <span className={`text-[11px] font-bold tracking-widest uppercase ${selectedTeam === team ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    <span className={`text-[11px] font-bold tracking-widest uppercase ${selectedTeam === team ? 'text-slate-950' : 'text-slate-400'}`}>
                                         {team}
                                     </span>
                                 </button>
@@ -289,9 +289,9 @@ const KboContent: React.FC<{
                         onClick={startAnalysis}
                         className="w-full py-6 bg-slate-950 text-white font-bold text-xs tracking-[0.2em] uppercase flex justify-center items-center gap-3 hover:bg-slate-800 transition-all active:scale-[0.98] mt-12"
                     >
-                         Initialize Analysis
+                         궁합 분석 시작
                     </button>
-                    <p className="text-center text-[9px] text-slate-400 mt-6 font-bold tracking-[0.3em] uppercase opacity-50">Usage: 5 Credits</p>
+                    <p className="text-center text-[9px] text-slate-400 mt-6 font-bold tracking-[0.3em] uppercase opacity-50">사용: 5 크레딧</p>
                 </div>
             </div>
         );
@@ -315,16 +315,16 @@ const KboContent: React.FC<{
             {aiError && !result ? (
                 <div className="py-20 text-center">
                     <X className="w-12 h-12 text-red-500 mx-auto mb-4 stroke-[1px]" />
-                    <h3 className="text-xl font-serif text-slate-900 mb-4 tracking-tight">Analysis Interrupted</h3>
+                    <h3 className="text-xl font-serif text-slate-900 mb-4 tracking-tight">분석이 중단되었습니다</h3>
                     <p className="text-slate-500 mb-12 whitespace-pre-wrap text-sm leading-relaxed">
-                        {aiError.message || 'An unexpected error occurred during processing.'}
-                        {"\n"}No credits were deducted.
+                        {aiError.message || '처리 중 예기치 않은 오류가 발생했습니다.'}
+                        {"\n"}크레딧은 차감되지 않았습니다.
                     </p>
                     <button
                         onClick={() => { setHasStarted(false); setError(null); }}
                         className="px-12 py-4 border border-slate-900 text-slate-900 font-bold text-[10px] tracking-widest uppercase active:scale-95 transition-all"
                     >
-                        Return to Selection
+                        구단 선택으로 돌아가기
                     </button>
                 </div>
             ) : isLoading && !result ? (
@@ -340,7 +340,7 @@ const KboContent: React.FC<{
                             "{currentLoadingMessage}"
                         </p>
                         <p className="text-slate-400 font-bold text-[9px] tracking-[0.4em] uppercase">
-                            Processing Data Records
+                            데이터 분석 및 처리 중
                         </p>
                     </div>
                 </div>
@@ -354,17 +354,17 @@ const KboContent: React.FC<{
                     
                     {/* Hero Score Section */}
                     <div className="flex flex-col items-center text-center pt-8">
-                        <div className="text-blue-600 font-bold text-[10px] uppercase tracking-[0.3em] mb-8">
-                             Harmony Analysis
+                        <div className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>
+                             구단 궁합 분석 리포트
                         </div>
                         <h4 className="text-4xl font-serif text-slate-900 tracking-tight mb-12">
                             {selectedTeam === '없음 (아직 없음)' ? '당신에게 어울리는 구단은?' : `${selectedTeam} 궁합`}
                         </h4>
                         <div className="flex flex-col items-center">
-                            <p className="text-[140px] leading-none font-serif text-slate-900 tracking-[-0.05em]">
+                            <p className="text-[140px] leading-none font-serif tracking-[-0.05em]" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#0f172a' }}>
                                 {result.score || 0}
                             </p>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mt-4">Harmony Score</p>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mt-4">궁합 점수</p>
                         </div>
                     </div>
 
@@ -373,12 +373,12 @@ const KboContent: React.FC<{
                     {/* Stats Section */}
                     <div className="grid grid-cols-2 gap-12 sm:gap-24">
                         <div className="space-y-4">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Win Fairy</h5>
+                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">승리 요정 지수</h5>
                             <p className="text-6xl font-serif text-slate-900 leading-none">{result.winFairyScore || 0}%</p>
                             <p className="text-[11px] text-slate-400 font-medium">당신의 응원이 승리로 이어질 확률</p>
                         </div>
                         <div className="space-y-4">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Message</h5>
+                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">오늘의 구단 운세</h5>
                             <p className="text-lg font-serif text-slate-900 leading-snug">{result.dailyMessage}</p>
                         </div>
                     </div>
@@ -388,7 +388,7 @@ const KboContent: React.FC<{
                     {/* Detailed Analysis */}
                     <section className="space-y-10 max-w-xl mx-auto">
                         <div className="flex flex-col items-center">
-                             <h5 className="font-bold text-slate-900 text-[11px] uppercase tracking-[0.3em] mb-8">Detailed Insights</h5>
+                             <h5 className="font-bold text-slate-900 text-[11px] uppercase tracking-[0.3em] mb-8">사주 & MBTI 상세 분석</h5>
                              <div className="text-slate-800 text-base leading-[1.9] font-serif whitespace-pre-wrap text-center italic opacity-90">
                                 "{result.supportedTeamAnalysis}"
                              </div>
@@ -399,7 +399,7 @@ const KboContent: React.FC<{
 
                     {/* Tendency Map */}
                     <section className="flex flex-col items-center">
-                        <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-12">Performance Tendency</h5>
+                        <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-12">구단 성향 분석</h5>
                         <div className="w-full max-w-[400px]">
                             <RadarChart data={result.dimensions || []} />
                         </div>
@@ -408,11 +408,11 @@ const KboContent: React.FC<{
                     {/* Match Grid */}
                     <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
                         <div className="bg-white py-12 px-8 flex flex-col items-center">
-                            <h5 className="font-bold text-blue-600 text-[10px] uppercase tracking-widest mb-4">Best Connection</h5>
+                            <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>최고의 찰떡 궁합</h5>
                             <p className="text-2xl font-serif text-slate-900">{result.bestTeam}</p>
                         </div>
                         <div className="bg-white py-12 px-8 flex flex-col items-center">
-                            <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">Worst Connection</h5>
+                            <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">주의가 필요한 궁합</h5>
                             <p className="text-2xl font-serif text-slate-900">{result.worstTeam}</p>
                         </div>
                     </div>
@@ -426,13 +426,13 @@ const KboContent: React.FC<{
                                 className="flex-1 w-full px-12 py-6 bg-white text-slate-900 text-xs font-bold tracking-widest transition-all hover:bg-slate-50 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 uppercase"
                             >
                                 {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
-                                Share Story
+                                인스타 스토리 공유
                             </button>
                             <button
                                 onClick={handleDownloadPDF}
                                 className="flex-1 w-full px-12 py-6 bg-slate-950 text-white text-xs font-bold tracking-widest transition-all hover:bg-slate-800 active:scale-95 flex items-center justify-center gap-3 uppercase"
                             >
-                                <Download className="w-4 h-4" /> Download PDF
+                                <Download className="w-4 h-4" /> 리포트 다운로드
                             </button>
                         </div>
                         
@@ -440,7 +440,7 @@ const KboContent: React.FC<{
                             onClick={() => { setHasStarted(false); onReset(); }}
                             className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] hover:text-slate-950 transition-colors py-4"
                         >
-                            Analyze Another Team
+                            다른 구단 분석하기
                         </button>
                     </div>
                 </div>
@@ -480,7 +480,7 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
                 {/* Aesthetic Header */}
                 <div className="px-8 sm:px-12 pt-12 pb-8 shrink-0">
                     <div className="flex items-center gap-2 text-slate-400 font-bold tracking-[0.4em] text-[9px] uppercase mb-4">
-                        <BaseballIcon className="w-3 h-3" /> Sporting Ledger
+                        <BaseballIcon className="w-3 h-3" /> KBO 팬 궁합 분석 리포트
                     </div>
                     <h3 className="text-4xl font-serif text-slate-950 tracking-tighter leading-none">
                         KBO 팬 궁합
