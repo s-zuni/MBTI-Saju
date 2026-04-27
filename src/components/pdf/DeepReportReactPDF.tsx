@@ -4,8 +4,10 @@ import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line }
 Font.register({
   family: 'NanumMyungjo',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncjmeM52.ttf' },
-    { src: 'https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncgBf852.ttf', fontWeight: 'bold' }
+    { src: '/fonts/NanumMyeongjo-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/NanumMyeongjo-Bold.ttf', fontWeight: 700 },
+    { src: '/fonts/NanumMyeongjo-Regular.ttf', fontWeight: 400, fontStyle: 'italic' },
+    { src: '/fonts/NanumMyeongjo-Bold.ttf', fontWeight: 700, fontStyle: 'italic' }
   ]
 });
 
