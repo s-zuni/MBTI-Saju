@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
 import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
 
@@ -218,7 +218,6 @@ const SajuTable: React.FC<{ saju: any }> = ({ saju }) => {
 
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const roadmap = parsedContent.threeYearRoadmap || [];
-  const TOTAL_PAGES = 5 + roadmap.length;
 
   return (
     <Document>
