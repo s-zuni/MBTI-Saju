@@ -104,7 +104,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
                                         {cat.cost === 0 ? (
                                             'FREE'
                                         ) : cat.id === 'mbti' ? (
-                                            '49,000₩'
+                                            '50% OFF'
                                         ) : (
                                             <>
                                                 <Coins className="w-3 h-3" />

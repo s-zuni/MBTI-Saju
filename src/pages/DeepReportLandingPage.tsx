@@ -69,10 +69,10 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <div className="flex items-center gap-4 text-slate-500">
-              <span className="text-sm line-through opacity-50 font-light">₩98,000</span>
-              <span className="text-lg font-bold text-white">₩49,000</span>
-              <span className="px-2 py-0.5 bg-white/10 text-white text-[10px] rounded uppercase font-bold">50% 할인</span>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-white/10 text-white text-xs font-bold rounded-full uppercase tracking-wider animate-pulse">
+                50% 특별 할인 중
+              </span>
             </div>
           </div>
         </div>
@@ -141,8 +141,8 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                     <Clock className="w-5 h-5 text-silver-300" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-medium mb-2 text-white">3년 간 사주 보지 마세요</h3>
-                    <p className="text-slate-400 text-body-md">향후 3년 동안의 모든 대운과 세운을 월별로 꼼꼼히 분석해 드립니다. 이 리포트 하나로 미래 설계가 끝납니다.</p>
+                    <h3 className="text-xl font-medium mb-2 text-white">1회 사주 비용으로 3년 운세를 한 번에</h3>
+                    <p className="text-slate-400 text-body-md">여러 번 볼 필요 없습니다. 단 1회 분석 비용만으로 향후 3년 동안의 모든 대운과 세운을 월별로 꼼꼼히 분석해 드립니다. 가장 경제적이고 확실한 미래 설계입니다.</p>
                   </div>
                 </div>
 
@@ -228,6 +228,15 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
+
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-slate-500 line-through text-sm opacity-50">₩98,000</span>
+              <span className="text-2xl font-black text-white">₩49,000</span>
+              <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded">50% OFF</span>
+            </div>
+            <p className="text-slate-500 text-xs font-bold">1회 분석 비용으로 3년치를 모두 담았습니다.</p>
+          </div>
           
           <div className="mt-12 flex flex-wrap justify-center gap-10 opacity-40">
             <div className="flex items-center gap-2">

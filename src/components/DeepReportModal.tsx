@@ -208,30 +208,10 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
         <div className="px-8 md:px-10 py-8 overflow-y-auto custom-scrollbar">
           
-          <div className="bg-slate-900 rounded-3xl p-8 mb-8 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent)]"></div>
-             <div className="relative z-10">
-                <p className="text-[10px] font-black text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full inline-block mb-4 uppercase tracking-widest border border-amber-400/20">기간 한정 50% 할인</p>
-                <div className="flex items-end gap-3">
-                   <h3 className="text-5xl font-manrope font-black text-white tracking-tighter">49,000원</h3>
-                   <span className="text-xl text-slate-500 line-through font-light mb-2 tracking-tighter">98,000원</span>
-                </div>
-                <p className="text-xs font-bold text-slate-400 mt-3 flex items-center gap-1.5">
-                   <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-                   전문가 수기 작업으로 1~2일 내로 발송됩니다.
-                </p>
-             </div>
-             <div className="self-stretch w-full md:w-px bg-white/5 relative z-10"></div>
-             <div className="grid grid-cols-2 gap-3 w-full md:w-auto relative z-10">
-               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center flex flex-col items-center justify-center min-w-[80px]">
-                  <span className="material-symbols-outlined text-slate-400 mb-1.5 text-xl">mail</span>
-                  <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">E-mail</div>
-               </div>
-               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center flex flex-col items-center justify-center min-w-[80px]">
-                  <span className="material-symbols-outlined text-amber-500 mb-1.5 text-xl">chat</span>
-                  <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Kakao</div>
-               </div>
-             </div>
+          <div className="flex justify-center mb-8">
+            <span className="px-4 py-2 bg-rose-500 text-white text-xs font-black rounded-full shadow-lg shadow-rose-500/20 animate-pulse tracking-widest uppercase">
+              기간 한정 50% 특별 할인 적용 중
+            </span>
           </div>
 
           <div className="space-y-6">

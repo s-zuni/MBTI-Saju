@@ -80,11 +80,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
             </span>
           </button>
 
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="text-xs font-bold line-through">98,000원</span>
-            <span className="text-sm font-black text-amber-400">49,000원</span>
-            <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[10px] font-bold rounded-full">50% OFF</span>
-            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 text-[10px] font-bold rounded-full border border-amber-500/20 animate-pulse">하루 10건 제한!</span>
+          <div className="flex items-center gap-3">
+            <span className="px-4 py-2 bg-rose-500 text-white text-sm font-black rounded-full shadow-lg shadow-rose-500/30 animate-bounce">
+              기간한정 50% 할인 중!
+            </span>
+            <span className="px-3 py-1.5 bg-amber-500/20 text-amber-500 text-xs font-bold rounded-full border border-amber-500/20 animate-pulse">
+              하루 10건 제약!
+            </span>
           </div>
         </div>
       </div>
