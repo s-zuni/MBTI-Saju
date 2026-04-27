@@ -9,12 +9,14 @@
   font-weight: 400;
   font-style: normal;
 }
+
 @font-face {
   font-family: 'NanumMyungjo';
   src: url('/fonts/NanumMyeongjo-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
+
 /* Fallback for Italic as Nanum Myeongjo has no native italic */
 @font-face {
   font-family: 'NanumMyungjo';
@@ -30,6 +32,7 @@
   font-weight: 400;
   font-style: normal;
 }
+
 @font-face {
   font-family: 'NanumGothic';
   src: url('/fonts/NanumGothic-Bold.ttf') format('truetype');
@@ -73,11 +76,11 @@
   }
 
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31, 38, 135, 0.07)];
   }
 
   .celestial-card {
-    @apply bg-white rounded-[40px] p-8 border border-slate-50 shadow-[0_30px_60px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_rgba(79,70,229,0.08)] hover:-translate-y-2 transition-all duration-500;
+    @apply bg-white rounded-[40px] p-8 border border-slate-50 shadow-[0_30px_60px_rgba(0, 0, 0, 0.03)] hover:shadow-[0_30px_60px_rgba(79, 70, 229, 0.08)] hover:-translate-y-2 transition-all duration-500;
   }
 
   .nav-link {
@@ -188,7 +191,8 @@
   padding: 60px !important;
   font-family: 'Pretendard', sans-serif !important;
   background: #ffffff !important;
-  color: #0f172a !important; /* Extremely dark slate */
+  color: #0f172a !important;
+  /* Extremely dark slate */
 }
 
 /* Force dark text for visibility in PDF */
@@ -204,17 +208,20 @@
 .pdf-report-container .text-orange-500,
 .pdf-report-container .text-teal-600,
 .pdf-report-container .text-indigo-600 {
-  color: inherit !important; /* Allow the specific utility classes to work, but let's be careful */
+  color: inherit !important;
+  /* Allow the specific utility classes to work, but let's be careful */
 }
 
 /* Better approach: override specific light slate colors to be darker */
 .pdf-report-container .text-slate-400,
 .pdf-report-container .text-slate-500 {
-  color: #64748b !important; /* slate-500 darkened */
+  color: #64748b !important;
+  /* slate-500 darkened */
 }
 
 .pdf-report-container .text-slate-300 {
-  color: #94a3b8 !important; /* slate-400 darkened */
+  color: #94a3b8 !important;
+  /* slate-400 darkened */
 }
 
 /* Ensure background is white and borders are visible */
@@ -316,4 +323,4 @@
 
 .text-data-mono {
   @apply font-manrope text-[14px] font-semibold leading-none tracking-[0.05em];
-}
+}
