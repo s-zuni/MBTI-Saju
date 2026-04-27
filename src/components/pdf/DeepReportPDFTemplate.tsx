@@ -219,66 +219,69 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
 
       {/* 4. 03 인연의 지형도 */}
       <PageWrapper pageNumber={4} totalPages={TOTAL_PAGES}>
-        <SectionHeader num="03" title={parsedContent.relationship?.title || "인연의 지형도와 감정의 흐름"} />
+        <SectionHeader num="03" title={parsedContent.relationshipAndHealth?.title || "인연의 지형도와 삶의 균형"} />
         <div className="flex flex-col gap-10">
           <div className="bg-blue-50/30 p-8 rounded-3xl border border-blue-100/50">
             <h5 className="text-xl font-black text-slate-900 mb-6 tracking-tight">
               <span className="text-blue-600 mr-2">▶</span> 대인관계 역학 및 귀인 활용법
             </h5>
-            {renderText(parsedContent.relationship?.socialNetwork)}
+            {renderText(parsedContent.relationshipAndHealth?.socialNetwork)}
           </div>
           <div>
             <h5 className="text-xl font-black text-slate-900 mb-4 tracking-tight">
               <span className="text-rose-500 mr-2">▶</span> 감정의 패턴과 최적의 파트너십
             </h5>
             <div className="pl-5 border-l-2 border-rose-100">
-              {renderText(parsedContent.relationship?.romance)}
+              {renderText(parsedContent.relationshipAndHealth?.romanceAndHealth)}
             </div>
           </div>
         </div>
       </PageWrapper>
 
-      {/* 5,6,7. Three Year Roadmap (Divide if needed, but here simple mapping) */}
-      {parsedContent.threeYearRoadmap?.map((yearData: any, idx: number) => (
-        <PageWrapper key={yearData.year} pageNumber={5 + idx} totalPages={TOTAL_PAGES} bg={idx === 0 ? "bg-slate-900" : "bg-white"} extraClass={idx === 0 ? "text-white" : ""}>
-          <div className={`w-full mb-8 pb-4 border-b flex justify-between items-end ${idx === 0 ? 'border-slate-700' : 'border-slate-200'}`}>
-             <h2 className="text-4xl font-black tracking-tighter italic">{yearData.year}년 미래 로드맵</h2>
-             <p className={`text-sm font-bold ${idx === 0 ? 'text-amber-400' : 'text-violet-600'}`}>{yearData.yearlyTheme}</p>
-          </div>
-          
-          <div className="flex flex-col gap-8">
-            <div className={`p-6 rounded-2xl ${idx === 0 ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-100'}`}>
-              <h5 className="text-lg font-black mb-3">연간 총평 및 거시적 흐름</h5>
-              {renderText(yearData.overallSummary, idx !== 0)}
+      {/* 5,6,7. Future Roadmap */}
+      {parsedContent.futureRoadmap && Object.entries(parsedContent.futureRoadmap).map(([year, yearData]: [string, any], idx: number) => {
+        if (year === 'title') return null;
+        return (
+          <PageWrapper key={year} pageNumber={5 + idx} totalPages={TOTAL_PAGES} bg={idx === 0 ? "bg-slate-900" : "bg-white"} extraClass={idx === 0 ? "text-white" : ""}>
+            <div className={`w-full mb-8 pb-4 border-b flex justify-between items-end ${idx === 0 ? 'border-slate-700' : 'border-slate-200'}`}>
+               <h2 className="text-4xl font-black tracking-tighter italic">{year}년 미래 로드맵</h2>
+               <p className={`text-sm font-bold ${idx === 0 ? 'text-amber-400' : 'text-violet-600'}`}>{yearData.yearlyTheme}</p>
             </div>
             
-            <div className="grid grid-cols-1 gap-6">
-               <div className="flex flex-col gap-2">
-                 <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>직업 및 재물 운용</p>
-                 <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-indigo-950/30' : 'bg-indigo-50'}`}>
-                   {renderText(yearData.careerAndWealthDetails, idx !== 0)}
+            <div className="flex flex-col gap-8">
+              <div className={`p-6 rounded-2xl ${idx === 0 ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-100'}`}>
+                <h5 className="text-lg font-black mb-3">연간 총평 및 거시적 흐름</h5>
+                {renderText(yearData.overallSummary, idx !== 0)}
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6">
+                 <div className="flex flex-col gap-2">
+                   <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>직업 및 재물 운용</p>
+                   <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-indigo-950/30' : 'bg-indigo-50'}`}>
+                     {renderText(yearData.careerAndWealthDetails, idx !== 0)}
+                   </div>
                  </div>
-               </div>
-               <div className="flex flex-col gap-2">
-                 <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>관계 및 애정 흐름</p>
-                 <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-rose-950/30' : 'bg-rose-50'}`}>
-                   {renderText(yearData.relationshipDetails, idx !== 0)}
+                 <div className="flex flex-col gap-2">
+                   <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>관계 및 애정 흐름</p>
+                   <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-rose-950/30' : 'bg-rose-50'}`}>
+                     {renderText(yearData.relationshipDetails, idx !== 0)}
+                   </div>
                  </div>
-               </div>
-               <div className="flex flex-col gap-2">
-                 <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>건강 관리 및 개운 전략</p>
-                 <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-emerald-950/30' : 'bg-emerald-50'}`}>
-                   {renderText(yearData.healthAndCaution, idx !== 0)}
+                 <div className="flex flex-col gap-2">
+                   <p className={`text-xs font-black uppercase tracking-widest ${idx === 0 ? 'text-slate-500' : 'text-slate-400'}`}>건강 관리 및 개운 전략</p>
+                   <div className={`p-5 rounded-xl ${idx === 0 ? 'bg-emerald-950/30' : 'bg-emerald-50'}`}>
+                     {renderText(yearData.healthAndCaution, idx !== 0)}
+                   </div>
                  </div>
-               </div>
+              </div>
             </div>
-          </div>
-        </PageWrapper>
-      ))}
+          </PageWrapper>
+        );
+      })}
 
       {/* 8. 04 마스터 마스터플랜 */}
       <PageWrapper pageNumber={8} totalPages={TOTAL_PAGES} bg="bg-slate-950" extraClass="text-white">
-        <SectionHeader num="04" title={parsedContent.actionPlan?.title || "운명을 바꾸는 마스터 마스터플랜"} dark />
+        <SectionHeader num="04" title={parsedContent.finalAdvice?.title || "운명을 바꾸는 마스터 마스터플랜"} dark />
         
         <div className="flex flex-col gap-10 flex-1">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 relative overflow-hidden">
@@ -287,19 +290,19 @@ export const DeepReportPDFTemplate: React.FC<DeepReportPDFTemplateProps> = ({ sa
               <div className="flex flex-col gap-4">
                 <h5 className="text-xl font-black text-amber-400 italic">핵심 지침 01. 즉각적 실행 과제</h5>
                 <div className="text-slate-300">
-                  {renderText(parsedContent.actionPlan?.advice1, false)}
+                  {renderText(parsedContent.finalAdvice?.advice1, false)}
                 </div>
               </div>
               <div className="flex flex-col gap-4">
                 <h5 className="text-xl font-black text-amber-400 italic">핵심 지침 02. 운의 흐름 강화 전략</h5>
                 <div className="text-slate-300">
-                  {renderText(parsedContent.actionPlan?.advice2, false)}
+                  {renderText(parsedContent.finalAdvice?.advice2, false)}
                 </div>
               </div>
               <div className="flex flex-col gap-4">
                 <h5 className="text-xl font-black text-amber-400 italic">핵심 지침 03. 관계적 한계 돌파</h5>
                 <div className="text-slate-300">
-                  {renderText(parsedContent.actionPlan?.advice3, false)}
+                  {renderText(parsedContent.finalAdvice?.advice3, false)}
                 </div>
               </div>
             </div>

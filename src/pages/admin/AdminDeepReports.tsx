@@ -154,8 +154,11 @@ const AdminDeepReports: React.FC = () => {
       setReportModal(prev => ({ ...prev, content }));
     };
 
-    const updateModalSajuData = (sajuData: any) => {
-      setReportModal(prev => ({ ...prev, sajuData }));
+    const updateModalSajuData = (newData: any) => {
+      setReportModal(prev => ({ 
+        ...prev, 
+        sajuData: { ...prev.sajuData, ...newData } 
+      }));
     };
 
     const setModalTitle = (title: string) => {
@@ -214,12 +217,7 @@ const AdminDeepReports: React.FC = () => {
           const chunk = decoder.decode(value, { stream: true });
           generatedText += chunk;
           
-          // --- SIMPLE & ROBUST JSON PARSING ---
-          // Since the AI outputs PURE JSON, we just try to parse it.
-          // We need to handle the streaming nature (partial JSON).
           let cleanText = generatedText.trim();
-          
-          // Remove any potential markdown wrappers if AI ignores instructions
           if (cleanText.startsWith('```')) {
              cleanText = cleanText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
           }
@@ -230,38 +228,90 @@ const AdminDeepReports: React.FC = () => {
           const tryRepair = (txt: string) => {
             try {
               let r = txt.trim();
-              
-              // Remove trailing commas before closing braces/brackets
               r = r.replace(/,\s*([}\]])/g, '$1');
-              
               const ob = (r.match(/{/g)||[]).length, cb = (r.match(/}/g)||[]).length;
               if (ob > cb) r += '}'.repeat(ob - cb);
               const oa = (r.match(/\[/g)||[]).length, ca = (r.match(/\]/g)||[]).length;
               if (oa > ca) r += ']'.repeat(oa - ca);
-              
               return JSON.parse(r);
             } catch { return null; }
           };
+
           const parsed = tryParse(cleanText) || tryRepair(cleanText);
           if (parsed) {
             updateModalSajuData(parsed);
-            updateModalContent(Object.values(parsed).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'));
+            
+            // Collect all strings from the nested object for preview
+            const allStrings: string[] = [];
+            const collectStrings = (obj: any) => {
+              if (!obj) return;
+              if (typeof obj === 'string') {
+                if (obj.length > 20) allStrings.push(obj);
+              } else if (typeof obj === 'object') {
+                Object.values(obj).forEach(collectStrings);
+              }
+            };
+            collectStrings(parsed);
+            updateModalContent(allStrings.join('\n\n'));
           }
         }
-        // After stream ends: ensure everything is enriched
-        setReportModal(prev => {
-          if (!prev.sajuData) return prev;
-          return {
-            ...prev,
-            sajuData: {
-              ...prev.sajuData,
-              reportType: req.report_type,
-              mbti: req.mbti,
-              clientName: req.profiles?.name,
-              birthInfo: req.birth_info,
-            }
+
+        // After stream ends: Final parse and SAVE to database
+        let finalData: any = null;
+        try {
+          let cleanText = generatedText.trim();
+          if (cleanText.startsWith('```')) {
+             cleanText = cleanText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+          }
+          finalData = JSON.parse(cleanText);
+        } catch (e) {
+          console.error('Final parse failed, trying repair:', e);
+          // Try repair one last time
+          let r = generatedText.trim();
+          if (r.startsWith('```')) r = r.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+          r = r.replace(/,\s*([}\]])/g, '$1');
+          const ob = (r.match(/{/g)||[]).length, cb = (r.match(/}/g)||[]).length;
+          if (ob > cb) r += '}'.repeat(ob - cb);
+          const oa = (r.match(/\[/g)||[]).length, ca = (r.match(/\]/g)||[]).length;
+          if (oa > ca) r += ']'.repeat(oa - ca);
+          try { finalData = JSON.parse(r); } catch (e2) { console.error('Final repair failed:', e2); }
+        }
+
+        if (finalData) {
+          // Merge with initial metadata
+          const enrichedData = {
+            ...finalData,
+            userSaju: initialSaju,
+            reportType: req.report_type,
+            mbti: req.mbti,
+            clientName: req.profiles?.name,
+            birthInfo: req.birth_info,
+            generated_at: new Date().toISOString()
           };
-        });
+          
+          updateModalSajuData(enrichedData);
+
+          // SAVE TO SUPABASE
+          try {
+            const { error: updateError } = await supabase
+              .from('deep_report_requests')
+              .update({ 
+                generated_data: enrichedData,
+                generated_at: new Date().toISOString()
+              })
+              .eq('id', req.id);
+            
+            if (updateError) throw updateError;
+            console.log('Report saved to DB');
+          } catch (dbErr) {
+            console.error('Failed to save report to DB:', dbErr);
+          }
+        }
+
+        setReportModal(prev => ({
+          ...prev,
+          title: `${req.profiles?.name || '내담자'}님의 심층 리포트 (완료)`
+        }));
       }
 
     } catch (error) {

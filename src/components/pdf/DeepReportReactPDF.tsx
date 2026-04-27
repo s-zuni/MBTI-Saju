@@ -217,93 +217,118 @@ const SajuTable: React.FC<{ saju: any }> = ({ saju }) => {
 };
 
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
-  const roadmap = parsedContent.threeYearRoadmap || [];
-
   return (
     <Document>
-      {/* Cover */}
+      {/* 00. Cover Page */}
       <Page size="A4" style={styles.coverPage}>
-        <Text style={styles.coverSubtitle}>VIP LIFE STRATEGY</Text>
+        <Text style={styles.coverSubtitle}>VIP PREMIUM STRATEGY REPORT</Text>
         <Text style={styles.coverTitle}>{parsedContent.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
         <View style={{ height: 1, width: 150, backgroundColor: '#FBBF24', marginVertical: 30 }} />
         <Text style={styles.clientName}>{clientName} 님</Text>
-        <Text style={{ marginTop: 40, fontSize: 12, color: '#94A3B8' }}>{parsedContent.cover?.subTitle}</Text>
+        <Text style={{ marginTop: 40, fontSize: 12, color: '#94A3B8', textAlign: 'center', width: '80%' }}>
+          {parsedContent.cover?.subTitle || "명리학과 심리학의 융합을 통한 인생 설계"}
+        </Text>
+        <Text style={{ marginTop: 100, fontSize: 10, color: '#475569' }}>
+          {parsedContent.cover?.reportDate || new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </Text>
       </Page>
 
-      {/* 01 Core Identity */}
+      {/* 01. Core Identity */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 본질"}</Text>
-        <SajuTable saju={sajuData?.userSaju} />
+        <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 운명적 본질"}</Text>
+        
+        {/* Saju Table Section */}
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24' }]}>사주 원국 분석 (四柱 元局)</Text>
+          <SajuTable saju={sajuData?.userSaju} />
+        </View>
+
         <Text style={styles.subTitle}>기질적 시너지 분석</Text>
         {renderText(parsedContent.coreIdentity?.mbtiSajuSynergy)}
-        <View style={[styles.box, { backgroundColor: '#FFF1F2', borderColor: '#FECDD3' }]}>
-          <Text style={[styles.boxTitle, { color: '#BE123C' }]}>잠재적 리스크 관리</Text>
+        
+        <View style={[styles.box, { backgroundColor: '#FFF1F2', borderColor: '#FECDD3', marginTop: 25 }]}>
+          <Text style={[styles.boxTitle, { color: '#BE123C' }]}>잠재적 리스크 관리 (Risk Management)</Text>
           {renderText(parsedContent.coreIdentity?.hiddenRisk)}
         </View>
-        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | CORE IDENTITY</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        
+        <View style={styles.footer} fixed>
+          <Text>VIP STRATEGY REPORT | CORE IDENTITY</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
       </Page>
 
-      {/* 02 Wealth & Career */}
+      {/* 02. Wealth & Career */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물 및 사회적 성취"}</Text>
-        <Text style={styles.subTitle}>직업적 포지셔닝</Text>
-        {renderText(parsedContent.wealthAndCareer?.careerDirection)}
-        <View style={styles.box}>
-          <Text style={styles.boxTitle}>자산 관리 및 재물 흐름</Text>
-          {renderText(parsedContent.wealthAndCareer?.wealthFlow)}
+        <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물운 및 사회적 성취"}</Text>
+        
+        <Text style={styles.subTitle}>평생의 재물운 흐름</Text>
+        {renderText(parsedContent.wealthAndCareer?.wealthAnalysis)}
+        
+        <View style={[styles.box, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD', marginTop: 25 }]}>
+          <Text style={[styles.boxTitle, { color: '#0369A1' }]}>직업적 성취와 방향성 (Career Roadmap)</Text>
+          {renderText(parsedContent.wealthAndCareer?.careerGuidance)}
         </View>
-        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | WEALTH & CAREER</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        
+        <View style={styles.footer} fixed>
+          <Text>VIP STRATEGY REPORT | WEALTH & CAREER</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
       </Page>
 
-      {/* 03 Relationship */}
+      {/* 03. Relationship & Health */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.relationship?.title || "03. 인연 및 감정의 흐름"}</Text>
-        <Text style={styles.subTitle}>대인관계 및 귀인 활용</Text>
-        {renderText(parsedContent.relationship?.socialNetwork)}
-        <View style={styles.box}>
-          <Text style={styles.boxTitle}>애정 패턴 및 파트너십</Text>
-          {renderText(parsedContent.relationship?.romance)}
+        <Text style={styles.sectionTitle}>{parsedContent.relationshipAndHealth?.title || "03. 대인관계 및 건강 관리"}</Text>
+        
+        <Text style={styles.subTitle}>대인관계 및 인연의 흐름</Text>
+        {renderText(parsedContent.relationshipAndHealth?.relationshipAnalysis)}
+        
+        <View style={[styles.box, { backgroundColor: '#FDF2F8', borderColor: '#FBCFE8', marginTop: 25 }]}>
+          <Text style={[styles.boxTitle, { color: '#BE185D' }]}>건강 관리 및 에너지 균형 (Wellness)</Text>
+          {renderText(parsedContent.relationshipAndHealth?.healthWarning)}
         </View>
-        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | RELATIONSHIPS</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        
+        <View style={styles.footer} fixed>
+          <Text>VIP STRATEGY REPORT | RELATIONSHIP & HEALTH</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
       </Page>
 
-      {/* Roadmap Pages */}
-      {roadmap.map((yearData: any, idx: number) => (
-        <Page key={idx} size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{yearData.year}년 미래 로드맵</Text>
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#4338CA', marginBottom: 15 }}>{yearData.yearlyTheme}</Text>
-          <Text style={styles.paragraph}>{yearData.overallSummary}</Text>
-          
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[재물 및 직업]</Text>
-            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.careerAndWealthDetails}</Text>
-            
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[인연 및 애정]</Text>
-            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.relationshipDetails}</Text>
-            
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[건강 및 주의점]</Text>
-            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.healthAndCaution}</Text>
-          </View>
-          <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | {yearData.year} ROADMAP</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-        </Page>
-      ))}
-
-      {/* 04 Action Plan */}
+      {/* 04. Future Roadmap (2027-2029) */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "04. 마스터 마스터플랜"}</Text>
-        <View style={[styles.box, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-          <Text style={[styles.boxTitle, { color: '#0369A1' }]}>즉각적 실행 과제</Text>
-          {renderText(parsedContent.actionPlan?.advice1)}
+        <Text style={styles.sectionTitle}>{parsedContent.futureRoadmap?.title || "04. 2027~2029년 운명적 로드맵"}</Text>
+        
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.subTitle, { color: '#4338CA' }]}>2027년 연간 분석</Text>
+          {renderText(parsedContent.futureRoadmap?.y2027)}
         </View>
-        <View style={styles.box}>
-          <Text style={styles.boxTitle}>운의 강화 전략</Text>
-          {renderText(parsedContent.actionPlan?.advice2)}
+
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.subTitle, { color: '#4338CA' }]}>2028년 연간 분석</Text>
+          {renderText(parsedContent.futureRoadmap?.y2028)}
         </View>
-        <View style={styles.box}>
-          <Text style={styles.boxTitle}>관계적 돌파구</Text>
-          {renderText(parsedContent.actionPlan?.advice3)}
+      </Page>
+
+      <Page size="A4" style={styles.page}>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.subTitle, { color: '#4338CA' }]}>2029년 연간 분석</Text>
+          {renderText(parsedContent.futureRoadmap?.y2029)}
         </View>
-        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | FINAL PLAN</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+
+        <View style={[styles.box, { backgroundColor: '#F8FAFC', borderLeftWidth: 4, borderLeftColor: '#1E293B', marginTop: 40 }]}>
+          <Text style={[styles.boxTitle, { color: '#1E293B' }]}>마스터의 종합 제언 (Final Summary)</Text>
+          {renderText(parsedContent.finalAdvice?.summary)}
+        </View>
+
+        <View style={{ marginTop: 'auto', padding: 20, borderTopWidth: 1, borderTopColor: '#E2E8F0', alignItems: 'center' }}>
+          <Text style={{ fontSize: 10, color: '#94A3B8', fontFamily: 'NanumMyungjo' }}>
+            본 리포트는 개인의 데이터와 통계를 기반으로 작성되었으며, 삶의 긍정적인 방향성을 설정하는 도구로 활용하시기 바랍니다.
+          </Text>
+        </View>
+
+        <View style={styles.footer} fixed>
+          <Text>VIP STRATEGY REPORT | FUTURE ROADMAP</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
       </Page>
     </Document>
   );
