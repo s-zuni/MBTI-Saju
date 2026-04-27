@@ -3,8 +3,6 @@ import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line }
 import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
 import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
 
-const FONT_BASE_URL = 'https://www.mbtiju.com';
-
 Font.register({
   family: 'NanumMyungjo',
   fonts: [
