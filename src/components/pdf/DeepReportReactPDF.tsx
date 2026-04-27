@@ -1,15 +1,17 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Circle, Line } from '@react-pdf/renderer';
+import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
+import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
 
 const FONT_BASE_URL = 'https://www.mbtiju.com';
 
 Font.register({
   family: 'NanumMyungjo',
   fonts: [
-    { src: `${FONT_BASE_URL}/fonts/NanumMyeongjo-Regular.ttf`, fontWeight: 400 },
-    { src: `${FONT_BASE_URL}/fonts/NanumMyeongjo-Bold.ttf`, fontWeight: 700 },
-    { src: `${FONT_BASE_URL}/fonts/NanumMyeongjo-Regular.ttf`, fontWeight: 400, fontStyle: 'italic' },
-    { src: `${FONT_BASE_URL}/fonts/NanumMyeongjo-Bold.ttf`, fontWeight: 700, fontStyle: 'italic' }
+    { src: NanumMyeongjoRegular, fontWeight: 400 },
+    { src: NanumMyeongjoBold, fontWeight: 700 },
+    { src: NanumMyeongjoRegular, fontWeight: 400, fontStyle: 'italic' },
+    { src: NanumMyeongjoBold, fontWeight: 700, fontStyle: 'italic' }
   ]
 });
 
