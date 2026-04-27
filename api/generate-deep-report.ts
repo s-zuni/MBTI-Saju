@@ -7,7 +7,6 @@ export const config = {
     runtime: 'edge', 
 };
 
-// === 사주 데이터를 AI가 깊이 이해할 수 있도록 풍부한 컨텍스트로 변환 ===
 const GAN_MAP: Record<string, { korean: string; element: string; desc: string }> = {
     '甲': { korean: '갑목', element: '목(木)', desc: '양의 목. 큰 나무, 대들보. 곧고 강한 리더십, 고집, 개척정신' },
     '乙': { korean: '을목', element: '목(木)', desc: '음의 목. 화초, 덩굴. 유연하고 적응력 강함, 끈기, 현실적 처세' },
@@ -82,25 +81,12 @@ function buildRichSajuContext(saju: any): string {
     const dayDesc = describePillar('일주(日柱)', '본인·배우자운·핵심 성격', p?.day);
     const hourDesc = describePillar('시주(時柱)', '자녀운·말년운·내면의 욕구', p?.hour);
     
-    // 십성 분포 분석
-    const allShiShen: string[] = [];
-    ['year', 'month', 'day', 'hour'].forEach(key => {
-        const pil = (p as any)?.[key];
-        if (pil?.ganShiShen && pil.ganShiShen !== '-') allShiShen.push((translateShiShen(pil.ganShiShen as any).split('(')[0]) ?? '');
-        if (pil?.zhiShiShen && pil.zhiShiShen !== '-') allShiShen.push((translateShiShen(pil.zhiShiShen as any).split('(')[0]) ?? '');
-    });
-    const shiShenCount: Record<string, number> = {};
-    allShiShen.forEach(s => { shiShenCount[s] = (shiShenCount[s] || 0) + 1; });
-    const shiShenSummary = Object.entries(shiShenCount).map(([k, v]) => `${k} ${v}개`).join(', ');
-    
     const ratio = saju.elementRatio;
     const elements = saju.elements;
     
-    // 오행 과다/부족 판단
     const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
     const overElements = Object.entries(ratio || {}).filter(([_, v]) => (v as number) >= 35).map(([k]) => elementNames[k]).join(', ');
     const lackElements = Object.entries(ratio || {}).filter(([_, v]) => (v as number) === 0).map(([k]) => elementNames[k]).join(', ');
-    const weakElements = Object.entries(ratio || {}).filter(([_, v]) => (v as number) > 0 && (v as number) <= 12).map(([k]) => elementNames[k]).join(', ');
 
     return `
 [내담자 사주팔자(四柱八字) 정밀 분석 데이터]
@@ -119,11 +105,6 @@ ${hourDesc}
   목(木) ${ratio?.wood || 0}% (${elements?.wood || 0}개) / 화(火) ${ratio?.fire || 0}% (${elements?.fire || 0}개) / 토(土) ${ratio?.earth || 0}% (${elements?.earth || 0}개) / 금(金) ${ratio?.metal || 0}% (${elements?.metal || 0}개) / 수(水) ${ratio?.water || 0}% (${elements?.water || 0}개)
   ${overElements ? `⚠ 과다(偏重): ${overElements}` : ''}
   ${lackElements ? `⚠ 결핍(缺): ${lackElements}` : ''}
-  ${weakElements ? `⚠ 약세(弱): ${weakElements}` : ''}
-
-★ 십성(十星) 배치 분포: ${shiShenSummary}
-
-★ 간지(干支) 원국: ${saju.ganZhi?.year} ${saju.ganZhi?.month} ${saju.ganZhi?.day} ${saju.ganZhi?.hour}
 `;
 }
 
@@ -140,7 +121,7 @@ export default async function handler(req: Request) {
 
     try {
         const body = await req.json();
-        const { mbti, birthInfo, name, reportType, specialRequest, partnerInfo } = body;
+        const { mbti, birthInfo, name } = body;
         
         let birthDate = '';
         let birthTime = '';
@@ -151,106 +132,84 @@ export default async function handler(req: Request) {
         }
         let userSaju = calculateSaju(birthDate, birthTime);
         
-        let partnerSaju = null;
-        if (partnerInfo) {
-            const [pDate, pTime] = partnerInfo.birth_info.split(' ');
-            partnerSaju = calculateSaju(pDate, pTime || '12:00');
-        }
+        const sajuContext = buildRichSajuContext(userSaju);
 
-        const isMbtiMode = reportType && reportType.includes('MBTI');
-        const hasMbti = isMbtiMode && mbti && mbti !== '미입력';
-        const hasSpecialRequest = specialRequest && specialRequest.trim() !== '' && specialRequest !== '없음';
-
-        const expertPersona = isMbtiMode
-            ? `당신은 명리학 50년 이상 경력의 냉철한 고수(高手) 역술인이자 공인 MBTI 전문가입니다. 현재 내담자는 49,000원을 결제한 '프리미엄 심층 분석' 고객입니다.`
-            : `당신은 명리학 50년 이상 경력의 냉철한 고수(高手) 역술인입니다. 현재 내담자는 49,000원을 결제한 '프리미엄 심층 분석' 고객입니다.`;
-
-        const specialRequestSchema = hasSpecialRequest
-            ? `  "specialRequestAnalysis": "▶ 특별 요청 분석\\n\\n- 내용 (3,000자 이상 압도적 상세 분석)",\n  "specialRequestKeywords": ["핵심1", "핵심2", "핵심3"],`
-            : `  "specialRequestAnalysis": "",\n  "specialRequestKeywords": [],`;
+        const expertPersona = `너는 대한민국 최상위 1% VIP를 대상으로 명리학(사주)과 심리학(MBTI)을 융합하여 프리미엄 라이프 컨설팅 보고서를 작성하는 수석 애널리스트이자 전문 카피라이터다.
+고객이 제공한 사주 원국 데이터와 MBTI 성향을 분석하여, 반드시 아래 정의된 JSON 형식으로만 응답하라. 보고서의 단가는 49,000원이므로, 고객이 압도적인 통찰력과 가치를 느낄 수 있도록 철저히 분석하고 유려한 문장으로 작성해야 한다.`;
 
         const systemPrompt = `${expertPersona}
-당신은 대한민국 상위 0.1%만을 상대하는 사주 명리학의 최고 권위자입니다. 당신의 목표는 고객이 "49,000원이 아니라 49만원이라도 아깝지 않다"고 느낄 정도로 압도적인 디테일과 통찰력을 제공하는 것입니다. 20페이지 분량의 보고서를 작성한다는 마음가짐으로 모든 섹션을 극한까지 서술하십시오.
 
-[핵심 명령: 분량과 깊이의 극대화]
-1. **텍스트 양 5배 확장**: 각 대주제당 최소 2,500자 이상의 본문을 작성하십시오. 단순히 문장을 늘리는 것이 아니라, 명리학적 원리를 아주 깊이 있게 파고드십시오.
-2. **소주제 4~5개 필수**: 각 대주제(선천 기질, 재물운 등) 내부에 반드시 4~5개의 구체적인 소주제(▶)를 포함시키십시오.
-3. **사주 근거의 철저한 인용**: 모든 분석의 시작은 "사주 원국의 [글자]가 [글자]와 만나 [현상]을 일으키므로..."와 같은 명확한 근거 제시여야 합니다. 근거 없는 해석은 금지합니다.
-4. **뻔한 조언 절대 금지**: "긍정적으로 사세요", "운동을 하세요" 같은 보편적인 말은 탈락 사유입니다. 이 사주만이 가진 독특한 에너지 흐름에 기반한 '독점적 솔루션'을 제시하십시오.
+[!!! 절대 준수 규칙 3가지 !!!]
+1. MBTI 제외 영어 사용 절대 금지: 'MBTI'라는 단어를 제외한 어떠한 영단어(Career, Wealth, Action Plan 등)도 본문에 노출해서는 안 된다. 모두 고급스러운 한국어로 번역하여 작성하라. (예: 라이프스타일 -> 삶의 양식, 마인드셋 -> 마음가짐)
+2. 명리학 용어 표기법 (한자+한글 병기): 사주 전문 용어를 사용할 때는 고객의 이해를 돕기 위해 반드시 한자와 한글을 병기하고 비유적 설명을 덧붙여라.
+   - 올바른 예: "당신은 傷官(상관)의 기운이 강하여..." / "지장간에 숨겨진 偏財(편재)의 영향으로..."
+   - 틀린 예: "상관의 기운이 강하여..." (한자 누락) / "傷官이 강하여..." (한글 누락)
+3. 2027~2029년 로드맵의 극강의 디테일: 향후 3년의 운세는 단순 요약이 불가하다. 각 연도마다 [총평], [재물 및 직업], [대인관계 및 애정], [건강 및 주의점]을 나누어 각각 최소 3~4문장 이상의 구체적인 흐름, 피해야 할 시기, 행동 지침을 소름 돋을 정도로 상세히 서술하라.
 
-[섹션별 상세 지침]
-- **선천적 기질**: 일간의 본질뿐만 아니라, 월지의 계절감, 지장간의 숨은 의도, 12운성의 세밀한 에너지를 4~5개의 소주제로 나누어 분석하십시오.
-- **재물 및 커리어**: 정재/편재의 유무뿐만 아니라 식상생재 여부, 관성의 통제력 등을 근거로 구체적인 산업군, 직무, 자산 증식 방식(부동산, 주식, 현금 등)을 지목하십시오.
-- **3개년 운세 엔진 (리포트의 핵심)**: 
-    - 향후 3년(2027, 2028, 2029) 각각에 대해 '연간 총평', '4대 영역(커리어/재물/연애/건강) 상세 타임라인', '주의할 달 vs 기회의 달'을 특정하십시오.
-    - 특히 분기별(Quarterly) 흐름을 짚어주어 내담자가 연간 계획을 세울 수 있게 하십시오.
-- **운을 바꾸는 개운법(改運法)**: 단순히 운을 기다리는 것이 아니라, 이 사주의 부족한 기운을 채울 수 있는 아주 구체적인 행동(예: 서쪽으로 산책, 특정 색상의 속옷 착용, 특정 시간대 명상 등)을 5가지 이상 제시하십시오.
+[출력 JSON 스키마 (JSON 응답 구조)]
+반드시 아래의 JSON 키(Key) 값을 유지하되, 값(Value)은 모두 한국어로 작성하라.
 
-[절대 준수 규칙]
-1. **JSON 전용**: 오직 순수 JSON만 출력하십시오.
-2. **언어 제약**: 영어 절대 금지 (MBTI 코드 제외). 한자 병기 권장 (예: 목(木)).
-3. **가독성**: 개조식(Bullet points)을 적극 활용하되, 본문의 내용은 매우 상세하게(서술형 5~7문장 이상) 작성하십시오.
-4. **개인화**: "\${name} 님만을 위한 마스터의 특별 조언"과 같은 문구를 곳곳에 배치하십시오.
-
-[JSON 스키마]
 {
-  "userSaju": { /* 전달된 데이터 */ },
-  "luckyItems": {
-    "color": "행운의 색상 및 활용법 (200자 이상)",
-    "number": "행운의 숫자 및 의미 (200자 이상)",
-    "direction": "도움되는 방향 및 이유 (200자 이상)",
-    "habit": "운을 여는 핵심 습관 (200자 이상)"
+  "cover": {
+    "mainTitle": "고객의 사주와 MBTI를 관통하는 은유적이고 묵직한 메인 카피 (예: 예리한 辛金(신금)의 칼날과 INTP의 심해가 만나는 지점)",
+    "subTitle": "고객의 핵심 운명을 요약하는 한 줄 카피"
   },
-  "congenitalSummary": "▶ [주제1]...\\n\\n▶ [주제2]...\\n\\n▶ [주제3]...\\n\\n▶ [주제4]...\\n\\n▶ [주제5]...",
-  "congenitalKeywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
-  
-  "wealthAnalysis": "▶ [재물의 근본 구조]...\\n\\n▶ [최적의 직업 및 직무]...\\n\\n▶ [자산 관리 및 투자 전략]...\\n\\n▶ [사회적 성취 시나리오]...\\n\\n▶ [주의해야 할 재물 리스크]...",
-  "wealthKeywords": ["직업운", "재물축적", "투자성향", "사회적지위", "리스크"],
-
-  "relationshipAnalysis": "▶ [인간관계의 근본 패턴]...\\n\\n▶ [연애 및 결혼운 정밀 분석]...\\n\\n▶ [대인관계에서의 소통 전략]...\\n\\n▶ [귀인이 나타나는 시기와 유형]...\\n\\n▶ [인간관계 스트레스 해소법]...",
-  
-  "healthAnalysis": "▶ [오행으로 본 체질적 강약]...\\n\\n▶ [신체 부위별 주의 사항]...\\n\\n▶ [정신 건강 및 스트레스 관리]...\\n\\n▶ [최적의 식이 및 운동 처방]...\\n\\n▶ [생애 주기별 건강 관리 로드맵]...",
-  
-  "threeYearDetail": [
+  "coreIdentity": {
+    "title": "01. 선천적 기질 및 운명적 본질",
+    "mbtiSajuSynergy": "MBTI와 사주 오행이 결합되었을 때 나타나는 독보적인 강점과 무의식적 특징을 상세히 서술 (3문단 이상)",
+    "hiddenRisk": "본성 깊은 곳에 숨겨진 리스크와 이를 극복하기 위한 심리적 조언 (2문단 이상)"
+  },
+  "wealthAndCareer": {
+    "title": "02. 재물 그릇의 크기와 사회적 성취",
+    "careerDirection": "당신의 강점을 가장 크게 증폭시킬 수 있는 직업적 환경과 사회적 포지셔닝 상세 서술",
+    "wealthFlow": "타고난 財星(재성)의 흐름을 바탕으로 한 재물 축적 방식 (안정형 vs 투자형 등)과 생애 주기별 자산 관리 조언"
+  },
+  "relationship": {
+    "title": "03. 인연의 지형도와 감정의 흐름",
+    "socialNetwork": "대인관계에서 발현되는 특징과 귀인을 알아보는 방법, 상극인 인연을 피하는 기술",
+    "romance": "애정 관계에서의 패턴, 갈등 해결 방식 및 심리적 안정감을 주는 파트너의 특징"
+  },
+  "threeYearRoadmap": [
     {
-      "year": "2027",
-      "summary": "연간 총평 (500자 이상)",
-      "keywords": ["키워드1", "2", "3"],
-      "areas": {
-        "career": "상세 분석",
-        "wealth": "상세 분석",
-        "love": "상세 분석",
-        "health": "상세 분석"
-      },
-      "monthlyTimeline": "1~3월: ..., 4~6월: ..., 7~9월: ..., 10~12월: ...",
-      "goldenAction": "반드시 실천해야 할 개운 행동"
+      "year": 2027,
+      "yearlyTheme": "2027년 정미(丁未)년의 핵심 테마 카피",
+      "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+      "careerAndWealthDetails": "[재물 및 직업] 해당 연도의 승부처, 투자운, 직업적 이동수 등을 월별 흐름(예: 상반기/하반기)에 맞추어 매우 상세히 서술",
+      "relationshipDetails": "[대인관계 및 애정] 해당 연도의 인연법, 피해야 할 사람, 새롭게 맺어지는 관계의 특징을 상세히 서술",
+      "healthAndCaution": "[건강 및 주의점] 신체적/정신적 건강 관리법과 흉운을 피하기 위한 구체적 개운법(방향, 색상, 습관 등)"
     },
-    { "year": "2028", "summary": "연간 총평", "keywords": [], "areas": {}, "monthlyTimeline": "", "goldenAction": "" },
-    { "year": "2029", "summary": "연간 총평", "keywords": [], "areas": {}, "monthlyTimeline": "", "goldenAction": "" }
+    {
+      "year": 2028,
+      "yearlyTheme": "2028년 무신(戊申)년의 핵심 테마 카피",
+      "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+      "careerAndWealthDetails": "[재물 및 직업] 상세 분석",
+      "relationshipDetails": "[대인관계 및 애정] 상세 분석",
+      "healthAndCaution": "[건강 및 주의점] 상세 분석"
+    },
+    {
+      "year": 2029,
+      "yearlyTheme": "2029년 기유(己酉)년의 핵심 테마 카피",
+      "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+      "careerAndWealthDetails": "[재물 및 직업] 상세 분석",
+      "relationshipDetails": "[대인관계 및 애정] 상세 분석",
+      "healthAndCaution": "[건강 및 주의점] 상세 분석"
+    }
   ],
-  "yearlyScores": [
-    { "year": "2027", "score": 85, "label": "길(吉)" },
-    { "year": "2028", "score": 92, "label": "대길(大吉)" },
-    { "year": "2029", "score": 78, "label": "평(平)" }
-  ],
-
-  "partnerAnalysis": "▶ [사주적 궁합 최적 유형]...\\n\\n▶ [직장 동료/파트너십 전략]...\\n\\n▶ [피해야 할 악연의 특징]...\\n\\n▶ [관계의 결실을 맺는 타이밍]...",
-  
-  "strategicDirective": "▶ [\${name} 님의 운명적 한 줄 요약]...\\n\\n▶ [마스터의 핵심 지침 1]...\\n\\n▶ [마스터의 핵심 지침 2]...\\n\\n▶ [마스터의 핵심 지침 3]...\\n\\n▶ [절대 하지 말아야 할 것]...\\n\\n▶ [최종 제언]",
-  
-  "quarterlyLuck": [
-    { "period": "1분기", "summary": "상세", "point": "핵심" },
-    { "period": "2분기", "summary": "상세", "point": "핵심" },
-    { "period": "3분기", "summary": "상세", "point": "핵심" },
-    { "period": "4분기", "summary": "상세", "point": "핵심" }
-  ],
-  "masterAdvice": "\${name} 님만을 위한 마스터의 마지막 한 줄 조언 (강렬하고 깊은 통찰)"
+  "actionPlan": {
+    "title": "04. 운명을 바꾸는 마스터의 마스터플랜",
+    "advice1": "당장 내일부터 실천해야 할 가장 중요한 현실적 조언 1 (개조식 3줄 이상 설명)",
+    "advice2": "운의 흐름을 끌어올리는 심리적/환경적 조언 2 (개조식 3줄 이상 설명)",
+    "advice3": "대인관계 및 직업적 한계를 돌파하기 위한 조언 3 (개조식 3줄 이상 설명)"
+  }
 }
 
-[최종 확인] 20페이지 분량이 가능하도록 본문을 극한으로 서술하십시오. 사주 근거 없는 말은 단 한 마디도 하지 마십시오.`;
+[절대 준수 규칙]
+1. 오직 순수 JSON만 출력하십시오.
+2. 20페이지 분량이 가능하도록 본문을 극한으로 서술하십시오. 
+3. 사주 근거 없는 말은 단 한 마디도 하지 마십시오.
+4. 모든 오행 표기 시 Wood, Fire 등 영어 절대 금지. 한자 병기 필수 (예: 목(木)).`;
 
-        const sajuContext = buildRichSajuContext(userSaju);
-        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}, 유형: ${reportType}, 요청: ${specialRequest}\n${sajuContext}`;
+        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}\n${sajuContext}`;
 
         let lastError;
         for (let attempt = 0; attempt < 4; attempt++) {
@@ -261,7 +220,7 @@ export default async function handler(req: Request) {
                     system: systemPrompt,
                     prompt: userQuery,
                     maxRetries: 0,
-                    maxTokens: 32000,
+                    maxTokens: 16000,
                 } as any);
                 return result.toTextStreamResponse({ headers: corsHeaders });
             } catch (error) {

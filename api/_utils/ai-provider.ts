@@ -11,10 +11,10 @@ import { createOpenAI } from '@ai-sdk/openai';
 
 // Model Constants
 export const MODELS = {
-    GEMINI_PRIMARY: 'gemini-3.1-flash-lite-preview',
-    GEMINI_FALLBACK: 'gemini-2.5-flash-lite',
-    GPT_PRIMARY: 'gpt-5-nano-2025-08-07',
-    GPT_FALLBACK: 'gpt-5-nano-2025-08-07', // Using nano for both for now per user version request
+    GEMINI_PRIMARY: 'gemini-1.5-flash',
+    GEMINI_FALLBACK: 'gemini-1.5-flash',
+    GPT_PRIMARY: 'gpt-4o-mini',
+    GPT_FALLBACK: 'gpt-4o-mini',
 };
 
 /**

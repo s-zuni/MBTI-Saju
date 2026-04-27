@@ -1,4 +1,3 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject, generateObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
@@ -184,7 +183,9 @@ export default async function handler(req: Request) {
 
     [절대 규칙]
     - **강조 금지**: **(별표 두개) 및 어떠한 마크다운 강조 기호도 절대 사용 금지.**
-    - 한국어로 작성하되, MBTI 용어는 그대로 사용.
+    - 모든 분석 내용은 반드시 한국어만 사용하세요. (MBTI 용어 제외)
+    - 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.
+    - 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
     - **줄 바꿈**: 가급적 매 문장마다 \n\n을 사용하여 텍스트가 뭉쳐 보이지 않게 하세요.`;
 
     let userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
@@ -194,7 +195,7 @@ export default async function handler(req: Request) {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
-                    const { model, name } = getAIProvider(attempt);
+                    const { model } = getAIProvider(attempt);
                     const result = await streamObject({
                         model,
                         schema: currentSchema,
@@ -205,7 +206,7 @@ export default async function handler(req: Request) {
                     return result.toTextStreamResponse({ headers: corsHeaders });
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for full analysis:`, error);
+                    console.warn(`Attempt ${attempt + 1} failed for full analysis:`, error);
                     if (!isRetryableAIError(error)) break;
                 }
             }
@@ -215,7 +216,7 @@ export default async function handler(req: Request) {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
-                    const { model, name } = getAIProvider(attempt);
+                    const { model } = getAIProvider(attempt);
                     const result = await generateObject({
                         model,
                         schema: currentSchema,
@@ -229,7 +230,7 @@ export default async function handler(req: Request) {
                     });
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for part ${part}:`, error);
+                    console.warn(`Attempt ${attempt + 1} failed for part ${part}:`, error);
                     if (!isRetryableAIError(error)) break;
                 }
             }

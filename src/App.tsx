@@ -234,7 +234,7 @@ function App() {
 
 function AppContent({ 
   session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
-  checkSufficientCredits, getCost, debugInfo,
+  checkSufficientCredits, getCost,
   tier, fortune, isFortuneLoading, tomorrowFortune, isTomorrowLoading, handleFetchFortune, handleFetchTomorrowFortune, handleStart, 
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {

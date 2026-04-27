@@ -1,4 +1,3 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { calculateSaju } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
@@ -25,13 +24,13 @@ export default async (req: Request) => {
         // AI Key checking is now handled centrally in ai-provider.ts
 
         // Calculate Saju
-        let sajuInfo = "Saju information not available";
+        let sajuInfo = "사주 정보를 불러올 수 없습니다.";
         if (birthDate) {
             try {
                 const saju = calculateSaju(birthDate, birthTime);
                 sajuInfo = `
-                - Day Master (Il-Gan): ${saju.dayMaster.korean} (${saju.dayMaster.description})
-                - Five Elements: Wood ${saju.elementRatio.wood}%, Fire ${saju.elementRatio.fire}%, Earth ${saju.elementRatio.earth}%, Metal ${saju.elementRatio.metal}%, Water ${saju.elementRatio.water}%
+                - 일간: ${saju.dayMaster.korean} (${saju.dayMaster.description})
+                - 오행 분포: 목(木) ${saju.elementRatio.wood}%, 화(화) ${saju.elementRatio.fire}%, 토(토) ${saju.elementRatio.earth}%, 금(금) ${saju.elementRatio.metal}%, 수(수) ${saju.elementRatio.water}%
                 `;
             } catch (e) {
                 console.error("Saju Calculation Error", e);
@@ -52,6 +51,11 @@ export default async (req: Request) => {
   예: "INTJ의 계획형 기질이 사주의 목(木) 부족과 맞물려 실행력 저하를 유발합니다."
 - 한계와 문제점을 가감 없이 지적하고, 현실적 개선책으로 마무리
 - 핵심 2~3가지로 압축. 군더더기 없이 임팩트 있게
+
+[언어 규칙 - 중요]
+- 모든 분석 내용은 반드시 한국어만 사용하세요.
+- 오행(목, 화, 토, 금, 수)을 언급할 때 영어(Wood, Fire 등)를 절대 사용하지 마세요.
+- 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
 
 [형식 규칙]
 - 별표 두 개(**) 절대 사용 금지
@@ -85,7 +89,7 @@ ${pastContext ? `[이전 상담 요약]\n${pastContext}\n` : ''}
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
-                    const { model, name } = getAIProvider(attempt);
+                    const { model } = getAIProvider(attempt);
                     const result = await streamText({
                         model,
                         system: systemPrompt,
@@ -96,7 +100,7 @@ ${pastContext ? `[이전 상담 요약]\n${pastContext}\n` : ''}
                     });
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for chat:`, error);
+                    console.warn(`Attempt ${attempt + 1} failed for chat:`, error);
                     if (!isRetryableAIError(error)) break;
                 }
             }

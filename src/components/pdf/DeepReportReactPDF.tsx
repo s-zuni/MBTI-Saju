@@ -23,11 +23,11 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    padding: '25mm',
+    padding: '20mm',
     backgroundColor: '#ffffff',
     fontFamily: 'NotoSansKR',
-    fontSize: 12,
-    lineHeight: 1.8,
+    fontSize: 11,
+    lineHeight: 1.6,
     color: '#1E293B',
   },
   coverPage: {
@@ -42,201 +42,144 @@ const styles = StyleSheet.create({
   },
   coverTitle: {
     fontFamily: 'NanumMyungjo',
-    fontSize: 48,
-    marginBottom: 24,
+    fontSize: 40,
+    marginBottom: 20,
     textAlign: 'center',
     letterSpacing: -1,
     lineHeight: 1.2,
   },
   coverSubtitle: {
-    fontSize: 14,
-    letterSpacing: 10,
+    fontSize: 12,
+    letterSpacing: 8,
     color: '#FBBF24',
-    marginBottom: 48,
+    marginBottom: 40,
     textTransform: 'uppercase',
   },
   clientName: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'NanumMyungjo',
-    marginTop: 24,
+    marginTop: 20,
     color: '#F8FAFC',
-  },
-  section: {
-    marginBottom: 40,
   },
   sectionTitle: {
     fontFamily: 'NanumMyungjo',
-    fontSize: 26,
+    fontSize: 22,
     color: '#0F172A',
-    borderBottom: '2pt solid #E2E8F0',
-    paddingBottom: 12,
-    marginBottom: 30,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderBottom: '1pt solid #E2E8F0',
+    paddingBottom: 10,
+    marginBottom: 25,
     backgroundColor: '#F8FAFC',
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   subTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#0F172A',
-    marginTop: 25,
-    marginBottom: 15,
-    borderLeft: '4pt solid #6366F1',
-    paddingLeft: 12,
+    marginTop: 20,
+    marginBottom: 10,
+    borderLeft: '3pt solid #6366F1',
+    paddingLeft: 10,
     fontFamily: 'NotoSansKR',
   },
   paragraph: {
-    marginBottom: 15,
+    marginBottom: 12,
     textAlign: 'justify',
     fontFamily: 'NotoSansKR',
     color: '#334155',
   },
   bulletPoint: {
     flexDirection: 'row',
-    marginBottom: 10,
-    paddingLeft: 15,
+    marginBottom: 8,
+    paddingLeft: 10,
   },
   bullet: {
-    width: 15,
-    fontSize: 14,
+    width: 12,
+    fontSize: 12,
     color: '#6366F1',
     fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'NotoSansKR',
-    fontSize: 11.5,
+    fontSize: 10.5,
   },
-  adviceBox: {
-    marginTop: 30,
-    padding: 20,
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
-    border: '1pt solid #C7D2FE',
+  box: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    border: '0.5pt solid #E2E8F0',
   },
-  adviceTitle: {
-    fontSize: 14,
+  boxTitle: {
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#4338CA',
     marginBottom: 8,
     fontFamily: 'NotoSansKR',
   },
-  adviceContent: {
-    fontSize: 12,
-    fontFamily: 'NanumMyungjo',
-    color: '#312E81',
-    fontStyle: 'italic',
-  },
-  watermark: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%) rotate(-45deg)',
-    fontSize: 60,
-    color: '#F1F5F9',
-    opacity: 0.3,
-    zIndex: -1,
-    fontFamily: 'NotoSansKR',
-  },
   footer: {
     position: 'absolute',
     bottom: '10mm',
-    left: '25mm',
-    right: '25mm',
+    left: '20mm',
+    right: '20mm',
     borderTop: '0.5pt solid #E2E8F0',
-    paddingTop: 10,
+    paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    fontSize: 9,
+    fontSize: 8,
     color: '#94A3B8',
     fontFamily: 'NotoSansKR',
   },
-  legalPage: {
-    padding: '40mm 25mm',
-    backgroundColor: '#F8FAFC',
-    color: '#64748B',
-    fontFamily: 'NotoSansKR',
-    fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 2,
+  sajuTable: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    border: '0.5pt solid #E2E8F0',
   },
-  radarContainer: {
-    marginVertical: 30,
-    padding: 25,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    border: '1pt solid #E2E8F0',
-    alignItems: 'center',
-  }
+  sajuCol: {
+    flex: 1,
+    borderRight: '0.5pt solid #E2E8F0',
+  },
+  sajuHeader: {
+    backgroundColor: '#1E293B',
+    color: '#FFFFFF',
+    padding: 5,
+    textAlign: 'center',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  sajuCell: {
+    padding: 8,
+    textAlign: 'center',
+    borderBottom: '0.5pt solid #E2E8F0',
+  },
+  sajuLabel: {
+    fontSize: 7,
+    color: '#94A3B8',
+    marginBottom: 2,
+  },
+  sajuValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
 
-interface PillarInfo {
-  gan?: string;
-  zhi?: string;
-  ganShiShen?: string;
-  zhiShiShen?: string;
-  twelveStages?: string;
-  twelveSpirits?: string;
-  hiddenStems?: string[];
-}
-
 interface Props {
-  sajuData: {
-    userSaju?: {
-      dayMaster?: {
-        chinese: string;
-        korean: string;
-        description: string;
-      };
-      elementRatio?: {
-        wood: number;
-        fire: number;
-        earth: number;
-        metal: number;
-        water: number;
-      };
-      pillars?: {
-        year?: PillarInfo;
-        month?: PillarInfo;
-        day?: PillarInfo;
-        hour?: PillarInfo;
-      };
-    };
-    reportType?: string;
-  };
+  sajuData: any;
   parsedContent: any;
   clientName: string;
 }
 
-const ELEMENT_COLORS = {
-  wood: '#10B981', fire: '#EF4444', earth: '#F59E0B', metal: '#64748B', water: '#3B82F6',
-};
-
-
-
-
-
-
-const renderContent = (text: string | undefined) => {
+const renderText = (text: string | undefined) => {
   if (!text) return null;
-  const sections = text.split('\n');
-  return sections.map((line, idx) => {
+  const lines = text.split('\n');
+  return lines.map((line, idx) => {
     const trimmed = line.trim();
-    if (!trimmed) return <View key={idx} style={{ height: 12 }} />;
-    if (trimmed.startsWith('▶')) {
-      return (
-        <Text key={idx} style={styles.subTitle} wrap={false}>
-          {trimmed.replace('▶', '').trim()}
-        </Text>
-      );
-    }
+    if (!trimmed) return <View key={idx} style={{ height: 8 }} />;
     if (trimmed.startsWith('- ')) {
       return (
-        <View key={idx} style={styles.bulletPoint} wrap={false}>
-          <Text style={styles.bullet}>■</Text>
+        <View key={idx} style={styles.bulletPoint}>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>{trimmed.slice(2)}</Text>
         </View>
       );
@@ -245,142 +188,123 @@ const renderContent = (text: string | undefined) => {
   });
 };
 
-const RadarChart: React.FC<{ ratio: any }> = ({ ratio }) => {
-  if (!ratio) return null;
-  const size = 300;
-  const center = size / 2;
-  const radius = 100;
-  const categories = [
-    { label: '목(木)', key: 'wood', angle: -90, color: ELEMENT_COLORS.wood },
-    { label: '화(火)', key: 'fire', angle: -18, color: ELEMENT_COLORS.fire },
-    { label: '토(土)', key: 'earth', angle: 54, color: ELEMENT_COLORS.earth },
-    { label: '금(金)', key: 'metal', angle: 126, color: ELEMENT_COLORS.metal },
-    { label: '수(水)', key: 'water', angle: 198, color: ELEMENT_COLORS.water },
-  ];
-  const points = categories.map(c => {
-    const val = (ratio[c.key] || 0) / 100;
-    const r = radius * val;
-    const rad = (c.angle * Math.PI) / 180;
-    return { x: center + r * Math.cos(rad), y: center + r * Math.sin(rad) };
-  });
-  const pathData = points.reduce((acc, p, i) => acc + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`), '') + ' Z';
+const SajuTable: React.FC<{ saju: any }> = ({ saju }) => {
+  if (!saju?.pillars) return null;
+  const pillars = [saju.pillars.hour, saju.pillars.day, saju.pillars.month, saju.pillars.year];
+  const headers = ['시주', '일주', '월주', '년주'];
+
   return (
-    <View style={styles.radarContainer}>
-      <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 20, fontFamily: 'NotoSansKR' }}>오행(五行) 에너지 밸런스</Text>
-      <Svg width={size} height={size}>
-        {[0.2, 0.4, 0.6, 0.8, 1.0].map((v, i) => (
-          <Circle key={i} cx={center} cy={center} r={radius * v} stroke="#E2E8F0" strokeWidth={0.5} fill="none" />
-        ))}
-        {categories.map((c, i) => {
-          const rad = (c.angle * Math.PI) / 180;
-          return (
-            <React.Fragment key={i}>
-              <Line x1={center} y1={center} x2={center + radius * Math.cos(rad)} y2={center + radius * Math.sin(rad)} stroke="#E2E8F0" strokeWidth={0.5} />
-              <Text x={center + (radius + 20) * Math.cos(rad)} y={center + (radius + 20) * Math.sin(rad)} style={{ fontSize: 10, fill: c.color, fontFamily: 'NotoSansKR', textAnchor: 'middle' }}>{c.label}</Text>
-            </React.Fragment>
-          );
-        })}
-        <Path d={pathData} fill="#6366F1" fillOpacity={0.2} stroke="#6366F1" strokeWidth={2} />
-      </Svg>
+    <View style={styles.sajuTable}>
+      {pillars.map((p, i) => (
+        <View key={i} style={[styles.sajuCol, i === 3 ? { borderRight: 0 } : {}]}>
+          <View style={styles.sajuHeader}><Text>{headers[i]}</Text></View>
+          <View style={styles.sajuCell}>
+            <Text style={styles.sajuLabel}>천간</Text>
+            <Text style={styles.sajuValue}>{p?.gan || '-'}</Text>
+          </View>
+          <View style={styles.sajuCell}>
+            <Text style={styles.sajuLabel}>지지</Text>
+            <Text style={styles.sajuValue}>{p?.zhi || '-'}</Text>
+          </View>
+          <View style={styles.sajuCell}>
+            <Text style={styles.sajuLabel}>십성</Text>
+            <Text style={{ fontSize: 9 }}>{p?.zhiShiShen || '-'}</Text>
+          </View>
+        </View>
+      ))}
     </View>
   );
 };
 
-const ThreeYearTimeline: React.FC<{ detail: any[] }> = ({ detail }) => {
-  if (!detail) return null;
-  return detail.map((yearData, idx) => (
-    <Page key={idx} size="A4" style={styles.page}>
-      <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-      <View style={styles.sectionTitle}>
-        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>{yearData.year}</Text>
-        <Text style={{ flex: 1 }}>{yearData.year}년 상세 운세 로드맵</Text>
-      </View>
-      <Text style={[styles.paragraph, { fontSize: 13, fontWeight: 'bold', color: '#1E293B' }]}>{yearData.summary}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 15 }}>
-        {yearData.keywords?.map((k: string, i: number) => (
-          <Text key={i} style={{ backgroundColor: '#F1F5F9', padding: '4 10', borderRadius: 20, fontSize: 10, color: '#475569' }}>#{k}</Text>
-        ))}
-      </View>
-      <View style={{ marginTop: 20 }}>
-        {Object.entries(yearData.areas || {}).map(([key, val]: any, i) => (
-          <View key={i} style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#4338CA', marginBottom: 5 }}>[ {key.toUpperCase()} ]</Text>
-            <Text style={styles.paragraph}>{val}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.adviceBox}>
-        <Text style={styles.adviceTitle}>마스터의 핵심 개운 행동 (Golden Action)</Text>
-        <Text style={styles.adviceContent}>{yearData.goldenAction}</Text>
-      </View>
-      <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | {yearData.year} YEARLY DETAIL</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-    </Page>
-  ));
-};
-
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
+  const roadmap = parsedContent.threeYearRoadmap || [];
+  const TOTAL_PAGES = 5 + roadmap.length;
+
   return (
     <Document>
+      {/* Cover */}
       <Page size="A4" style={styles.coverPage}>
-        <Text style={styles.coverSubtitle}>PREMIUM SYNERGY REPORT</Text>
-        <Text style={styles.coverTitle}>심층 인생 전략 분석{'\n'}마스터 에디션</Text>
-        <View style={{ height: 2, width: 200, backgroundColor: '#FBBF24', marginVertical: 40 }} />
-        <Text style={{ fontSize: 14, color: '#94A3B8', marginBottom: 15 }}>귀하를 위한 운명의 기록</Text>
+        <Text style={styles.coverSubtitle}>VIP LIFE STRATEGY</Text>
+        <Text style={styles.coverTitle}>{parsedContent.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
+        <View style={{ height: 1, width: 150, backgroundColor: '#FBBF24', marginVertical: 30 }} />
         <Text style={styles.clientName}>{clientName} 님</Text>
-        <Text style={{ marginTop: 60, fontSize: 12, color: '#475569', letterSpacing: 3 }}>
-          {sajuData?.reportType || '사주 명리학 심층 분석'}
-        </Text>
-        <Text style={{ position: 'absolute', bottom: 50, fontSize: 10, color: '#64748B' }}>
-          © 2026 MBTI-사주 시너지 연구소. ALL RIGHTS RESERVED.
-        </Text>
+        <Text style={{ marginTop: 40, fontSize: 12, color: '#94A3B8' }}>{parsedContent.cover?.subTitle}</Text>
       </Page>
 
+      {/* 01 Core Identity */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>01</Text><Text style={{ flex: 1 }}>선천적 기질 및 운명적 도구</Text></View>
-        <RadarChart ratio={sajuData?.userSaju?.elementRatio} />
-        {renderContent(parsedContent.congenitalSummary)}
-        <View style={styles.adviceBox}>
-          <Text style={styles.adviceTitle}>마스터의 기질 총평</Text>
-          <Text style={styles.adviceContent}>{parsedContent.masterAdvice}</Text>
+        <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 본질"}</Text>
+        <SajuTable saju={sajuData?.userSaju} />
+        <Text style={styles.subTitle}>기질적 시너지 분석</Text>
+        {renderText(parsedContent.coreIdentity?.mbtiSajuSynergy)}
+        <View style={[styles.box, { backgroundColor: '#FFF1F2', borderColor: '#FECDD3' }]}>
+          <Text style={[styles.boxTitle, { color: '#BE123C' }]}>잠재적 리스크 관리</Text>
+          {renderText(parsedContent.coreIdentity?.hiddenRisk)}
         </View>
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | CORE ESSENCE</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | CORE IDENTITY</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
+      {/* 02 Wealth & Career */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>02</Text><Text style={{ flex: 1 }}>재물적 성취 및 사회적 성공 전략</Text></View>
-        {renderContent(parsedContent.wealthAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | WEALTH & CAREER</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물 및 사회적 성취"}</Text>
+        <Text style={styles.subTitle}>직업적 포지셔닝</Text>
+        {renderText(parsedContent.wealthAndCareer?.careerDirection)}
+        <View style={styles.box}>
+          <Text style={styles.boxTitle}>자산 관리 및 재물 흐름</Text>
+          {renderText(parsedContent.wealthAndCareer?.wealthFlow)}
+        </View>
+        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | WEALTH & CAREER</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
+      {/* 03 Relationship */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>03</Text><Text style={{ flex: 1 }}>사회적 관계 및 인간 역학</Text></View>
-        {renderContent(parsedContent.relationshipAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | RELATIONSHIPS</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        <Text style={styles.sectionTitle}>{parsedContent.relationship?.title || "03. 인연 및 감정의 흐름"}</Text>
+        <Text style={styles.subTitle}>대인관계 및 귀인 활용</Text>
+        {renderText(parsedContent.relationship?.socialNetwork)}
+        <View style={styles.box}>
+          <Text style={styles.boxTitle}>애정 패턴 및 파트너십</Text>
+          {renderText(parsedContent.relationship?.romance)}
+        </View>
+        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | RELATIONSHIPS</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
 
+      {/* Roadmap Pages */}
+      {roadmap.map((yearData: any, idx: number) => (
+        <Page key={idx} size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>{yearData.year}년 미래 로드맵</Text>
+          <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#4338CA', marginBottom: 15 }}>{yearData.yearlyTheme}</Text>
+          <Text style={styles.paragraph}>{yearData.overallSummary}</Text>
+          
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[재물 및 직업]</Text>
+            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.careerAndWealthDetails}</Text>
+            
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[인연 및 애정]</Text>
+            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.relationshipDetails}</Text>
+            
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B', marginBottom: 5 }}>[건강 및 주의점]</Text>
+            <Text style={[styles.paragraph, { fontSize: 10 }]}>{yearData.healthAndCaution}</Text>
+          </View>
+          <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | {yearData.year} ROADMAP</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
+        </Page>
+      ))}
+
+      {/* 04 Action Plan */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>04</Text><Text style={{ flex: 1 }}>에너지 리듬 및 생체 건강</Text></View>
-        {renderContent(parsedContent.healthAnalysis)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | HEALTH & VITALITY</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
-
-      <ThreeYearTimeline detail={parsedContent.threeYearDetail} />
-
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.watermark} fixed>MBTI-SAJU SYNERGY</Text>
-        <View style={styles.sectionTitle}><Text style={{ fontSize: 32, fontWeight: 'bold', color: '#6366F1', marginRight: 15 }}>09</Text><Text style={{ flex: 1 }}>인생 사명 및 마스터 가이드</Text></View>
-        {renderContent(parsedContent.strategicDirective)}
-        <View style={styles.footer} fixed><Text>PREMIUM DEEP REPORT | STRATEGIC DIRECTIVE</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
-      </Page>
-
-      <Page size="A4" style={styles.legalPage}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#334155', marginBottom: 40 }}>법적 고지 및 안내</Text>
-        <Text>본 리포트는 명리학적 데이터와 심리 분석을 바탕으로 한 통계적 분석 결과이며, 개인의 자유 의지와 환경에 따라 실제 삶과는 다를 수 있습니다. 인생의 참고 자료로 활용하시기 바랍니다. 모든 분석 내용은 학술적 견해를 포함하고 있으며, 특정 미래 사건에 대한 확정적 예고가 아님을 밝힙니다.</Text>
-        <Text style={{ marginTop: 60 }}>MBTI-사주 시너지 전략 연구소</Text>
+        <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "04. 마스터 마스터플랜"}</Text>
+        <View style={[styles.box, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+          <Text style={[styles.boxTitle, { color: '#0369A1' }]}>즉각적 실행 과제</Text>
+          {renderText(parsedContent.actionPlan?.advice1)}
+        </View>
+        <View style={styles.box}>
+          <Text style={styles.boxTitle}>운의 강화 전략</Text>
+          {renderText(parsedContent.actionPlan?.advice2)}
+        </View>
+        <View style={styles.box}>
+          <Text style={styles.boxTitle}>관계적 돌파구</Text>
+          {renderText(parsedContent.actionPlan?.advice3)}
+        </View>
+        <View style={styles.footer} fixed><Text>VIP STRATEGY REPORT | FINAL PLAN</Text><Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /></View>
       </Page>
     </Document>
   );

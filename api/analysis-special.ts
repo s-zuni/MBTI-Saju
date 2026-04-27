@@ -1,4 +1,3 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju } from './_utils/saju';
@@ -105,14 +104,7 @@ function getDateString(offsetDays: number = 0): string {
     return d.toISOString().split('T')[0]!; // YYYY-MM-DD in UTC
 }
 
-function getScoreComment(score: number): string {
-    if (score >= 90) return '환상의 짝꿍';
-    if (score >= 80) return '찰떡 궁합';
-    if (score >= 70) return '좋은 인연';
-    if (score >= 60) return '나쁘지 않은 사이';
-    if (score >= 50) return '평범한 관계';
-    return '인연이 약함';
-}
+
 
 // Template-based analysis removed in favor of dynamic AI generation to satisfy "MBTI/Saju essential use" requirement.
 
@@ -201,6 +193,16 @@ export default async function handler(req: Request) {
         try { saju = calculateSaju(birthDate, birthTime); } catch (e) { console.error('Saju error:', e); }
     }
 
+    const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
+    const translateRatio = (ratio: any) => {
+        if (!ratio) return {};
+        const result: any = {};
+        for (const [k, v] of Object.entries(ratio)) {
+            result[elementNames[k] || k] = v;
+        }
+        return result;
+    };
+
     let systemPrompt = `당신은 20대 여성의 감성과 니즈를 완벽하게 파악하고 있는 '트렌디 웰니스 & 라이프 컨설턴트'입니다.
     
     [핵심 규칙]
@@ -212,22 +214,23 @@ export default async function handler(req: Request) {
     6. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
     7. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
     8. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-    9. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요.`;
+    9. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
+    10. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.`;
 
     let userQuery = '';
 
     if (type === 'healing') {
-        userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(saju?.elementRatio || {})}, 선호 지역: ${region || '전국'}`;
+        userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${region || '전국'}`;
     } else if (type === 'naming') {
         let finalTargetSaju = targetSajuData;
         if (!finalTargetSaju && targetBirthDate) {
             finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
         }
-        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(finalTargetSaju?.elementRatio || {})}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
+        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
     } else if (type === 'job') {
-        userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}`;
+        userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (type === 'trip') {
-        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
+        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
     } else if (type === 'kbo') {
         const isNoTeam = requirements === '없음 (아직 없음)';
         
@@ -252,7 +255,7 @@ export default async function handler(req: Request) {
         구단: ${teamToAnalyze}
         MBTI: ${mbti || '알수없음'}
         사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
-        오행 분포: ${JSON.stringify(saju?.elementRatio || {})}
+        오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
         사용자 이름: ${name || '사용자'}
         추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'}
 
@@ -276,14 +279,14 @@ export default async function handler(req: Request) {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
         const dateTag = scope === 'tomorrow' ? '내일' : '오늘';
-        userQuery = `[대상 날짜: ${dateTag}] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}. 반드시 '${dateTag}'의 운세만 생성하세요.`;
+        userQuery = `[대상 날짜: ${dateTag}] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}. 반드시 '${dateTag}'의 운세만 생성하세요.`;
     }
 
     try {
         let lastError;
         for (let attempt = 0; attempt < 4; attempt++) {
             try {
-                const { model, name } = getAIProvider(attempt);
+                const { model } = getAIProvider(attempt);
                 const result = await streamObject({
                     model,
                     schema: currentSchema,
@@ -294,7 +297,7 @@ export default async function handler(req: Request) {
                 return result.toTextStreamResponse({ headers: corsHeaders });
             } catch (error) {
                 lastError = error;
-                console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for type ${type}:`, error);
+                console.warn(`Attempt ${attempt + 1} failed for type ${type}:`, error);
                 
                 // If not retryable or we've exhausted attempts, bread out
                 if (!isRetryableAIError(error)) {
