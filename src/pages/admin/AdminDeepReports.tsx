@@ -330,7 +330,7 @@ const AdminDeepReports: React.FC = () => {
   );
 
   const displayContent = reportModal.sajuData ? 
-    (reportModal.content || `🔮 [분석 데이터 구조화 완료]\n- 재물운: ${reportModal.sajuData.wealthAnalysis?.substring(0, 50) || '분석 중...'}...\n- 애정운: ${reportModal.sajuData.relationshipAnalysis?.substring(0, 50) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)`)
+    (reportModal.content || `🔮 [분석 데이터 구조화 완료]\n- 재물운: ${reportModal.sajuData.wealthAndCareer?.wealthFlow?.substring(0, 50) || '분석 중...'}...\n- 직업운: ${reportModal.sajuData.wealthAndCareer?.careerDirection?.substring(0, 50) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)`)
     : "리포트 생성이 진행중입니다. 완료 후 다운로드가 가능합니다. (구조화된 데이터 우선 처리 중)";
 
   return (

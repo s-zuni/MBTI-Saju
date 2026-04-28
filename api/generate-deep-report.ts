@@ -190,16 +190,40 @@ export default async function handler(req: Request) {
       "year": 2029,
       "yearlyTheme": "2029년 기유(己酉)년의 핵심 테마 카피",
       "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
-      "careerAndWealthDetails": "[재물 및 직업] 상세 분석",
-      "relationshipDetails": "[대인관계 및 애정] 상세 분석",
-      "healthAndCaution": "[건강 및 주의점] 상세 분석"
-    }
-  ],
+  "threeYearRoadmap": {
+    "title": "04. 3개년 운의 흐름과 로드맵",
+    "details": [
+      {
+        "year": 2027,
+        "yearlyTheme": "2027년 정미(丁未)년의 핵심 테마 카피",
+        "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+        "careerAndWealthDetails": "[재물 및 직업] 해당 연도의 승부처, 투자운, 직업적 이동수 등을 월별 흐름(예: 상반기/하반기)에 맞추어 매우 상세히 서술",
+        "relationshipDetails": "[대인관계 및 애정] 해당 연도의 인연법, 피해야 할 사람, 새롭게 맺어지는 관계의 특징을 상세히 서술",
+        "healthAndCaution": "[건강 및 주의점] 신체적/정신적 건강 관리법과 흉운을 피하기 위한 구체적 개운법(방향, 색상, 습관 등)"
+      },
+      {
+        "year": 2028,
+        "yearlyTheme": "2028년 무신(戊申)년의 핵심 테마 카피",
+        "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+        "careerAndWealthDetails": "[재물 및 직업] 상세 분석",
+        "relationshipDetails": "[대인관계 및 애정] 상세 분석",
+        "healthAndCaution": "[건강 및 주의점] 상세 분석"
+      },
+      {
+        "year": 2029,
+        "yearlyTheme": "2029년 기유(己酉)년의 핵심 테마 카피",
+        "overallSummary": "해당 연도의 전체적인 운의 흐름과 반드시 명심해야 할 거시적 조언 (상세히)",
+        "careerAndWealthDetails": "[재물 및 직업] 상세 분석",
+        "relationshipDetails": "[대인관계 및 애정] 상세 분석",
+        "healthAndCaution": "[건강 및 주의점] 상세 분석"
+      }
+    ]
+  },
   "actionPlan": {
-    "title": "04. 운명을 바꾸는 마스터의 마스터플랜",
+    "title": "05. 운명을 바꾸는 마스터의 마스터플랜",
     "advice1": "당장 내일부터 실천해야 할 가장 중요한 현실적 조언 1 (개조식 3줄 이상 설명)",
-    "advice2": "운의 흐름을 끌어올리는 심리적/환경적 조언 2 (개조식 3줄 이상 설명)",
-    "advice3": "대인관계 및 직업적 한계를 돌파하기 위한 조언 3 (개조식 3줄 이상 설명)"
+    "advice2": "중장기적으로 운의 그릇을 키우기 위한 습관 및 마음가짐 조언",
+    "advice3": "최종적으로 당신이 도달하게 될 최고의 미래상에 대한 격려와 확신"
   }
 }
 
