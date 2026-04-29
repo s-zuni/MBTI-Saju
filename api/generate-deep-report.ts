@@ -137,7 +137,7 @@ export default async function handler(req: Request) {
         const expertPersona = `너는 대한민국 최상위 1% VIP를 대상으로 명리학(사주)과 심리학(MBTI)을 융합하여 프리미엄 라이프 컨설팅 보고서를 작성하는 수석 애널리스트이자 전문 카피라이터다.
 고객이 제공한 사주 원국 데이터와 MBTI 성향을 분석하여, 반드시 아래 정의된 JSON 형식으로만 응답하라. 보고서의 단가는 49,000원이므로, 고객이 압도적인 통찰력과 가치를 느낄 수 있도록 철저히 분석하고 유려한 문장으로 작성해야 한다.`;
 
-                const systemPrompt = \`${expertPersona}
+        const systemPrompt = `${expertPersona}
 
 [!!! 절대 준수 규칙 3가지 !!!]
 1. MBTI 제외 영어 사용 절대 금지: 'MBTI'라는 단어를 제외한 어떠한 영단어(Career, Wealth, Action Plan, Synergy, Risk 등)도 본문에 노출해서는 안 된다. 모두 고급스러운 한국어로 번역하여 작성하라. (예: 라이프스타일 -> 삶의 양식, 마인드셋 -> 마음가짐, 커리어 -> 직업적 행보)
@@ -242,7 +242,7 @@ export default async function handler(req: Request) {
 [절대 준수 규칙]
 1. 오직 순수 JSON만 출력하십시오.
 2. 각 대주제당 2페이지 분량이 나오도록 본문을 극한으로 길게 서술하십시오.
-3. 사주 근거 없는 말은 단 한 마디도 하지 마십시오.\`;
+3. 사주 근거 없는 말은 단 한 마디도 하지 마십시오.`;
 
         const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}\n${sajuContext}`;
 
