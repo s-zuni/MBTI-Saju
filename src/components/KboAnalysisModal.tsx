@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, X, Instagram, Download } from 'lucide-react';
+import { Loader2, X, Instagram } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { generatePDF } from '../utils/pdfGenerator';
 import { generateImage } from '../utils/exportUtils';
@@ -225,16 +225,6 @@ const KboContent: React.FC<{
         } catch (e: any) {
             setError(e.message);
             setHasStarted(false);
-        }
-    };
-
-    const handleDownloadPDF = async () => {
-        if (!reportRef.current || !result) return;
-        try {
-            const fileName = `MBTIJU_KboReport_${new Date().getTime()}`;
-            await generatePDF(reportRef.current, fileName);
-        } catch (err) {
-            alert('PDF 생성 중 오류가 발생했습니다.');
         }
     };
 
