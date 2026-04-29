@@ -298,7 +298,7 @@ const KboContent: React.FC<{
     }
 
     return (
-        <div className="px-5 sm:px-10 pb-12 pt-6 overflow-y-auto custom-scrollbar grow bg-white">
+        <div className="px-0 pb-12 pt-0 overflow-y-auto custom-scrollbar grow bg-[#F9F7F2]">
             {/* HIDDEN SHARE CARD FOR CAPTURE */}
             <div className="fixed left-[-9999px] top-[-9999px]">
                  {result && typeof result.score === 'number' && (
@@ -311,11 +311,11 @@ const KboContent: React.FC<{
                  )}
             </div>
 
-            <div ref={reportRef} className="bg-white">
+            <div ref={reportRef} className="bg-[#F9F7F2] font-['Manrope']">
             {aiError && !result ? (
-                <div className="py-20 text-center">
+                <div className="py-20 text-center px-8">
                     <X className="w-12 h-12 text-red-500 mx-auto mb-4 stroke-[1px]" />
-                    <h3 className="text-xl font-serif text-slate-900 mb-4 tracking-tight">분석이 중단되었습니다</h3>
+                    <h3 className="text-xl font-['Noto_Serif_KR'] text-slate-900 mb-4 tracking-tight">분석이 중단되었습니다</h3>
                     <p className="text-slate-500 mb-12 whitespace-pre-wrap text-sm leading-relaxed">
                         {aiError.message || '처리 중 예기치 않은 오류가 발생했습니다.'}
                         {"\n"}크레딧은 차감되지 않았습니다.
@@ -328,133 +328,189 @@ const KboContent: React.FC<{
                     </button>
                 </div>
             ) : (isLoading || !result || typeof result.score !== 'number') ? (
-                <div className="py-32 flex flex-col items-center justify-center">
+                <div className="py-32 flex flex-col items-center justify-center px-8">
                     <div className="relative mb-24">
-                        <div className="w-16 h-16 border border-slate-100 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                        <div className="w-16 h-16 border border-[#E5E5E5] rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 border border-slate-200 animate-[spin_3s_linear_infinite]" />
+                            <div className="w-12 h-12 border border-[#E5E5E5] animate-[spin_3s_linear_infinite]" />
                         </div>
                     </div>
                     <div className="text-center space-y-6">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] animate-pulse">
                             {result ? '데이터 정밀 분석 중...' : '데이터 연결 중...'}
                         </p>
-                        <p className="text-lg font-serif text-slate-900 tracking-tight italic">
+                        <p className="text-lg font-['Noto_Serif_KR'] text-slate-900 tracking-tight italic">
                             "{currentLoadingMessage}"
                         </p>
                     </div>
                 </div>
             ) : error ? (
-                <div className="text-center py-20 border border-red-100 rounded-2xl">
+                <div className="text-center py-20 border border-red-100 rounded-2xl mx-8">
                     <p className="text-red-500 font-bold mb-4">{error}</p>
                     <button onClick={() => setHasStarted(false)} className="px-8 py-3 bg-slate-950 text-white rounded-full text-xs font-bold">다시 선택하기</button>
                 </div>
             ) : result ? (
-                <div className="animate-fade-up py-4 space-y-20 pb-20">
-                    
-                    {/* Hero Score Section */}
-                    <div className="flex flex-col items-center text-center pt-8">
-                        <div className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>
-                             구단 궁합 분석 리포트
-                        </div>
-                        <h4 className="text-4xl font-serif text-slate-900 tracking-tight mb-12">
-                            {selectedTeam === '없음 (아직 없음)' ? '당신에게 어울리는 구단은?' : `${selectedTeam} 궁합`}
-                        </h4>
-                        <div className="flex flex-col items-center">
-                            <p className="text-[140px] leading-none font-serif tracking-[-0.05em]" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#0f172a' }}>
-                                {result.score || 0}
-                            </p>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.4em] mt-4">궁합 점수</p>
-                        </div>
-                    </div>
+                <div className="animate-fade-up">
+                    {/* Header */}
+                    <header className="pt-10 pb-6 px-6 text-center">
+                        <h1 className="font-['Noto_Serif_KR'] text-2xl text-[#000666] tracking-tight font-semibold">구단 궁합 및 승요 분석 결과</h1>
+                        <div className="mt-2 w-8 h-0.5 bg-[#775a19] mx-auto opacity-40"></div>
+                    </header>
 
-                    <div className="w-full border-t border-slate-100 opacity-50" />
+                    {/* Main Content */}
+                    <main className="px-6 pb-8 space-y-6">
+                        {/* Compatibility Score Section */}
+                        <section className="relative py-8 bg-white/50 rounded-2xl border border-[#E5E5E5] flex flex-col items-center">
+                            <div className="flex items-center justify-between w-full px-8 mb-8">
+                                {/* Current User or Placeholder for Logo A */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 p-3 overflow-hidden">
+                                        <div className="w-full h-full rounded-full bg-slate-50 flex items-center justify-center text-[#000666] font-bold text-xl">
+                                            {userName.slice(0, 1)}
+                                        </div>
+                                    </div>
+                                    <span className="text-[13px] font-semibold text-slate-600 tracking-tight">{userName}</span>
+                                </div>
 
-                    {/* Stats Section */}
-                    <div className="grid grid-cols-2 gap-12 sm:gap-24">
-                        <div className="space-y-4">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">승리 요정 지수</h5>
-                            <p className="text-6xl font-serif text-slate-900 leading-none">{result.winFairyScore || 0}%</p>
-                            <p className="text-[11px] text-slate-400 font-medium">당신의 응원이 승리로 이어질 확률</p>
-                        </div>
-                        <div className="space-y-4">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">오늘의 구단 운세</h5>
-                            <p className="text-lg font-serif text-slate-900 leading-snug">{result.dailyMessage}</p>
-                        </div>
-                    </div>
+                                {/* Heart Icon */}
+                                <div className="relative flex flex-col items-center">
+                                    <div className="w-10 h-10 rounded-full bg-[#775a19]/10 flex items-center justify-center">
+                                        <svg viewBox="0 0 24 24" fill="#775a19" className="w-5 h-5">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                        </svg>
+                                    </div>
+                                </div>
 
-                    <div className="w-full border-t border-slate-100 opacity-50" />
-
-                    {/* Detailed Analysis */}
-                    <section className="space-y-10 max-w-xl mx-auto">
-                        <div className="flex flex-col items-center">
-                             <h5 className="font-bold text-slate-900 text-[11px] uppercase tracking-[0.3em] mb-8">사주 & MBTI 상세 분석</h5>
-                             <div className="text-slate-800 text-base leading-[1.9] font-serif whitespace-pre-wrap text-center italic opacity-90">
-                                "{result.supportedTeamAnalysis}"
-                             </div>
-                        </div>
-                    </section>
-
-                    <div className="w-full border-t border-slate-100 opacity-50" />
-
-                    {/* Tendency Map */}
-                    <section className="flex flex-col items-center">
-                        <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-12">구단 성향 분석</h5>
-                        <div className="w-full max-w-[400px]">
-                            <RadarChart data={result.dimensions || []} />
-                        </div>
-                    </section>
-
-                    {/* Match Grid or Direct Recommendations */}
-                    {selectedTeam === '없음 (아직 없음)' ? (
-                        <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
-                            <div className="bg-white py-12 px-8 flex flex-col items-center">
-                                <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>최고의 찰떡 궁합</h5>
-                                <p className="text-2xl font-serif text-slate-900">{result.bestTeam}</p>
+                                {/* Team Logo */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="w-20 h-20 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 p-3 overflow-hidden">
+                                        {getTeamInfo(selectedTeam || '')?.logo ? (
+                                            <img 
+                                                alt={selectedTeam || ''} 
+                                                className="w-full h-full object-contain" 
+                                                src={getTeamInfo(selectedTeam || '')?.logo} 
+                                            />
+                                        ) : (
+                                            <BaseballIcon className="w-10 h-10 text-slate-300" />
+                                        )}
+                                    </div>
+                                    <span className="text-[13px] font-semibold text-slate-600 tracking-tight">{selectedTeam === '없음 (아직 없음)' ? '추천 구단' : selectedTeam}</span>
+                                </div>
                             </div>
-                            <div className="bg-white py-12 px-8 flex flex-col items-center">
-                                <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">주의가 필요한 궁합</h5>
-                                <p className="text-2xl font-serif text-slate-900">{result.worstTeam}</p>
+
+                            {/* Big Score */}
+                            <div>
+                                <p className="text-[#775a19] text-[10px] font-bold uppercase tracking-[0.3em] mb-6 opacity-70">궁합 지수</p>
+                                <div className="flex items-baseline gap-1">
+                                    <p className="text-8xl font-['Noto_Serif_KR'] text-[#000666] tracking-tighter leading-none font-bold">
+                                        {result.score}
+                                    </p>
+                                    <span className="text-xl font-bold text-[#000666]/40">%</span>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
-                            <div className="bg-white py-12 px-8 flex flex-col items-center text-center">
-                                <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>오늘의 직관 자리 추천</h5>
-                                <p className="text-sm font-serif text-slate-900 leading-snug break-keep">{result.recommendedSeat || '좌석 정보를 분석 중입니다.'}</p>
+                        </section>
+
+                        {/* Analysis Detail */}
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                                <span className="text-[12px] font-semibold text-[#775a19] tracking-wider">승리 요정 리포트</span>
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
                             </div>
-                            <div className="bg-white py-12 px-8 flex flex-col items-center text-center">
-                                <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">오늘, 행운의 직관음식</h5>
-                                <p className="text-sm font-serif text-slate-900 leading-snug break-keep">{result.luckyFood || '먹거리 정보를 분석 중입니다.'}</p>
+                            
+                            <div className="bg-white/60 p-7 rounded-2xl border border-slate-100 text-center shadow-sm">
+                                <p className="font-['Noto_Serif_KR'] text-lg text-[#000666] mb-4 font-semibold">
+                                    오늘의 승리 요정 점수: <span className="text-[#775a19]">{result.winFairyScore}점</span>
+                                </p>
+                                <div className="font-['Manrope'] text-[15px] text-slate-600 leading-relaxed break-keep">
+                                    {result.supportedTeamAnalysis}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        </section>
+
+                        {/* Recommended Seat & Food or Best/Worst */}
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                                <span className="text-[12px] font-semibold text-[#775a19] tracking-wider">
+                                    {selectedTeam === '없음 (아직 없음)' ? '추천 궁합 분석' : '오늘의 행운 가이드'}
+                                </span>
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                {selectedTeam === '없음 (아직 없음)' ? (
+                                    <>
+                                        <div className="bg-white/60 p-6 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                                            <span className="text-sm font-semibold text-slate-500">최고의 찰떡 궁합</span>
+                                            <span className="font-['Noto_Serif_KR'] text-lg text-[#000666] font-bold">{result.bestTeam}</span>
+                                        </div>
+                                        <div className="bg-white/60 p-6 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                                            <span className="text-sm font-semibold text-slate-500">주의가 필요한 궁합</span>
+                                            <span className="font-['Noto_Serif_KR'] text-lg text-slate-600 font-bold">{result.worstTeam}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="bg-white/60 p-6 rounded-2xl border border-slate-100 space-y-2 shadow-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#775a19]"></div>
+                                                <span className="text-[12px] font-bold text-[#775a19] uppercase tracking-wider">오늘의 직관 자리 추천</span>
+                                            </div>
+                                            <p className="text-[15px] text-slate-700 leading-relaxed font-medium pl-3.5 break-keep">
+                                                {result.recommendedSeat}
+                                            </p>
+                                        </div>
+                                        <div className="bg-white/60 p-6 rounded-2xl border border-slate-100 space-y-2 shadow-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#775a19]"></div>
+                                                <span className="text-[12px] font-bold text-[#775a19] uppercase tracking-wider">오늘, 행운의 직관음식</span>
+                                            </div>
+                                            <p className="text-[15px] text-slate-700 leading-relaxed font-medium pl-3.5 break-keep">
+                                                {result.luckyFood}
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Radar Chart Section */}
+                        <section className="pt-8">
+                             <div className="flex items-center gap-3 mb-8">
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                                <span className="text-[12px] font-semibold text-slate-400 tracking-widest uppercase">구단 성향 분석</span>
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                            </div>
+                            <div className="bg-white/40 rounded-3xl p-4 border border-slate-100">
+                                <RadarChart data={result.dimensions || []} />
+                            </div>
+                        </section>
+                    </main>
 
                     {/* Footer Actions */}
-                    <div className="flex flex-col items-center pt-20 gap-8">
-                        <div className="flex flex-col sm:flex-row items-center gap-px bg-slate-200 w-full border border-slate-200">
-                            <button
-                                onClick={handleShareInstagram}
-                                disabled={isSharing}
-                                className="flex-1 w-full px-12 py-6 bg-white text-slate-900 text-xs font-bold tracking-widest transition-all hover:bg-slate-50 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 uppercase"
-                            >
-                                {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
-                                인스타 스토리 공유
-                            </button>
-                            <button
-                                onClick={handleDownloadPDF}
-                                className="flex-1 w-full px-12 py-6 bg-slate-950 text-white text-xs font-bold tracking-widest transition-all hover:bg-slate-800 active:scale-95 flex items-center justify-center gap-3 uppercase"
-                            >
-                                <Download className="w-4 h-4" /> 리포트 다운로드
-                            </button>
-                        </div>
-                        
-                        <button
+                    <footer className="px-6 pb-12 flex flex-col gap-3">
+                        <button 
+                            onClick={handleShareInstagram}
+                            disabled={isSharing}
+                            className="w-full bg-[#000666] text-white py-5 rounded-2xl font-bold text-[15px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        >
+                            {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                            인스타그램 공유하기
+                        </button>
+                        <button 
                             onClick={() => { setHasStarted(false); onReset(); }}
-                            className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] hover:text-slate-950 transition-colors py-4"
+                            className="w-full text-slate-400 font-semibold py-4 text-[14px] hover:text-[#000666] transition-colors"
                         >
                             다른 구단 분석하기
                         </button>
+                    </footer>
+
+                    {/* Decorative Stars */}
+                    <div className="fixed top-20 right-4 p-4 opacity-10 pointer-events-none z-0">
+                        <svg viewBox="0 0 24 24" className="w-32 h-32 text-[#000666] fill-current">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
                     </div>
                 </div>
             ) : null}
@@ -487,18 +543,8 @@ const KboAnalysisModal: React.FC<KboModalProps> = ({ isOpen, onClose, onNavigate
 
     return (
         <div className="fixed inset-0 bg-white sm:bg-slate-950/40 backdrop-blur-sm overflow-y-auto h-full w-full flex justify-center items-center z-[1000] p-0 sm:p-6">
-            <div className="relative p-0 w-full max-w-2xl bg-white sm:rounded-3xl h-full sm:h-auto sm:max-h-[94vh] overflow-hidden flex flex-col sm:border sm:border-slate-200">
+            <div className="relative p-0 w-full max-w-2xl bg-[#F9F7F2] sm:rounded-[40px] h-full sm:h-auto sm:max-h-[94vh] overflow-hidden flex flex-col sm:border sm:border-slate-200 shadow-2xl">
                 <ServiceNavigation currentService="kbo" onNavigate={onNavigate} onClose={onClose} />
-
-                {/* Aesthetic Header */}
-                <div className="px-8 sm:px-12 pt-12 pb-8 shrink-0">
-                    <div className="flex items-center gap-2 text-slate-400 font-bold tracking-[0.4em] text-[9px] uppercase mb-4">
-                        <BaseballIcon className="w-3 h-3" /> KBO 팬 궁합 분석 리포트
-                    </div>
-                    <h3 className="text-4xl font-serif text-slate-950 tracking-tighter leading-none">
-                        KBO 팬 궁합
-                    </h3>
-                </div>
 
                 <KboContent 
                     key={resetKey}
