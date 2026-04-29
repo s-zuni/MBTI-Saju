@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, X, Instagram } from 'lucide-react';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
-import { generatePDF } from '../utils/pdfGenerator';
 import { generateImage } from '../utils/exportUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
