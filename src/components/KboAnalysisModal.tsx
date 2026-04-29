@@ -301,10 +301,10 @@ const KboContent: React.FC<{
         <div className="px-5 sm:px-10 pb-12 pt-6 overflow-y-auto custom-scrollbar grow bg-white">
             {/* HIDDEN SHARE CARD FOR CAPTURE */}
             <div className="fixed left-[-9999px] top-[-9999px]">
-                 {result && (
+                 {result && typeof result.score === 'number' && (
                     <KboShareCard 
                         ref={shareRef}
-                        result={result}
+                        result={result as any}
                         selectedTeam={selectedTeam || ''}
                         userName={userName}
                     />
@@ -327,20 +327,20 @@ const KboContent: React.FC<{
                         구단 선택으로 돌아가기
                     </button>
                 </div>
-            ) : isLoading && !result ? (
-                <div className="flex flex-col justify-center items-center h-96 px-12 text-center">
-                    <div className="relative mb-12">
-                         <div className="w-12 h-12 border border-slate-200 animate-[spin_3s_linear_infinite]" />
-                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-blue-600" />
-                         </div>
+            ) : (isLoading || !result || typeof result.score !== 'number') ? (
+                <div className="py-32 flex flex-col items-center justify-center">
+                    <div className="relative mb-24">
+                        <div className="w-16 h-16 border border-slate-100 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 border border-slate-200 animate-[spin_3s_linear_infinite]" />
+                        </div>
                     </div>
-                    <div className="space-y-4">
-                        <p className="text-slate-900 font-serif text-xl tracking-tight italic opacity-80">
-                            "{currentLoadingMessage}"
+                    <div className="text-center space-y-6">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] animate-pulse">
+                            {result ? '데이터 정밀 분석 중...' : '데이터 연결 중...'}
                         </p>
-                        <p className="text-slate-400 font-bold text-[9px] tracking-[0.4em] uppercase">
-                            데이터 분석 및 처리 중
+                        <p className="text-lg font-serif text-slate-900 tracking-tight italic">
+                            "{currentLoadingMessage}"
                         </p>
                     </div>
                 </div>

@@ -71,7 +71,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             </button>
             <div className="flex items-center gap-3">
               <span className="px-3 py-1 bg-white/10 text-white text-xs font-bold rounded-full uppercase tracking-wider animate-pulse">
-                50% 특별 할인 중
+                기간 한정 특별 할인가 적용 중
               </span>
             </div>
           </div>
@@ -231,9 +231,9 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
 
           <div className="mt-8 flex flex-col items-center gap-2">
             <div className="flex items-center gap-3">
-              <span className="text-slate-500 line-through text-sm opacity-50">₩98,000</span>
-              <span className="text-2xl font-black text-white">₩49,000</span>
-              <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded">50% OFF</span>
+              <span className="text-slate-500 line-through text-sm opacity-50">₩49,000</span>
+              <span className="text-2xl font-black text-white">₩29,800</span>
+              <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded">한정 할인가</span>
             </div>
             <p className="text-slate-500 text-xs font-bold">1회 분석 비용으로 3년치를 모두 담았습니다.</p>
           </div>

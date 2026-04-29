@@ -66,7 +66,7 @@ const schemas: Record<string, any> = {
         dimensions: z.array(z.object({
             label: z.string().describe("평가 척도 이름"),
             value: z.number().describe("해당 척도 점수 (0-100)")
-        })).length(5),
+        })).describe("5가지 평가 지표"),
         date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
         dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지"),
         recommendedSeat: z.string().optional().describe("오늘의 직관 자리 추천 (사주와 MBTI 바탕)"),
