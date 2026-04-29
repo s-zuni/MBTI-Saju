@@ -124,6 +124,8 @@ export const kboSchema = z.object({
     })),
     date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
     dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지 (예: '오늘은 직관 에너지가 최고조! 직관 가도 OK')"),
+    recommendedSeat: z.string().optional().describe("오늘의 직관 자리 추천 (사주와 MBTI 바탕)"),
+    luckyFood: z.string().optional().describe("오늘, 행운의 직관음식 (사주와 MBTI 바탕)"),
     tomorrowScore: z.number().describe("내일 예정 궁합 점수 (0-100)"),
     tomorrowWinFairyScore: z.number().describe("내일 예정 승리 요정 지수 (0-100)")
 });

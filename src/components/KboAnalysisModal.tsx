@@ -405,17 +405,30 @@ const KboContent: React.FC<{
                         </div>
                     </section>
 
-                    {/* Match Grid */}
-                    <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
-                        <div className="bg-white py-12 px-8 flex flex-col items-center">
-                            <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>최고의 찰떡 궁합</h5>
-                            <p className="text-2xl font-serif text-slate-900">{result.bestTeam}</p>
+                    {/* Match Grid or Direct Recommendations */}
+                    {selectedTeam === '없음 (아직 없음)' ? (
+                        <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
+                            <div className="bg-white py-12 px-8 flex flex-col items-center">
+                                <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>최고의 찰떡 궁합</h5>
+                                <p className="text-2xl font-serif text-slate-900">{result.bestTeam}</p>
+                            </div>
+                            <div className="bg-white py-12 px-8 flex flex-col items-center">
+                                <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">주의가 필요한 궁합</h5>
+                                <p className="text-2xl font-serif text-slate-900">{result.worstTeam}</p>
+                            </div>
                         </div>
-                        <div className="bg-white py-12 px-8 flex flex-col items-center">
-                            <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">주의가 필요한 궁합</h5>
-                            <p className="text-2xl font-serif text-slate-900">{result.worstTeam}</p>
+                    ) : (
+                        <div className="grid grid-cols-2 border-t border-slate-100 pt-12 gap-px bg-slate-50">
+                            <div className="bg-white py-12 px-8 flex flex-col items-center text-center">
+                                <h5 className="font-bold text-[10px] uppercase tracking-widest mb-4" style={{ color: getTeamInfo(selectedTeam || '')?.primaryColor || '#2563eb' }}>오늘의 직관 자리 추천</h5>
+                                <p className="text-sm font-serif text-slate-900 leading-snug break-keep">{result.recommendedSeat || '좌석 정보를 분석 중입니다.'}</p>
+                            </div>
+                            <div className="bg-white py-12 px-8 flex flex-col items-center text-center">
+                                <h5 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-4">오늘, 행운의 직관음식</h5>
+                                <p className="text-sm font-serif text-slate-900 leading-snug break-keep">{result.luckyFood || '먹거리 정보를 분석 중입니다.'}</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Footer Actions */}
                     <div className="flex flex-col items-center pt-20 gap-8">

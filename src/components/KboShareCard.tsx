@@ -148,16 +148,29 @@ const KboShareCard = React.forwardRef<HTMLDivElement, KboShareCardProps>(({ resu
                                 {result.winFairyScore}<span className="text-2xl text-slate-300 ml-4">%</span>
                             </p>
                         </div>
-                        <div className="flex gap-12 mt-8">
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>최고의 궁합</p>
-                                <p className="text-xl font-serif text-slate-900">{result.bestTeam}</p>
+                        {selectedTeam === '없음 (아직 없음)' ? (
+                            <div className="flex gap-12 mt-8">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>최고의 궁합</p>
+                                    <p className="text-xl font-serif text-slate-900">{result.bestTeam}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">주의할 궁합</p>
+                                    <p className="text-xl font-serif text-slate-900">{result.worstTeam}</p>
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">주의할 궁합</p>
-                                <p className="text-xl font-serif text-slate-900">{result.worstTeam}</p>
+                        ) : (
+                            <div className="flex gap-12 mt-8">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>행운의 자리</p>
+                                    <p className="text-xl font-serif text-slate-900">{result.recommendedSeat}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">행운의 음식</p>
+                                    <p className="text-xl font-serif text-slate-900">{result.luckyFood}</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
