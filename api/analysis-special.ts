@@ -69,8 +69,8 @@ const schemas: Record<string, any> = {
         })).describe("5가지 평가 지표"),
         date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
         dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지"),
-        recommendedSeat: z.string().optional().describe("오늘의 직관 자리 추천 (사주와 MBTI 바탕)"),
-        luckyFood: z.string().optional().describe("오늘, 행운의 직관음식 (사주와 MBTI 바탕)"),
+        recommendedSeat: z.string().describe("오늘의 직관 자리 추천 (사주와 MBTI 바탕)"),
+        luckyFood: z.string().describe("오늘, 행운의 직관음식 (사주와 MBTI 바탕)"),
         tomorrowScore: z.number().describe("내일 궁합 점수"),
         tomorrowWinFairyScore: z.number().describe("내일 승요지수")
     }),
@@ -277,8 +277,8 @@ export default async function handler(req: Request) {
            - 점수가 높다면 왜 천생연분인지, 낮다면 어떤 점을 주의해야 하는지 사주학적으로 풀어내세요.
            - 2-30대 여성이 좋아할 만한 감성적이고 세련된 문체를 유지하세요.
         2. dailyMessage: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내).
-        3. recommendedSeat (기존 팬인 경우에만 생성): 사주와 MBTI를 분석하여 사용자에게 가장 행운을 줄 수 있는 야구장 좌석 구역을 추천하세요. (예: "열정이 넘치는 응원석 1루 쪽", "차분히 분석하기 좋은 포수 뒤쪽 명당" 등)
-        4. luckyFood (기존 팬인 경우에만 생성): 사용자의 오늘 기운을 북돋아 줄 야구장 먹거리나 주변 음식을 추천하세요. (예: "화(火)의 기운을 보충할 매콤한 떡볶이", "MBTI P 성향에 딱 맞는 즉석 구이 오징어" 등)
+        3. recommendedSeat: 사주와 MBTI를 분석하여 사용자에게 가장 행운을 줄 수 있는 야구장 좌석 구역을 추천하세요. (예: "열정이 넘치는 응원석 1루 쪽", "차분히 분석하기 좋은 포수 뒤쪽 명당" 등)
+        4. luckyFood: 사용자의 오늘 기운을 북돋아 줄 야구장 먹거리나 주변 음식을 추천하세요. (예: "화(火)의 기운을 보충할 매콤한 떡볶이", "MBTI P 성향에 딱 맞는 즉석 구이 오징어" 등)
         5. 주의: '추천 여부'가 '추천됨'인 경우에만 bestTeam과 worstTeam을 상세히 고려하세요. 기존 팬인 경우에는 bestTeam과 worstTeam은 결과에 포함만 시키되, 분석 내용(supportedTeamAnalysis)에서는 응원하는 구단 위주로 서술하세요.`;
     } else if (type === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
