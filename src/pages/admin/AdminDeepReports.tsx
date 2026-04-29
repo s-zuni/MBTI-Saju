@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle } from 'lucide-react';
+import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle, RefreshCw } from 'lucide-react';
 import { generateReactPDF } from '../../utils/pdfGenerator';
 import { DeepReportReactPDF } from '../../components/pdf/DeepReportReactPDF';
 import { calculateSaju } from '../../utils/sajuUtils';
@@ -426,6 +426,25 @@ const AdminDeepReports: React.FC = () => {
                            >
                              {expandedId === req.id ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
                            </button>
+                           {req.generated_data && (
+                             <button
+                               onClick={() => {
+                                 if (window.confirm('기존 데이터가 영구적으로 삭제되고 새로 분석합니다. 정말 리포트를 재생성하시겠습니까?')) {
+                                   generateAIReport(req);
+                                 }
+                               }}
+                               disabled={generatingId !== null}
+                               className={`flex items-center gap-1.5 text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-sm ${
+                                generatingId === req.id 
+                                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                                  : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100'
+                               }`}
+                               title="오류 발생 시 리포트 재생성"
+                             >
+                               {generatingId === req.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <RefreshCw className="w-3.5 h-3.5" />}
+                               재생성
+                             </button>
+                           )}
                            <button 
                              onClick={() => {
                                if (req.generated_data) {
