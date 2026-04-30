@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     padding: '20mm',
     backgroundColor: '#ffffff',
     fontFamily: 'NotoSansKR',
-    fontSize: 16.5,
+    fontSize: 13,
     lineHeight: 1.6,
     color: '#1E293B',
   },
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'NanumMyungjo',
-    fontSize: 30,
+    fontSize: 20,
     color: '#0F172A',
     borderBottom: '1.5pt solid #E2E8F0',
     paddingBottom: 12,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   subTitle: {
-    fontSize: 22.5,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#0F172A',
     marginTop: 25,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
     fontFamily: 'NotoSansKR',
     color: '#334155',
-    fontSize: 15.75,
+    fontSize: 13,
   },
   bulletPoint: {
     flexDirection: 'row',
@@ -175,19 +175,23 @@ interface Props {
 
 const renderText = (text: string | undefined) => {
   if (!text) return null;
+  // Handle various bullet point symbols and split by new lines
   const lines = text.split("\n");
   return lines.map((line, idx) => {
     const trimmed = line.trim();
-    if (!trimmed) return <View key={idx} style={{ height: 9 }} />;
-    if (trimmed.startsWith("- ")) {
+    if (!trimmed) return <View key={idx} style={{ height: 10 }} />;
+    
+    // Check for bullet patterns: - , • , * , 1. 
+    const bulletMatch = trimmed.match(/^([-•*]|\d+\.)\s+(.*)$/);
+    if (bulletMatch) {
       return (
-        <View key={idx} style={styles.bulletPoint}>
-          <Text style={styles.bullet}>•</Text>
-          <Text style={styles.bulletText}>{trimmed.slice(2)}</Text>
+        <View key={idx} style={[styles.bulletPoint, { marginBottom: 12 }]}>
+          <Text style={[styles.bullet, { fontSize: 13 }]}>•</Text>
+          <Text style={[styles.bulletText, { fontSize: 13, flex: 1 }]}>{bulletMatch[2]}</Text>
         </View>
       );
     }
-    return <Text key={idx} style={styles.paragraph}>{trimmed}</Text>;
+    return <Text key={idx} style={[styles.paragraph, { marginBottom: 12 }]}>{trimmed}</Text>;
   });
 };
 
