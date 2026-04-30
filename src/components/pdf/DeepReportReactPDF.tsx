@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Rect, G, Circle, Line } from '@react-pdf/renderer';
 import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
 import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
 
@@ -98,14 +98,15 @@ const styles = StyleSheet.create({
   },
   bullet: {
     width: 15,
-    fontSize: 15,
+    fontSize: 13,
     color: '#6366F1',
     fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'NotoSansKR',
-    fontSize: 15,
+    fontSize: 13,
+    lineHeight: 1.5,
   },
   box: {
     marginTop: 22,
@@ -165,37 +166,230 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  decorativeLine: {
+    height: 1.5,
+    width: 60,
+    backgroundColor: '#FBBF24',
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  premiumBox: {
+    marginTop: 25,
+    padding: 20,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    borderLeft: '4pt solid #1E293B',
+    borderTop: '0.5pt solid #E2E8F0',
+    borderRight: '0.5pt solid #E2E8F0',
+    borderBottom: '0.5pt solid #E2E8F0',
+  },
 });
 
+interface SajuPillar {
+  gan: string;
+  zhi: string;
+  ganShiShen: string;
+  zhiShiShen: string;
+  twelveStages: string;
+  twelveSpirits: string;
+  hiddenStems: string[];
+}
+
+interface SajuData {
+  userSaju: {
+    pillars: {
+      year: SajuPillar;
+      month: SajuPillar;
+      day: SajuPillar;
+      hour: SajuPillar;
+    };
+    dayMaster: {
+      chinese: string;
+      korean: string;
+      description: string;
+    };
+    elements: {
+      wood: number;
+      fire: number;
+      earth: number;
+      metal: number;
+      water: number;
+    };
+    elementRatio: {
+      wood: number;
+      fire: number;
+      earth: number;
+      metal: number;
+      water: number;
+    };
+  };
+}
+
+interface ReportDetail {
+  subtitle: string;
+  content: string;
+}
+
+interface SajuReportContent {
+  cover?: {
+    mainTitle?: string;
+    subTitle?: string;
+  };
+  natalChartAnalysis?: {
+    title: string;
+    details: ReportDetail[];
+  };
+  coreIdentity?: {
+    title: string;
+    details: ReportDetail[];
+  };
+  wealthAndCareer?: {
+    title: string;
+    details: ReportDetail[];
+  };
+  relationship?: {
+    title: string;
+    details: ReportDetail[];
+  };
+  threeYearRoadmap?: {
+    title: string;
+    details: {
+      year: number;
+      yearlyTheme: string;
+      subtopics: ReportDetail[];
+    }[];
+  };
+  actionPlan?: {
+    title: string;
+    details: ReportDetail[];
+  };
+}
+
 interface Props {
-  sajuData: any;
-  parsedContent: any;
+  sajuData: SajuData;
+  parsedContent: SajuReportContent;
   clientName: string;
 }
 
 const renderText = (text: string | undefined) => {
   if (!text) return null;
-  // Handle various bullet point symbols and split by new lines
+  
+  // Split by newline but DO NOT filter out empty strings to preserve spacing
   const lines = text.split("\n");
+  
   return lines.map((line, idx) => {
     const trimmed = line.trim();
-    if (!trimmed) return <View key={idx} style={{ height: 10 }} />;
+    
+    // Handle empty lines for spacing
+    if (trimmed.length === 0) {
+      return <View key={idx} style={{ height: 10 }} />;
+    }
     
     // Check for bullet patterns: - , • , * , 1. 
-    const bulletMatch = trimmed.match(/^([-•*]|\d+\.)\s+(.*)$/);
+    const bulletMatch = line.match(/^(\s*)([-•*+]|\d+\.)\s+(.*)$/);
+    
     if (bulletMatch) {
+      const indentation = (bulletMatch[1]?.length || 0) * 8;
+      const bulletType = bulletMatch[2] || '';
+      const content = bulletMatch[3] || '';
+      
+      const displayBullet = /\d+\./.test(bulletType) ? bulletType : '•';
+
       return (
-        <View key={idx} style={[styles.bulletPoint, { marginBottom: 12 }]}>
-          <Text style={[styles.bullet, { fontSize: 13 }]}>•</Text>
-          <Text style={[styles.bulletText, { fontSize: 13, flex: 1 }]}>{bulletMatch[2]}</Text>
+        <View key={idx} style={[styles.bulletPoint, { marginLeft: indentation, marginBottom: 8 }]}>
+          <Text style={[styles.bullet, { width: /\d+\./.test(bulletType) ? 25 : 15 }]}>{displayBullet}</Text>
+          <Text style={styles.bulletText}>{content}</Text>
         </View>
       );
     }
-    return <Text key={idx} style={[styles.paragraph, { marginBottom: 12 }]}>{trimmed}</Text>;
+    
+    return <Text key={idx} style={styles.paragraph}>{trimmed}</Text>;
   });
 };
 
-const SajuTable: React.FC<{ saju: any }> = ({ saju }) => {
+const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio"] }> = ({ elements }) => {
+  if (!elements) return null;
+
+  const data = [
+    { label: '목(木)', value: elements.wood, color: '#10B981' },
+    { label: '화(火)', value: elements.fire, color: '#EF4444' },
+    { label: '토(土)', value: elements.earth, color: '#F59E0B' },
+    { label: '금(金)', value: elements.metal, color: '#94A3B8' },
+    { label: '수(水)', value: elements.water, color: '#3B82F6' },
+  ];
+
+  const chartHeight = 120;
+  const chartWidth = 350;
+  const barWidth = 45;
+  const gap = 20;
+
+  return (
+    <View style={{ marginTop: 25, marginBottom: 30, alignItems: 'center' }}>
+      <Text style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 15, color: '#475569' }}>
+        오행(五行) 에너지 분포도 (Percent)
+      </Text>
+      <Svg height={chartHeight + 40} width={chartWidth} viewBox={`0 0 ${chartWidth} ${chartHeight + 40}`}>
+        {/* Grid Lines */}
+        {[0, 25, 50, 75, 100].map((level) => (
+          <G key={level}>
+            <Line 
+              x1="40" y1={chartHeight - (level * chartHeight / 100)} 
+              x2={chartWidth} y2={chartHeight - (level * chartHeight / 100)} 
+              stroke="#E2E8F0" strokeWidth="0.5" 
+            />
+            <Text x="0" y={chartHeight - (level * chartHeight / 100) + 4} style={{ fontSize: 9, fill: '#94A3B8' }}>{level}%</Text>
+          </G>
+        ))}
+
+        {/* Bars */}
+        {data.map((item, i) => {
+          const barHeight = (item.value * chartHeight) / 100;
+          const x = 50 + i * (barWidth + gap);
+          return (
+            <G key={item.label}>
+              <Rect
+                x={x}
+                y={chartHeight - barHeight}
+                width={barWidth}
+                height={barHeight}
+                fill={item.color}
+                rx={4}
+              />
+              <Text 
+                x={x + barWidth / 2} 
+                y={chartHeight + 15} 
+                textAnchor="middle" 
+                style={{ fontSize: 11, fontWeight: 'bold', fill: '#1E293B' }}
+              >
+                {item.label}
+              </Text>
+              <Text 
+                x={x + barWidth / 2} 
+                y={chartHeight - barHeight - 5} 
+                textAnchor="middle" 
+                style={{ fontSize: 10, fontWeight: 'bold', fill: item.color }}
+              >
+                {item.value}%
+              </Text>
+            </G>
+          );
+        })}
+      </Svg>
+    </View>
+  );
+};
+
+const DayMasterBox: React.FC<{ dayMaster: SajuData["userSaju"]["dayMaster"] }> = ({ dayMaster }) => {
+  if (!dayMaster) return null;
+  return (
+    <View style={[styles.box, { borderLeft: '5pt solid #FBBF24', backgroundColor: '#FEFCE8', marginBottom: 20 }]}>
+      <Text style={[styles.boxTitle, { color: '#854D0E', fontSize: 16 }]}>본신의 본질: {dayMaster.chinese} {dayMaster.korean} (日干)</Text>
+      <Text style={[styles.paragraph, { marginBottom: 0, color: '#92400E', fontWeight: 'bold' }]}>{dayMaster.description}</Text>
+    </View>
+  );
+};
+
+const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
   if (!saju?.pillars) return null;
   const pillars = [saju.pillars.hour, saju.pillars.day, saju.pillars.month, saju.pillars.year];
   const headers = ["시주(時柱)", "일주(日柱)", "월주(月柱)", "년주(年柱)"];
@@ -208,14 +402,17 @@ const SajuTable: React.FC<{ saju: any }> = ({ saju }) => {
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>천간(天干)</Text>
             <Text style={styles.sajuValue}>{p?.gan || "-"}</Text>
+            <Text style={{ fontSize: 10, color: '#6366F1', marginTop: 2, fontWeight: 'bold' }}>{p?.ganShiShen || "-"}</Text>
           </View>
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>지지(地支)</Text>
             <Text style={styles.sajuValue}>{p?.zhi || "-"}</Text>
+            <Text style={{ fontSize: 10, color: '#4338CA', marginTop: 2, fontWeight: 'bold' }}>{p?.zhiShiShen || "-"}</Text>
           </View>
-          <View style={styles.sajuCell}>
-            <Text style={styles.sajuLabel}>십성(十星)</Text>
-            <Text style={{ fontSize: 12 }}>{p?.zhiShiShen || "-"}</Text>
+          <View style={[styles.sajuCell, { borderBottom: 0, backgroundColor: '#F8FAFC' }]}>
+            <Text style={styles.sajuLabel}>12운성/신살</Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#1E293B' }}>{p?.twelveStages || "-"}</Text>
+            <Text style={{ fontSize: 9, color: '#64748B', marginTop: 1 }}>{p?.twelveSpirits || "-"}</Text>
           </View>
         </View>
       ))}
@@ -228,16 +425,40 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
     <Document>
       {/* 00. Cover Page */}
       <Page size="A4" style={styles.coverPage}>
+        {/* Decorative background element */}
+        <View style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1 }}>
+          <Svg width="300" height="300" viewBox="0 0 100 100">
+            <Circle cx="100" cy="0" r="80" fill="#FBBF24" />
+            <Circle cx="100" cy="0" r="60" fill="none" stroke="#ffffff" strokeWidth="1" />
+          </Svg>
+        </View>
+
         <Text style={styles.coverSubtitle}>VIP 프리미엄 전략 보고서</Text>
+        
+        <View style={{ marginVertical: 40, alignItems: 'center' }}>
+          <Svg width="80" height="80" viewBox="0 0 100 100">
+            <Path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="#FBBF24" strokeWidth="2" />
+            <Path d="M50 15 L85 30 L85 70 L50 85 L15 70 L15 30 Z" fill="#FBBF24" opacity="0.2" />
+            <Text x="50" y="55" textAnchor="middle" style={{ fontSize: 10, fill: '#FBBF24', fontFamily: 'NanumMyungjo' }}>命</Text>
+          </Svg>
+        </View>
+
         <Text style={styles.coverTitle}>{parsedContent.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
-        <View style={{ height: 1.5, width: 150, backgroundColor: '#FBBF24', marginVertical: 30 }} />
+        
+        <View style={{ height: 2, width: 120, backgroundColor: '#FBBF24', marginVertical: 35 }} />
+        
         <Text style={styles.clientName}>{clientName} 님</Text>
-        <Text style={{ marginTop: 45, fontSize: 16.5, color: '#94A3B8', textAlign: 'center', width: '70%' }}>
+        
+        <Text style={{ marginTop: 50, fontSize: 16, color: '#94A3B8', textAlign: 'center', width: '70%', lineHeight: 1.5 }}>
           {parsedContent.cover?.subTitle || "명리학과 심리학의 융합을 통한 인생 설계"}
         </Text>
-        <Text style={{ marginTop: 120, fontSize: 13.5, color: '#475569' }}>
-          {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </Text>
+        
+        <View style={{ marginTop: 120, alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, color: '#475569', letterSpacing: 2 }}>ANTIGRAVITY MASTER ANALYSIS</Text>
+          <Text style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>
+            {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </Text>
+        </View>
       </Page>
 
       {/* 00. Natal Chart Analysis */}
@@ -246,11 +467,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         
         <View style={{ marginBottom: 20 }}>
           <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24' }]}>사주 원국 테이블 (四柱 元局)</Text>
+          <DayMasterBox dayMaster={sajuData?.userSaju?.dayMaster} />
           <SajuTable saju={sajuData?.userSaju} />
+          <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
         </View>
 
         {parsedContent.natalChartAnalysis?.details?.map((detail: any, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }} wrap={false}>
+          <View key={idx} style={{ marginBottom: 20 }}>
             <Text style={styles.subTitle}>{detail.subtitle}</Text>
             {renderText(detail.content)}
           </View>
@@ -267,7 +490,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 운명적 본질"}</Text>
 
         {parsedContent.coreIdentity?.details?.map((detail: any, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }} wrap={false}>
+          <View key={idx} style={{ marginBottom: 20 }}>
             <Text style={styles.subTitle}>{detail.subtitle}</Text>
             {renderText(detail.content)}
           </View>
@@ -284,7 +507,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물 그릇의 크기와 사회적 성취"}</Text>
         
         {parsedContent.wealthAndCareer?.details?.map((detail: any, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }} wrap={false}>
+          <View key={idx} style={{ marginBottom: 20 }}>
             <Text style={[styles.subTitle, { borderLeftColor: '#0369A1' }]}>{detail.subtitle}</Text>
             {renderText(detail.content)}
           </View>
@@ -301,7 +524,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <Text style={styles.sectionTitle}>{parsedContent.relationship?.title || "03. 인연의 지형도와 감정의 흐름"}</Text>
         
         {parsedContent.relationship?.details?.map((detail: any, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }} wrap={false}>
+          <View key={idx} style={{ marginBottom: 20 }}>
             <Text style={[styles.subTitle, { borderLeftColor: '#BE185D' }]}>{detail.subtitle}</Text>
             {renderText(detail.content)}
           </View>
@@ -321,7 +544,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <Text style={[styles.subTitle, { color: '#4338CA' }]}>{yearData.year}년: {yearData.yearlyTheme}</Text>
           
           {yearData.subtopics?.map((subtopic: any, idx: number) => (
-            <View key={idx} style={{ marginBottom: 18 }} wrap={false}>
+            <View key={idx} style={{ marginBottom: 18 }}>
               <Text style={{ fontWeight: 'bold', fontSize: 13.5, color: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D', marginBottom: 6 }}>
                 [{subtopic.subtitle}]
               </Text>
@@ -341,13 +564,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "05. 운명을 바꾸는 마스터의 마스터플랜"}</Text>
         
         {parsedContent.actionPlan?.details?.map((detail: any, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }} wrap={false}>
+          <View key={idx} style={{ marginBottom: 20 }}>
             <Text style={styles.subTitle}>{detail.subtitle}</Text>
             {renderText(detail.content)}
           </View>
         ))}
 
-        <View style={[styles.box, { backgroundColor: '#F8FAFC', borderLeftWidth: 6, borderLeftColor: '#1E293B', marginTop: 45 }]}>
+        <View style={styles.premiumBox}>
           <Text style={[styles.boxTitle, { color: '#1E293B' }]}>마스터의 최종 제언</Text>
           <Text style={styles.paragraph}>
             본 보고서는 당신의 선천적 기질과 후천적 운의 흐름을 정밀하게 분석한 결과입니다. 
