@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Info, Clock } from 'lucide-react';
 import { requestPayment } from '../utils/paymentHandlers';
+import { isTossApp } from '../utils/envUtils';
+import { AIT_DEEP_REPORT_PRODUCT_ID } from '../config/creditConfig';
 
 interface DeepReportModalProps {
   isOpen: boolean;
@@ -173,7 +175,22 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         customerName: session?.user?.user_metadata?.full_name || '비회원 이용자',
         metadata: {
             productId: 'deep_report'
-        }
+        },
+        // Apps In Toss 전용 필드
+        aitProductId: isTossApp() ? AIT_DEEP_REPORT_PRODUCT_ID : undefined,
+        onAitGrant: isTossApp() ? async (oid: string) => {
+            console.log('[AIT Grant] 심층 리포트 지급 처리 시작:', oid);
+            const { error } = await supabase
+                .from('deep_report_requests')
+                .update({ status: 'paid', payment_id: oid })
+                .eq('order_id', oid);
+            
+            if (error) {
+                console.error('[AIT Grant] DB 업데이트 실패:', error);
+                return false;
+            }
+            return true;
+        } : undefined
       });
 
       if (!response.success) {

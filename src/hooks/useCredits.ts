@@ -4,6 +4,9 @@ import { Session } from '@supabase/supabase-js';
 import { SERVICE_COSTS, ServiceType, REFUND_PERIOD_DAYS } from '../config/creditConfig';
 import { onTokenRefreshed } from './useAuth';
 import { formatSafariDate } from '../utils/textUtils';
+import { isTossApp } from '../utils/envUtils';
+import { COIN_PACKAGES, AIT_DEEP_REPORT_PRODUCT_ID } from '../config/creditConfig';
+
 
 export interface CreditPurchase {
     id: string;
@@ -37,7 +40,10 @@ export interface PricingPlan {
     is_popular: boolean;
     sort_order: number;
     is_active: boolean;
+    ait_product_id?: string | undefined;
+    created_at?: string; // ⭐️ 폴백 데이터 대응을 위해 추가
 }
+
 
 interface UseCreditsReturn {
     credits: number;
@@ -204,9 +210,6 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             
             if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 setIsInitialized(true);
-                // 세션이 확정된 후 크레딧 정보 패칭 (force=true로 호출)
-                // useCredits(session)의 session prop이 갱신되기 전일 수 있으므로 
-                // 내부에서 getSession()을 다시 한 번 수행하는 refreshCredits를 호출합니다.
             }
         });
 
@@ -215,9 +218,104 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         };
     }, []);
 
+    const getCost = useCallback((serviceType: ServiceType): number => {
+        return SERVICE_COSTS[serviceType];
+    }, []);
+
+    const checkSufficientCredits = useCallback((serviceType: ServiceType): boolean => {
+        const cost = getCost(serviceType);
+        return credits >= cost;
+    }, [credits, getCost]);
+
+    // 크레딧 구매
+    const purchaseCredits = useCallback(async (
+        planId: string,
+        pricePaid: number,
+        creditAmount: number,
+        paymentId?: string
+    ): Promise<boolean> => {
+        if (!session?.user?.id) return false;
+
+        try {
+            const { error } = await supabase
+                .from('credit_purchases')
+                .insert({
+                    user_id: session.user.id,
+                    plan_id: planId,
+                    purchased_credits: creditAmount,
+                    remaining_credits: creditAmount,
+                    price_paid: pricePaid,
+                    payment_id: paymentId || null,
+                    status: 'active',
+                });
+
+            if (error) throw error;
+
+            await refreshCredits();
+            return true;
+        } catch (err) {
+            console.error('Error purchasing credits:', err);
+            return false;
+        }
+    }, [session, refreshCredits]);
+
+    // Apps In Toss 미결 주문 복원 로직
+    const recoverAitOrders = useCallback(async () => {
+        try {
+            // @ts-ignore
+            const toss = window.toss;
+            if (!toss?.iap?.getPendingOrders) return;
+
+            const pendingOrders = await toss.iap.getPendingOrders();
+            if (!pendingOrders || pendingOrders.length === 0) return;
+
+            console.log(`[AIT Recovery] ${pendingOrders.length}개의 미결 주문 발견`);
+
+            for (const order of pendingOrders) {
+                // 1. 크레딧 패키지 확인
+                const pkg = COIN_PACKAGES.find(p => p.aitProductId === order.productId);
+                if (pkg) {
+                    console.log(`[AIT Recovery] 크레딧 패키지 복원 시작: ${order.orderId}`);
+                    const success = await purchaseCredits(pkg.id, pkg.price, pkg.credits, order.orderId);
+                    if (success) {
+                        await toss.iap.completeProductGrant({ orderId: order.orderId });
+                        console.log(`[AIT Recovery] 크레딧 지급 및 확인 완료: ${order.orderId}`);
+                    }
+                    continue;
+                }
+
+                // 2. 심층 리포트 확인
+                if (order.productId === AIT_DEEP_REPORT_PRODUCT_ID) {
+                    console.log(`[AIT Recovery] 심층 리포트 복원 시작: ${order.orderId}`);
+                    const { error } = await supabase
+                        .from('deep_report_requests')
+                        .update({ status: 'paid', payment_id: order.orderId })
+                        .eq('order_id', order.orderId);
+                    
+                    if (!error) {
+                        await toss.iap.completeProductGrant({ orderId: order.orderId });
+                        console.log(`[AIT Recovery] 심층 리포트 지급 확인 완료: ${order.orderId}`);
+                    } else {
+                        console.error(`[AIT Recovery] 심층 리포트 DB 업데이트 실패:`, error);
+                    }
+                    continue;
+                }
+
+                console.error(`[AIT Recovery] 알 수 없는 상품 ID: ${order.productId}`);
+            }
+        } catch (err) {
+            console.error('[AIT Recovery] 주문 복원 중 오류:', err);
+        }
+    }, [purchaseCredits]);
+
     useEffect(() => {
         if (isInitialized) {
             refreshCredits(true);
+            
+            // Apps In Toss 환경에서 미결 주문 복원 시도
+            if (isTossApp()) {
+                recoverAitOrders();
+            }
         }
 
         // TOKEN_REFRESHED 이벤트 구독: 토큰 갱신 시 자동 크레딧 재조회
@@ -239,16 +337,7 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             window.removeEventListener('focus', handleFocus);
             unsubscribeTokenRefresh();
         };
-    }, [isInitialized, refreshCredits]);
-
-    const getCost = useCallback((serviceType: ServiceType): number => {
-        return SERVICE_COSTS[serviceType];
-    }, []);
-
-    const checkSufficientCredits = useCallback((serviceType: ServiceType): boolean => {
-        const cost = getCost(serviceType);
-        return credits >= cost;
-    }, [credits, getCost]);
+    }, [isInitialized, refreshCredits, recoverAitOrders]);
 
     // FIFO 크레딧 사용 (RPC 전환)
     const useCreditsFunc = useCallback(async (serviceType: ServiceType): Promise<boolean> => {
@@ -289,38 +378,6 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
             return false;
         }
     }, [session, credits, getCost, refreshCredits]);
-
-    // 크레딧 구매
-    const purchaseCredits = useCallback(async (
-        planId: string,
-        pricePaid: number,
-        creditAmount: number,
-        paymentId?: string
-    ): Promise<boolean> => {
-        if (!session?.user?.id) return false;
-
-        try {
-            const { error } = await supabase
-                .from('credit_purchases')
-                .insert({
-                    user_id: session.user.id,
-                    plan_id: planId,
-                    purchased_credits: creditAmount,
-                    remaining_credits: creditAmount,
-                    price_paid: pricePaid,
-                    payment_id: paymentId || null,
-                    status: 'active',
-                });
-
-            if (error) throw error;
-
-            await refreshCredits();
-            return true;
-        } catch (err) {
-            console.error('Error purchasing credits:', err);
-            return false;
-        }
-    }, [session, refreshCredits]);
 
     // 환불 요청
     const requestRefund = useCallback(async (

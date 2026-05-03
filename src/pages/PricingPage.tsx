@@ -46,6 +46,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                 is_active: true,
                 is_popular: pkg.credits === 50,
                 sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                ait_product_id: pkg.aitProductId, // ⭐️ AIT 상품 ID 매핑 추가
                 created_at: new Date().toISOString()
             }));
             setPlans(fallbackPlans);
@@ -116,6 +117,20 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
                 customerKey: customerKey,
                 customerEmail: user.email,
                 customerName: user.user_metadata?.full_name || user.user_metadata?.name || '사용자',
+                aitProductId: plan.ait_product_id || plan.id, // ⭐️ AIT 상품 ID 추가
+                onAitGrant: async (oid, pid) => {
+                    try {
+                        // AIT 결제 성공 시 크레딧 지급 로직
+                        if (onPurchaseSuccess) {
+                            await onPurchaseSuccess(plan.id, plan.price, plan.credits, oid);
+                            return true;
+                        }
+                        return false;
+                    } catch (err) {
+                        console.error('AIT Grant Error (PricingPage):', err);
+                        return false;
+                    }
+                }
             });
 
             if (!response.success && response.error_msg) {

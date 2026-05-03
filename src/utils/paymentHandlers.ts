@@ -1,4 +1,5 @@
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
+import { isTossApp } from './envUtils';
 
 export interface Product {
     id: string;
@@ -20,6 +21,9 @@ export interface TossPaymentConfig {
     metadata?: Record<string, any>;
     successUrl?: string;
     failUrl?: string;
+    // Apps In Toss (AIT) 전용 필드
+    aitProductId?: string;
+    onAitGrant?: (orderId: string, productId: string) => Promise<boolean>;
 }
 
 export interface PaymentResponse {
@@ -31,24 +35,62 @@ export interface PaymentResponse {
 }
 
 // Toss Payments Client Key (Test/Live)
-// 기본 테스트 키를 보다 범용적인 키로 변경 (Toss 공식 문서 기준)
 const CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_mBZ1gQ4YVXbxv27PnmDqrLW2K0np';
 
-if (!process.env.REACT_APP_TOSS_CLIENT_KEY) {
-    console.warn('Toss Payments: REACT_APP_TOSS_CLIENT_KEY 환경 변수가 없습니다. 테스트 키를 사용합니다.');
-}
-
 /**
- * 토스페이먼츠 결제창 호출 (V2 SDK)
+ * 결제창 호출 (환경에 따라 Toss Payments Web SDK 또는 Apps In Toss SDK 사용)
  */
 export const requestPayment = async (config: TossPaymentConfig): Promise<PaymentResponse> => {
+    // 1. 앱인토스(Apps In Toss) 환경인 경우
+    if (isTossApp()) {
+        console.log('앱인토스 결제 환경 감지됨');
+        try {
+            // @ts-ignore - toss 객체는 앱인토스 환경에서 주입됨
+            const toss = window.toss;
+            if (!toss || !toss.iap) {
+                throw new Error('앱인토스 SDK를 찾을 수 없습니다.');
+            }
+
+            if (!config.aitProductId) {
+                throw new Error('앱인토스 상품 ID(aitProductId)가 필요합니다.');
+            }
+
+            // 앱인토스 결제 요청
+            const result = await toss.iap.createOneTimePurchaseOrder({
+                productId: config.aitProductId,
+                orderId: config.orderId,
+                // SDK 1.1.3+ 지급 완료 과정 필수
+                grantProduct: async (order: { orderId: string; productId: string }) => {
+                    console.log('상품 지급 시작:', order);
+                    if (config.onAitGrant) {
+                        const success = await config.onAitGrant(order.orderId, order.productId);
+                        if (!success) {
+                            throw new Error('상품 지급 처리 실패 (Partner Server Error)');
+                        }
+                    } else {
+                        console.warn('onAitGrant 콜백이 없어 지급 처리를 생략합니다.');
+                    }
+                }
+            });
+
+            console.log('앱인토스 결제 결과:', result);
+            return { success: true, orderId: config.orderId };
+        } catch (error: any) {
+            console.error('앱인토스 결제 에러:', error);
+            return {
+                success: false,
+                error_msg: error.message || '앱인토스 결제 중 오류가 발생했습니다.'
+            };
+        }
+    }
+
+    // 2. 일반 웹 환경인 경우 (기존 토스페이먼츠)
     try {
-        console.log('결제 요청 시작 (Direct):', {
+        console.log('일반 웹 결제 요청 시작:', {
             name: config.name,
             amount: config.amount,
         });
 
-        // Safari 대응: 로딩 타임아웃 추가
         const loadPromise = loadTossPayments(CLIENT_KEY);
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('결제 모듈을 불러오는 데 실패했습니다(타임아웃).')), 15000)
@@ -56,13 +98,10 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
 
         const tossPayments = await Promise.race([loadPromise, timeoutPromise]) as any;
 
-        // V2 SDK 인스턴스 생성
         const payment = tossPayments.payment({
             customerKey: config.customerKey || 'ANONYMOUS',
         });
 
-        // 결제 요청 (v2 규격)
-        // Safari 특성상 팝업 차단이 발생할 수 있으므로, 비동기 호출 전 에러 핸들링 준비
         await payment.requestPayment({
             method: "CARD",
             amount: {
@@ -86,20 +125,10 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
         return { success: true };
     } catch (error: any) {
         console.error('Toss Payments 상세 에러:', error);
-
-        let errorMessage = "결제 준비 중 알 수 없는 오류가 발생했습니다.";
-        if (error.message) {
-            errorMessage = error.message;
-        }
-        
-        if (error.code) {
-            errorMessage = `[${error.code}] ${errorMessage}`;
-        }
-
-        // 구체적인 에러 메시지 반환하여 무한 로딩 방지 UI 트리거
         return {
             success: false,
-            error_msg: errorMessage
+            error_msg: error.message || "결제 준비 중 오류가 발생했습니다."
         };
     }
 };
+

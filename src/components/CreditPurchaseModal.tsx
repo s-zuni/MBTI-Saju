@@ -55,6 +55,7 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                     is_active: true,
                     is_popular: pkg.credits === 50,
                     sort_order: pkg.credits === 100 ? 1 : pkg.credits === 50 ? 2 : 3,
+                    ait_product_id: pkg.aitProductId, // ⭐️ AIT 상품 ID 매핑 추가
                     created_at: new Date().toISOString()
                 }));
                 if (isMounted) setPlans(fallbackPlans);
@@ -149,7 +150,20 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 orderId: orderId,
                 customerKey: customerKey,
                 customerEmail: userEmail,
+                aitProductId: plan.ait_product_id || plan.id, // AIT 상품 ID 우선 사용
+                onAitGrant: async (oid, pid) => {
+                    try {
+                        // AIT 결제 성공 시 크레딧 지급 로직 (purchaseCredits 호출 대신 onSuccess 직접 활용 가능)
+                        // 여기서는 부모 컴포넌트에서 전달받은 onSuccess를 통해 DB 업데이트 및 UI 갱신을 수행합니다.
+                        await onSuccess(plan.id, plan.price, plan.credits, oid);
+                        return true;
+                    } catch (err) {
+                        console.error('AIT Grant Error:', err);
+                        return false;
+                    }
+                }
             });
+
 
             if (!response.success && response.error_msg) {
                 alert(`결제 오류: ${response.error_msg}`);

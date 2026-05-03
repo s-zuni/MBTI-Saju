@@ -6,13 +6,17 @@ export interface CreditPackage {
   originalPrice: number;
   price: number;
   isDiscount: boolean;
+  aitProductId?: string; // 앱인토스 전용 상품 ID (SKU)
 }
 
+export const AIT_DEEP_REPORT_PRODUCT_ID = 'ait.0000028985.c768a922.be48a69c7b.7821907657';
+
 export const COIN_PACKAGES: CreditPackage[] = [
-  { id: 'credit_100', credits: 100, originalPrice: 15000, price: 4900, isDiscount: true },
-  { id: 'credit_50', credits: 50, originalPrice: 10000, price: 2900, isDiscount: true },
-  { id: 'credit_10', credits: 10, originalPrice: 3000, price: 900, isDiscount: true }
+  { id: 'credit_100', credits: 100, originalPrice: 15000, price: 12000, isDiscount: true, aitProductId: 'ait.0000028985.7b691d9f.fdc11ac895.7822835073' },
+  { id: 'credit_50', credits: 50, originalPrice: 10000, price: 6900, isDiscount: true, aitProductId: 'credit_50_pack' }, // No ID provided for 50
+  { id: 'credit_10', credits: 10, originalPrice: 3000, price: 1500, isDiscount: true, aitProductId: 'ait.0000028985.07b29acd.41888d489a.7823137772' }
 ];
+
 
 // 심층 리포트 구매 고객 전용 이벤트 패키지
 export const EVENT_CREDIT_PACKAGE = {
