@@ -4,6 +4,8 @@ import { supabase } from '../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
+import { useCredits } from '../hooks/useCredits';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 interface NavbarProps { }
 
@@ -16,6 +18,7 @@ const Navbar: React.FC<NavbarProps> = () => {
 
   const { session } = useAuth();
   const { openModal, isAnyModalOpen } = useModalStore();
+  const { credits } = useCredits(session);
 
   // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
@@ -59,13 +62,20 @@ const Navbar: React.FC<NavbarProps> = () => {
     }
   };
 
-  const handleTarotClick = () => {
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      navigate('/chat'); // Or wherever tarot is on mobile
-    } else {
-      openModal('tarot');
+  const handleChatClick = () => {
+    if (!session) {
+      openModal('analysis', 'login');
+      return;
     }
+    if (credits >= SERVICE_COSTS.AI_CHAT_5) {
+      navigate('/chat');
+    } else {
+      openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_5 });
+    }
+  };
+
+  const handleTarotClick = () => {
+    openModal('tarot');
   };
 
   // Dynamic styles: Aura Ethereal high-contrast style
@@ -90,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           <button onClick={() => navigate('/fortune')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운세 보기
           </button>
-          <button onClick={() => navigate('/chat')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
+          <button onClick={handleChatClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운명 심층 상담
           </button>
           <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
@@ -161,7 +171,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
-              <button onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
+              <button onClick={() => { handleChatClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
               <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
               <button onClick={() => { navigate('/community'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">커뮤니티</button>
               <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">요금제</button>

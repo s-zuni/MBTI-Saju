@@ -252,6 +252,11 @@ function AppContent({
     }
   }, [location.state, session, openModal, navigate, location.pathname]);
 
+  // 라우트 변경 시 모든 모달 닫기 (타로 등 모달이 열린 채로 다른 화면 이동 방지)
+  useEffect(() => {
+    closeAllModals();
+  }, [location.pathname, closeAllModals]);
+
   const handleCloseOnboarding = () => {
     if (session?.user) {
       localStorage.setItem(`hasSeenOnboarding_${session.user.id}`, 'true');

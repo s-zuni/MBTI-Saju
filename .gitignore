@@ -38,3 +38,5 @@ yarn-error.log*
 # examples
 /apps-in-toss-examples-main
 /apps-in-toss-examples-main.zip
+
+.granite

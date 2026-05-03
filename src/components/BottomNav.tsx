@@ -2,6 +2,9 @@ import React from 'react';
 import { Home, Compass, MessageSquare, Layers, Users } from 'lucide-react'; 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useModalStore } from '../hooks/useModalStore';
+import { useAuth } from '../hooks/useAuth';
+import { useCredits } from '../hooks/useCredits';
+import { SERVICE_COSTS } from '../config/creditConfig';
 
 export interface BottomNavProps { }
 
@@ -9,6 +12,20 @@ const BottomNav: React.FC<BottomNavProps> = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { openModal } = useModalStore();
+    const { session } = useAuth();
+    const { credits } = useCredits(session);
+
+    const handleChatClick = () => {
+        if (!session) {
+            openModal('analysis', 'login');
+            return;
+        }
+        if (credits >= SERVICE_COSTS.AI_CHAT_5) {
+            navigate('/chat');
+        } else {
+            openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_5 });
+        }
+    };
 
     const navItems = [
         {
@@ -30,7 +47,7 @@ const BottomNav: React.FC<BottomNavProps> = () => {
             label: '상담',
             path: '/chat',
             isActive: (p: string) => p.startsWith('/chat') || p.startsWith('/room'),
-            onClick: () => navigate('/chat')
+            onClick: handleChatClick
         },
         {
             icon: Layers, 

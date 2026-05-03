@@ -29,7 +29,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "ait build && node -e \"const fs=require('fs'); const path=require('path'); const s='build/web'; const d='build'; if(fs.existsSync(s)){fs.readdirSync(s).forEach(f=>{const sp=path.join(s,f); const dp=path.join(d,f); if(fs.statSync(sp).isDirectory()){fs.cpSync(sp,dp,{recursive:true})}else{fs.copyFileSync(sp,dp)}})}\"",
+    "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
     "dev": "granite dev",
