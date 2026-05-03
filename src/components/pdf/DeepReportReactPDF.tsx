@@ -226,8 +226,8 @@ interface SajuData {
 }
 
 interface ReportDetail {
-  subtitle: string;
-  content: string;
+  subtitle?: string;
+  content?: string;
 }
 
 interface SajuReportContent {
@@ -472,9 +472,9 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
         </View>
 
-        {parsedContent.natalChartAnalysis?.details?.map((detail: any, idx: number) => (
+        {parsedContent.natalChartAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>
-            <Text style={styles.subTitle}>{detail.subtitle}</Text>
+            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
         ))}
@@ -489,9 +489,9 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
       <Page size="A4" style={styles.page}>
         <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 운명적 본질"}</Text>
 
-        {parsedContent.coreIdentity?.details?.map((detail: any, idx: number) => (
+        {parsedContent.coreIdentity?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>
-            <Text style={styles.subTitle}>{detail.subtitle}</Text>
+            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
         ))}
@@ -506,9 +506,9 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
       <Page size="A4" style={styles.page}>
         <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물 그릇의 크기와 사회적 성취"}</Text>
         
-        {parsedContent.wealthAndCareer?.details?.map((detail: any, idx: number) => (
+        {parsedContent.wealthAndCareer?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>
-            <Text style={[styles.subTitle, { borderLeftColor: '#0369A1' }]}>{detail.subtitle}</Text>
+            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#0369A1' }]}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
         ))}
@@ -523,9 +523,9 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
       <Page size="A4" style={styles.page}>
         <Text style={styles.sectionTitle}>{parsedContent.relationship?.title || "03. 인연의 지형도와 감정의 흐름"}</Text>
         
-        {parsedContent.relationship?.details?.map((detail: any, idx: number) => (
+        {parsedContent.relationship?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>
-            <Text style={[styles.subTitle, { borderLeftColor: '#BE185D' }]}>{detail.subtitle}</Text>
+            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#BE185D' }]}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
         ))}
@@ -543,11 +543,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           
           <Text style={[styles.subTitle, { color: '#4338CA' }]}>{yearData.year}년: {yearData.yearlyTheme}</Text>
           
-          {yearData.subtopics?.map((subtopic: any, idx: number) => (
+          {yearData.subtopics?.map((subtopic: ReportDetail, idx: number) => (
             <View key={idx} style={{ marginBottom: 18 }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 13.5, color: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D', marginBottom: 6 }}>
-                [{subtopic.subtitle}]
-              </Text>
+              {subtopic.subtitle && (
+                <Text style={{ fontWeight: 'bold', fontSize: 13.5, color: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D', marginBottom: 6 }}>
+                  [{subtopic.subtitle}]
+                </Text>
+              )}
               {renderText(subtopic.content)}
             </View>
           ))}
@@ -563,9 +565,9 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
       <Page size="A4" style={styles.page}>
         <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "05. 운명을 바꾸는 마스터의 마스터플랜"}</Text>
         
-        {parsedContent.actionPlan?.details?.map((detail: any, idx: number) => (
+        {parsedContent.actionPlan?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>
-            <Text style={styles.subTitle}>{detail.subtitle}</Text>
+            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
         ))}

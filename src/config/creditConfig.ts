@@ -6,7 +6,7 @@ export interface CreditPackage {
   originalPrice: number;
   price: number;
   isDiscount: boolean;
-  aitProductId?: string; // 앱인토스 전용 상품 ID (SKU)
+  aitProductId?: string | undefined; // 앱인토스 전용 상품 ID (SKU)
 }
 
 export const AIT_DEEP_REPORT_PRODUCT_ID = 'ait.0000028985.c768a922.be48a69c7b.7821907657';

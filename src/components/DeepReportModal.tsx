@@ -178,8 +178,8 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         },
         // Apps In Toss 전용 필드
         aitProductId: isTossApp() ? AIT_DEEP_REPORT_PRODUCT_ID : undefined,
-        onAitGrant: isTossApp() ? async (oid: string) => {
-            console.log('[AIT Grant] 심층 리포트 지급 처리 시작:', oid);
+        onAitGrant: isTossApp() ? async (oid: string, pid: string) => {
+            console.log('[AIT Grant] 심층 리포트 지급 처리 시작:', oid, '상품:', pid);
             const { error } = await supabase
                 .from('deep_report_requests')
                 .update({ status: 'paid', payment_id: oid })

@@ -36,12 +36,12 @@ export interface PricingPlan {
     credits: number;
     price: number;
     original_price: number;
-    description: string | null;
+    description: string | null | undefined;
     is_popular: boolean;
     sort_order: number;
     is_active: boolean;
     ait_product_id?: string | undefined;
-    created_at?: string; // ⭐️ 폴백 데이터 대응을 위해 추가
+    created_at?: string | undefined; // ⭐️ 폴백 데이터 대응을 위해 추가
 }
 
 

@@ -16,14 +16,14 @@ export interface TossPaymentConfig {
     amount: number;
     orderId: string;
     customerKey: string; // V2 필수값 (Sanitized user id 또는 ANONYMOUS)
-    customerName?: string;
-    customerEmail?: string;
-    metadata?: Record<string, any>;
-    successUrl?: string;
-    failUrl?: string;
+    customerName?: string | undefined;
+    customerEmail?: string | undefined;
+    metadata?: Record<string, any> | undefined;
+    successUrl?: string | undefined;
+    failUrl?: string | undefined;
     // Apps In Toss (AIT) 전용 필드
-    aitProductId?: string;
-    onAitGrant?: (orderId: string, productId: string) => Promise<boolean>;
+    aitProductId?: string | undefined;
+    onAitGrant?: ((orderId: string, productId: string) => Promise<boolean>) | undefined;
 }
 
 export interface PaymentResponse {
