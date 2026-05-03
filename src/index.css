@@ -70,6 +70,15 @@
 
   body {
     @apply font-sans bg-slate-50 text-slate-900 antialiased;
+    overscroll-behavior-y: none; /* Native-like feel in webviews */
+  }
+
+  /* Safe Area Padding Utilities for Apps In Toss */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
   }
 }
 

@@ -1,0 +1,26 @@
+# MBTIJU - 심층 사주 & MBTI 분석 서비스
+
+이 프로젝트는 토스(Toss)의 앱인토스(Apps In Toss) 플랫폼에서 구동되는 미니앱입니다.
+
+## 프로젝트 개요
+- 서비스명: mbtiju
+- 주요 기능: 사용자의 생년월시(사주)와 MBTI를 결합하여 심층적인 성격 및 운세 분석 보고서를 제공합니다.
+- 기술 스택: React, Craco, Tailwind CSS, Supabase, Google Gemini API.
+
+## 앱인토스(AIT) 연동 정보
+이 앱은 @apps-in-toss/web-framework를 사용하여 토스 앱과 통신합니다.
+
+### 주요 활용 기능 (overview.md 참조)
+- 화면 구조: 'shared' 레이아웃을 사용하며 내비게이션 바 설정을 포함합니다.
+- 분석/로깅: 사용자 행동 로그를 기록하기 위해 분석 기능을 활용합니다.
+- 화면 제어: Safe Area 대응 및 웹뷰 속성 제어를 포함합니다.
+- 스타일: Stack, Spacing 등 AIT 제공 유틸리티를 권장합니다.
+
+### 개발 및 빌드 환경
+- 개발 서버: http://localhost:3000 (granite.config.ts 설정 참조)
+- 빌드 도구: ait CLI를 사용하여 .ait 아티팩트를 생성합니다.
+- 배포: `npm run package`로 .ait 파일 생성 후 `npm run deploy`로 배포합니다.
+
+## 주의 사항
+- 모든 API 호출 시 토스 앱 환경인지 샌드박스 환경인지 확인이 필요합니다.
+- PDF 리포트 생성 기능이 포함되어 있으므로 메모리 관리에 유의해야 합니다.

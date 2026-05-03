@@ -40,6 +40,7 @@ import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { singleDayFortuneSchema } from './config/schemas';
 import { calculateSaju } from './utils/sajuUtils';
+import { isTossApp } from './utils/envUtils';
 
 // Lazy load modals for better initial performance
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
@@ -242,6 +243,7 @@ function AppContent({
   const navigate = useNavigate();
   const isChatPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/room');
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isInToss = isTossApp();
   
   // Handle automatic modal opening from share link
   useEffect(() => {
@@ -291,8 +293,8 @@ function AppContent({
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
           <Route path="*" element={
-            <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
-              <Navbar />
+            <div className={`selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden ${isInToss ? 'pt-0 pb-safe' : 'pb-20 md:pb-0'}`}>
+              {!isInToss && <Navbar />}
 
               {isAuthLoading && !session && location.pathname !== '/premium' ? (
                 <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
@@ -442,8 +444,8 @@ function AppContent({
                 </Routes>
               )}
 
-              {!isChatPage && <Footer />}
-              {!isAdminPage && <BottomNav />}
+              {!isChatPage && !isInToss && <Footer />}
+              {!isAdminPage && !isInToss && <BottomNav />}
 
 
               {/* Modals are now lazy loaded and managed by openModal store */}

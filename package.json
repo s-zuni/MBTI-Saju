@@ -1,6 +1,6 @@
 {
   "name": "mbti-app",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "dependencies": {
     "@ai-sdk/google": "^3.0.53",
@@ -33,6 +33,7 @@
     "test": "craco test",
     "eject": "react-scripts eject",
     "dev": "granite dev",
+    "package": "ait build",
     "deploy": "ait deploy"
   },
   "eslintConfig": {
