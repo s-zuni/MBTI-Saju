@@ -18,7 +18,7 @@ import RelationshipPage from './pages/RelationshipPage';
 import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
-import { SERVICE_COSTS } from './config/creditConfig';
+
 import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
@@ -37,22 +37,14 @@ import AdminDeepReports from './pages/admin/AdminDeepReports';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
-import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { singleDayFortuneSchema } from './config/schemas';
-import { calculateSaju } from './utils/sajuUtils';
 import { isTossApp } from './utils/envUtils';
 
 // Lazy load modals for better initial performance
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
-const FortuneModal = lazy(() => import('./components/FortuneModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
 const DeepReportModal = lazy(() => import('./components/DeepReportModal'));
 const RecommendationModal = lazy(() => import('./components/RecommendationModal'));
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
-const TripModal = lazy(() => import('./components/TripModal'));
-const NamingModal = lazy(() => import('./components/NamingModal'));
-const KboAnalysisModal = lazy(() => import('./components/KboAnalysisModal'));
-const TarotModal = lazy(() => import('./components/Tarot/TarotModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
@@ -62,6 +54,13 @@ const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
 const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
+
+// New standalone pages
+const TodayFortunePage = lazy(() => import('./pages/TodayFortunePage'));
+const TarotPage = lazy(() => import('./pages/TarotPage'));
+const TripPage = lazy(() => import('./pages/TripPage'));
+const NamingPage = lazy(() => import('./pages/NamingPage'));
+const KboPage = lazy(() => import('./pages/KboPage'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -75,34 +74,7 @@ function App() {
   const { modals, openModal, closeModal, closeAllModals } = useModalStore();
 
 
-  // Streaming today's fortune
-  const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
-    api: '/api/fortune?scope=today',
-    schema: singleDayFortuneSchema,
-    headers: {
-      'Authorization': `Bearer ${session?.access_token || ''}`,
-    },
-  });
 
-  // Streaming tomorrow's fortune
-  const { object: tomorrowFortune, submit: fetchTomorrow, isLoading: isTomorrowLoading } = useObject({
-    api: '/api/fortune?scope=tomorrow',
-    schema: singleDayFortuneSchema,
-    headers: {
-      'Authorization': `Bearer ${session?.access_token || ''}`,
-    },
-    onFinish: async () => {
-        // Only deduct credits when generation is successfully finished
-        await consumeCredits('FORTUNE_TOMORROW');
-        console.log('[App] Tomorrow fortune generation finished and credits deducted.');
-    },
-    onError: (error) => {
-        console.error('[App] Tomorrow fortune generation failed:', error);
-        alert('내일 운세를 불러오는 중 오류가 발생했습니다. 크레딧은 차감되지 않았습니다.');
-    }
-  });
-
-  // Syncing with legacy state if necessary, but recommended to use 'fortune' directly
 
   const { tier } = useSubscription(session);
   const creditHook = useCredits(session);
@@ -150,53 +122,6 @@ function App() {
   }, [session, isAuthLoading, openModal]);
 
 
-
-  const handleFetchFortune = async () => {
-    const cost = SERVICE_COSTS.FORTUNE_TODAY;
-    if (credits < cost) {
-      openModal('creditPurchase', undefined, { requiredCredits: cost });
-      return;
-    }
-
-    if (!session) return;
-    
-    openModal('fortune');
-
-    const sajuData = calculateSaju(session.user.user_metadata.birth_date, session.user.user_metadata.birth_time);
-    fetchFortune({ 
-      birthDate: session.user.user_metadata.birth_date, 
-      mbti: session.user.user_metadata.mbti,
-      sajuData,
-      scope: 'today' // Explicitly request today only
-    });
-  };
-
-  const handleFetchTomorrowFortune = async () => {
-    const cost = SERVICE_COSTS.FORTUNE_TOMORROW;
-    if (credits < cost) {
-      openModal('creditPurchase', undefined, { requiredCredits: cost });
-      return false;
-    }
-
-    if (!session) return false;
-    
-    const sajuData = calculateSaju(session.user.user_metadata.birth_date, session.user.user_metadata.birth_time);
-    fetchTomorrow({ 
-      birthDate: session.user.user_metadata.birth_date, 
-      mbti: session.user.user_metadata.mbti,
-      sajuData,
-      scope: 'tomorrow'
-    });
-    return true;
-  };
-
-  // handleSwitchService and checkCreditsAndOpen removed as components now handle their own navigation and credit checks
-
-  const handleStart = async () => {
-    if (session) handleFetchFortune();
-    else openModal('analysis', 'signup');
-  };
-
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
@@ -215,13 +140,7 @@ function App() {
         getCost={creditHook.getCost}
         debugInfo={creditHook.debugInfo}
         tier={tier}
-        fortune={fortune}
-        isFortuneLoading={isFortuneLoading}
-        tomorrowFortune={tomorrowFortune}
-        isTomorrowLoading={isTomorrowLoading}
-        handleFetchFortune={handleFetchFortune}
-        handleFetchTomorrowFortune={handleFetchTomorrowFortune}
-        handleStart={handleStart}
+
         showPremiumBanner={showPremiumBanner}
         setShowPremiumBanner={setShowPremiumBanner}
         modals={modals}
@@ -236,7 +155,7 @@ function App() {
 function AppContent({ 
   session, isAuthLoading, credits, refreshCredits, purchaseCredits, consumeCredits, 
   checkSufficientCredits, getCost,
-  tier, fortune, isFortuneLoading, tomorrowFortune, isTomorrowLoading, handleFetchFortune, handleFetchTomorrowFortune, handleStart, 
+  tier, 
   showPremiumBanner, setShowPremiumBanner, modals, closeModal, closeAllModals, openModal 
 }: any) {
   const location = useLocation();
@@ -245,6 +164,11 @@ function AppContent({
   const isAdminPage = location.pathname.startsWith('/admin');
   const isInToss = isTossApp();
   
+  const handleStart = () => {
+    if (session) navigate('/today-fortune');
+    else openModal('analysis', 'signup');
+  };
+
   // Handle automatic modal opening from share link
   useEffect(() => {
     if (location.state?.openCompatibility && session) {
@@ -343,7 +267,9 @@ function AppContent({
                             </button>
 
                             <button
-                              onClick={() => openModal('kbo')}
+                              onClick={() => {
+                                navigate('/kbo');
+                              }}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
                               <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors p-2">
@@ -400,7 +326,7 @@ function AppContent({
                   <Route path="/community/post/:id" element={<PostDetailPage />} />
                   <Route path="/fortune" element={
                     <FortunePage
-                      onFortuneClick={handleFetchFortune}
+                      onFortuneClick={() => navigate('/today-fortune')}
                       onMbtiSajuClick={() => {
                         navigate('/premium');
                       }}
@@ -439,6 +365,11 @@ function AppContent({
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
                   <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={() => openModal('deepReport')} />} />
+                  <Route path="/today-fortune" element={<TodayFortunePage />} />
+                  <Route path="/today-tarot" element={<TarotPage />} />
+                  <Route path="/trip" element={<TripPage />} />
+                  <Route path="/naming" element={<NamingPage />} />
+                  <Route path="/kbo" element={<KboPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
@@ -455,34 +386,13 @@ function AppContent({
                 mode={modals?.analysis?.mode}
                 initialData={session?.user?.user_metadata}
               />
-              <FortuneModal
-                isOpen={modals?.fortune?.isOpen || false}
-                onClose={() => closeModal('fortune')}
-                fortune={fortune}
-                loading={isFortuneLoading}
-                tomorrowFortune={tomorrowFortune}
-                isTomorrowLoading={isTomorrowLoading}
-                onFetchTomorrow={handleFetchTomorrowFortune}
-                onNavigate={(service) => {
-                  closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'deepReport' : service) as any);
-                }}
-                credits={credits}
-                onUseCredit={async (serviceType) => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits(serviceType);
-                }}
-                onOpenCreditPurchase={(requiredCredits) => {
-                  openModal('creditPurchase', undefined, { requiredCredits });
-                }}
-              />
+
               <MbtiSajuModal
                 isOpen={modals?.mbtiSaju?.isOpen || false}
                 onClose={() => closeModal('mbtiSaju')}
                 onNavigate={(service) => {
                   closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
+                  if (service === 'fortune') navigate('/today-fortune');
                   else openModal((service === 'mbti' ? 'deepReport' : service) as any);
                 }}
                 onUseCredit={async (isRegenerate?: boolean) => {
@@ -509,77 +419,12 @@ function AppContent({
                 onClose={() => closeModal('compatibility')}
                 onNavigate={(service: any) => {
                   closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
+                  if (service === 'fortune') navigate('/today-fortune');
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {
                   if (!session?.user?.id) return false;
                   return await consumeCredits('COMPATIBILITY_TRIP');
-                }}
-                credits={credits}
-                session={session}
-              />
-
-              <TripModal
-                isOpen={modals?.trip?.isOpen || false}
-                onClose={() => closeModal('trip')}
-                onNavigate={(service: any) => {
-                  closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
-                }}
-                onUseCredit={async () => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits('COMPATIBILITY_TRIP');
-                }}
-                credits={credits}
-                session={session}
-              />
-              <NamingModal
-                isOpen={modals?.naming?.isOpen || false}
-                onClose={() => closeModal('naming')}
-                onNavigate={(service: string) => {
-                  closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
-                }}
-                onUseCredit={async () => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits('NAMING');
-                }}
-                credits={credits}
-                session={session}
-              />
-              <KboAnalysisModal
-                isOpen={modals?.kbo?.isOpen || false}
-                onClose={() => closeModal('kbo')}
-                onNavigate={(service: any) => {
-                  closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
-                }}
-                onUseCredit={async () => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits('KBO');
-                }}
-                credits={credits}
-                session={session}
-              />
-              <TarotModal
-                isOpen={modals?.tarot?.isOpen || false}
-                onClose={() => closeModal('tarot')}
-                tier={tier}
-                onUpgradeRequired={() => {
-                  openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.TAROT });
-                }}
-                onUseCredit={async () => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits('TAROT');
-                }}
-                onNavigate={(service: any) => {
-                  closeAllModals();
-                  if (service === 'fortune') handleFetchFortune();
-                  else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 credits={credits}
                 session={session}

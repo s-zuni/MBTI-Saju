@@ -52,9 +52,9 @@ const BottomNav: React.FC<BottomNavProps> = () => {
         {
             icon: Layers, 
             label: '타로',
-            path: '/tarot',
-            isActive: (p: string) => p === '/tarot',
-            onClick: () => openModal('tarot')
+            path: '/today-tarot',
+            isActive: (p: string) => p === '/today-tarot',
+            onClick: () => navigate('/today-tarot')
         },
         {
             icon: Users,

@@ -37,12 +37,12 @@ const FortunePage: React.FC<FortunePageProps> = ({
     const navigate = useNavigate();
 
     const handleSubCategoryClick = (cat: any) => {
-        if (cat.id === 'fortune') onFortuneClick();
+        if (cat.id === 'fortune') navigate('/today-fortune');
         else if (cat.id === 'mbti') onMbtiSajuClick();
-        else if (cat.id === 'tarot') onTarotClick();
-        else if (cat.id === 'trip') onTripClick();
-        else if (cat.id === 'naming') onNamingClick();
-        else if (cat.id === 'kbo') onKboClick();
+        else if (cat.id === 'tarot') navigate('/today-tarot');
+        else if (cat.id === 'trip') navigate('/trip');
+        else if (cat.id === 'naming') navigate('/naming');
+        else if (cat.id === 'kbo') navigate('/kbo');
         else if (cat.id === 'relationship') navigate('/relationship');
     };
 
