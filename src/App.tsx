@@ -448,12 +448,13 @@ function AppContent({
                 userName={session?.user?.user_metadata?.full_name}
               />
 
-              <DeepReportEventModal
-                isOpen={modals?.deepReportEvent?.isOpen || false}
-                onClose={() => closeModal('deepReportEvent')}
-                session={session}
-              />
-
+              {!isTossApp() && (
+                <DeepReportEventModal
+                  isOpen={modals?.deepReportEvent?.isOpen || false}
+                  onClose={() => closeModal('deepReportEvent')}
+                  session={session}
+                />
+              )}
 
               <PremiumBanner
                 isVisible={showPremiumBanner}

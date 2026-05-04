@@ -17,8 +17,7 @@ export const COIN_PACKAGES: CreditPackage[] = [
   { id: 'credit_10', credits: 10, originalPrice: 3000, price: 1500, isDiscount: true, aitProductId: 'ait.0000028985.07b29acd.41888d489a.7823137772' }
 ];
 
-
-// 심층 리포트 구매 고객 전용 이벤트 패키지
+// 심층 리포트 구매 고객 전용 이벤트 패키지 (일반 웹 전용)
 export const EVENT_CREDIT_PACKAGE = {
   id: 'event_credit_500',
   credits: 500,
@@ -26,6 +25,7 @@ export const EVENT_CREDIT_PACKAGE = {
   originalPrice: 49000,
   eventType: 'deep_report_credit_500',
 } as const;
+
 
 export const SERVICE_COSTS = {
   FORTUNE_TODAY: 0,

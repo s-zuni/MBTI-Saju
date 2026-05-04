@@ -13,6 +13,7 @@ export type ModalType =
     | 'creditPurchase'
     | 'onboarding'
     | 'deepReport'
+
     | 'deepReportEvent'
     | 'kbo';
 
@@ -36,6 +37,7 @@ let globalModals: Record<string, ModalState> = {
     creditPurchase: { isOpen: false },
     onboarding: { isOpen: false },
     deepReport: { isOpen: false },
+
     deepReportEvent: { isOpen: false },
     kbo: { isOpen: false },
 };

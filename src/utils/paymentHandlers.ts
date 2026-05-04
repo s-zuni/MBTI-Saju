@@ -1,4 +1,3 @@
-import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { isTossApp } from './envUtils';
 
 export interface Product {
@@ -86,48 +85,13 @@ export const requestPayment = async (config: TossPaymentConfig): Promise<Payment
 
     // 2. 일반 웹 환경인 경우 (기존 토스페이먼츠)
     try {
-        console.log('일반 웹 결제 요청 시작:', {
-            name: config.name,
-            amount: config.amount,
-        });
-
-        const loadPromise = loadTossPayments(CLIENT_KEY);
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('결제 모듈을 불러오는 데 실패했습니다(타임아웃).')), 15000)
-        );
-
-        const tossPayments = await Promise.race([loadPromise, timeoutPromise]) as any;
-
-        const payment = tossPayments.payment({
-            customerKey: config.customerKey || 'ANONYMOUS',
-        });
-
-        await payment.requestPayment({
-            method: "CARD",
-            amount: {
-                currency: "KRW",
-                value: config.amount,
-            },
-            orderId: config.orderId,
-            orderName: config.name,
-            successUrl: config.successUrl || `${window.location.origin}/payment/success`,
-            failUrl: config.failUrl || `${window.location.origin}/payment/fail`,
-            customerEmail: config.customerEmail,
-            customerName: config.customerName,
-            metadata: config.metadata,
-            card: {
-                flowMode: "DEFAULT",
-                useCardPoint: false,
-                useAppCardOnly: false,
-            },
-        } as any);
-
-        return { success: true };
+        const { requestWebPayment } = await import('./webPaymentHandler');
+        return await requestWebPayment(config, CLIENT_KEY);
     } catch (error: any) {
-        console.error('Toss Payments 상세 에러:', error);
+        console.error('웹 결제 모듈 로드 에러:', error);
         return {
             success: false,
-            error_msg: error.message || "결제 준비 중 오류가 발생했습니다."
+            error_msg: "결제 모듈을 불러오는 중 오류가 발생했습니다."
         };
     }
 };
