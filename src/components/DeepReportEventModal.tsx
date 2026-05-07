@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Coins, Gift, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { requestPayment } from '../utils/paymentHandlers';
+import { requestPayment } from '../payment';
 import { EVENT_CREDIT_PACKAGE } from '../config/creditConfig';
 import { isTossApp } from '../utils/envUtils';
 

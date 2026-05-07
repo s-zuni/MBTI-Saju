@@ -12,7 +12,6 @@
     "@react-pdf/font": "^4.0.8",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/supabase-js": "^2.89.0",
-    "@tosspayments/tosspayments-sdk": "^2.5.0",
     "ai": "^6.0.138",
     "font-loader": "^0.1.2",
     "html2canvas": "^1.4.1",

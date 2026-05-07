@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
-import { requestPayment } from '../utils/paymentHandlers';
+import { requestPayment, Product } from '../payment';
 import { COIN_PACKAGES } from '../config/creditConfig';
 
 import type { PricingPlan } from '../hooks/useCredits';

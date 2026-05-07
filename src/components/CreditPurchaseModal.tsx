@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Coins, Sparkles, Check, Zap, Loader2 } from 'lucide-react';
 import { supabase, ensureValidSession } from '../supabaseClient';
-import { requestPayment } from '../utils/paymentHandlers';
+import { requestPayment } from '../payment';
 import type { PricingPlan } from '../hooks/useCredits';
 import { COIN_PACKAGES } from '../config/creditConfig';
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Info, Clock } from 'lucide-react';
-import { requestPayment } from '../utils/paymentHandlers';
+import { requestPayment } from '../payment';
 import { isTossApp } from '../utils/envUtils';
 import { AIT_DEEP_REPORT_PRODUCT_ID } from '../config/creditConfig';
 
