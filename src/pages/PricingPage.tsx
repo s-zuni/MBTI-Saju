@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { requestPayment, Product } from '../payment';
 import { COIN_PACKAGES } from '../config/creditConfig';
+import { isTossApp } from '../utils/envUtils';
 
 import type { PricingPlan } from '../hooks/useCredits';
 
@@ -135,6 +136,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
             if (!response.success && response.error_msg) {
                 alert(`결제 오류: ${response.error_msg}`);
+            } else if (response.success && isTossApp()) {
+                alert('결제가 완료되었습니다!');
+                navigate('/usage-history', { replace: true });
             }
             // Toss Payments v2는 리다이렉트 방식이 기본이므로, 
             // 성공/실패 처리는 리다이렉트된 페이지(/payment/success 등)에서 수행됩니다.

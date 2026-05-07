@@ -4,6 +4,7 @@ import { supabase, ensureValidSession } from '../supabaseClient';
 import { requestPayment } from '../payment';
 import type { PricingPlan } from '../hooks/useCredits';
 import { COIN_PACKAGES } from '../config/creditConfig';
+import { isTossApp } from '../utils/envUtils';
 
 interface CreditPurchaseModalProps {
     isOpen: boolean;
@@ -167,6 +168,9 @@ const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
             if (!response.success && response.error_msg) {
                 alert(`결제 오류: ${response.error_msg}`);
+            } else if (response.success && isTossApp()) {
+                alert('크레딧 충전이 완료되었습니다!');
+                onClose();
             }
             // Toss Payments v2는 리다이렉트 방식이 기본이므로, 
             // 성공/실패 처리는 리다이렉트된 페이지에서 수행됩니다.

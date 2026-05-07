@@ -189,6 +189,26 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                 console.error('[AIT Grant] DB 업데이트 실패:', error);
                 return false;
             }
+
+            // 관리자 페이지 및 마이페이지 내역용 구매 기록 추가
+            await supabase.from('credit_purchases').insert({
+                user_id: session?.user?.id || customerKey,
+                purchased_credits: 0,
+                price_paid: amount,
+                payment_id: oid,
+                plan_id: 'deep_report',
+                status: 'active'
+            });
+
+            // 리포트 자동 생성 트리거
+            fetch('/api/generate-and-save-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: oid }),
+            }).catch(err => console.error('Auto-generation trigger failed:', err));
+
+            alert('심층 리포트 신청이 완료되었습니다! 앱 내 이용내역 또는 이메일을 확인해주세요.');
+            onClose();
             return true;
         } : undefined
       });
