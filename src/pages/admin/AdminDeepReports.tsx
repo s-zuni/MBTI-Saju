@@ -8,13 +8,13 @@ import { calculateSaju } from '../../utils/sajuUtils';
 interface DeepReportRequest {
   id: string;
   order_id: string;
-  user_id: string;
+  user_id: string | null;
   email: string;
-  kakao_id: string;
+  kakao_id: string | null;
   birth_info: string;
   mbti: string;
   report_type: string;
-  special_requests: string;
+  special_requests: string | null;
   amount: number;
   status: string;
   reservation_date: string;
@@ -24,12 +24,12 @@ interface DeepReportRequest {
     birth_info?: string;
     mbti?: string;
     relationship?: string;
-  };
+  } | null;
   generated_data?: any;
   generated_at?: string;
   profiles?: {
     name: string;
-  };
+  } | null;
 }
 
 
@@ -73,6 +73,13 @@ const AdminDeepReports: React.FC = () => {
     }
   };
 
+  // 비회원의 경우 email @ 앞부분 또는 '비회원'으로 표시
+  const getDisplayName = (req: DeepReportRequest): string => {
+    if (req.profiles?.name) return req.profiles.name;
+    if (req.email) return req.email.split('@')[0] || '비회원';
+    return '비회원';
+  };
+
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -102,13 +109,13 @@ const AdminDeepReports: React.FC = () => {
     setIsExporting(true);
 
     try {
-      const filename = `프리미엄_심층리포트_${reportModal.currentReq?.profiles?.name || '내담자'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `프리미엄_심층리포트_${getDisplayName(reportModal.currentReq!)}_${new Date().toISOString().split('T')[0]}.pdf`;
       
       const component = (
         <DeepReportReactPDF 
           sajuData={reportModal.sajuData} 
           parsedContent={reportModal.sajuData} 
-          clientName={reportModal.currentReq?.profiles?.name || '내담자'} 
+          clientName={getDisplayName(reportModal.currentReq!)} 
         />
       );
 
@@ -125,8 +132,9 @@ const AdminDeepReports: React.FC = () => {
     const req = reportModal.currentReq;
     if (!req || !req.email) return alert('이메일 정보가 없습니다.');
     
-    const subject = encodeURIComponent(`[MBTI-Saju] ${req.profiles?.name || '내담자'}님의 프리미엄 심층 리포트가 완성되었습니다.`);
-    const body = encodeURIComponent(`안녕하세요, ${req.profiles?.name || '내담자'}님.\n\n요청하신 프리미엄 심층 리포트가 완성되어 전달드립니다.\n(이곳에 다운로드한 PDF 파일을 첨부해 주세요)\n\n감사합니다.`);
+    const displayName = getDisplayName(req);
+    const subject = encodeURIComponent(`[MBTI-Saju] ${displayName}님의 프리미엄 심층 리포트가 완성되었습니다.`);
+    const body = encodeURIComponent(`안녕하세요, ${displayName}님.\n\n요청하신 프리미엄 심층 리포트가 완성되어 전달드립니다.\n(이곳에 다운로드한 PDF 파일을 첨부해 주세요)\n\n감사합니다.`);
     
     window.location.href = `mailto:${req.email}?subject=${subject}&body=${body}`;
     
@@ -175,16 +183,17 @@ const AdminDeepReports: React.FC = () => {
       console.error('Initial saju calculation failed:', e);
     }
 
+    const displayName = getDisplayName(req);
     setReportModal({ 
       isOpen: true, 
       content: '', 
-      title: `${req.profiles?.name || '내담자'}님의 리포트 생성 중...`, 
+      title: `${displayName}님의 리포트 생성 중...`, 
       currentReq: req,
       sajuData: {
         userSaju: initialSaju,
         reportType: req.report_type,
         mbti: req.mbti,
-        clientName: req.profiles?.name,
+        clientName: displayName,
         birthInfo: req.birth_info,
       }
     });
@@ -209,7 +218,7 @@ const AdminDeepReports: React.FC = () => {
       const decoder = new TextDecoder();
 
       if (reader) {
-        setModalTitle(`${req.profiles?.name || '내담자'}님의 심층 리포트`);
+        setModalTitle(`${getDisplayName(req)}님의 심층 리포트`);
         
         while (true) {
           const { done, value } = await reader.read();
@@ -284,7 +293,7 @@ const AdminDeepReports: React.FC = () => {
             userSaju: initialSaju,
             reportType: req.report_type,
             mbti: req.mbti,
-            clientName: req.profiles?.name,
+            clientName: getDisplayName(req),
             birthInfo: req.birth_info,
             generated_at: new Date().toISOString()
           };
@@ -310,7 +319,7 @@ const AdminDeepReports: React.FC = () => {
 
         setReportModal(prev => ({
           ...prev,
-          title: `${req.profiles?.name || '내담자'}님의 심층 리포트 (완료)`
+          title: `${getDisplayName(req)}님의 심층 리포트 (완료)`
         }));
       }
 
@@ -323,11 +332,18 @@ const AdminDeepReports: React.FC = () => {
     }
   };
 
-  const filteredRequests = requests.filter(req => 
-    req.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    req.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (req.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredRequests = requests.filter(req => {
+    const search = searchTerm.toLowerCase();
+    const email = (req.email || '').toLowerCase();
+    const orderId = (req.order_id || '').toLowerCase();
+    const profileName = (req.profiles?.name || '').toLowerCase();
+    const displayName = getDisplayName(req).toLowerCase();
+    
+    return email.includes(search) ||
+           orderId.includes(search) ||
+           profileName.includes(search) ||
+           displayName.includes(search);
+  });
 
   const displayContent = reportModal.sajuData ? 
     (reportModal.content || `🔮 [분석 데이터 구조화 완료]\n- 핵심 성격: ${reportModal.sajuData.natalChartAnalysis?.details?.[0]?.content?.substring(0, 100) || '분석 중...'}...\n- 재물/성취: ${reportModal.sajuData.wealthAndCareer?.details?.[0]?.content?.substring(0, 100) || '분석 중...'}...\n\n(PDF 생성 버튼을 클릭하면 고품질 프리미엄 리포트로 다운로드됩니다.)`)
@@ -392,10 +408,13 @@ const AdminDeepReports: React.FC = () => {
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500">
-                              {(req.profiles?.name || 'U')[0]}
+                              {(getDisplayName(req)[0] || 'N').toUpperCase()}
                            </div>
                            <div>
-                              <div className="font-bold text-slate-900 text-base">{req.profiles?.name || '내담자'}</div>
+                              <div className="font-bold text-slate-900 text-base flex items-center gap-2">
+                                {getDisplayName(req)}
+                                {!req.user_id && <span className="text-[10px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded-md">비회원</span>}
+                              </div>
                               <div className="text-xs text-slate-500 font-medium">{req.email}</div>
                            </div>
                         </div>
@@ -462,7 +481,7 @@ const AdminDeepReports: React.FC = () => {
                                  setReportModal({
                                    isOpen: true,
                                    content: Object.values(data).filter(v => typeof v === 'string' && v.length > 50).join('\n\n'),
-                                   title: `${req.profiles?.name || '내담자'}님의 심층 리포트`,
+                                   title: `${getDisplayName(req)}님의 심층 리포트`,
                                    currentReq: req,
                                    sajuData: data
                                  });

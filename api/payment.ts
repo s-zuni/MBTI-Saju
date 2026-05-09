@@ -69,14 +69,13 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         const userId = bodyUserId || tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const productId = tossData.metadata?.productId || 'credit_custom';
 
-        if (!userId || userId === 'ANONYMOUS') {
-            return res.status(400).json({ success: false, message: '사용자 장치 식별에 실패했습니다.' });
-        }
+        // deep_report는 비회원(GUEST_*)도 허용. 그 외 상품은 유효한 사용자 필요.
+        const isGuestUser = !userId || userId === 'ANONYMOUS' || userId.startsWith('GUEST_');
 
         if (productId === 'deep_report') {
             const { error: updateError } = await supabaseAdmin
                 .from('deep_report_requests')
-                .update({ status: 'paid' })
+                .update({ status: 'paid', payment_id: paymentKey })
                 .eq('order_id', orderId);
 
             if (updateError) {
@@ -84,21 +83,27 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
                 throw updateError;
             }
 
-            // 구매 내역에도 기록하여 사용자가 마이페이지에서 확인 가능하게 함
-            await supabaseAdmin.from('credit_purchases').insert({
-                user_id: userId,
-                purchased_credits: 0,
-                price_paid: amount,
-                payment_id: paymentKey,
-                plan_id: 'deep_report',
-                status: 'active'
-            });
+            // 로그인 사용자인 경우에만 구매 내역 기록 (비회원은 user_id가 없어 FK 제약 위반)
+            if (!isGuestUser) {
+                await supabaseAdmin.from('credit_purchases').insert({
+                    user_id: userId,
+                    purchased_credits: 0,
+                    price_paid: amount,
+                    payment_id: paymentKey,
+                    plan_id: 'deep_report',
+                    status: 'active'
+                });
+            }
 
             return res.status(200).json({
                 success: true,
                 message: '심층 결합 분석 리포트 결제 성공',
                 data: { toss: tossData }
             });
+        }
+
+        if (isGuestUser) {
+            return res.status(400).json({ success: false, message: '사용자 장치 식별에 실패했습니다.' });
         }
 
         // 이벤트 크레딧 패키지 (심층 리포트 구매 후 500크레딧 9,900원)
