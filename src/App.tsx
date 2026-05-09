@@ -217,7 +217,7 @@ function AppContent({
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
           <Route path="*" element={
-            <div className={`selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden ${isInToss ? 'pt-0 pb-safe' : 'pb-20 md:pb-0'}`}>
+            <div className={`selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden ${isInToss ? 'pt-0 pb-20' : 'pb-20 md:pb-0'}`}>
               {!isInToss && <Navbar />}
 
               {isAuthLoading && !session && location.pathname !== '/premium' ? (
@@ -376,7 +376,7 @@ function AppContent({
               )}
 
               {!isChatPage && !isInToss && <Footer />}
-              {!isAdminPage && !isInToss && <BottomNav />}
+              {!isAdminPage && <BottomNav />}
 
 
               {/* Modals are now lazy loaded and managed by openModal store */}

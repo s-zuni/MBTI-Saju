@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, Compass, MessageSquare, Layers, Users } from 'lucide-react'; 
+import { Home, Compass, MessageSquare, Layers, Users, User } from 'lucide-react'; 
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isTossApp } from '../utils/envUtils';
 import { useModalStore } from '../hooks/useModalStore';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
@@ -62,8 +63,25 @@ const BottomNav: React.FC<BottomNavProps> = () => {
             path: '/community',
             isActive: (p: string) => p.startsWith('/community'),
             onClick: () => navigate('/community')
+        },
+        {
+            icon: User,
+            label: '마이',
+            path: '/usage-history',
+            isActive: (p: string) => p === '/usage-history' || p === '/profile',
+            onClick: () => {
+                if (!session) {
+                    if (window.confirm('로그인이 필요한 서비스입니다. 로그인 하시겠습니까?')) {
+                        openModal('analysis', 'login');
+                    }
+                } else {
+                    navigate('/usage-history');
+                }
+            }
         }
     ];
+
+    const isInToss = isTossApp();
 
     // Admin, auth callback 페이지에서는 하단바 숨김
     if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/auth')) {
@@ -71,7 +89,7 @@ const BottomNav: React.FC<BottomNavProps> = () => {
     }
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-md border-t border-slate-100 pb-safe">
+        <nav className={`${isInToss ? 'flex' : 'md:hidden flex'} fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-md border-t border-slate-100 pb-2 mb-safe`}>
             <div className="flex justify-between items-center h-16 px-2">
                 {navItems.map((item, index) => {
                     const isActive = item.isActive(location.pathname);

@@ -5,6 +5,7 @@ import { Coins, Sparkles, Check, Loader2, Zap, AlertCircle } from 'lucide-react'
 import { requestPayment, Product } from '../payment';
 import { COIN_PACKAGES } from '../config/creditConfig';
 import { isTossApp } from '../utils/envUtils';
+import { useModalStore } from '../hooks/useModalStore';
 
 import type { PricingPlan } from '../hooks/useCredits';
 
@@ -21,6 +22,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
+    const { openModal } = useModalStore();
 
     const checkUser = React.useCallback(async () => {
         try {
@@ -99,7 +101,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onPurchaseSuccess, currentCre
 
     const handlePurchase = async (plan: PricingPlan) => {
         if (!user) {
-            alert('로그인이 필요합니다.');
+            if (window.confirm('로그인이 필요한 서비스입니다. 로그인 하시겠습니까?')) {
+                openModal('analysis', 'login');
+            }
             return;
         }
 

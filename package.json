@@ -1,6 +1,6 @@
 {
   "name": "mbti-app",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "private": true,
   "dependencies": {
     "@ai-sdk/google": "^3.0.53",
