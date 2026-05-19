@@ -6,25 +6,11 @@ import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
 
-interface FeatureGridsProps { }
-
-const FeatureGrids: React.FC<FeatureGridsProps> = () => {
+const FeatureGrids: React.FC = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     const { openModal } = useModalStore();
     const { credits } = useCredits(session);
-
-    const checkCreditsAndOpen = (cost: number, openFn: () => void) => {
-        if (!session) {
-            openModal('analysis', 'login');
-            return;
-        }
-        if (credits >= cost) {
-            openFn();
-        } else {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
-        }
-    };
 
     const gridItems = [
         {
@@ -62,7 +48,13 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             color: 'from-purple-500 to-purple-700',
             iconBg: 'bg-purple-50',
             iconColor: 'text-purple-600',
-            action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
+            action: () => {
+                if (!session) {
+                    openModal('analysis', 'login');
+                } else {
+                    navigate('/today-tarot');
+                }
+            },
         },
         {
             icon: Star,
@@ -90,7 +82,13 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             color: 'from-blue-500 to-indigo-600',
             iconBg: 'bg-blue-50',
             iconColor: 'text-blue-600',
-            action: () => checkCreditsAndOpen(SERVICE_COSTS.KBO, () => openModal('kbo')),
+            action: () => {
+                if (!session) {
+                    openModal('analysis', 'login');
+                } else {
+                    navigate('/kbo');
+                }
+            },
         },
     ];
 

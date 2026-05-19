@@ -75,7 +75,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const handleTarotClick = () => {
-    openModal('tarot');
+    navigate('/today-tarot');
   };
 
   // Dynamic styles: Aura Ethereal high-contrast style

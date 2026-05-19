@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { MapPin, Plane, Calendar, Download, Globe, CalendarDays, PenLine, ChevronLeft, Coins } from 'lucide-react';
+import { MapPin, Plane, Calendar, Download, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
 import { useAuth } from '../hooks/useAuth';
@@ -118,8 +118,24 @@ const TripPage: React.FC = () => {
 
     if (isAuthLoading) return null;
     if (!session) {
-        navigate('/');
-        return null;
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                    <Lock className="w-10 h-10 text-indigo-600" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
+                <p className="text-slate-500 mb-8">여행 운세 서비스를 이용하시려면 로그인이 필요합니다.</p>
+                <button
+                    onClick={() => {
+                        navigate('/');
+                        setTimeout(() => openModal('analysis', 'login'), 100);
+                    }}
+                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-600 transition-all active:scale-95 animate-bounce"
+                >
+                    로그인하고 시작하기
+                </button>
+            </div>
+        );
     }
 
     return (

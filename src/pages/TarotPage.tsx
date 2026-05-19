@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, ArrowLeft, Coins } from 'lucide-react';
+import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, ArrowLeft, Coins, Lock } from 'lucide-react';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
 import SpreadSelector, { SpreadType } from '../components/Tarot/SpreadSelector';
 import { supabase } from '../supabaseClient';
@@ -139,6 +139,27 @@ const TarotPage: React.FC = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!session) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf8fe] p-6 text-center">
+                <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                    <Lock className="w-10 h-10 text-purple-600" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
+                <p className="text-slate-500 mb-8 font-medium">타로 오라클 서비스를 이용하시려면 로그인이 필요합니다.</p>
+                <button
+                    onClick={() => {
+                        navigate('/');
+                        setTimeout(() => openModal('analysis', 'login'), 100);
+                    }}
+                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-purple-600 transition-all active:scale-95"
+                >
+                    로그인하고 시작하기
+                </button>
             </div>
         );
     }

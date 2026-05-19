@@ -90,10 +90,13 @@ const TodayFortunePage: React.FC = () => {
                 <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
                 <p className="text-slate-500 mb-8">운세를 확인하시려면 로그인이 필요합니다.</p>
                 <button
-                    onClick={() => navigate('/')}
-                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-slate-800 transition-all"
+                    onClick={() => {
+                        navigate('/');
+                        setTimeout(() => openModal('analysis', 'login'), 100);
+                    }}
+                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-amber-600 transition-all active:scale-95"
                 >
-                    홈으로 가기
+                    로그인하고 시작하기
                 </button>
             </div>
         );
