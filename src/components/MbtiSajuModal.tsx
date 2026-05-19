@@ -229,8 +229,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="flex justify-between items-center">
               <span className="text-sm font-bold text-slate-600">결제 금액</span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 line-through text-xs">49,000원</span>
-                <span className="text-lg font-black text-rose-600">29,800원</span>
+                <span className="text-slate-400 line-through text-xs">29,900원</span>
+                <span className="text-lg font-black text-rose-600">9,900원</span>
               </div>
             </div>
           </div>

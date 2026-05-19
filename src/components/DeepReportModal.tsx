@@ -135,7 +135,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
     try {
       // 1. 심층 리포트 요청 데이터 생성
       const orderId = `DEEPREPORT_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const amount = 29800;
+      const amount = 9900;
 
       const { error: insertError } = await supabase.from('deep_report_requests').insert({
         order_id: orderId,
@@ -227,7 +227,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           
           <div className="flex justify-center mb-8">
             <span className="px-4 py-2 bg-rose-500 text-white text-xs font-black rounded-full shadow-lg shadow-rose-500/20 animate-pulse tracking-widest uppercase">
-              기간 한정 파격 할인 적용 중
+              출시 기념 67% 특별 할인가 적용 중! (29,900원 → 9,900원)
             </span>
           </div>
 
@@ -500,7 +500,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
              className="w-full py-5 bg-[#0A0A0A] text-white rounded-2xl font-manrope font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
            >
              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="material-symbols-outlined">auto_awesome</span>}
-             29,800원 결제하고 리포트 신청하기
+             9,900원 결제하고 리포트 신청하기
            </button>
            <p className="text-center text-xs text-slate-400 mt-4 font-bold flex items-center justify-center gap-1">
              <Info className="w-4 h-4" /> 주문 제작 상품이므로 작성 착수 후에는 환불이 불가능합니다.
