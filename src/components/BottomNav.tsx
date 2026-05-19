@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, MessageSquare, Layers, Users } from 'lucide-react'; 
+import { Home, Compass, MessageSquare, Layers, Star } from 'lucide-react'; 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useModalStore } from '../hooks/useModalStore';
 import { useAuth } from '../hooks/useAuth';
@@ -57,11 +57,11 @@ const BottomNav: React.FC<BottomNavProps> = () => {
             onClick: () => navigate('/today-tarot')
         },
         {
-            icon: Users,
-            label: '커뮤니티',
-            path: '/community',
-            isActive: (p: string) => p.startsWith('/community'),
-            onClick: () => navigate('/community')
+            icon: Star,
+            label: '이용후기',
+            path: '/reviews',
+            isActive: (p: string) => p.startsWith('/reviews') || p.startsWith('/community'),
+            onClick: () => navigate('/reviews')
         }
     ];
 

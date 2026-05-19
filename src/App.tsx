@@ -6,8 +6,8 @@ import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
 import FeatureGrids from './components/FeatureGrids';
 import { supabase } from './supabaseClient';
+import ReviewCollectionPage from './components/ReviewCollectionPage';
 import BottomNav from './components/BottomNav';
-import CommunityPage from './components/CommunityPage';
 import SplashScreen from './components/SplashScreen';
 import MyPage from './components/MyPage';
 import ChatPage from './pages/ChatPage';
@@ -53,7 +53,6 @@ const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModa
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
-const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
 
 // New standalone pages
 const TodayFortunePage = lazy(() => import('./pages/TodayFortunePage'));
@@ -322,8 +321,8 @@ function AppContent({
                       session={session}
                     />
                   } />
-                  <Route path="/community" element={<CommunityPage session={session} />} />
-                  <Route path="/community/post/:id" element={<PostDetailPage />} />
+                  <Route path="/reviews" element={<ReviewCollectionPage />} />
+                  <Route path="/community" element={<ReviewCollectionPage />} />
                   <Route path="/fortune" element={
                     <FortunePage
                       onFortuneClick={() => navigate('/today-fortune')}

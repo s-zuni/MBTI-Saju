@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, MessageSquare, Layers, Users, Sparkles, Trophy } from 'lucide-react';
+import { Compass, MessageSquare, Layers, Sparkles, Trophy, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
@@ -65,13 +65,13 @@ const FeatureGrids: React.FC<FeatureGridsProps> = () => {
             action: () => checkCreditsAndOpen(SERVICE_COSTS.TAROT, () => openModal('tarot')),
         },
         {
-            icon: Users,
-            label: '커뮤니티',
-            sub: '운명을 나누는 공간',
-            color: 'from-slate-600 to-slate-800',
-            iconBg: 'bg-slate-100',
-            iconColor: 'text-slate-600',
-            action: () => navigate('/community'),
+            icon: Star,
+            label: '이용후기',
+            sub: '찐 솔직한 이용후기 모음',
+            color: 'from-amber-400 to-orange-500',
+            iconBg: 'bg-amber-50',
+            iconColor: 'text-amber-500',
+            action: () => navigate('/reviews'),
         },
         {
             icon: Sparkles,

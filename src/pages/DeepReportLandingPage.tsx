@@ -18,19 +18,22 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       name: "김*현",
       tag: "30대 직장인",
       content: "그동안 봤던 사주랑은 차원이 달라요. 20페이지가 넘는 분량에 제 성격부터 미래 3년 운세까지 정말 디테일하게 분석되어 있어서 놀랐습니다. 특히 MBTI랑 결합된 분석이 정말 정확해요.",
-      rating: 5
+      rating: 5,
+      date: "2026.05.18"
     },
     {
       name: "이*우",
       tag: "사업가",
       content: "사업 방향성을 잡는 데 큰 도움이 되었습니다. 1,000만 건의 데이터를 기반으로 했다더니 통계적으로 납득이 가는 분석들이 많더라고요. 3년치 운세가 다 들어있어서 돈이 아깝지 않습니다.",
-      rating: 5
+      rating: 5,
+      date: "2026.05.17"
     },
     {
       name: "박*아",
       tag: "취준생",
       content: "단순히 '좋다 나쁘다'가 아니라, 구체적으로 어떤 시기에 무엇을 조심해야 할지 알려줘서 좋았어요. 리포트 디자인도 너무 고급스러워서 소장 가치가 있습니다.",
-      rating: 5
+      rating: 5,
+      date: "2026.05.15"
     }
   ];
 
@@ -201,7 +204,11 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                   </div>
                   <div>
                     <div className="text-white font-medium text-sm">{review.name}</div>
-                    <div className="text-slate-500 text-xs">{review.tag}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-slate-500 text-xs">{review.tag}</span>
+                      <span className="text-white/20 text-[10px]">•</span>
+                      <span className="text-slate-500 text-xs">{review.date}</span>
+                    </div>
                   </div>
                 </div>
               </div>
