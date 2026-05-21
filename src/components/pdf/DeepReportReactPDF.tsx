@@ -352,7 +352,7 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
                 x={x + barWidth / 2} 
                 y={chartHeight + 15} 
                 textAnchor="middle" 
-                style={{ fontSize: 11, fontWeight: 'bold', fill: '#1E293B', fontFamily: 'NanumGothic' }}
+                style={{ fontSize: 11, fontWeight: 'bold', fill: '#1E293B', fontFamily: 'NotoSansKR' }}
               >
                 {item.label}
               </Text>
@@ -360,7 +360,7 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
                 x={x + barWidth / 2} 
                 y={chartHeight - barHeight - 5} 
                 textAnchor="middle" 
-                style={{ fontSize: 10, fontWeight: 'bold', fill: item.color, fontFamily: 'NanumGothic' }}
+                style={{ fontSize: 10, fontWeight: 'bold', fill: item.color, fontFamily: 'NotoSansKR' }}
               >
                 {item.value}%
               </Text>
@@ -442,7 +442,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <Svg width="80" height="80" viewBox="0 0 100 100">
             <Path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="#FBBF24" strokeWidth="2" />
             <Path d="M50 15 L85 30 L85 70 L50 85 L15 70 L15 30 Z" fill="#FBBF24" opacity="0.2" />
-            <Text x="50" y="55" textAnchor="middle" style={{ fontSize: 10, fill: '#FBBF24', fontFamily: 'NanumMyungjo' }}>命</Text>
+            <Text x="50" y="55" textAnchor="middle" style={{ fontSize: 10, fill: '#FBBF24', fontFamily: 'NotoSansKR' }}>命</Text>
           </Svg>
         </View>
 
