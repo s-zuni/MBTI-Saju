@@ -2,6 +2,8 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Rect, G, Circle, Line } from '@react-pdf/renderer';
 import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
 import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
+import NanumGothicRegular from '../../assets/fonts/NanumGothic-Regular.ttf';
+import NanumGothicBold from '../../assets/fonts/NanumGothic-Bold.ttf';
 
 // Font Registration
 Font.register({
@@ -15,10 +17,12 @@ Font.register({
 });
 
 Font.register({
-  family: 'NotoSansKR',
+  family: 'NanumGothic',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLQ.ttf' },
-    { src: 'https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzg01eLQ.ttf', fontWeight: 'bold' }
+    { src: NanumGothicRegular, fontWeight: 400 },
+    { src: NanumGothicBold, fontWeight: 700 },
+    { src: NanumGothicRegular, fontWeight: 400, fontStyle: 'italic' },
+    { src: NanumGothicBold, fontWeight: 700, fontStyle: 'italic' }
   ]
 });
 
@@ -26,7 +30,7 @@ const styles = StyleSheet.create({
   page: {
     padding: '20mm',
     backgroundColor: '#ffffff',
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
     fontSize: 13,
     lineHeight: 1.6,
     color: '#1E293B',
@@ -39,7 +43,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ffffff',
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
   },
   coverTitle: {
     fontFamily: 'NanumMyungjo',
@@ -82,12 +86,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderLeft: '4.5pt solid #6366F1',
     paddingLeft: 15,
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
   },
   paragraph: {
     marginBottom: 15,
     textAlign: 'justify',
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
     color: '#334155',
     fontSize: 13,
   },
@@ -100,11 +104,11 @@ const styles = StyleSheet.create({
     width: 15,
     fontSize: 13,
     color: '#6366F1',
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
   },
   bulletText: {
     flex: 1,
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
     fontSize: 13,
     lineHeight: 1.5,
   },
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4338CA',
     marginBottom: 9,
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
   },
   footer: {
     position: 'absolute',
@@ -133,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     fontSize: 12,
     color: '#94A3B8',
-    fontFamily: 'NotoSansKR',
+    fontFamily: 'NanumGothic',
   },
   sajuTable: {
     flexDirection: 'row',
@@ -259,6 +263,10 @@ interface SajuReportContent {
       subtopics: ReportDetail[];
     }[];
   };
+  specialRequestAnalysis?: {
+    title: string;
+    details: ReportDetail[];
+  };
   actionPlan?: {
     title: string;
     details: ReportDetail[];
@@ -359,7 +367,7 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
                 x={x + barWidth / 2} 
                 y={chartHeight + 15} 
                 textAnchor="middle" 
-                style={{ fontSize: 11, fontWeight: 'bold', fill: '#1E293B' }}
+                style={{ fontSize: 11, fontWeight: 'bold', fill: '#1E293B', fontFamily: 'NanumGothic' }}
               >
                 {item.label}
               </Text>
@@ -367,7 +375,7 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
                 x={x + barWidth / 2} 
                 y={chartHeight - barHeight - 5} 
                 textAnchor="middle" 
-                style={{ fontSize: 10, fontWeight: 'bold', fill: item.color }}
+                style={{ fontSize: 10, fontWeight: 'bold', fill: item.color, fontFamily: 'NanumGothic' }}
               >
                 {item.value}%
               </Text>
@@ -389,6 +397,16 @@ const DayMasterBox: React.FC<{ dayMaster: SajuData["userSaju"]["dayMaster"] }> =
   );
 };
 
+const GAN_SINGLE_KOREAN: Record<string, string> = {
+  '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무',
+  '己': '기', '庚': '경', '辛': '신', '壬': '임', '癸': '계'
+};
+const ZHI_SINGLE_KOREAN: Record<string, string> = {
+  '子': '자', '丑': '축', '寅': '인', '卯': '묘', '辰': '진',
+  '巳': '사', '午': '오', '未': '미', '申': '신', '酉': '유',
+  '戌': '술', '亥': '해'
+};
+
 const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
   if (!saju?.pillars) return null;
   const pillars = [saju.pillars.hour, saju.pillars.day, saju.pillars.month, saju.pillars.year];
@@ -401,12 +419,12 @@ const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
           <View style={styles.sajuHeader}><Text>{headers[i]}</Text></View>
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>천간(天干)</Text>
-            <Text style={styles.sajuValue}>{p?.gan || "-"}</Text>
+            <Text style={styles.sajuValue}>{p?.gan ? `${GAN_SINGLE_KOREAN[p.gan] || p.gan}(${p.gan})` : "-"}</Text>
             <Text style={{ fontSize: 10, color: '#6366F1', marginTop: 2, fontWeight: 'bold' }}>{p?.ganShiShen || "-"}</Text>
           </View>
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>지지(地支)</Text>
-            <Text style={styles.sajuValue}>{p?.zhi || "-"}</Text>
+            <Text style={styles.sajuValue}>{p?.zhi ? `${ZHI_SINGLE_KOREAN[p.zhi] || p.zhi}(${p.zhi})` : "-"}</Text>
             <Text style={{ fontSize: 10, color: '#4338CA', marginTop: 2, fontWeight: 'bold' }}>{p?.zhiShiShen || "-"}</Text>
           </View>
           <View style={[styles.sajuCell, { borderBottom: 0, backgroundColor: '#F8FAFC' }]}>
@@ -561,9 +579,26 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         </Page>
       ))}
 
-      {/* 05. Action Plan */}
+      {/* 05. Special Request Analysis (At least 3 pages) */}
+      {parsedContent.specialRequestAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
+        <Page key={idx} size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>{idx === 0 ? (parsedContent.specialRequestAnalysis?.title || "05. 내담자 특별 요청사항에 대한 명리적 해답") : `${detail.subtitle || '요청사항 상세 분석'}`}</Text>
+          
+          <View style={{ marginTop: 10 }}>
+            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#4F46E5' }]}>{detail.subtitle}</Text>}
+            {renderText(detail.content)}
+          </View>
+          
+          <View style={styles.footer} fixed>
+            <Text>VIP 프리미엄 전략 보고서 | 특별 요청사항 분석</Text>
+            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          </View>
+        </Page>
+      ))}
+
+      {/* 06. Action Plan */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "05. 운명을 바꾸는 마스터의 마스터플랜"}</Text>
+        <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "06. 운명을 바꾸는 마스터의 마스터플랜"}</Text>
         
         {parsedContent.actionPlan?.details?.map((detail: ReportDetail, idx: number) => (
           <View key={idx} style={{ marginBottom: 20 }}>

@@ -197,52 +197,97 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { purchaseId, cancelReason } = req.body;
+    const { purchaseId, cancelReason, type } = req.body;
 
     if (!purchaseId) {
         return res.status(400).json({ success: false, message: 'Missing purchaseId' });
     }
 
     try {
-        const { data: purchase, error: fetchError } = await supabaseAdmin
-            .from('credit_purchases')
-            .select('*, profiles(id, credits)')
-            .eq('id', purchaseId)
-            .single();
+        if (type === 'deep_report') {
+            const { data: request, error: fetchError } = await supabaseAdmin
+                .from('deep_report_requests')
+                .select('*')
+                .eq('id', purchaseId)
+                .single();
 
-        if (fetchError || !purchase) {
-            return res.status(404).json({ success: false, message: 'Purchase not found' });
-        }
+            if (fetchError || !request) {
+                return res.status(404).json({ success: false, message: 'Deep report request not found' });
+            }
 
-        const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
-        const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
+            if (!request.payment_id) {
+                return res.status(400).json({ success: false, message: '결제 정보(payment_id)가 없는 요청입니다.' });
+            }
 
-        const tossResponse = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${purchase.payment_id}/cancel`), {
-            method: 'POST',
-            body: JSON.stringify({ cancelReason: cancelReason || '관리자에 의한 환불' }),
-            headers: {
-                Authorization: encryptedSecretKey,
-                'Content-Type': 'application/json',
-            },
-        });
+            const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
+            const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
 
-        const tossData = await tossResponse.json();
-
-        if (!tossResponse.ok) {
-            return res.status(tossResponse.status).json({
-                success: false,
-                message: tossData.message || 'Toss cancel failed',
-                code: tossData.code
+            const tossResponse = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${request.payment_id}/cancel`), {
+                method: 'POST',
+                body: JSON.stringify({ cancelReason: cancelReason || '관리자에 의한 환불' }),
+                headers: {
+                    Authorization: encryptedSecretKey,
+                    'Content-Type': 'application/json',
+                },
             });
+
+            const tossData = await tossResponse.json();
+
+            if (!tossResponse.ok) {
+                return res.status(tossResponse.status).json({
+                    success: false,
+                    message: tossData.message || 'Toss cancel failed',
+                    code: tossData.code
+                });
+            }
+
+            await supabaseAdmin.from('deep_report_requests').update({ status: 'refunded' }).eq('id', purchaseId);
+
+            // Also update corresponding credit_purchases if any
+            await supabaseAdmin.from('credit_purchases').update({ status: 'refunded', refunded_at: new Date().toISOString() }).eq('payment_id', request.payment_id);
+
+            return res.status(200).json({ success: true, message: 'Refund successful', data: { toss: tossData } });
+        } else {
+            const { data: purchase, error: fetchError } = await supabaseAdmin
+                .from('credit_purchases')
+                .select('*, profiles(id, credits)')
+                .eq('id', purchaseId)
+                .single();
+
+            if (fetchError || !purchase) {
+                return res.status(404).json({ success: false, message: 'Purchase not found' });
+            }
+
+            const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
+            const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
+
+            const tossResponse = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${purchase.payment_id}/cancel`), {
+                method: 'POST',
+                body: JSON.stringify({ cancelReason: cancelReason || '관리자에 의한 환불' }),
+                headers: {
+                    Authorization: encryptedSecretKey,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const tossData = await tossResponse.json();
+
+            if (!tossResponse.ok) {
+                return res.status(tossResponse.status).json({
+                    success: false,
+                    message: tossData.message || 'Toss cancel failed',
+                    code: tossData.code
+                });
+            }
+
+            await supabaseAdmin.from('credit_purchases').update({ status: 'refunded', refunded_at: new Date().toISOString() }).eq('id', purchaseId);
+
+            const currentCredits = purchase.profiles?.credits || 0;
+            const newCredits = Math.max(0, currentCredits - purchase.purchased_credits);
+            await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', purchase.user_id);
+
+            return res.status(200).json({ success: true, message: 'Refund successful', data: { new_balance: newCredits, toss: tossData } });
         }
-
-        await supabaseAdmin.from('credit_purchases').update({ status: 'refunded', refunded_at: new Date().toISOString() }).eq('id', purchaseId);
-
-        const currentCredits = purchase.profiles?.credits || 0;
-        const newCredits = Math.max(0, currentCredits - purchase.purchased_credits);
-        await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', purchase.user_id);
-
-        return res.status(200).json({ success: true, message: 'Refund successful', data: { new_balance: newCredits, toss: tossData } });
     } catch (error: any) {
         return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
     }

@@ -76,6 +76,51 @@ const ZHI_MAP: { [key: string]: { element: string; polarity: string; korean: str
     '亥': { element: 'water', polarity: '-', korean: '해수' }, // Pig
 };
 
+// Translation Maps for Korean/Hanja 병기
+const SHISHEN_TRANSLATE: Record<string, string> = {
+    '比肩': '비견(比肩)',
+    '劫財': '겁재(劫財)', '劫财': '겁재(劫財)',
+    '食神': '식신(食神)',
+    '傷官': '상관(傷官)', '伤官': '상관(傷官)',
+    '偏財': '편재(偏財)', '偏财': '편재(偏財)',
+    '正財': '정재(正財)', '正财': '정재(正財)',
+    '偏官': '편관(偏官)',
+    '七殺': '편관(七殺)', '七杀': '편관(七殺)',
+    '正官': '정관(正官)',
+    '偏印': '편인(偏印)',
+    '正印': '정인(正印)'
+};
+
+const STAGE_TRANSLATE: Record<string, string> = {
+    '长生': '장생(長生)', '長生': '장생(長生)',
+    '沐浴': '목욕(沐浴)',
+    '冠带': '관대(冠帶)', '冠帶': '관대(冠帶)',
+    '临官': '건록(建祿)', '臨官': '건록(建祿)',
+    '帝旺': '제왕(帝旺)',
+    '衰': '쇠(衰)',
+    '病': '병(病)',
+    '死': '사(死)',
+    '墓': '묘(墓)',
+    '绝': '절(絶)', '絶': '절(絶)',
+    '胎': '태(胎)',
+    '养': '양(養)', '養': '양(養)'
+};
+
+const SPIRIT_TRANSLATE: Record<string, string> = {
+    '지살': '지살(地煞)',
+    '연살': '연살(年煞)',
+    '월살': '월살(月煞)',
+    '망신살': '망신살(亡神)',
+    '장성살': '장성살(將星)',
+    '반안살': '반안살(攀鞍)',
+    '역마살': '역마살(驛馬)',
+    '육해살': '육해살(六害)',
+    '화개살': '화개살(華蓋)',
+    '겁살': '겁살(劫煞)',
+    '재살': '재살(災煞)',
+    '천살': '천살(天煞)'
+};
+
 // 12 Sinsal (Spirits) Mapping based on Triple Combinations (삼합)
 const SPIRIT_ORDER = ['지살', '연살', '월살', '망신살', '장성살', '반안살', '역마살', '육해살', '화개살', '겁살', '재살', '천살'];
 const ZHI_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -95,7 +140,8 @@ function getTwelveSpirits(baseZhi: string, targetZhi: string): string {
     const targetIndex = ZHI_ORDER.indexOf(targetZhi);
     
     const distance = (targetIndex - startIndex + 12) % 12;
-    return SPIRIT_ORDER[distance] || '-';
+    const spirit = SPIRIT_ORDER[distance] || '-';
+    return SPIRIT_TRANSLATE[spirit] || spirit;
 }
 
 const DAY_MASTER_DESC: { [key: string]: string } = {
@@ -175,15 +221,18 @@ export function calculateSaju(birthDate: string, birthTime: string | null): Saju
 
     const createPillar = (gan: string, zhi: string, type: 'Year' | 'Month' | 'Day' | 'Time'): PillarInfo => {
         const isUnknown = gan === '?';
+        const ganRaw = isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenGan`]() || '-';
+        const zhiRaw = isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenZhi`]() || '-';
+        const stageRaw = isUnknown ? '-' : (eightChar as any)[`get${type}DiShi`]() || '-';
         return {
             gan,
             zhi,
             ganElement: GAN_MAP[gan]?.element || '',
             zhiElement: ZHI_MAP[zhi]?.element || '',
-            ganShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenGan`]() || '-',
-            zhiShiShen: isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenZhi`]() || '-',
+            ganShiShen: isUnknown ? '-' : SHISHEN_TRANSLATE[ganRaw] || ganRaw,
+            zhiShiShen: isUnknown ? '-' : SHISHEN_TRANSLATE[zhiRaw] || zhiRaw,
             hiddenStems: isUnknown ? [] : (eightChar as any)[`get${type}HideGan`]() || [],
-            twelveStages: isUnknown ? '-' : (eightChar as any)[`get${type}DiShi`]() || '-',
+            twelveStages: isUnknown ? '-' : STAGE_TRANSLATE[stageRaw] || stageRaw,
             twelveSpirits: isUnknown ? '-' : getTwelveSpirits(dayZhi, zhi)
         };
     };
