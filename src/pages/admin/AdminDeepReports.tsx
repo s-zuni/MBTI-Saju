@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle, RefreshCw } from 'lucide-react';
+import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, Mail, MessageCircle, RefreshCw, FileText } from 'lucide-react';
 import { generateReactPDF } from '../../utils/pdfGenerator';
 import { DeepReportReactPDF } from '../../components/pdf/DeepReportReactPDF';
+import { generateDocx } from '../../utils/docxGenerator';
 import { calculateSaju } from '../../utils/sajuUtils';
 
 interface DeepReportRequest {
@@ -123,6 +124,27 @@ const AdminDeepReports: React.FC = () => {
     } catch (err: any) {
       console.error('PDF generation error:', err);
       alert(`PDF 생성 중 오류가 발생했습니다: ${err?.message || '알 수 없는 오류'}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!reportModal.sajuData) {
+      alert('분석 데이터가 아직 완전히 구조화되지 않았거나 생성 중입니다. 잠시만 기다려주세요.');
+      return;
+    }
+    setIsExporting(true);
+
+    try {
+      await generateDocx(
+        reportModal.sajuData,
+        reportModal.sajuData,
+        getDisplayName(reportModal.currentReq!)
+      );
+    } catch (err: any) {
+      console.error('DOCX generation error:', err);
+      alert(`DOCX 생성 중 오류가 발생했습니다: ${err?.message || '알 수 없는 오류'}`);
     } finally {
       setIsExporting(false);
     }
@@ -609,6 +631,18 @@ const AdminDeepReports: React.FC = () => {
                  >
                    {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
                    PREMIUM PDF 다운로드
+                 </button>
+                 <button 
+                  onClick={handleDownloadDocx}
+                  disabled={generatingId !== null || isExporting}
+                  className={`px-8 py-4 font-black rounded-2xl flex items-center gap-3 transition-all transform active:scale-95 ${
+                      generatingId || isExporting
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:shadow-blue-300'
+                  }`}
+                 >
+                   {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                   DOCX 다운로드
                  </button>
                  <button onClick={() => setReportModal(prev => ({...prev, isOpen: false}))} className="p-4 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all">
                     <X className="w-8 h-8" />

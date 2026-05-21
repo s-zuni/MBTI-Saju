@@ -1,36 +1,21 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Rect, G, Circle, Line } from '@react-pdf/renderer';
-import NanumMyeongjoRegular from '../../assets/fonts/NanumMyeongjo-Regular.ttf';
-import NanumMyeongjoBold from '../../assets/fonts/NanumMyeongjo-Bold.ttf';
-import NanumGothicRegular from '../../assets/fonts/NanumGothic-Regular.ttf';
-import NanumGothicBold from '../../assets/fonts/NanumGothic-Bold.ttf';
+import NotoSansKR from '../../assets/fonts/NotoSansKR.ttf';
 
-// Font Registration
+// Font Registration - Noto Sans KR supports full CJK (Hanja) characters
 Font.register({
-  family: 'NanumMyungjo',
-  fonts: [
-    { src: NanumMyeongjoRegular, fontWeight: 400 },
-    { src: NanumMyeongjoBold, fontWeight: 700 },
-    { src: NanumMyeongjoRegular, fontWeight: 400, fontStyle: 'italic' },
-    { src: NanumMyeongjoBold, fontWeight: 700, fontStyle: 'italic' }
-  ]
+  family: 'NotoSansKR',
+  src: NotoSansKR,
 });
 
-Font.register({
-  family: 'NanumGothic',
-  fonts: [
-    { src: NanumGothicRegular, fontWeight: 400 },
-    { src: NanumGothicBold, fontWeight: 700 },
-    { src: NanumGothicRegular, fontWeight: 400, fontStyle: 'italic' },
-    { src: NanumGothicBold, fontWeight: 700, fontStyle: 'italic' }
-  ]
-});
+// Prevent CJK hyphenation issues
+Font.registerHyphenationCallback(word => [word]);
 
 const styles = StyleSheet.create({
   page: {
     padding: '20mm',
     backgroundColor: '#ffffff',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
     fontSize: 13,
     lineHeight: 1.6,
     color: '#1E293B',
@@ -43,10 +28,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ffffff',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   coverTitle: {
-    fontFamily: 'NanumMyungjo',
+    fontFamily: 'NotoSansKR',
     fontSize: 48,
     marginBottom: 30,
     textAlign: 'center',
@@ -63,12 +48,12 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: 36,
-    fontFamily: 'NanumMyungjo',
+    fontFamily: 'NotoSansKR',
     marginTop: 30,
     color: '#F8FAFC',
   },
   sectionTitle: {
-    fontFamily: 'NanumMyungjo',
+    fontFamily: 'NotoSansKR',
     fontSize: 20,
     color: '#0F172A',
     borderBottom: '1.5pt solid #E2E8F0',
@@ -86,12 +71,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderLeft: '4.5pt solid #6366F1',
     paddingLeft: 15,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   paragraph: {
     marginBottom: 15,
     textAlign: 'justify',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
     color: '#334155',
     fontSize: 13,
   },
@@ -104,11 +89,11 @@ const styles = StyleSheet.create({
     width: 15,
     fontSize: 13,
     color: '#6366F1',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
     fontSize: 13,
     lineHeight: 1.5,
   },
@@ -124,7 +109,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4338CA',
     marginBottom: 9,
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   footer: {
     position: 'absolute',
@@ -137,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     fontSize: 12,
     color: '#94A3B8',
-    fontFamily: 'NanumGothic',
+    fontFamily: 'NotoSansKR',
   },
   sajuTable: {
     flexDirection: 'row',
