@@ -21,12 +21,28 @@ interface Payment {
     status: string;
     purchased_at: string;
     payment_id: string;
+    payment_method?: string;
     profiles?: {
         name: string;
         email: string;
     } | null;
     email?: string;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const PaymentManagement: React.FC = () => {
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -72,8 +88,10 @@ const PaymentManagement: React.FC = () => {
                 status: p.status,
                 purchased_at: p.purchased_at,
                 payment_id: p.payment_id,
+                payment_method: p.payment_method,
                 profiles: p.profiles
             }));
+
 
             // 4. Map deep report requests
             const mappedReports: Payment[] = (reportData || []).map(p => {
@@ -89,13 +107,12 @@ const PaymentManagement: React.FC = () => {
                     status: p.status,
                     purchased_at: p.created_at,
                     payment_id: p.payment_id || '-',
-                    profiles: {
-                        name: displayName,
-                        email: displayEmail
-                    },
+                    payment_method: p.payment_method,
+                    profiles: { name: displayName, email: displayEmail },
                     email: displayEmail
                 };
             });
+
 
             // 5. Merge and sort by purchased_at descending
             const merged = [...mappedCredits, ...mappedReports].sort((a, b) => {
@@ -226,6 +243,7 @@ const PaymentManagement: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">구분 / 주문 정보</th>
+                                <th className="px-6 py-4 text-sm font-bold text-slate-400">결제 수단</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">결제 금액</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">상품 정보</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">상태</th>
@@ -235,13 +253,13 @@ const PaymentManagement: React.FC = () => {
                         <tbody className="divide-y divide-slate-100 font-medium">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                    <td colSpan={6} className="px-6 py-20 text-center">
                                         <Loader2 className="animate-spin text-slate-950 mx-auto" size={32} />
                                     </td>
                                 </tr>
                             ) : filteredPayments.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400">결제 내역이 없습니다.</td>
+                                    <td colSpan={6} className="px-6 py-20 text-center text-slate-400">결제 내역이 없습니다.</td>
                                 </tr>
                             ) : (
                                 filteredPayments.map((p) => (
@@ -259,6 +277,9 @@ const PaymentManagement: React.FC = () => {
                                                     <div className="text-[10px] text-slate-300 mt-1 font-mono">{p.payment_id}</div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-slate-600">{p.payment_method ?? '기타'}</div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-900 font-black">
                                             {p.price_paid?.toLocaleString()}원
