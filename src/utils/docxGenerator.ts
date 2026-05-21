@@ -22,7 +22,7 @@ function parseContentToParagraphs(text: string): Paragraph[] {
     const bulletMatch = trimmed.match(/^([-•*+]|\d+\.)\s+(.*)$/);
     if (bulletMatch) {
       return new Paragraph({
-        children: [new TextRun({ text: bulletMatch[2], size: 22, font: 'Malgun Gothic' })],
+        children: [new TextRun({ text: bulletMatch[2] || '', size: 22, font: 'Malgun Gothic' })],
         bullet: { level: 0 },
         spacing: { after: 80 },
       });
