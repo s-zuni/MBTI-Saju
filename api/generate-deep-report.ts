@@ -286,9 +286,9 @@ export default async function handler(req: Request) {
 6. MBTI는 반드시 사주적 근거와 연결하여 설명하십시오. (별개로 서술 금지)
 7. 뻔한 희망 고문이나 추상적 조언은 철저히 배제하고, 차갑고 예리한 현실적 대안을 제시하십시오.
 8. 영어 사용 시(MBTI 제외) 마스터의 자격 박탈로 간주합니다.
-9. 전체 텍스트 분량은 공백 포함 최소 12,000자 이상이 되어야 합니다. (매우 중요)\`;
+9. 전체 텍스트 분량은 공백 포함 최소 12,000자 이상이 되어야 합니다. (매우 중요)`;
 
-        const userQuery = \`이름: \${name}, MBTI: \${mbti}, 생년월일시: \${birthInfo}, 유형: \${report_type}, 요청: \${specialRequest || '없음'}\\n\${sajuContext}\`;
+        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}, 유형: ${report_type}, 요청: ${specialRequest || '없음'}\n${sajuContext}`;
 
         let lastError;
         for (let attempt = 0; attempt < 4; attempt++) {
