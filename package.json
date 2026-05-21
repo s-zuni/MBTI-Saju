@@ -58,6 +58,7 @@
     "node": "24.x"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20.11.0",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
