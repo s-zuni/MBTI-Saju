@@ -564,22 +564,22 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         </Page>
       ))}
 
-      {/* 05. Special Request Analysis (At least 3 pages) */}
-      {parsedContent.specialRequestAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
-        <Page key={idx} size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{idx === 0 ? (parsedContent.specialRequestAnalysis?.title || "05. 내담자 특별 요청사항에 대한 명리적 해답") : `${detail.subtitle || '요청사항 상세 분석'}`}</Text>
-          
-          <View style={{ marginTop: 10 }}>
+      {/* 05. Special Request Analysis */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>{parsedContent.specialRequestAnalysis?.title || "05. 내담자 특별 요청사항에 대한 명리적 해답"}</Text>
+        
+        {parsedContent.specialRequestAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
+          <View key={idx} style={{ marginBottom: 20 }}>
             {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#4F46E5' }]}>{detail.subtitle}</Text>}
             {renderText(detail.content)}
           </View>
-          
-          <View style={styles.footer} fixed>
-            <Text>VIP 프리미엄 전략 보고서 | 특별 요청사항 분석</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
-        </Page>
-      ))}
+        ))}
+        
+        <View style={styles.footer} fixed>
+          <Text>VIP 프리미엄 전략 보고서 | 특별 요청사항 분석</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
+      </Page>
 
       {/* 06. Action Plan */}
       <Page size="A4" style={styles.page}>
