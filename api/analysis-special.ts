@@ -102,8 +102,9 @@ function getDeterministicValue(seed: string, offset: number, min: number, max: n
 
 function getDateString(offsetDays: number = 0): string {
     const d = new Date();
+    d.setHours(d.getHours() + 9); // KST
     d.setDate(d.getDate() + offsetDays);
-    return d.toISOString().split('T')[0]!; // YYYY-MM-DD in UTC
+    return d.toISOString().split('T')[0]!; // YYYY-MM-DD
 }
 
 
@@ -298,7 +299,8 @@ MBTI: ${mbti}
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
         const dateTag = scope === 'tomorrow' ? '내일' : '오늘';
-        userQuery = `[대상 날짜: ${dateTag}] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}. 반드시 '${dateTag}'의 운세만 생성하세요.`;
+        const targetDate = getDateString(scope === 'tomorrow' ? 1 : 0);
+        userQuery = `[대상 날짜: ${targetDate} (${dateTag})] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}. 반드시 '${dateTag}'의 운세만 생성하세요. 생성되는 운세의 date 필드는 반드시 '${targetDate}' 이어야 합니다.`;
     }
 
     try {
