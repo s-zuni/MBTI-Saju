@@ -139,6 +139,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ message: 'Request not found' });
         }
 
+        if (request.status !== 'paid' && request.status !== 'active') {
+            return res.status(400).json({ success: false, message: '결제가 승인되지 않아 리포트를 생성할 수 없습니다.' });
+        }
+
         if (request.generated_data) {
             return res.status(200).json({ success: true, message: 'Already generated' });
         }
@@ -330,7 +334,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const parsedData = JSON.parse(cleanedText);
         const dataToSave = { ...parsedData, userSaju, reportType: report_type, mbti, clientName: name, birthInfo: birth_info };
 
-        await supabase.from('deep_report_requests').update({ generated_data: dataToSave, generated_at: new Date().toISOString(), status: 'paid' }).eq('order_id', orderId);
+        await supabase.from('deep_report_requests').update({ generated_data: dataToSave, generated_at: new Date().toISOString() }).eq('order_id', orderId);
 
         return res.status(200).json({ success: true, message: 'Generated' });
     } catch (error: any) {
