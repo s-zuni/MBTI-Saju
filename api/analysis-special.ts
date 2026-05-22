@@ -232,7 +232,21 @@ export default async function handler(req: Request) {
     } else if (type === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (type === 'trip') {
-        userQuery = `이름: ${name}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 지역: ${region}, 기간: ${startDate} ~ ${endDate}, 요청사항: ${requirements}`;
+        userQuery = `[여행지 및 일정 분석 요청]
+사용자 이름: ${name}
+MBTI: ${mbti}
+사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
+오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
+선호 지역: ${region}
+여행 기간: ${startDate} ~ ${endDate}
+요청사항: ${requirements}
+
+[생성 작업 지침]
+1. 20대 여성의 취향과 감성에 맞춘 트렌디하고 감각적인 여행 코스와 장소를 제안하세요. (예: 인스타그래머블 핫플, 감성 숙소, 웨이팅 맛집, 힐링 스팟 등)
+2. 사용자의 사주(일간, 오행의 부족/과다)와 MBTI 성향을 깊이 있게 분석하여, '왜 이곳이 당신에게 완벽한 맞춤 여행지인지' 설득력 있게 설명하세요. (예: 부족한 수(水) 기운을 채워주는 오션뷰 숙소, P 성향을 배려한 여유로운 동선 등)
+3. 각 추천 장소마다 인생샷을 건질 수 있는 'photoSpot'과 기운을 보완해줄 수 있는 'food'를 반드시 포함하세요.
+4. 함께 가면 시너지가 나는 여행 메이트(companion)와 이번 여행에 챙기면 좋은 행운의 아이템(luckyItem)을 추천하세요.
+5. 일정(itinerary) 구성 시 너무 뻔한 관광지가 아닌 현지인 느낌의 장소를 포함시키고, MBTI 특성을 고려한 일정을 구성하세요.`;
     } else if (type === 'kbo') {
         const isNoTeam = requirements === '없음 (아직 없음)';
         

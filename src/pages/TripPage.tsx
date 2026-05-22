@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { MapPin, Plane, Calendar, Download, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock } from 'lucide-react';
+import { MapPin, Plane, Calendar, Download, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import { stripMarkdown } from '../utils/textUtils';
 import { useAuth } from '../hooks/useAuth';
@@ -270,6 +270,16 @@ const TripPage: React.FC = () => {
                                     </div>
                                 ) : result ? (
                                     <div className="space-y-16 animate-fade-up">
+                                        {result?.concept && (
+                                            <div className="bg-gradient-to-br from-sky-500 to-indigo-600 p-8 rounded-[40px] text-white shadow-xl">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <Heart className="w-8 h-8 text-sky-200" />
+                                                    <h3 className="text-xl font-bold text-sky-100">이번 여행의 테마</h3>
+                                                </div>
+                                                <p className="text-3xl font-black leading-tight break-keep">{stripMarkdown(result.concept)}</p>
+                                            </div>
+                                        )}
+
                                         <section className="space-y-8">
                                             <h4 className="text-xl font-black text-slate-950 inline-flex items-center gap-3 bg-sky-50 py-3 px-6 rounded-full">
                                                 <MapPin className="w-6 h-6 text-sky-500" /> 추천 여행지 BEST 3
@@ -291,6 +301,18 @@ const TripPage: React.FC = () => {
                                                                 <p className="text-xs font-black text-sky-600 uppercase tracking-widest">Recommended Activities</p>
                                                                 <p className="text-slate-700 leading-relaxed font-medium text-lg break-keep">{stripMarkdown(place.activity)}</p>
                                                             </div>
+                                                            {place.photoSpot && (
+                                                                <div className="space-y-2 bg-sky-50 p-4 rounded-2xl">
+                                                                    <p className="text-xs font-black text-sky-600 uppercase tracking-widest flex items-center gap-1"><Camera className="w-4 h-4"/> Photo Spot</p>
+                                                                    <p className="text-slate-700 leading-relaxed font-medium break-keep">{stripMarkdown(place.photoSpot)}</p>
+                                                                </div>
+                                                            )}
+                                                            {place.food && (
+                                                                <div className="space-y-2 bg-orange-50 p-4 rounded-2xl">
+                                                                    <p className="text-xs font-black text-orange-600 uppercase tracking-widest flex items-center gap-1"><Coffee className="w-4 h-4"/> Lucky Food</p>
+                                                                    <p className="text-slate-700 leading-relaxed font-medium break-keep">{stripMarkdown(place.food)}</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -318,6 +340,57 @@ const TripPage: React.FC = () => {
                                                         </ul>
                                                     </div>
                                                 ))}
+                                            </div>
+                                        </section>
+
+                                        {(result?.companion || result?.luckyItem) && (
+                                            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {result.companion && (
+                                                    <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col gap-4">
+                                                        <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                                                            <Users className="w-6 h-6 text-indigo-500" />
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Best Travel Mate</h5>
+                                                            <p className="text-slate-950 font-bold text-lg break-keep">{stripMarkdown(result.companion)}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {result.luckyItem && (
+                                                    <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col gap-4">
+                                                        <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                                                            <Sparkles className="w-6 h-6 text-amber-500" />
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Lucky Item</h5>
+                                                            <p className="text-slate-950 font-bold text-lg break-keep">{stripMarkdown(result.luckyItem)}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </section>
+                                        )}
+
+                                        <section className="space-y-6">
+                                            <div className="bg-slate-950 p-8 rounded-[40px] text-white">
+                                                <h4 className="text-xl font-black text-white inline-flex items-center gap-3 mb-6">
+                                                    <Lightbulb className="w-6 h-6 text-yellow-400" /> 여행 총평 & 꿀팁
+                                                </h4>
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest">Summary</p>
+                                                        <p className="text-lg font-medium leading-relaxed break-keep">{stripMarkdown(result.summary || '')}</p>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-800">
+                                                        <div>
+                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Clock className="w-4 h-4"/> Best Time</p>
+                                                            <p className="text-slate-200 font-medium break-keep">{stripMarkdown(result.bestTime || '')}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Lightbulb className="w-4 h-4"/> Advice</p>
+                                                            <p className="text-slate-200 font-medium break-keep">{stripMarkdown(result.tip || '')}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </section>
 

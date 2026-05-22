@@ -97,15 +97,20 @@ export const singleDayFortuneSchema = z.object({
 
 // Special Analysis: Trip
 export const tripSchema = z.object({
+    concept: z.string().describe("이번 여행의 메인 컨셉 (예: '갑목과 INFP가 만나는 감성 힐링 여행')").optional(),
     places: z.array(z.object({
-        name: z.string(),
-        reason: z.string(),
-        activity: z.string()
+        name: z.string().describe("여행지 이름 (구체적인 장소나 도시)"),
+        reason: z.string().describe("사주와 MBTI 기반 추천 이유"),
+        activity: z.string().describe("이곳에서 꼭 해야 할 활동"),
+        photoSpot: z.string().describe("인생샷 포토스팟 및 사진 꿀팁").optional(),
+        food: z.string().describe("행운을 부르는 추천 맛집/메뉴").optional()
     })),
     itinerary: z.array(z.object({
         day: z.string(),
         schedule: z.array(z.string())
     })),
+    companion: z.string().describe("함께 가면 시너지가 나는 MBTI 또는 사주 일간 추천").optional(),
+    luckyItem: z.string().describe("여행에 챙겨가면 좋은 행운의 아이템 (OOTD, 소품 등)").optional(),
     summary: z.string(),
     bestTime: z.string(),
     tip: z.string()
