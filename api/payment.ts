@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).end();
     }
 
-    if (req.method !== 'POST') {
+    if (req.method !== 'POST' && req.method !== 'GET') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
@@ -21,6 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return confirmPayment(req, res);
     } else if (action === 'cancel') {
         return cancelPayment(req, res);
+    } else if (action === 'info') {
+        return getPaymentInfo(req, res);
     } else {
         return res.status(400).json({ success: false, message: 'Invalid action' });
     }
@@ -288,6 +290,41 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
 
             return res.status(200).json({ success: true, message: 'Refund successful', data: { new_balance: newCredits, toss: tossData } });
         }
+    } catch (error: any) {
+        return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+    }
+}
+
+async function getPaymentInfo(req: VercelRequest, res: VercelResponse) {
+    const paymentKey = req.query.paymentKey || req.body?.paymentKey;
+    if (!paymentKey || paymentKey === '-') {
+        return res.status(400).json({ success: false, message: '유효한 paymentKey가 없습니다.' });
+    }
+
+    try {
+        const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
+        const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
+
+        const tossResponse = await fetch(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
+            method: 'GET',
+            headers: {
+                Authorization: encryptedSecretKey,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const tossData = await tossResponse.json();
+
+        if (!tossResponse.ok) {
+            return res.status(tossResponse.status).json({
+                success: false,
+                message: tossData.message || 'Toss info failed',
+                code: tossData.code,
+                tossError: tossData
+            });
+        }
+
+        return res.status(200).json({ success: true, data: tossData });
     } catch (error: any) {
         return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
     }

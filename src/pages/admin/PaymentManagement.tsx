@@ -49,6 +49,9 @@ const PaymentManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [refundingId, setRefundingId] = useState<string | null>(null);
+    const [selectedPaymentInfo, setSelectedPaymentInfo] = useState<any>(null);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+    const [infoLoadingId, setInfoLoadingId] = useState<string | null>(null);
 
     const fetchPayments = React.useCallback(async () => {
         try {
@@ -164,6 +167,34 @@ const PaymentManagement: React.FC = () => {
         }
     };
 
+    const handleViewInfo = async (payment: Payment) => {
+        if (!payment.payment_id || payment.payment_id === '-') {
+            alert('Toss payment_id 가 없습니다.');
+            return;
+        }
+
+        setInfoLoadingId(payment.id);
+        try {
+            const response = await fetch(`/api/payment?action=info&paymentKey=${payment.payment_id}`, {
+                method: 'GET',
+            });
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || '정보를 불러오는데 실패했습니다.');
+            }
+            setSelectedPaymentInfo(result.data);
+            setIsInfoModalOpen(true);
+        } catch (error: any) {
+            console.error('Info fetch error:', error);
+            alert(error.message || '결제 상세 정보를 불러오는데 실패했습니다.');
+        } finally {
+            setInfoLoadingId(null);
+        }
+    };
+
+
+
     const filteredPayments = payments.filter(p =>
         p.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -187,6 +218,13 @@ const PaymentManagement: React.FC = () => {
                     >
                         {refundingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />} 환불처리
                     </button>
+                    <button 
+                        onClick={() => handleViewInfo(p)}
+                        disabled={infoLoadingId === p.id}
+                        className="text-[10px] text-slate-400 hover:text-blue-500 font-bold flex items-center gap-1 transition-colors disabled:opacity-50"
+                    >
+                        {infoLoadingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <Search size={10} />} 상세조회
+                    </button>
                 </div>
             );
         }
@@ -202,15 +240,44 @@ const PaymentManagement: React.FC = () => {
                     >
                          {refundingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <RotateCcw size={10} />} 즉시 환불 승인
                     </button>
+                    <button 
+                        onClick={() => handleViewInfo(p)}
+                        disabled={infoLoadingId === p.id}
+                        className="text-[10px] text-slate-400 hover:text-blue-500 font-bold flex items-center gap-1 transition-colors disabled:opacity-50"
+                    >
+                        {infoLoadingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <Search size={10} />} 상세조회
+                    </button>
                 </div>
             );
         }
 
         if (isRefunded) {
-            return <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><AlertCircle size={12} /> 환불완료</span>;
+            return (
+                <div className="flex flex-col gap-2">
+                    <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><AlertCircle size={12} /> 환불완료</span>
+                    <button 
+                        onClick={() => handleViewInfo(p)}
+                        disabled={infoLoadingId === p.id}
+                        className="text-[10px] text-slate-400 hover:text-blue-500 font-bold flex items-center gap-1 transition-colors disabled:opacity-50"
+                    >
+                        {infoLoadingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <Search size={10} />} 상세조회
+                    </button>
+                </div>
+            );
         }
 
-        return <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black w-fit">{p.status}</span>;
+        return (
+            <div className="flex flex-col gap-2">
+                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-black w-fit">{p.status}</span>
+                <button 
+                    onClick={() => handleViewInfo(p)}
+                    disabled={infoLoadingId === p.id}
+                    className="text-[10px] text-slate-400 hover:text-blue-500 font-bold flex items-center gap-1 transition-colors disabled:opacity-50"
+                >
+                    {infoLoadingId === p.id ? <Loader2 size={10} className="animate-spin" /> : <Search size={10} />} 상세조회
+                </button>
+            </div>
+        );
     };
 
     return (
@@ -304,6 +371,30 @@ const PaymentManagement: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Modal */}
+            {isInfoModalOpen && selectedPaymentInfo && (
+                <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="text-xl font-black text-slate-800">토스페이먼츠 결제 상세</h3>
+                            <button onClick={() => setIsInfoModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl">닫기</button>
+                        </div>
+                        <div className="p-6 overflow-y-auto">
+                            <pre className="bg-slate-50 p-4 rounded-2xl text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                {JSON.stringify(selectedPaymentInfo, null, 2)}
+                            </pre>
+                            {selectedPaymentInfo.receipt && selectedPaymentInfo.receipt.url && (
+                                <div className="mt-4">
+                                    <a href={selectedPaymentInfo.receipt.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline text-sm font-bold">
+                                        영수증 보기
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
