@@ -297,15 +297,21 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
 
 async function getPaymentInfo(req: VercelRequest, res: VercelResponse) {
     const paymentKey = req.query.paymentKey || req.body?.paymentKey;
-    if (!paymentKey || paymentKey === '-') {
-        return res.status(400).json({ success: false, message: '유효한 paymentKey가 없습니다.' });
+    const orderId = req.query.orderId || req.body?.orderId;
+    
+    if ((!paymentKey || paymentKey === '-') && (!orderId || orderId === '-')) {
+        return res.status(400).json({ success: false, message: '유효한 paymentKey나 orderId가 없습니다.' });
     }
 
     try {
         const widgetSecretKey = process.env.TOSS_SECRET_KEY || 'test_sk_Z1aOwX7K8m2Y2a7Wq9Lp8yQxzvNP';
         const encryptedSecretKey = 'Basic ' + Buffer.from(widgetSecretKey + ':').toString('base64');
 
-        const tossResponse = await fetch(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
+        const url = (paymentKey && paymentKey !== '-') 
+            ? `https://api.tosspayments.com/v1/payments/${paymentKey}`
+            : `https://api.tosspayments.com/v1/payments/orders/${orderId}`;
+
+        const tossResponse = await fetch(url, {
             method: 'GET',
             headers: {
                 Authorization: encryptedSecretKey,

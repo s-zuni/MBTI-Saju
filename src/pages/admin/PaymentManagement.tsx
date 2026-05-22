@@ -21,6 +21,7 @@ interface Payment {
     status: string;
     purchased_at: string;
     payment_id: string;
+    order_id?: string;
     payment_method?: string;
     profiles?: {
         name: string;
@@ -91,6 +92,7 @@ const PaymentManagement: React.FC = () => {
                 status: p.status,
                 purchased_at: p.purchased_at,
                 payment_id: p.payment_id,
+                order_id: p.order_id,
                 payment_method: p.payment_method,
                 profiles: p.profiles
             }));
@@ -110,6 +112,7 @@ const PaymentManagement: React.FC = () => {
                     status: p.status,
                     purchased_at: p.created_at,
                     payment_id: p.payment_id || '-',
+                    order_id: p.order_id,
                     payment_method: p.payment_method,
                     profiles: { name: displayName, email: displayEmail },
                     email: displayEmail
@@ -168,14 +171,18 @@ const PaymentManagement: React.FC = () => {
     };
 
     const handleViewInfo = async (payment: Payment) => {
-        if (!payment.payment_id || payment.payment_id === '-') {
-            alert('Toss payment_id 가 없습니다.');
+        const queryParam = payment.payment_id && payment.payment_id !== '-' 
+            ? `paymentKey=${payment.payment_id}` 
+            : (payment.order_id ? `orderId=${payment.order_id}` : null);
+
+        if (!queryParam) {
+            alert('조회할 수 있는 결제 키(paymentKey)나 주문 번호(orderId)가 없습니다.');
             return;
         }
 
         setInfoLoadingId(payment.id);
         try {
-            const response = await fetch(`/api/payment?action=info&paymentKey=${payment.payment_id}`, {
+            const response = await fetch(`/api/payment?action=info&${queryParam}`, {
                 method: 'GET',
             });
             const result = await response.json();
