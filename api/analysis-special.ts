@@ -34,13 +34,11 @@ const schemas: Record<string, any> = {
         reason: z.string(),
         summary: z.string()
     }),
-    naming: z.object({
-        names: z.array(z.object({
-            hangul: z.string(),
-            hanja: z.string(),
-            meaning: z.string(),
-            saju_compatibility: z.string()
-        })),
+    jamidusu: z.object({
+        main_character: z.string(),
+        love_style: z.string(),
+        wealth_style: z.string(),
+        charm_points: z.array(z.string()).length(3),
         summary: z.string()
     }),
     trip: z.object({
@@ -224,12 +222,22 @@ export default async function handler(req: Request) {
 
     if (type === 'healing') {
         userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${region || '전국'}`;
-    } else if (type === 'naming') {
+    } else if (type === 'jamidusu') {
         let finalTargetSaju = targetSajuData;
         if (!finalTargetSaju && targetBirthDate) {
             finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
         }
-        userQuery = `성별: ${targetGender}, 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}, 생년월일 ${targetBirthDate}. 요청사항: ${requirements || '없음'}`;
+        userQuery = `[자미두수 기반 수호별 캐릭터 분석 요청]
+성별: ${targetGender === 'male' ? '남성' : '여성'}
+생년월일시: ${targetBirthDate} ${targetBirthTime || '시간모름'}
+사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}
+
+[생성 작업 지침]
+1. 위 사주 명식(특히 일간과 오행)을 자미두수의 주요 별(자미, 칠살, 파군, 탐랑, 천기, 태음, 천동 등)이 가진 성향으로 치환하여 20대 여성이 호기심을 가질 만한 '나의 메인 수호별 캐릭터'를 도출하세요. (예: "어디서나 시선집중! 매력 만점 탐랑성", "거침없는 팩폭러 칠살성")
+2. 'love_style'은 자미두수의 부처궁(연애운) 관점에서, 나의 연애 스타일과 잘 맞는 이상형을 트렌디하게 설명하세요.
+3. 'wealth_style'은 재백궁(재물운) 관점에서, 돈을 쓰는 성향과 재물운을 재미있게 분석하세요 (예: "가심비 폭발! 쓸 땐 확실히 쓰는 스타일").
+4. 'charm_points'는 나의 타고난 매력 포인트 3가지를 명확하게 제시하세요.
+5. 절대로 결과에 영어를 포함하지 마세요. 모두 한국어로 작성하고 어려운 한자는 쉽게 풀어쓰세요.`;
     } else if (type === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (type === 'trip') {

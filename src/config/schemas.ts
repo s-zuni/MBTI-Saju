@@ -135,15 +135,13 @@ export const kboSchema = z.object({
     tomorrowWinFairyScore: z.number().describe("내일 예정 승리 요정 지수 (0-100)")
 });
 
-// Special Analysis: Trip
-export const namingSchema = z.object({
-    names: z.array(z.object({
-        hangul: z.string(),
-        hanja: z.string(),
-        meaning: z.string(),
-        saju_compatibility: z.string()
-    })),
-    summary: z.string()
+// Special Analysis: Jamidusu
+export const jamidusuSchema = z.object({
+    main_character: z.string().describe("나의 메인 수호별 캐릭터 (예: 거침없는 팩폭러, 칠살성)"),
+    love_style: z.string().describe("연애 스타일 분석 (부처궁 해석)"),
+    wealth_style: z.string().describe("재물 및 소비 성향 분석 (재백궁 해석)"),
+    charm_points: z.array(z.string()).length(3).describe("나의 매력 포인트 3가지"),
+    summary: z.string().describe("한 줄 요약 메세지")
 });
 
 // Special Analysis: Compatibility

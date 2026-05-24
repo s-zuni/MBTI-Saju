@@ -58,7 +58,7 @@ const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage
 const TodayFortunePage = lazy(() => import('./pages/TodayFortunePage'));
 const TarotPage = lazy(() => import('./pages/TarotPage'));
 const TripPage = lazy(() => import('./pages/TripPage'));
-const NamingPage = lazy(() => import('./pages/NamingPage'));
+const JamidusuPage = lazy(() => import('./pages/JamidusuPage'));
 const KboPage = lazy(() => import('./pages/KboPage'));
 
 function App() {
@@ -310,7 +310,7 @@ function AppContent({
                     <MyPage
                       onOpenDeepReport={() => openModal('deepReport')}
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
-                      onOpenNaming={() => openModal('naming')}
+                      onJamidusuClick={() => navigate('/jamidusu')}
                       onOpenCompatibility={() => openModal('compatibility')}
                       credits={credits}
                       refreshCredits={refreshCredits}
@@ -331,7 +331,7 @@ function AppContent({
                       }}
                       onTarotClick={() => openModal('tarot')}
                       onTripClick={() => openModal('trip')}
-                      onNamingClick={() => openModal('naming')}
+                      onJamidusuClick={() => navigate('/jamidusu')}
                       onKboClick={() => openModal('kbo')}
                       onCompatibilityClick={() => openModal('compatibility')}
                     />
@@ -367,7 +367,7 @@ function AppContent({
                   <Route path="/today-fortune" element={<TodayFortunePage />} />
                   <Route path="/today-tarot" element={<TarotPage />} />
                   <Route path="/trip" element={<TripPage />} />
-                  <Route path="/naming" element={<NamingPage />} />
+                  <Route path="/jamidusu" element={<JamidusuPage />} />
                   <Route path="/kbo" element={<KboPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />

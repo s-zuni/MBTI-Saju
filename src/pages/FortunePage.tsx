@@ -10,7 +10,7 @@ const subCategories = [
     { id: 'mbti', img: '/assets/icons/3d_mbti.png', label: '심층 리포트', sub: '전문가 수기 결합 분석', cost: 49000, userCount: '5,300+', isPopular: true, colorClass: 'violet' },
     { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true, colorClass: 'purple' },
     { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false, colorClass: 'sky' },
-    { id: 'naming', img: '/assets/icons/3d_healing.png', label: '사주 작명', sub: '행운의 이름 찾기', cost: SERVICE_COSTS.NAMING, userCount: '1,200+', isPopular: false, colorClass: 'emerald' },
+    { id: 'jamidusu', img: '/assets/icons/3d_healing.png', label: '수호별 찾기', sub: '자미두수 기반 🔮', cost: SERVICE_COSTS.JAMIDUSU, userCount: '1,200+', isPopular: false, colorClass: 'indigo' },
     { id: 'kbo', img: '/assets/icons/3d_kbo.png', label: 'KBO 팬 궁합', sub: '사주×야구 궁합', cost: SERVICE_COSTS.KBO, userCount: '1,500+', isPopular: true, isNew: true, colorClass: 'blue' },
     { id: 'relationship', img: '/assets/icons/3d_relationship.png', label: '인연 도감', sub: '소중한 인연 관리', cost: SERVICE_COSTS.RELATIONSHIP_ADD, userCount: '3,300+', isPopular: true, colorClass: 'pink' },
 ];
@@ -20,7 +20,7 @@ interface FortunePageProps {
     onMbtiSajuClick: () => void;
     onTarotClick: () => void;
     onTripClick: () => void;
-    onNamingClick: () => void;
+    onJamidusuClick: () => void;
     onKboClick: () => void;
     onCompatibilityClick: () => void;
 }
@@ -30,7 +30,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
     onMbtiSajuClick,
     onTarotClick,
     onTripClick,
-    onNamingClick,
+    onJamidusuClick,
     onKboClick,
     onCompatibilityClick,
 }) => {
@@ -41,7 +41,7 @@ const FortunePage: React.FC<FortunePageProps> = ({
         else if (cat.id === 'mbti') onMbtiSajuClick();
         else if (cat.id === 'tarot') navigate('/today-tarot');
         else if (cat.id === 'trip') navigate('/trip');
-        else if (cat.id === 'naming') navigate('/naming');
+        else if (cat.id === 'jamidusu') onJamidusuClick();
         else if (cat.id === 'kbo') navigate('/kbo');
         else if (cat.id === 'relationship') navigate('/relationship');
     };

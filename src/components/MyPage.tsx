@@ -130,7 +130,7 @@ const formatHiddenStems = (stems: string[] | undefined) => {
 interface MyPageProps {
   onOpenDeepReport: () => void;
   onOpenMbtiSaju: () => void;
-  onOpenNaming: () => void;
+  onJamidusuClick: () => void;
   onOpenCompatibility: () => void;
   credits: number;
   refreshCredits: (force?: boolean, session?: any) => Promise<void>;
@@ -274,7 +274,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
 const MyPage: React.FC<MyPageProps> = ({ 
   onOpenDeepReport,
   onOpenMbtiSaju, 
-  onOpenNaming, 
+  onJamidusuClick, 
   onOpenCompatibility, 
   credits, 
   refreshCredits, 
@@ -758,13 +758,13 @@ const MyPage: React.FC<MyPageProps> = ({
 
               <div className="grid gap-4">
                 <button
-                  onClick={onOpenNaming}
+                  onClick={onJamidusuClick}
                   className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
                 >
-                  <span className="text-2xl bg-teal-50 p-3 rounded-full">✍️</span>
+                  <span className="text-2xl bg-indigo-50 p-3 rounded-full">✨</span>
                   <div>
-                    <h3 className="font-bold text-lg">사주 작명소</h3>
-                    <p className="text-slate-500 text-sm">사주에 맞는 행운의 이름</p>
+                    <h3 className="font-bold text-lg">나의 수호별 찾기</h3>
+                    <p className="text-slate-500 text-sm">자미두수 메인 캐릭터</p>
                   </div>
                 </button>
 
