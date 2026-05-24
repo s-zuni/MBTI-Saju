@@ -1,6 +1,6 @@
 import { ServiceType } from '../components/ServiceNavigation';
 
-export const HUMOROUS_LOADING_MESSAGES: Record<ServiceType | 'default', string[]> = {
+const HUMOROUS_LOADING_MESSAGES: Record<ServiceType | 'default', string[]> = {
     mbti: [
         "당신의 영혼을 털기 위해 사주와 MBTI가 회담 중입니다...",
         "MBTI와 사주가 서로 싸우지 않게 잘 중재하고 있어요.",

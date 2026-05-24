@@ -46,18 +46,7 @@ export type ServiceType = keyof typeof SERVICE_COSTS;
 
 export const REFUND_PERIOD_DAYS = 7;
 
-// 할인 종료일 - 배포 후 설정 예정 (현재 null은 무제한 할인 의미)
-export const DISCOUNT_END_DATE: string | null = null;
 
-// 할인 남은 일수 계산 함수
-export const getDiscountDaysRemaining = (): number | null => {
-  if (!DISCOUNT_END_DATE) return null;
-  const endDate = new Date(DISCOUNT_END_DATE);
-  const today = new Date();
-  const diffTime = endDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
-};
 
 // 서비스 이름 한글화
 export const SERVICE_NAMES: Record<ServiceType, string> = {

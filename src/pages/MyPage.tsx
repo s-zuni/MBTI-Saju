@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
-import AnalysisModal from './AnalysisModal';
-import CreditPurchaseModal from './CreditPurchaseModal';
+import AnalysisModal from '../components/AnalysisModal';
+import CreditPurchaseModal from '../components/CreditPurchaseModal';
 
 interface Profile {
   id: string;
@@ -54,78 +54,8 @@ interface Analysis {
   commonalities?: string;
 }
 
-const ELEMENT_STYLES: Record<string, string> = {
-  wood: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  fire: 'bg-rose-50 text-rose-700 border-rose-100',
-  earth: 'bg-amber-50 text-amber-700 border-amber-100',
-  metal: 'bg-slate-50 text-slate-700 border-slate-200',
-  water: 'bg-blue-50 text-blue-700 border-blue-100',
-  default: 'bg-slate-50 text-slate-400 border-slate-100'
-};
-
-const GAN_INFO: Record<string, { element: string; name: string }> = {
-  '甲': { element: 'wood', name: '갑목' }, '乙': { element: 'wood', name: '을목' },
-  '丙': { element: 'fire', name: '병화' }, '丁': { element: 'fire', name: '정화' },
-  '戊': { element: 'earth', name: '무토' }, '己': { element: 'earth', name: '기토' },
-  '庚': { element: 'metal', name: '경금' }, '辛': { element: 'metal', name: '신금' },
-  '壬': { element: 'water', name: '임수' }, '癸': { element: 'water', name: '계수' },
-};
-
-const ZHI_INFO: Record<string, { element: string; name: string }> = {
-  '子': { element: 'water', name: '자수' }, '丑': { element: 'earth', name: '축토' },
-  '寅': { element: 'wood', name: '인목' }, '卯': { element: 'wood', name: '묘목' },
-  '辰': { element: 'earth', name: '진토' }, '巳': { element: 'fire', name: '사화' },
-  '午': { element: 'fire', name: '오화' }, '未': { element: 'earth', name: '미토' },
-  '申': { element: 'metal', name: '신금' }, '酉': { element: 'metal', name: '유금' },
-  '戌': { element: 'earth', name: '술토' }, '亥': { element: 'water', name: '해수' },
-};
-
-const SHISHEN_MAP: Record<string, string> = {
-  '比肩': '비견', '劫財': '겁재', '劫财': '겁재', '食神': '식신', '傷官': '상관', '伤官': '상관',
-  '偏財': '편재', '偏财': '편재', '正財': '정재', '正财': '정재', '偏官': '편관', '七殺': '편관',
-  '正官': '정관', '偏印': '편인', '正印': '정인'
-};
-
-const SHISHEN_COLORS: Record<string, string> = {
-  '비견': 'text-rose-600 bg-rose-50',
-  '겁재': 'text-rose-500 bg-rose-50/50',
-  '식신': 'text-orange-600 bg-orange-50',
-  '상관': 'text-orange-500 bg-orange-50/50',
-  '편재': 'text-amber-600 bg-amber-50',
-  '정재': 'text-amber-500 bg-amber-50/50',
-  '편관': 'text-emerald-700 bg-emerald-50',
-  '정관': 'text-emerald-600 bg-emerald-50/50',
-  '편인': 'text-slate-700 bg-slate-100',
-  '정인': 'text-slate-600 bg-slate-100/50',
-  'default': 'text-slate-500 bg-slate-50'
-};
-
-const translateShiShen = (s: any) => {
-  if (!s || s === '-') return '-';
-  
-  // Handle array returned by lunar-javascript's get[..]ShiShenZhi()
-  let result = Array.isArray(s) ? s.join('') : String(s);
-  if (!result || result === '-') return '-';
-  
-  Object.entries(SHISHEN_MAP).forEach(([zh, ko]) => {
-    result = result.replace(new RegExp(zh, 'g'), ko + ' ');
-  });
-  return result.trim().replace(/\s+/g, ', ');
-};
-
-const getShiShenStyle = (s: string | undefined): string => {
-  if (!s) return SHISHEN_COLORS.default as string;
-  const ko = translateShiShen(s).split(',')[0]; // Use the first one for color color if multiple
-  return (SHISHEN_COLORS[ko || ''] || SHISHEN_COLORS.default) as string;
-};
-
-const formatHiddenStems = (stems: string[] | undefined) => {
-  if (!stems || stems.length === 0) return '-';
-  return stems.map(s => {
-    const info = GAN_INFO[s];
-    return info ? info.name.substring(0, 1) : s;
-  }).join(', ');
-};
+import SajuGrid from '../components/saju/SajuGrid';
+import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
 
 interface MyPageProps {
   onOpenDeepReport: () => void;
@@ -141,135 +71,7 @@ interface MyPageProps {
   session: any;
 }
 
-const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
-  if (!saju || !saju.pillars) return null;
 
-  const pillars = [
-    { label: '생시', key: 'hour' },
-    { label: '생일', key: 'day' },
-    { label: '생월', key: 'month' },
-    { label: '생년', key: 'year' },
-  ];
-
-  const renderCell = (char: string, type: 'gan' | 'zhi', shishen: string = '') => {
-    const isUnknown = char === '?' || char === '모름';
-    const info = type === 'gan' ? GAN_INFO[char] : ZHI_INFO[char];
-    const style = info ? ELEMENT_STYLES[info.element] : ELEMENT_STYLES.default;
-    
-    return (
-      <div className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${style}`}>
-        <div className="flex items-center gap-1">
-          <span className="text-xl md:text-2xl font-black">{char}</span>
-          {!isUnknown && info && (
-             <span className="text-[8px] md:text-[10px] font-bold opacity-60">
-               {info.element === 'wood' ? '목' : 
-                info.element === 'fire' ? '화' : 
-                info.element === 'earth' ? '토' : 
-                info.element === 'metal' ? '금' : '수'}
-             </span>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-8">
-      <div className="grid grid-cols-5 border-b border-slate-100 bg-slate-50/50">
-        <div className="p-3 border-r border-slate-100"></div>
-        {pillars.map((p) => (
-          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-950 text-white' : ''}`}>
-            {p.label}
-          </div>
-        ))}
-      </div>
-
-      {/* 천간 Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">천간</div>
-        {pillars.map((p) => (
-          <div key={p.key} className="p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center">
-            {renderCell(saju.pillars[p.key].gan, 'gan')}
-          </div>
-        ))}
-      </div>
-
-      {/* 십성 (천간) Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
-        {pillars.map((p) => {
-          const raw = saju.pillars[p.key].ganShiShen;
-          const ko = p.key === 'day' ? '비견' : translateShiShen(raw);
-          const style = getShiShenStyle(ko);
-          return (
-            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
-               <span className={`px-1.5 py-0.5 rounded text-[10px] md:text-xs font-black ${style}`}>
-                 {ko}
-               </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 지지 Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-3 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지지</div>
-        {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 flex flex-col items-center justify-center ${p.key === 'day' ? 'bg-slate-50 shadow-inner' : ''}`}>
-            {renderCell(saju.pillars[p.key].zhi, 'zhi')}
-          </div>
-        ))}
-      </div>
-
-      {/* 십성 (지지) Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
-        {pillars.map((p) => {
-          const raw = saju.pillars[p.key].zhiShiShen;
-          const ko = translateShiShen(raw);
-          const style = getShiShenStyle(ko);
-          return (
-            <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
-               <span className={`px-1.5 py-0.5 rounded text-[9px] md:text-[11px] font-bold ${style}`}>
-                 {ko}
-               </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 지장간 Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">지장간</div>
-        {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[9px] md:text-[10px] font-medium text-slate-500 tracking-tighter ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
-            {formatHiddenStems(saju.pillars[p.key].hiddenStems)}
-          </div>
-        ))}
-      </div>
-
-      {/* 12운성 Row */}
-      <div className="grid grid-cols-5 border-b border-slate-50">
-        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12운성</div>
-        {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-700 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
-            {saju.pillars[p.key].twelveStages}
-          </div>
-        ))}
-      </div>
-
-      {/* 12신살 Row */}
-      <div className="grid grid-cols-5">
-        <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12신살</div>
-        {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
-            {saju.pillars[p.key].twelveSpirits}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const MyPage: React.FC<MyPageProps> = ({ 
   onOpenDeepReport,
@@ -853,7 +655,7 @@ const MyPage: React.FC<MyPageProps> = ({
         onClose={() => setIsCreditModalOpen(false)}
         userEmail={profile?.email}
         currentCredits={credits}
-        onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
+        onSuccess={async (planId: string, pricePaid: number, creditAmount: number, paymentId?: string) => {
           await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
         }}
       />
