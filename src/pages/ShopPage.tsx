@@ -93,7 +93,7 @@ const ShopPage: React.FC = () => {
 
                 {/* Grid */}
                 {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                         {Array.from({ length: 8 }).map((_, idx) => (
                             <div key={idx} className="bg-white rounded-3xl p-3 border border-slate-100/80 animate-pulse space-y-3">
                                 <div className="aspect-square w-full bg-slate-100 rounded-2xl" />
@@ -108,7 +108,7 @@ const ShopPage: React.FC = () => {
                         <p className="text-slate-500 font-bold">등록된 상품이 없습니다.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                         {filteredProducts.map(product => {
                             const isSoldOut = product.stock === 0;
                             const wished = isWishlisted(product.id);
@@ -117,7 +117,7 @@ const ShopPage: React.FC = () => {
                                 <div
                                     key={product.id}
                                     onClick={() => navigate(`/shop/${product.id}`)}
-                                    className="group bg-white rounded-3xl p-3 border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer relative flex flex-col justify-between"
+                                    className="group bg-white rounded-3xl p-2.5 md:p-3 border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer relative flex flex-col justify-between"
                                 >
                                     <div>
                                         {/* Image wrapper */}
@@ -130,7 +130,7 @@ const ShopPage: React.FC = () => {
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                                                    <Package size={28} />
+                                                    <Package size={24} />
                                                 </div>
                                             )}
 
@@ -140,16 +140,16 @@ const ShopPage: React.FC = () => {
                                                     e.stopPropagation();
                                                     toggleWishlist(product.id).catch(err => console.error(err));
                                                 }}
-                                                className="absolute top-2.5 right-2.5 p-2 rounded-xl bg-white/90 hover:bg-white text-slate-400 hover:text-red-500 shadow-sm transition-all"
+                                                className="absolute top-2 right-2 p-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-400 hover:text-red-500 shadow-sm transition-all"
                                             >
                                                 <Heart
-                                                    size={16}
+                                                    size={14}
                                                     className={wished ? 'fill-red-500 text-red-500 scale-110 transition-transform' : ''}
                                                 />
                                             </button>
 
                                             {/* Category badge */}
-                                            <span className={`absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-sm ${
+                                            <span className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-bold shadow-sm ${
                                                 product.product_type === 'physical'
                                                     ? 'bg-blue-600/90 text-white'
                                                     : 'bg-emerald-600/90 text-white'
@@ -160,7 +160,7 @@ const ShopPage: React.FC = () => {
                                             {/* Sold Out Overlay */}
                                             {isSoldOut && (
                                                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
-                                                    <span className="px-4 py-2 rounded-xl bg-white/95 text-slate-800 font-black text-xs shadow">
+                                                    <span className="px-3 py-1.5 rounded-xl bg-white/95 text-slate-800 font-black text-[10px] shadow">
                                                         일시 품절
                                                     </span>
                                                 </div>
@@ -168,19 +168,19 @@ const ShopPage: React.FC = () => {
                                         </div>
 
                                         {/* Product Details */}
-                                        <div className="mt-3 px-1">
-                                            <h3 className="font-bold text-slate-800 group-hover:text-violet-600 transition-colors text-sm line-clamp-2 min-h-[40px] leading-snug">
+                                        <div className="mt-2.5 px-0.5">
+                                            <h3 className="font-bold text-slate-800 group-hover:text-violet-600 transition-colors text-xs md:text-sm line-clamp-2 min-h-[32px] md:min-h-[36px] leading-snug">
                                                 {product.name}
                                             </h3>
                                         </div>
                                     </div>
 
-                                    <div className="mt-2 px-1 pb-1 flex justify-between items-center">
-                                        <span className="text-base font-black text-slate-900">
+                                    <div className="mt-1.5 px-0.5 pb-0.5 flex justify-between items-center">
+                                        <span className="text-sm md:text-base font-black text-slate-900">
                                             ₩{product.price.toLocaleString()}
                                         </span>
                                         {product.stock > 0 && product.stock <= 5 && (
-                                            <span className="text-[10px] font-bold text-red-500">
+                                            <span className="text-[9px] md:text-[10px] font-bold text-red-500 whitespace-nowrap">
                                                 품절임박 {product.stock}개
                                             </span>
                                         )}

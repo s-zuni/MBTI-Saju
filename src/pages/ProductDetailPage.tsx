@@ -51,6 +51,9 @@ const ProductDetailPage: React.FC = () => {
 
     const [cartAdding, setCartAdding] = useState(false);
 
+    // Shipping info accordion open/close state
+    const [isShippingOpen, setIsShippingOpen] = useState(false);
+
     const fetchProduct = useCallback(async () => {
         if (!productId) return;
         try {
@@ -147,16 +150,9 @@ const ProductDetailPage: React.FC = () => {
 
         // Validate shipping fields for physical products
         if (product.product_type === 'physical') {
-            if (!shippingName.trim()) {
-                alert('수령인 이름을 입력해주세요.');
-                return;
-            }
-            if (!shippingPhone.trim()) {
-                alert('연락처를 입력해주세요.');
-                return;
-            }
-            if (!shippingAddress.trim()) {
-                alert('배송 주소를 입력해주세요.');
+            if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {
+                setIsShippingOpen(true);
+                alert('배송지 정보를 모두 입력해주세요.');
                 return;
             }
         }
@@ -178,8 +174,45 @@ const ProductDetailPage: React.FC = () => {
         await requestDirectPurchase(item, shippingInfo);
     };
 
+    const actionButtons = (isMobileSticky = false) => (
+        <div className="flex gap-2 w-full">
+            <button
+                onClick={() => toggleWishlist(product.id).catch(err => console.error(err))}
+                className={`p-4 rounded-2xl border transition-all ${
+                    wished
+                        ? 'border-red-100 bg-red-50 text-red-500'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-400'
+                }`}
+            >
+                <Heart size={20} className={wished ? 'fill-red-500 text-red-500' : ''} />
+            </button>
+
+            <button
+                onClick={handleAddToCart}
+                disabled={isSoldOut || cartAdding}
+                className="flex-1 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-sm"
+            >
+                {cartAdding ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
+                장바구니
+            </button>
+
+            <button
+                onClick={handleBuyNow}
+                disabled={isSoldOut || paymentLoading}
+                className="flex-1 py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-slate-200 transition-colors disabled:opacity-50 text-sm"
+            >
+                {paymentLoading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                ) : (
+                    <Zap size={18} className="fill-white text-white" />
+                )}
+                {isSoldOut ? '품절' : '바로 구매'}
+            </button>
+        </div>
+    );
+
     return (
-        <div className="bg-white min-h-screen pb-24">
+        <div className="bg-white min-h-screen pb-24 md:pb-24">
             <div className="max-w-6xl mx-auto px-4 py-6">
                 {/* Back Button */}
                 <button
@@ -236,7 +269,7 @@ const ProductDetailPage: React.FC = () => {
                                     product.product_type === 'physical'
                                         ? 'bg-blue-50 text-blue-600 border border-blue-100'
                                         : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                }`}>
+                                    }`}>
                                     {product.product_type === 'physical' ? '실물 상품' : '디지털 상품'}
                                 </span>
                                 <span className={`text-xs font-bold ${isSoldOut ? 'text-red-500' : 'text-slate-400'}`}>
@@ -253,7 +286,7 @@ const ProductDetailPage: React.FC = () => {
                             </div>
 
                             <div className="border-t border-slate-100 pt-4">
-                                <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+                                <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-line font-medium">
                                     {product.description}
                                 </p>
                             </div>
@@ -262,7 +295,7 @@ const ProductDetailPage: React.FC = () => {
                         {/* Quantity Selector & Shipping Address */}
                         <div className="space-y-6 mt-6 border-t border-slate-100 pt-6">
                             {!isSoldOut && (
-                                <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                                <div className="flex justify-between items-center bg-slate-50/70 p-4 rounded-2xl">
                                     <span className="font-bold text-slate-700 text-sm">구매 수량</span>
                                     <div className="flex items-center gap-4 bg-white rounded-xl border border-slate-200 p-1">
                                         <button
@@ -284,62 +317,74 @@ const ProductDetailPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Shipping info Form */}
+                            {/* Shipping info Accordion Form */}
                             {!isSoldOut && product.product_type === 'physical' && (
-                                <div className="space-y-4 bg-slate-50/50 p-5 rounded-3xl border border-slate-100/80">
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
-                                        <Truck size={16} className="text-violet-600" />
-                                        배송지 정보 입력
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                        <div>
-                                            <label className="block text-slate-400 font-bold mb-1.5">수령인</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="이름"
-                                                value={shippingName}
-                                                onChange={e => setShippingName(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-slate-400 font-bold mb-1.5">연락처</label>
-                                            <input
-                                                type="tel"
-                                                required
-                                                placeholder="ex) 010-0000-0000"
-                                                value={shippingPhone}
-                                                onChange={e => setShippingPhone(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800"
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <label className="block text-slate-400 font-bold mb-1.5">배송 주소</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="기본주소 및 상세주소 입력"
-                                                value={shippingAddress}
-                                                onChange={e => setShippingAddress(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800"
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <label className="block text-slate-400 font-bold mb-1.5">배송 요청사항 (선택)</label>
-                                            <input
-                                                type="text"
-                                                placeholder="부재 시 문앞에 놓아주세요"
-                                                value={shippingMemo}
-                                                onChange={e => setShippingMemo(e.target.value)}
-                                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800"
-                                            />
+                                <div className="bg-slate-50/50 rounded-3xl border border-slate-100/80 overflow-hidden transition-all duration-300">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsShippingOpen(!isShippingOpen)}
+                                        className="w-full p-5 flex justify-between items-center font-bold text-slate-800 text-sm hover:bg-slate-100/30 transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Truck size={16} className="text-violet-600" />
+                                            배송지 정보 입력 {(!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) && <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block animate-pulse ml-0.5" />}
+                                        </span>
+                                        <span className="text-xs text-slate-400 font-bold">
+                                            {isShippingOpen ? '접기' : '입력하기 ❯'}
+                                        </span>
+                                    </button>
+                                    
+                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isShippingOpen ? 'max-h-[500px] border-t border-slate-100 p-5' : 'max-h-0'}`}>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                                            <div>
+                                                <label className="block text-slate-400 font-bold mb-1.5">수령인</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="이름"
+                                                    value={shippingName}
+                                                    onChange={e => setShippingName(e.target.value)}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800 text-xs"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-400 font-bold mb-1.5">연락처</label>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    placeholder="ex) 010-0000-0000"
+                                                    value={shippingPhone}
+                                                    onChange={e => setShippingPhone(e.target.value)}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800 text-xs"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <label className="block text-slate-400 font-bold mb-1.5">배송 주소</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="기본주소 및 상세주소 입력"
+                                                    value={shippingAddress}
+                                                    onChange={e => setShippingAddress(e.target.value)}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800 text-xs"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <label className="block text-slate-400 font-bold mb-1.5">배송 요청사항 (선택)</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="부재 시 문앞에 놓아주세요"
+                                                    value={shippingMemo}
+                                                    onChange={e => setShippingMemo(e.target.value)}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:border-violet-500 text-slate-800 text-xs"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Total price & Actions */}
+                            {/* Total price & Actions (Desktop only) */}
                             <div className="space-y-4">
                                 {!isSoldOut && (
                                     <div className="flex justify-between items-baseline">
@@ -350,45 +395,37 @@ const ProductDetailPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => toggleWishlist(product.id).catch(err => console.error(err))}
-                                        className={`p-4 rounded-2xl border transition-all ${
-                                            wished
-                                                ? 'border-red-100 bg-red-50 text-red-500'
-                                                : 'border-slate-200 hover:bg-slate-50 text-slate-400'
-                                        }`}
-                                    >
-                                        <Heart size={20} className={wished ? 'fill-red-500 text-red-500' : ''} />
-                                    </button>
-
-                                    <button
-                                        onClick={handleAddToCart}
-                                        disabled={isSoldOut || cartAdding}
-                                        className="flex-1 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                                    >
-                                        {cartAdding ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
-                                        장바구니
-                                    </button>
-
-                                    <button
-                                        onClick={handleBuyNow}
-                                        disabled={isSoldOut || paymentLoading}
-                                        className="flex-1 py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-slate-200 transition-colors disabled:opacity-50"
-                                    >
-                                        {paymentLoading ? (
-                                            <Loader2 className="animate-spin" size={18} />
-                                        ) : (
-                                            <Zap size={18} className="fill-white text-white" />
-                                        )}
-                                        {isSoldOut ? '품절' : '바로 구매'}
-                                    </button>
+                                <div className="hidden md:block">
+                                    {actionButtons()}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Sticky CTA Footer */}
+            {!isSoldOut && (
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-[99] bg-white/95 backdrop-blur-md border-t border-slate-150 p-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex flex-col gap-3">
+                    <div className="flex justify-between items-center px-1">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">최종 결제 금액 ({quantity}개)</span>
+                            <span className="text-lg font-black text-violet-600">₩{(product.price * quantity).toLocaleString()}</span>
+                        </div>
+                        {product.product_type === 'physical' && (
+                            <button
+                                onClick={() => setIsShippingOpen(!isShippingOpen)}
+                                className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+                                    isShippingOpen ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-violet-50 border-violet-100 text-violet-600'
+                                }`}
+                            >
+                                {isShippingOpen ? '배송지 닫기' : '배송지 정보 입력'}
+                            </button>
+                        )}
+                    </div>
+                    {actionButtons(true)}
+                </div>
+            )}
         </div>
     );
 };
