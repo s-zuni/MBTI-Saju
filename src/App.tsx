@@ -30,9 +30,8 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import PaymentManagement from './pages/admin/PaymentManagement';
-import RefundManagement from './pages/admin/RefundManagement';
 import PlanManagement from './pages/admin/PlanManagement';
-import AdminCommunity from './pages/admin/AdminCommunity';
+import AdminReviews from './pages/admin/AdminReviews';
 import AdminDeepReports from './pages/admin/AdminDeepReports';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
@@ -210,11 +209,10 @@ function AppContent({
           {/* Admin System - With Sidebar, No Header/Footer */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="community" element={<AdminCommunity />} />
+            <Route path="reviews" element={<AdminReviews />} />
             <Route path="deep-reports" element={<AdminDeepReports />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
-            <Route path="refunds" element={<RefundManagement />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="plans" element={<PlanManagement />} />
             <Route path="shop/products" element={<AdminShopProducts />} />
