@@ -7,7 +7,9 @@ import {
     RotateCcw,
     Settings,
     LogOut,
-    MessageSquare
+    MessageSquare,
+    Package,
+    FileText
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
@@ -32,6 +34,8 @@ const AdminSidebar: React.FC = () => {
         { name: '환불 관리', icon: <RotateCcw size={20} />, path: '/admin/refunds' },
         { name: '고객 문의 관리', icon: <MessageSquare size={20} />, path: '/admin/inquiries' },
         { name: '요금제 관리', icon: <Settings size={20} />, path: '/admin/plans' },
+        { name: '운세템 상품 관리', icon: <Package size={20} />, path: '/admin/shop/products' },
+        { name: '운세템 주문 관리', icon: <FileText size={20} />, path: '/admin/shop/orders' },
     ];
 
     return (

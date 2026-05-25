@@ -106,6 +106,9 @@ const Navbar: React.FC<NavbarProps> = () => {
           <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             타로
           </button>
+          <button onClick={() => navigate('/shop')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
+            운세템 숍
+          </button>
           <button onClick={() => navigate('/reviews')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             이용후기
           </button>
@@ -173,6 +176,7 @@ const Navbar: React.FC<NavbarProps> = () => {
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
               <button onClick={() => { handleChatClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
               <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
+              <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세템 숍</button>
               <button onClick={() => { navigate('/reviews'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">이용후기</button>
               <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">요금제</button>
             </div>

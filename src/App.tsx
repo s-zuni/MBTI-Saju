@@ -61,6 +61,11 @@ const TripPage = lazy(() => import('./pages/TripPage'));
 const JamidusuPage = lazy(() => import('./pages/JamidusuPage'));
 const KboPage = lazy(() => import('./pages/KboPage'));
 
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const AdminShopProducts = lazy(() => import('./pages/admin/AdminShopProducts'));
+const AdminShopOrders = lazy(() => import('./pages/admin/AdminShopOrders'));
+
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
@@ -212,6 +217,8 @@ function AppContent({
             <Route path="refunds" element={<RefundManagement />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="plans" element={<PlanManagement />} />
+            <Route path="shop/products" element={<AdminShopProducts />} />
+            <Route path="shop/orders" element={<AdminShopOrders />} />
           </Route>
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
@@ -354,6 +361,8 @@ function AppContent({
                       }}
                     />
                   } />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/shop/:productId" element={<ProductDetailPage />} />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
                   <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />

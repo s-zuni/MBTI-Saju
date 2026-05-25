@@ -48,6 +48,9 @@ const PaymentSuccess: React.FC = () => {
 
                 // 승인 요청 후 임시 데이터 삭제 (성공/실패 여부와 상관없이 시도했으므로 정리)
                 localStorage.removeItem('pending_payment_user_id');
+                if (orderId && orderId.startsWith('SHOP')) {
+                    localStorage.removeItem('pending_shop_order');
+                }
 
                 const data = await response.json();
 
