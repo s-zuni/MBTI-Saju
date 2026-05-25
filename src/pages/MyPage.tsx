@@ -6,6 +6,7 @@ import AnalysisModal from '../components/AnalysisModal';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
 import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
+
 interface Profile {
   id: string;
   name: string;
@@ -54,7 +55,6 @@ interface Analysis {
   elementAnalysis?: string;
   commonalities?: string;
 }
-
 
 
 interface MyPageProps {

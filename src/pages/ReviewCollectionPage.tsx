@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Star, MessageSquare, PlusCircle, Search, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
+import { supabase } from '../supabaseClient';
 
 interface Review {
     id: string;
@@ -233,19 +234,43 @@ const ReviewCollectionPage: React.FC = () => {
     const [newService, setNewService] = useState('심층 사주 리포트');
     const [newContent, setNewContent] = useState('');
 
-    useEffect(() => {
-        // Load reviews from localStorage if exist, otherwise load defaults
-        const stored = localStorage.getItem('mbtiju_reviews');
-        if (stored) {
-            try {
-                setReviews(JSON.parse(stored));
-            } catch (e) {
+    const fetchReviews = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('reviews')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const mapped: Review[] = data.map((d: any) => {
+                    const dt = new Date(d.created_at);
+                    const formattedDate = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
+                    return {
+                        id: d.id,
+                        author_name: d.author_name,
+                        mbti: d.mbti,
+                        rating: Number(d.rating),
+                        service_tag: d.service_tag,
+                        content: d.content,
+                        date: formattedDate,
+                        is_verified: d.is_verified
+                    };
+                });
+                setReviews(mapped);
+            } else {
                 setReviews(DEFAULT_REVIEWS);
             }
-        } else {
+        } catch (e) {
+            console.error('Error loading reviews from Supabase:', e);
             setReviews(DEFAULT_REVIEWS);
         }
     }, []);
+
+    useEffect(() => {
+        fetchReviews().catch(err => console.error(err));
+    }, [fetchReviews]);
 
     // Filter services list
     const services = ['전체', '심층 사주 리포트', 'AI 사주 상담', '타로', '오늘의 운세', 'KBO 팬 궁합'];
@@ -292,35 +317,35 @@ const ReviewCollectionPage: React.FC = () => {
         setIsWriteModalOpen(true);
     };
 
-    const handleWriteSubmit = (e: React.FormEvent) => {
+    const handleWriteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newAuthor.trim() || !newContent.trim()) {
             alert('모든 필드를 입력해 주세요.');
             return;
         }
 
-        const date = new Date();
-        const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+        try {
+            const { error } = await supabase
+                .from('reviews')
+                .insert({
+                    author_name: newAuthor,
+                    mbti: newMbti,
+                    rating: newRating,
+                    service_tag: newService,
+                    content: newContent,
+                    is_verified: true
+                });
 
-        const createdReview: Review = {
-            id: `rev-custom-${Date.now()}`,
-            author_name: newAuthor,
-            mbti: newMbti,
-            rating: newRating,
-            service_tag: newService,
-            content: newContent,
-            date: formattedDate,
-            is_verified: true
-        };
+            if (error) throw error;
 
-        const updatedReviews = [createdReview, ...reviews];
-        setReviews(updatedReviews);
-        localStorage.setItem('mbtiju_reviews', JSON.stringify(updatedReviews));
-
-        // Reset
-        setNewContent('');
-        setIsWriteModalOpen(false);
-        alert('리뷰가 등록되었습니다. 소중한 의견 감사합니다!');
+            // Reset
+            setNewContent('');
+            setIsWriteModalOpen(false);
+            alert('리뷰가 등록되었습니다. 소중한 의견 감사합니다!');
+            await fetchReviews();
+        } catch (err: any) {
+            alert(`리뷰 등록 실패: ${err.message}`);
+        }
     };
 
     // Render Star Rating row helper
