@@ -241,33 +241,51 @@ const JamidusuPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="space-y-6">
-                                                    {result.love_style && (
+                                                    {result.destiny_palace && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-indigo-500">♥</span> 연애 스타일
+                                                                <span className="text-indigo-500">✨</span> 타고난 본성 (명궁)
                                                             </h3>
-                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.love_style}</p>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.destiny_palace}</p>
                                                         </div>
                                                     )}
 
+                                                    {result.career_palace && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <span className="text-blue-500">💼</span> 나의 재능과 성공 (관록궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.career_palace}</p>
+                                                        </div>
+                                                    )}
+                                                    
                                                     {result.wealth_style && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-purple-500">💰</span> 재물 성향
+                                                                <span className="text-amber-500">💰</span> 재물운 (재백궁)
                                                             </h3>
                                                             <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.wealth_style}</p>
                                                         </div>
                                                     )}
 
-                                                    {result.charm_points && result.charm_points.length > 0 && (
+                                                    {result.love_style && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <span className="text-rose-500">♥</span> 연애 스타일 (부처궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.love_style}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {result.lucky_items && result.lucky_items.length > 0 && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                                                <Sparkles className="w-4 h-4 text-amber-500" /> 나의 매력 포인트
+                                                                <Sparkles className="w-4 h-4 text-purple-500" /> 나를 돕는 길성 & 행운 요소
                                                             </h3>
                                                             <ul className="space-y-2">
-                                                                {result.charm_points.map((point: any, idx: number) => (
+                                                                {result.lucky_items.map((point: any, idx: number) => (
                                                                     <li key={idx} className="text-slate-600 text-sm flex items-start gap-2">
-                                                                        <span className="text-amber-500 font-bold mt-0.5">•</span>
+                                                                        <span className="text-purple-500 font-bold mt-0.5">•</span>
                                                                         <span className="break-keep">{point}</span>
                                                                     </li>
                                                                 ))}

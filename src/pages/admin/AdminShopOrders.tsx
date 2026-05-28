@@ -19,6 +19,7 @@ interface OrderItem {
     product_price: number;
     quantity: number;
     subtotal: number;
+    selected_option?: string | null;
 }
 
 interface Order {
@@ -168,6 +169,7 @@ const AdminShopOrders: React.FC = () => {
                 { header: '배송 주소', key: 'shipping_address', width: 45 },
                 { header: '배송 메모', key: 'shipping_memo', width: 30 },
                 { header: '상품명', key: 'product_name', width: 30 },
+                { header: '선택 옵션', key: 'selected_option', width: 20 },
                 { header: '단가', key: 'product_price', width: 12 },
                 { header: '수량', key: 'quantity', width: 8 },
                 { header: '소계', key: 'subtotal', width: 12 }
@@ -203,6 +205,7 @@ const AdminShopOrders: React.FC = () => {
                         shipping_address: order.shipping_address || '',
                         shipping_memo: order.shipping_memo || '',
                         product_name: item.product_name,
+                        selected_option: item.selected_option || '',
                         product_price: item.product_price,
                         quantity: item.quantity,
                         subtotal: item.subtotal
@@ -257,7 +260,7 @@ const AdminShopOrders: React.FC = () => {
                     <div>
                         <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                             <FileText className="text-violet-600" />
-                            운세템 주문 관리
+                            운세 주문 관리
                         </h1>
                         <p className="text-sm text-slate-500">고객들의 주문 내역 및 배송 상태를 처리합니다.</p>
                     </div>
@@ -454,6 +457,7 @@ const AdminShopOrders: React.FC = () => {
                                         <thead>
                                             <tr className="bg-slate-50 text-xs font-bold text-slate-400 border-b border-slate-100">
                                                 <th className="py-3 px-4">상품명</th>
+                                                <th className="py-3 px-4">선택 옵션</th>
                                                 <th className="py-3 px-4 w-20 text-right">단가</th>
                                                 <th className="py-3 px-4 w-16 text-center">수량</th>
                                                 <th className="py-3 px-4 w-24 text-right">금액</th>
@@ -463,6 +467,7 @@ const AdminShopOrders: React.FC = () => {
                                             {selectedOrder.items.map(item => (
                                                 <tr key={item.id}>
                                                     <td className="py-3 px-4 font-bold text-slate-800">{item.product_name}</td>
+                                                    <td className="py-3 px-4 text-slate-500 font-semibold">{item.selected_option || '-'}</td>
                                                     <td className="py-3 px-4 text-right">₩{item.product_price.toLocaleString()}</td>
                                                     <td className="py-3 px-4 text-center font-bold">{item.quantity}</td>
                                                     <td className="py-3 px-4 text-right font-black text-slate-800">
@@ -471,7 +476,7 @@ const AdminShopOrders: React.FC = () => {
                                                 </tr>
                                             ))}
                                             <tr className="bg-slate-50/50 font-bold text-slate-800">
-                                                <td colSpan={3} className="py-4 px-4 text-right font-bold text-sm">합계 금액</td>
+                                                <td colSpan={4} className="py-4 px-4 text-right font-bold text-sm">합계 금액</td>
                                                 <td className="py-4 px-4 text-right font-black text-sm text-violet-600">
                                                     ₩{selectedOrder.total_amount.toLocaleString()}
                                                 </td>

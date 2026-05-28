@@ -6,13 +6,24 @@ import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
 
+interface GridItem {
+    icon: any;
+    label: string;
+    sub: string;
+    color: string;
+    iconBg: string;
+    iconColor: string;
+    action: () => void;
+    badge?: string;
+}
+
 const FeatureGrids: React.FC = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     const { openModal } = useModalStore();
     const { credits } = useCredits(session);
 
-    const gridItems = [
+    const gridItems: GridItem[] = [
         {
             icon: Compass,
             label: '운세 보기',
@@ -67,13 +78,12 @@ const FeatureGrids: React.FC = () => {
         },
         {
             icon: Sparkles,
-            label: '운세템 상점',
+            label: '운세 상점',
             sub: '부적 & 굿즈',
             color: 'from-rose-400 to-pink-500',
             iconBg: 'bg-rose-50',
             iconColor: 'text-rose-500',
-            badge: 'SOON',
-            action: () => alert('운세템 상점은 현재 준비 중입니다. 조만간 멋진 아이템으로 찾아뵙겠습니다!'),
+            action: () => navigate('/shop'),
         },
         {
             icon: Trophy,

@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     Users,
     CreditCard,
-    RotateCcw,
     Settings,
     LogOut,
     MessageSquare,
@@ -33,8 +32,8 @@ const AdminSidebar: React.FC = () => {
         { name: '결제 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
         { name: '고객 문의/환불 관리', icon: <MessageSquare size={20} />, path: '/admin/inquiries' },
         { name: '요금제 관리', icon: <Settings size={20} />, path: '/admin/plans' },
-        { name: '운세템 상품 관리', icon: <Package size={20} />, path: '/admin/shop/products' },
-        { name: '운세템 주문 관리', icon: <FileText size={20} />, path: '/admin/shop/orders' },
+        { name: '운세 상품 관리', icon: <Package size={20} />, path: '/admin/shop/products' },
+        { name: '운세 주문 관리', icon: <FileText size={20} />, path: '/admin/shop/orders' },
     ];
 
     return (

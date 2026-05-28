@@ -25,6 +25,8 @@ interface ShopProduct {
     images: string[];
     is_active: boolean;
     created_at: string;
+    options?: { name: string; values: string[] }[] | null;
+    discount_price?: number | null;
 }
 
 const AdminShopProducts: React.FC = () => {
@@ -37,6 +39,7 @@ const AdminShopProducts: React.FC = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState<number>(0);
+    const [discountPrice, setDiscountPrice] = useState<number | ''>('');
     const [stock, setStock] = useState<number>(0);
     const [productType, setProductType] = useState<'physical' | 'digital'>('physical');
     const [isActive, setIsActive] = useState(true);
@@ -46,6 +49,7 @@ const AdminShopProducts: React.FC = () => {
     const [detailPreviews, setDetailPreviews] = useState<string[]>([]);
     const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
     const [existingImages, setExistingImages] = useState<string[]>([]);
+    const [optionsList, setOptionsList] = useState<{ name: string; values: string[] }[]>([]);
     
     const [saving, setSaving] = useState(false);
 
@@ -75,6 +79,7 @@ const AdminShopProducts: React.FC = () => {
         setName('');
         setDescription('');
         setPrice(0);
+        setDiscountPrice('');
         setStock(0);
         setProductType('physical');
         setIsActive(true);
@@ -84,6 +89,7 @@ const AdminShopProducts: React.FC = () => {
         setDetailPreviews([]);
         setExistingThumbnailUrl(null);
         setExistingImages([]);
+        setOptionsList([]);
         setIsModalOpen(true);
     };
 
@@ -92,6 +98,7 @@ const AdminShopProducts: React.FC = () => {
         setName(product.name);
         setDescription(product.description || '');
         setPrice(product.price);
+        setDiscountPrice(product.discount_price ?? '');
         setStock(product.stock);
         setProductType(product.product_type);
         setIsActive(product.is_active);
@@ -101,6 +108,7 @@ const AdminShopProducts: React.FC = () => {
         setDetailPreviews([]);
         setExistingThumbnailUrl(product.thumbnail_url);
         setExistingImages(product.images || []);
+        setOptionsList(product.options || []);
         setIsModalOpen(true);
     };
 
@@ -166,11 +174,13 @@ const AdminShopProducts: React.FC = () => {
                 name,
                 description,
                 price,
+                discount_price: discountPrice === '' ? null : Number(discountPrice),
                 stock,
                 product_type: productType,
                 thumbnail_url: finalThumbnailUrl,
                 images: finalImages,
                 is_active: isActive,
+                options: optionsList,
                 updated_at: new Date().toISOString()
             };
 
@@ -234,7 +244,7 @@ const AdminShopProducts: React.FC = () => {
                     <div>
                         <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                             <Package className="text-violet-600" />
-                            운세템 상품 관리
+                            운세 상품 관리
                         </h1>
                         <p className="text-sm text-slate-500">실물 및 디지털 상품을 등록하고 관리합니다.</p>
                     </div>
@@ -288,7 +298,16 @@ const AdminShopProducts: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="py-4 px-6 font-bold text-slate-900">{product.name}</td>
-                                            <td className="py-4 px-6 font-semibold">₩{product.price.toLocaleString()}</td>
+                                             <td className="py-4 px-6 font-semibold">
+                                                 {product.discount_price && product.discount_price < product.price ? (
+                                                     <div className="flex flex-col">
+                                                         <span className="text-violet-600 font-bold">₩{product.discount_price.toLocaleString()}</span>
+                                                         <span className="text-xs text-slate-400 line-through">₩{product.price.toLocaleString()}</span>
+                                                     </div>
+                                                 ) : (
+                                                     <span>₩{product.price.toLocaleString()}</span>
+                                                 )}
+                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`font-semibold ${product.stock === 0 ? 'text-red-500 font-bold' : ''}`}>
                                                     {product.stock.toLocaleString()}개
@@ -376,7 +395,7 @@ const AdminShopProducts: React.FC = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 mb-2">판매 가격 (KRW)</label>
                                     <input
@@ -385,6 +404,17 @@ const AdminShopProducts: React.FC = () => {
                                         min={0}
                                         value={price}
                                         onChange={e => setPrice(Number(e.target.value))}
+                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-violet-500 font-semibold"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 mb-2">할인 가격 (선택)</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={discountPrice}
+                                        onChange={e => setDiscountPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                                        placeholder="할인 미적용"
                                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-violet-500 font-semibold"
                                     />
                                 </div>
@@ -425,6 +455,71 @@ const AdminShopProducts: React.FC = () => {
                                         상품 노출 (활성화)
                                     </label>
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs font-bold text-slate-400">상품 옵션 설정</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOptionsList(prev => [...prev, { name: '', values: [] }])}
+                                        className="text-xs font-bold text-violet-600 hover:text-violet-750 flex items-center gap-1"
+                                    >
+                                        <Plus size={14} />
+                                        옵션 추가
+                                    </button>
+                                </div>
+                                {optionsList.length > 0 ? (
+                                    <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        {optionsList.map((opt, idx) => (
+                                            <div key={idx} className="flex flex-col gap-2 p-3 bg-white rounded-xl border border-slate-100 relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOptionsList(prev => prev.filter((_, i) => i !== idx))}
+                                                    className="absolute top-2 right-2 p-1 text-slate-450 hover:text-red-500 rounded-lg"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div className="col-span-1">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="예: 색상"
+                                                            required
+                                                            value={opt.name}
+                                                            onChange={e => {
+                                                                const updated = [...optionsList];
+                                                                if (updated[idx]) {
+                                                                    updated[idx].name = e.target.value;
+                                                                    setOptionsList(updated);
+                                                                }
+                                                            }}
+                                                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-violet-500 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="옵션값을 쉼표(,)로 구분 (예: 빨강,파랑)"
+                                                            required
+                                                            value={opt.values.join(',')}
+                                                            onChange={e => {
+                                                                const updated = [...optionsList];
+                                                                if (updated[idx]) {
+                                                                    updated[idx].values = e.target.value.split(',').map(v => v.trim()).filter(v => v !== '');
+                                                                    setOptionsList(updated);
+                                                                }
+                                                            }}
+                                                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-violet-500 font-semibold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 italic">설정된 옵션이 없습니다.</p>
+                                )}
                             </div>
 
                             <div>

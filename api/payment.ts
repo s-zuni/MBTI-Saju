@@ -127,7 +127,8 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
                     p_shipping_phone: tossData.metadata?.shippingPhone || '',
                     p_shipping_address: tossData.metadata?.shippingAddress || '',
                     p_shipping_memo: tossData.metadata?.shippingMemo || '',
-                    p_items: items
+                    p_items: items,
+                    p_shipping_fee: Number(tossData.metadata?.shippingFee || 0)
                 });
 
                 if (orderError) {

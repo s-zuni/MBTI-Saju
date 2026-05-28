@@ -138,9 +138,11 @@ export const kboSchema = z.object({
 // Special Analysis: Jamidusu
 export const jamidusuSchema = z.object({
     main_character: z.string().describe("나의 메인 수호별 캐릭터 (예: 거침없는 팩폭러, 칠살성)"),
-    love_style: z.string().describe("연애 스타일 분석 (부처궁 해석)"),
-    wealth_style: z.string().describe("재물 및 소비 성향 분석 (재백궁 해석)"),
-    charm_points: z.array(z.string()).length(3).describe("나의 매력 포인트 3가지"),
+    destiny_palace: z.string().describe("명궁(Life Palace) 분석: 타고난 본성과 나의 주성 특징"),
+    career_palace: z.string().describe("관록궁(Career Palace) 분석: 직업 성향과 추천 분야"),
+    wealth_style: z.string().describe("재백궁(Wealth Palace) 분석: 재물 및 소비 성향 분석"),
+    love_style: z.string().describe("부처궁(Love Palace) 분석: 연애 스타일과 잘 맞는 인연"),
+    lucky_items: z.array(z.string()).length(3).describe("운을 높여주는 자미두수 길성이나 행운 요소 3가지"),
     summary: z.string().describe("한 줄 요약 메세지")
 });
 

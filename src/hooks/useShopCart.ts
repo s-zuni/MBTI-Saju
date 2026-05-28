@@ -8,6 +8,7 @@ export interface ShopProductInfo {
     stock: number;
     thumbnail_url: string | null;
     product_type: 'physical' | 'digital';
+    discount_price?: number | null;
 }
 
 export interface ShopCartItem {
@@ -16,6 +17,7 @@ export interface ShopCartItem {
     quantity: number;
     created_at: string;
     product: ShopProductInfo | null;
+    selected_option?: string | null;
 }
 
 export function useShopCart() {
@@ -38,13 +40,15 @@ export function useShopCart() {
                     id,
                     product_id,
                     quantity,
+                    selected_option,
                     created_at,
                     product:shop_products (
                         name,
                         price,
                         stock,
                         thumbnail_url,
-                        product_type
+                        product_type,
+                        discount_price
                     )
                 `)
                 .eq('user_id', session.user.id);
@@ -58,13 +62,15 @@ export function useShopCart() {
                     id: item.id,
                     product_id: item.product_id,
                     quantity: item.quantity,
+                    selected_option: item.selected_option,
                     created_at: item.created_at,
                     product: prod ? {
                         name: prod.name,
                         price: prod.price,
                         stock: prod.stock,
                         thumbnail_url: prod.thumbnail_url,
-                        product_type: prod.product_type as 'physical' | 'digital'
+                        product_type: prod.product_type as 'physical' | 'digital',
+                        discount_price: prod.discount_price
                     } : null
                 };
             });
@@ -81,19 +87,20 @@ export function useShopCart() {
         fetchCart().catch(err => console.error(err));
     }, [session, fetchCart]);
 
-    const addToCart = async (productId: string, quantity = 1): Promise<boolean> => {
+    const addToCart = async (productId: string, quantity = 1, selectedOption?: string): Promise<boolean> => {
         if (!session?.user) {
             alert('로그인이 필요합니다.');
             return false;
         }
 
         try {
-            // Check if product already in cart
+            // Check if product already in cart with the SAME option
             const { data: existing, error: checkError } = await supabase
                 .from('shop_cart')
                 .select('id, quantity')
                 .eq('user_id', session.user.id)
                 .eq('product_id', productId)
+                .eq('selected_option', selectedOption || null)
                 .maybeSingle();
 
             if (checkError) throw checkError;
@@ -110,7 +117,8 @@ export function useShopCart() {
                     .insert({
                         user_id: session.user.id,
                         product_id: productId,
-                        quantity
+                        quantity,
+                        selected_option: selectedOption || null
                     });
                 if (insertError) throw insertError;
             }
@@ -177,8 +185,12 @@ export function useShopCart() {
 
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = cart.reduce((sum, item) => {
-        const itemPrice = item.product?.price ?? 0;
-        return sum + itemPrice * item.quantity;
+        const prod = item.product;
+        if (!prod) return sum;
+        const price = (prod.discount_price !== undefined && prod.discount_price !== null && prod.discount_price > 0 && prod.discount_price < prod.price)
+            ? prod.discount_price
+            : prod.price;
+        return sum + price * item.quantity;
     }, 0);
 
     return {

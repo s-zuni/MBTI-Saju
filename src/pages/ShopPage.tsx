@@ -15,6 +15,7 @@ interface ShopProduct {
     images: string[];
     is_active: boolean;
     created_at: string;
+    discount_price?: number | null;
 }
 
 const ShopPage: React.FC = () => {
@@ -59,10 +60,10 @@ const ShopPage: React.FC = () => {
                 <div className="max-w-xl mx-auto">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-violet-50 text-violet-600 mb-4">
                         <Sparkles size={12} className="animate-pulse" />
-                        특별한 행운과 치유의 운세템 자사몰
+                        특별한 행운과 치유의 운세 상점
                     </span>
                     <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                        운세템 자사몰
+                        운세 상점
                     </h1>
                     <p className="mt-3 text-sm md:text-base text-slate-500 font-medium leading-relaxed">
                         당신의 사주와 MBTI에 꼭 맞는 기운을 불어넣어 줄<br />
@@ -157,6 +158,13 @@ const ShopPage: React.FC = () => {
                                                 {product.product_type === 'physical' ? '실물' : '디지털'}
                                             </span>
 
+                                            {/* Discount badge */}
+                                            {product.discount_price && product.discount_price < product.price && (
+                                                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-red-500 text-white shadow-sm">
+                                                    {Math.round(((product.price - product.discount_price) / product.price) * 100)}% OFF
+                                                </span>
+                                            )}
+
                                             {/* Sold Out Overlay */}
                                             {isSoldOut && (
                                                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
@@ -175,10 +183,23 @@ const ShopPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-1.5 px-0.5 pb-0.5 flex justify-between items-center">
-                                        <span className="text-sm md:text-base font-black text-slate-900">
-                                            ₩{product.price.toLocaleString()}
-                                        </span>
+                                    <div className="mt-1.5 px-0.5 pb-0.5 flex justify-between items-center flex-wrap gap-1">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {product.discount_price && product.discount_price < product.price ? (
+                                                <>
+                                                    <span className="text-sm md:text-base font-black text-violet-600">
+                                                        ₩{product.discount_price.toLocaleString()}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 line-through font-semibold">
+                                                        ₩{product.price.toLocaleString()}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="text-sm md:text-base font-black text-slate-900">
+                                                    ₩{product.price.toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
                                         {product.stock > 0 && product.stock <= 5 && (
                                             <span className="text-[9px] md:text-[10px] font-bold text-red-500 whitespace-nowrap">
                                                 품절임박 {product.stock}개

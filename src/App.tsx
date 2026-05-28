@@ -5,7 +5,6 @@ import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
 import FeatureGrids from './components/FeatureGrids';
-import { supabase } from './supabaseClient';
 import ReviewCollectionPage from './pages/ReviewCollectionPage';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
@@ -62,6 +61,7 @@ const KboPage = lazy(() => import('./pages/KboPage'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
 const AdminShopProducts = lazy(() => import('./pages/admin/AdminShopProducts'));
 const AdminShopOrders = lazy(() => import('./pages/admin/AdminShopOrders'));
 
@@ -361,6 +361,7 @@ function AppContent({
                   } />
                   <Route path="/shop" element={<ShopPage />} />
                   <Route path="/shop/:productId" element={<ProductDetailPage />} />
+                  <Route path="/shop/cart" element={<CartPage />} />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
                   <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />

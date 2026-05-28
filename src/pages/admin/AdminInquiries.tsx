@@ -9,10 +9,7 @@ import {
     CheckCircle2,
     Clock,
     RotateCcw,
-    AlertTriangle,
-    ShieldCheck,
-    ShieldAlert,
-    Mail
+    AlertTriangle
 } from 'lucide-react';
 import { formatSafariDate } from '../../utils/textUtils';
 
@@ -104,16 +101,18 @@ const AdminInquiries: React.FC = () => {
             setInquiries(mappedData);
 
             // Sync selected inquiry data if open
-            if (selectedInquiry) {
-                const updated = mappedData.find(i => i.id === selectedInquiry.id);
-                if (updated) setSelectedInquiry(updated);
-            }
+            // Sync selected inquiry data if open
+            setSelectedInquiry(prev => {
+                if (!prev) return null;
+                const updated = mappedData.find(i => i.id === prev.id);
+                return updated || prev;
+            });
         } catch (err) {
             console.error('Error fetching inquiries:', err);
         } finally {
             setLoading(false);
         }
-    }, [selectedInquiry]);
+    }, []);
 
     const fetchMessages = useCallback(async (inquiryId: string) => {
         try {
@@ -135,7 +134,7 @@ const AdminInquiries: React.FC = () => {
 
     useEffect(() => {
         fetchInquiries().catch(err => console.error(err));
-    }, []);
+    }, [fetchInquiries]);
 
     useEffect(() => {
         if (selectedInquiry) {

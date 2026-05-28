@@ -28,6 +28,8 @@ interface ShopProduct {
     images: string[];
     is_active: boolean;
     created_at: string;
+    options?: { name: string; values: string[] }[] | null;
+    discount_price?: number | null;
 }
 
 const ProductDetailPage: React.FC = () => {
@@ -42,6 +44,7 @@ const ProductDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
+    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
     // Shipping info form
     const [shippingName, setShippingName] = useState('');
@@ -111,6 +114,9 @@ const ProductDetailPage: React.FC = () => {
     const wished = isWishlisted(product.id);
     const isSoldOut = product.stock === 0;
 
+    const hasDiscount = product.discount_price !== undefined && product.discount_price !== null && product.discount_price > 0 && product.discount_price < product.price;
+    const currentPrice = hasDiscount ? product.discount_price! : product.price;
+
     const handleIncrement = () => {
         if (quantity < product.stock) {
             setQuantity(prev => prev + 1);
@@ -129,9 +135,23 @@ const ProductDetailPage: React.FC = () => {
             return;
         }
 
+        // Validate options
+        if (product.options && product.options.length > 0) {
+            for (const opt of product.options) {
+                if (!selectedOptions[opt.name]) {
+                    alert(`${opt.name} 옵션을 선택해주세요.`);
+                    return;
+                }
+            }
+        }
+
+        const selectedOptionString = product.options && product.options.length > 0
+            ? product.options.map(opt => `${opt.name}: ${selectedOptions[opt.name]}`).join(' / ')
+            : undefined;
+
         try {
             setCartAdding(true);
-            const success = await addToCart(product.id, quantity);
+            const success = await addToCart(product.id, quantity, selectedOptionString);
             if (success) {
                 alert('장바구니에 상품을 담았습니다.');
             }
@@ -148,6 +168,20 @@ const ProductDetailPage: React.FC = () => {
             return;
         }
 
+        // Validate options
+        if (product.options && product.options.length > 0) {
+            for (const opt of product.options) {
+                if (!selectedOptions[opt.name]) {
+                    alert(`${opt.name} 옵션을 선택해주세요.`);
+                    return;
+                }
+            }
+        }
+
+        const selectedOptionString = product.options && product.options.length > 0
+            ? product.options.map(opt => `${opt.name}: ${selectedOptions[opt.name]}`).join(' / ')
+            : undefined;
+
         // Validate shipping fields for physical products
         if (product.product_type === 'physical') {
             if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {
@@ -160,8 +194,10 @@ const ProductDetailPage: React.FC = () => {
         const item = {
             product_id: product.id,
             product_name: product.name,
-            product_price: product.price,
-            quantity
+            product_price: currentPrice,
+            quantity,
+            selected_option: selectedOptionString,
+            product_type: product.product_type
         };
 
         const shippingInfo = product.product_type === 'physical' ? {
@@ -281,8 +317,26 @@ const ProductDetailPage: React.FC = () => {
                                 {product.name}
                             </h1>
 
-                            <div className="text-3xl font-black text-violet-600">
-                                ₩{product.price.toLocaleString()}
+                            <div className="flex items-center gap-3 flex-wrap">
+                                {product.discount_price !== undefined && product.discount_price !== null && product.discount_price > 0 && product.discount_price < product.price ? (
+                                    <>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl font-black text-violet-600">
+                                                ₩{product.discount_price.toLocaleString()}
+                                            </span>
+                                            <span className="text-sm font-bold text-slate-400 line-through">
+                                                ₩{product.price.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <span className="px-2.5 py-1 bg-red-50 text-red-500 rounded-xl text-xs font-black border border-red-100">
+                                            {Math.round(((product.price - product.discount_price) / product.price) * 100)}% 할인
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-3xl font-black text-violet-600">
+                                        ₩{product.price.toLocaleString()}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="border-t border-slate-100 pt-4">
@@ -294,6 +348,28 @@ const ProductDetailPage: React.FC = () => {
 
                         {/* Quantity Selector & Shipping Address */}
                         <div className="space-y-6 mt-6 border-t border-slate-100 pt-6">
+                            {/* Options Selector */}
+                            {!isSoldOut && product.options && product.options.length > 0 && (
+                                <div className="space-y-4 bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                                    <h4 className="font-bold text-slate-700 text-sm">옵션 선택</h4>
+                                    {product.options.map((opt, idx) => (
+                                        <div key={idx} className="space-y-1.5">
+                                            <label className="block text-xs font-bold text-slate-500">{opt.name}</label>
+                                            <select
+                                                value={selectedOptions[opt.name] || ''}
+                                                onChange={e => setSelectedOptions(prev => ({ ...prev, [opt.name]: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-violet-500 font-semibold bg-white text-sm"
+                                            >
+                                                <option value="">{opt.name} 선택</option>
+                                                {opt.values.map((val, vIdx) => (
+                                                    <option key={vIdx} value={val}>{val}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
                             {!isSoldOut && (
                                 <div className="flex justify-between items-center bg-slate-50/70 p-4 rounded-2xl">
                                     <span className="font-bold text-slate-700 text-sm">구매 수량</span>
@@ -390,7 +466,7 @@ const ProductDetailPage: React.FC = () => {
                                     <div className="flex justify-between items-baseline">
                                         <span className="font-bold text-slate-500 text-sm">최종 결제 금액</span>
                                         <span className="text-2xl font-black text-slate-900">
-                                            ₩{(product.price * quantity).toLocaleString()}
+                                            ₩{(currentPrice * quantity).toLocaleString()}
                                         </span>
                                     </div>
                                 )}
@@ -410,7 +486,7 @@ const ProductDetailPage: React.FC = () => {
                     <div className="flex justify-between items-center px-1">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">최종 결제 금액 ({quantity}개)</span>
-                            <span className="text-lg font-black text-violet-600">₩{(product.price * quantity).toLocaleString()}</span>
+                            <span className="text-lg font-black text-violet-600">₩{(currentPrice * quantity).toLocaleString()}</span>
                         </div>
                         {product.product_type === 'physical' && (
                             <button
