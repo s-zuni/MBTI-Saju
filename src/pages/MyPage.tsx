@@ -54,8 +54,7 @@ interface Analysis {
   commonalities?: string;
 }
 
-import SajuGrid from '../components/saju/SajuGrid';
-import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
+
 
 interface MyPageProps {
   onOpenDeepReport: () => void;
