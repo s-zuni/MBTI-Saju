@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, XCircle } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
@@ -250,7 +250,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 30% 50%, #8b5cf6 0%, transparent 60%), radial-gradient(circle at 70% 50%, #a78bfa 0%, transparent 60%)'}} />
             <div className="relative z-10">
               <p className="text-[10px] font-black text-violet-300 uppercase tracking-widest mb-2">MBTI × 사주 융합 별명</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-white mb-3">✨ {stripMarkdown(analysis.fusionNickname)} ✨</h3>
+              <h3 className="text-2xl sm:text-3xl font-black text-white mb-3 flex items-center justify-center gap-2">
+                <Sparkles className="w-5 h-5 text-violet-300" />
+                {stripMarkdown(analysis.fusionNickname)}
+                <Sparkles className="w-5 h-5 text-violet-300" />
+              </h3>
               <p className="text-xs text-violet-300">{analysis.mbti} × 사주 명리학 교차 분석</p>
             </div>
           </div>
@@ -405,15 +409,18 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   const data = (analysis.fieldStrategies as any)[field];
                   if (!data) return null;
                   const fieldConfig = {
-                    career: { icon: '💼', label: '커리어·직업', color: 'border-blue-400' },
-                    love: { icon: '💖', label: '연애·관계', color: 'border-rose-400' },
-                    wealth: { icon: '💰', label: '재물·투자', color: 'border-amber-400' },
+                    career: { icon: Briefcase, label: '커리어·직업', color: 'border-blue-400', iconColor: 'text-blue-500' },
+                    love: { icon: Heart, label: '연애·관계', color: 'border-rose-400', iconColor: 'text-rose-500' },
+                    wealth: { icon: Coins, label: '재물·투자', color: 'border-amber-400', iconColor: 'text-amber-500' },
                   };
                   const cfg = fieldConfig[field];
+                  const IconComponent = cfg.icon;
                   return (
                     <div key={field} className={`report-card border-l-4 ${cfg.color} !pl-5`}>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xl">{cfg.icon}</span>
+                        <div className={`p-1.5 rounded-lg bg-slate-50 border border-slate-100/50 flex items-center justify-center ${cfg.iconColor}`}>
+                          <IconComponent className="w-4 h-4" />
+                        </div>
                         <div>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cfg.label}</p>
                           <h5 className="font-black text-slate-950 text-sm">{stripMarkdown(data.subtitle)}</h5>
@@ -438,13 +445,19 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <div className="space-y-3">
                 {analysis.warnings.watchOut?.map((w: any, i: number) => (
                   <div key={i} className="report-card bg-amber-50 border-amber-100 !p-4">
-                    <h5 className="font-black text-amber-800 text-sm mb-1">⚠ {stripMarkdown(w.title)}</h5>
+                    <h5 className="font-black text-amber-800 text-sm mb-1 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      {stripMarkdown(w.title)}
+                    </h5>
                     <p className="text-amber-700 text-xs leading-relaxed">{stripMarkdown(w.description)}</p>
                   </div>
                 ))}
                 {analysis.warnings.avoid?.map((w: any, i: number) => (
                   <div key={i} className="report-card bg-red-50 border-red-100 !p-4">
-                    <h5 className="font-black text-red-800 text-sm mb-1">🚫 {stripMarkdown(w.title)}</h5>
+                    <h5 className="font-black text-red-800 text-sm mb-1 flex items-center gap-1.5">
+                      <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                      {stripMarkdown(w.title)}
+                    </h5>
                     <p className="text-red-700 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(w.description)}</p>
                   </div>
                 ))}

@@ -13,6 +13,34 @@ import { useCredits } from '../hooks/useCredits';
 import { useModalStore } from '../hooks/useModalStore';
 import { useSubscription } from '../hooks/useSubscription';
 
+const TarotCardBack = ({ className = "" }: { className?: string }) => (
+    <div className={`w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 relative flex items-center justify-center p-3 border border-purple-500/20 rounded-xl overflow-hidden ${className}`}>
+        <div className="absolute inset-1.5 border border-purple-500/10 rounded-lg pointer-events-none"></div>
+        <div className="absolute inset-3 border border-purple-500/5 rounded-md pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col items-center gap-1.5 text-purple-300/40">
+            <Moon className="w-6 h-6 animate-pulse fill-purple-300/10" />
+            <div className="w-1 h-1 bg-amber-400 rounded-full"></div>
+            <Sparkles className="w-4 h-4 text-amber-300/30" />
+        </div>
+        <div className="absolute top-2 left-2 w-1 h-1 bg-amber-400/20 rounded-full"></div>
+        <div className="absolute top-2 right-2 w-1 h-1 bg-amber-400/20 rounded-full"></div>
+        <div className="absolute bottom-2 left-2 w-1 h-1 bg-amber-400/20 rounded-full"></div>
+        <div className="absolute bottom-2 right-2 w-1 h-1 bg-amber-400/20 rounded-full"></div>
+    </div>
+);
+
+const TarotCardPlaceholder = ({ name }: { name: string }) => (
+    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-white relative flex flex-col items-center justify-center p-2 rounded-xl border border-purple-100/60 shadow-md">
+        <div className="absolute inset-1 border border-purple-500/5 rounded-lg"></div>
+        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-1.5">
+            <Moon className="w-4 h-4 text-purple-500" />
+        </div>
+        <div className="text-[11px] text-slate-800 font-extrabold px-1 text-center leading-tight tracking-tight select-none">
+            {name}
+        </div>
+    </div>
+);
+
 const TarotPage: React.FC = () => {
     const navigate = useNavigate();
     const { session, loading: isAuthLoading } = useAuth();
@@ -262,7 +290,7 @@ const TarotPage: React.FC = () => {
                                             const card = selectedCards[idx];
                                             return (
                                                 <div key={idx} className={`w-28 h-40 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 relative overflow-hidden ${card ? 'bg-white border-purple-200 shadow-xl scale-105' : 'bg-slate-50 border-dashed border-slate-200'}`}>
-                                                    {card ? <div className="text-center relative z-10"><div className="text-3xl mb-2">🃏</div><div className="text-[10px] text-slate-900 font-extrabold px-2 text-center leading-tight tracking-tighter">{card.name}</div></div> : <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>}
+                                                    {card ? <TarotCardPlaceholder name={card.name} /> : <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>}
                                                 </div>
                                             );
                                         })}
@@ -272,8 +300,7 @@ const TarotPage: React.FC = () => {
                                             const isSelected = selectedCards.find(c => c.id === card.id);
                                             return (
                                                 <button key={card.id} onClick={() => handleCardSelect(card)} disabled={!!isSelected} className={`aspect-[2/3] rounded-xl border shadow-md transition-all duration-500 relative overflow-hidden group ${isSelected ? 'opacity-0 pointer-events-none' : 'hover:-translate-y-3 hover:scale-110 active:scale-95 bg-slate-900 border-purple-900/50'}`}>
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-transparent"></div>
-                                                    <div className="w-full h-full flex items-center justify-center"><Moon className="w-4 h-4 text-purple-500/20" /></div>
+                                                    <TarotCardBack />
                                                 </button>
                                             );
                                         })}
@@ -338,8 +365,8 @@ const TarotPage: React.FC = () => {
                                                 {reading.cardReadings?.map((card: any, idx: number) => (
                                                     <div key={idx} className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-white shadow-sm hover:shadow-xl transition-all h-full">
                                                         <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-6">Position {idx + 1}</div>
-                                                        <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-purple-100">
-                                                            <div className="text-7xl">🃏</div>
+                                                        <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-purple-100/50">
+                                                            <TarotCardBack className="border-none" />
                                                         </div>
                                                         <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
                                                         <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation ?? '')}</p>
