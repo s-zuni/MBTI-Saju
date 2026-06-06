@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText } from 'lucide-react';
+import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText, Gem, Star } from 'lucide-react';
 import AnalysisModal from '../components/AnalysisModal';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
@@ -451,7 +451,10 @@ const MyPage: React.FC<MyPageProps> = ({
                 <div className="space-y-6">
                   {/* Day Master Analysis */}
                   <div className='bg-white bg-opacity-60 rounded-xl p-5 border border-slate-100'>
-                    <h3 className="font-bold text-slate-600 mb-2">💎 나의 천간 및 본성</h3>
+                    <h3 className="font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                      <Gem className="w-4 h-4 text-violet-500" />
+                      나의 천간 및 본성
+                    </h3>
                     <p className="text-slate-950 text-lg font-black mb-1">
                       {analysis.nature?.dayMasterAnalysis || (analysis as any).typeDescription}
                     </p>
@@ -547,7 +550,7 @@ const MyPage: React.FC<MyPageProps> = ({
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                 <div className="flex justify-between items-start z-10">
-                  <span className="text-2xl mb-2">🔮</span>
+                  <span className="text-slate-400 mb-2"><FileText className="w-6 h-6 text-violet-400" /></span>
                   <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-tight">수기 작성 프리미엄</span>
                 </div>
                 <div className="z-10">
@@ -563,7 +566,9 @@ const MyPage: React.FC<MyPageProps> = ({
                   onClick={onJamidusuClick}
                   className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
                 >
-                  <span className="text-2xl bg-indigo-50 p-3 rounded-full">✨</span>
+                  <span className="bg-indigo-50 p-3 rounded-full flex items-center justify-center shrink-0">
+                    <Star className="w-6 h-6 text-indigo-500" />
+                  </span>
                   <div>
                     <h3 className="font-bold text-lg">나의 수호별 찾기</h3>
                     <p className="text-slate-500 text-sm">자미두수 메인 캐릭터</p>
@@ -574,7 +579,9 @@ const MyPage: React.FC<MyPageProps> = ({
                   onClick={onOpenCompatibility}
                   className="bg-white border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
                 >
-                  <span className="text-2xl bg-rose-50 p-3 rounded-full">💑</span>
+                  <span className="bg-rose-50 p-3 rounded-full flex items-center justify-center shrink-0">
+                    <Users className="w-6 h-6 text-rose-500" />
+                  </span>
                   <div>
                     <h3 className="font-bold text-lg">궁합 보러 가기</h3>
                     <p className="text-slate-500 text-sm">그 사람과의 시너지는?</p>

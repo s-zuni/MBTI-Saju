@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, Sparkles, Star } from 'lucide-react';
+import { Download, ChevronLeft, Coins, Lock, Sparkles, Star, Briefcase, Heart, User } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
@@ -244,7 +244,7 @@ const JamidusuPage: React.FC = () => {
                                                     {result.destiny_palace && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-indigo-500">✨</span> 타고난 본성 (명궁)
+                                                                <User className="w-4 h-4 text-indigo-500" /> 타고난 본성 (명궁)
                                                             </h3>
                                                             <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.destiny_palace}</p>
                                                         </div>
@@ -253,7 +253,7 @@ const JamidusuPage: React.FC = () => {
                                                     {result.career_palace && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-blue-500">💼</span> 나의 재능과 성공 (관록궁)
+                                                                <Briefcase className="w-4 h-4 text-blue-500" /> 나의 재능과 성공 (관록궁)
                                                             </h3>
                                                             <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.career_palace}</p>
                                                         </div>
@@ -262,7 +262,7 @@ const JamidusuPage: React.FC = () => {
                                                     {result.wealth_style && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-amber-500">💰</span> 재물운 (재백궁)
+                                                                <Coins className="w-4 h-4 text-amber-500" /> 재물운 (재백궁)
                                                             </h3>
                                                             <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.wealth_style}</p>
                                                         </div>
@@ -271,7 +271,7 @@ const JamidusuPage: React.FC = () => {
                                                     {result.love_style && (
                                                         <div className="bg-slate-50 p-5 rounded-2xl">
                                                             <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <span className="text-rose-500">♥</span> 연애 스타일 (부처궁)
+                                                                <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" /> 연애 스타일 (부처궁)
                                                             </h3>
                                                             <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.love_style}</p>
                                                         </div>

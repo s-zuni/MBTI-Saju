@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stripMarkdown } from '../utils/textUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { Coins, Lock, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { Coins, Lock, ArrowLeft, Loader2, Sparkles, Palette, Hash, Compass } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
@@ -257,8 +257,8 @@ const TodayFortunePage: React.FC = () => {
 
                             {/* MAIN FORTUNE */}
                             <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 mb-8 relative">
-                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-amber-100 rotate-[-12deg]">
-                                    ✨
+                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-100/30 rotate-[-12deg]">
+                                    <Sparkles className="w-5 h-5 text-white" />
                                 </div>
                                 <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-wrap text-lg">
                                     {stripMarkdown(activeData.fortune)}
@@ -314,17 +314,23 @@ const TodayFortunePage: React.FC = () => {
                             {activeData.lucky && (
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3 rotate-3">🎨</div>
+                                        <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 rotate-3">
+                                            <Palette className="w-5 h-5 text-rose-500" />
+                                        </div>
                                         <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Color</div>
                                         <div className="text-slate-900 font-black text-sm">{activeData.lucky.color}</div>
                                     </div>
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3 -rotate-3">🔢</div>
+                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3 -rotate-3">
+                                            <Hash className="w-5 h-5 text-blue-500" />
+                                        </div>
                                         <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Number</div>
                                         <div className="text-slate-900 font-black text-sm">{activeData.lucky.number}</div>
                                     </div>
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3 rotate-6">🧭</div>
+                                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-3 rotate-6">
+                                            <Compass className="w-5 h-5 text-emerald-500" />
+                                        </div>
                                         <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Direction</div>
                                         <div className="text-slate-900 font-black text-sm">{activeData.lucky.direction}</div>
                                     </div>
