@@ -29,7 +29,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
         <div className="flex justify-center mb-5 md:mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/10">
             <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 +1,000만 ↑ 데이터 분석 / 20장 내외</span>
+            <span className="text-xs font-bold text-amber-200 tracking-wide">프리미엄 전문가 +1,000만 ↑ 데이터 분석 / A4 3~20장 분량</span>
           </div>
         </div>
 
