@@ -141,7 +141,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         amount: amount,
         status: 'pending_payment',
         reservation_date: formData.reservationDate,
-        partner_info: formData.reportType !== 'saju_counsel' && formData.partnerInfo.includePartner ? {
+        partner_info: formData.partnerInfo.includePartner ? {
           name: formData.partnerInfo.name,
           birth_info: `${formData.partnerInfo.birthDate} ${formData.partnerInfo.birthTime}`,
           mbti: formData.partnerInfo.mbti,
@@ -218,7 +218,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">{formData.reportType === 'saju_counsel' ? 'A4 3장 내외' : 'A4 20장 내외'}</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">{formData.reportType === 'saju_counsel' ? 'A4 5장 내외' : 'A4 20장 내외'}</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -239,9 +239,13 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                  <span className="material-symbols-outlined text-slate-900">calendar_month</span>
                  <h3 className="text-sm font-black text-slate-900">리포트 예약 일자 선택 <span className="text-rose-500">*</span></h3>
                </div>
-               <p className="text-xs text-slate-600 mb-4 font-bold flex items-center gap-1">
-                 <Info className="w-4 h-4" /> 프리미엄 수기 분석을 받으실 예약 일자를 선택해주세요.
-               </p>
+                <p className="text-xs text-slate-600 mb-4 font-bold flex flex-col gap-1.5 leading-relaxed">
+                  <span className="flex items-center gap-1"><Info className="w-4 h-4 text-violet-600 shrink-0" /> 프리미엄 수기 분석을 받으실 예약 일자를 선택해주세요.</span>
+                  <span className="text-rose-500 font-extrabold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">info</span>
+                    실제 분석과 정밀한 검증에 하루 정도 소요되므로 오늘 신청 시 빠르면 내일, 늦어도 이틀 뒤에 받아보실 수 있습니다.
+                  </span>
+                </p>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {availableDates.map(date => {
                     const isAvailable = availability[date] !== false;
@@ -380,8 +384,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                </div>
             </div>
 
-            {formData.reportType !== 'saju_counsel' && (
-              <div className="space-y-4 pt-4 border-t border-slate-100">
+            <div className="space-y-4 pt-4 border-t border-slate-100">
                  <div className="flex items-center justify-between">
                    <label className="text-sm font-black text-slate-800">상대방 정보 포함 (궁합 분석)</label>
                    <button 
@@ -494,7 +497,6 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                    </div>
                  )}
               </div>
-            )}
 
              <div className="space-y-2 pt-4 border-t border-slate-100">
                 <label className="text-sm font-black text-slate-800">

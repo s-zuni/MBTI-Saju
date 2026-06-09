@@ -635,15 +635,36 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <Page size="A4" style={styles.page}>
           <Text style={styles.sectionTitle}>{parsedContent.counselingAndAdvice?.title || "03. 고민 분석 및 조언"}</Text>
           
-          {parsedContent.counselingAndAdvice?.details?.map((detail: ReportDetail, idx: number) => (
+          {parsedContent.counselingAndAdvice?.details?.[0] && (
+            <View style={{ marginBottom: 20 }}>
+              {parsedContent.counselingAndAdvice.details[0].subtitle && (
+                <Text style={[styles.subTitle, { borderLeftColor: '#EF4444' }]}>
+                  {parsedContent.counselingAndAdvice.details[0].subtitle}
+                </Text>
+              )}
+              {renderText(parsedContent.counselingAndAdvice.details[0].content)}
+            </View>
+          )}
+          
+          <View style={styles.footer} fixed>
+            <Text>1:1 사주 고민 상담 리포트 | 고민 분석 및 조언</Text>
+            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          </View>
+        </Page>
+
+        {/* Page 4: 극복 솔루션 및 개운 처방 */}
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>04. 극복 솔루션 및 개운 처방</Text>
+          
+          {parsedContent.counselingAndAdvice?.details?.slice(1).map((detail: ReportDetail, idx: number) => (
             <View key={idx} style={{ marginBottom: 20 }}>
-              {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#EF4444' }]}>{detail.subtitle}</Text>}
+              {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#8B5CF6' }]}>{detail.subtitle}</Text>}
               {renderText(detail.content)}
             </View>
           ))}
           
           <View style={styles.footer} fixed>
-            <Text>1:1 사주 고민 상담 리포트 | 고민 분석 및 조언</Text>
+            <Text>1:1 사주 고민 상담 리포트 | 극복 솔루션 및 개운 처방</Text>
             <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
           </View>
         </Page>
