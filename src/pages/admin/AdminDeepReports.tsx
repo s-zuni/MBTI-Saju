@@ -443,7 +443,7 @@ const AdminDeepReports: React.FC = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex flex-col gap-1">
-                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${req.report_type.includes('MBTI') ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-700'}`}>
+                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${req.report_type === '사주 상담 리포트' ? 'bg-rose-100 text-rose-700' : req.report_type.includes('MBTI') ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-700'}`}>
                               {req.report_type}
                            </span>
                            <span className="text-[10px] font-bold text-slate-400 pl-1">📅 {req.reservation_date}</span>
@@ -572,9 +572,11 @@ const AdminDeepReports: React.FC = () => {
                                   )}
 
                                   <div className="md:col-span-2">
-                                     <h5 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">고객 특별 요청사항</h5>
+                                     <h5 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                                       {req.report_type === '사주 상담 리포트' ? '고객 고민 내용 (사주 상담 리포트)' : '고객 특별 요청사항'}
+                                     </h5>
                                      <div className="bg-slate-900 text-slate-100 p-8 rounded-3xl font-medium leading-relaxed text-sm shadow-xl whitespace-pre-line">
-                                        {req.special_requests || '별도의 요청사항이 없습니다.'}
+                                        {req.special_requests || (req.report_type === '사주 상담 리포트' ? '작성된 고민 내용이 없습니다.' : '별도의 요청사항이 없습니다.')}
                                      </div>
                                   </div>
 

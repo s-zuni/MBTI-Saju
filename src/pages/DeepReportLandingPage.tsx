@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, Star, Quote, ShieldCheck, Zap, Users, BarChar
 
 
 interface DeepReportLandingPageProps {
-  onOpenDeepReport: () => void;
+  onOpenDeepReport: (reportType?: string) => void;
 }
 
 const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDeepReport }) => {
@@ -61,21 +61,85 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             당신의 미래 3년을 완벽하게 설계하는 프리미엄 심층 리포트를 만나보세요.
           </p>
 
-          <div className="flex flex-col items-center gap-6 animate-fade-up [animation-delay:600ms]">
-            <button 
-              onClick={onOpenDeepReport}
-              className="group relative px-12 py-6 bg-white text-black rounded-full text-label-caps overflow-hidden transition-all hover:scale-105 active:scale-95"
-            >
-              <div className="absolute inset-0 bg-silver-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <span className="relative flex items-center gap-2">
-                심층 리포트 신청하기
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-full uppercase tracking-wider animate-pulse shadow-lg shadow-rose-600/30">
-                출시 기념 67% 특별 할인가 적용 중 (29,900원 → 9,900원)
-              </span>
+          <div className="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 text-left animate-fade-up [animation-delay:600ms] px-4">
+            {/* Card 1: 4-Year Saju Deep Report */}
+            <div className="premium-glass-card p-8 rounded-[32px] border border-white/5 bg-white/[0.02] backdrop-blur-xl flex flex-col justify-between hover:border-white/20 transition-all relative overflow-hidden group">
+              <div className="absolute top-0 right-0 px-4 py-1.5 bg-violet-600 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-2xl">
+                Best Seller
+              </div>
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-white mb-2">4년 사주 심층 리포트</h3>
+                <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                  선천적 기질과 핵심 오행 분석, 향후 4개년 월별 운세 흐름 및 MBTI 심리학 결합 정밀 로드맵 (A4 20장 분량)
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-violet-400 font-bold">✓</span> 사주원국 & 오행 에너지 정밀 해독
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-violet-400 font-bold">✓</span> 향후 4년 세부 세운 및 월별 흐름
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-violet-400 font-bold">✓</span> MBTI 심리학 모델 융합 성향 분석
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-violet-400 font-bold">✓</span> 귀인 활용법 & 1:1 맞춤형 개운 처방
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className="text-slate-500 line-through text-xs">₩39,900</span>
+                  <span className="text-2xl font-black text-white">₩29,900</span>
+                  <span className="px-2 py-0.5 bg-violet-900/60 text-violet-300 text-[9px] font-black rounded border border-violet-700">25% 특가</span>
+                </div>
+                <button 
+                  onClick={() => onOpenDeepReport('saju')}
+                  className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-slate-100 transition-all text-center flex items-center justify-center gap-2 text-sm active:scale-95"
+                >
+                  4년 심층 리포트 신청 <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Card 2: Saju Counseling Report */}
+            <div className="premium-glass-card p-8 rounded-[32px] border border-white/5 bg-white/[0.02] backdrop-blur-xl flex flex-col justify-between hover:border-white/20 transition-all relative overflow-hidden group">
+              <div className="absolute top-0 right-0 px-4 py-1.5 bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-2xl animate-pulse">
+                New
+              </div>
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-white mb-2">1:1 사주 고민 상담 리포트</h3>
+                <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                  당신의 고민에 대해 전문 사주 상담가가 사주 원국과 올해 대운세를 면밀히 해독하여 개인 맞춤형 명리학적 답변을 전달합니다.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-rose-400 font-bold">✓</span> 사주 원국 및 만세력 집중 분석
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-rose-400 font-bold">✓</span> 올해 대운세 분석 및 길흉 흐름
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-rose-400 font-bold">✓</span> 개인적인 고민(직업/애정 등) 집중 분석
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
+                    <span className="text-rose-400 font-bold">✓</span> 명리학적 해안 및 구체적 개운 방책
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className="text-slate-500 line-through text-xs">₩19,900</span>
+                  <span className="text-2xl font-black text-white">₩9,900</span>
+                  <span className="px-2 py-0.5 bg-rose-950 text-rose-300 text-[9px] font-black rounded border border-rose-800">50% 특가</span>
+                </div>
+                <button 
+                  onClick={() => onOpenDeepReport('saju_counsel')}
+                  className="w-full py-4 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 transition-all text-center flex items-center justify-center gap-2 text-sm active:scale-95"
+                >
+                  고민 상담 리포트 신청 <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -225,24 +289,25 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             <span className="italic italic-glow">새로운 운명</span>을 확인하세요
           </h2>
           
-          <button 
-            onClick={onOpenDeepReport}
-            className="group relative px-16 py-8 bg-white text-black rounded-full text-label-caps overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_-10px_rgba(255,255,255,0.2)]"
-          >
-            <div className="absolute inset-0 bg-silver-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span className="relative flex items-center gap-3 text-lg">
-              심층 리포트 받기
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center max-w-3xl mx-auto px-4">
+            <button 
+              onClick={() => onOpenDeepReport('saju')}
+              className="w-full sm:w-auto px-10 py-6 bg-white text-black rounded-full text-label-caps overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center justify-center gap-4 text-base"
+            >
+              <span>4년 심층 리포트 신청</span>
+              <span className="text-sm font-black text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">₩29,900</span>
+            </button>
+            <button 
+              onClick={() => onOpenDeepReport('saju_counsel')}
+              className="w-full sm:w-auto px-10 py-6 bg-rose-600 text-white rounded-full text-label-caps overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center justify-center gap-4 text-base"
+            >
+              <span>고민 상담 리포트 신청</span>
+              <span className="text-sm font-black text-rose-200 bg-rose-950 px-2.5 py-1 rounded-full">₩9,900</span>
+            </button>
+          </div>
 
           <div className="mt-8 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3">
-              <span className="text-slate-500 line-through text-sm opacity-50">₩29,900</span>
-              <span className="text-2xl font-black text-white">₩9,900</span>
-              <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded">67% 파격 특가</span>
-            </div>
-            <p className="text-slate-500 text-xs font-bold">커피 두 잔 값으로 평생 간직할 인생 지도를 만나보세요.</p>
+            <p className="text-slate-500 text-xs font-bold">커피 값으로 평생 간직할 인생 지도를 만나보세요.</p>
           </div>
           
           <div className="mt-12 flex flex-wrap justify-center gap-10 opacity-40">

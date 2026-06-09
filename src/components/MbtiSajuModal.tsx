@@ -16,7 +16,7 @@ interface MbtiSajuModalProps {
   onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
   credits?: number;
   session: any;
-  onOpenDeepReport?: () => void;
+  onOpenDeepReport?: (reportType?: string) => void;
 }
 
 interface ElementColor {
@@ -234,7 +234,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               </div>
             </div>
           </div>
-          <button onClick={onOpenDeepReport} className="w-full max-w-xs py-4 bg-violet-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2 hover:bg-violet-700 transition-colors">
+          <button onClick={() => onOpenDeepReport?.()} className="w-full max-w-xs py-4 bg-violet-600 text-white rounded-full font-black shadow-xl flex items-center justify-center gap-2 hover:bg-violet-700 transition-colors">
             <Sparkles className="w-5 h-5" />
             프리미엄 심층 리포트 신청하기
           </button>

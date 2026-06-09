@@ -85,7 +85,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
               기간한정 특별 할인가 적용 중!
             </span>
             <span className="px-3 py-1.5 bg-amber-500/20 text-amber-500 text-xs font-bold rounded-full border border-amber-500/20 animate-pulse">
-              하루 10건 제약!
+              실시간 신청 접수 중!
             </span>
           </div>
         </div>

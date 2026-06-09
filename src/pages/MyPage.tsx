@@ -58,7 +58,7 @@ interface Analysis {
 
 
 interface MyPageProps {
-  onOpenDeepReport: () => void;
+  onOpenDeepReport: (reportType?: string) => void;
   onOpenMbtiSaju: () => void;
   onJamidusuClick: () => void;
   onOpenCompatibility: () => void;
@@ -545,7 +545,7 @@ const MyPage: React.FC<MyPageProps> = ({
             {/* Navigation Buttons for Deep Analysis */}
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <button
-                onClick={onOpenDeepReport}
+                onClick={() => onOpenDeepReport()}
                 className="relative overflow-hidden bg-slate-950 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col justify-between h-40 group border border-slate-800"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
