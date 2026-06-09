@@ -110,7 +110,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-white mb-2">1:1 사주 고민 상담 리포트</h3>
                 <p className="text-slate-400 text-xs leading-relaxed mb-6">
-                  당신의 고민에 대해 전문 사주 상담가가 사주 원국과 올해 대운세를 면밀히 해독하여 개인 맞춤형 명리학적 답변을 전달합니다.
+                  당신의 고민에 대해 전문 사주 상담가가 사주 원국과 올해 대운세를 면밀히 해독하여 개인 맞춤형 명리학적 답변을 전달합니다. (A4 3장 분량)
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
