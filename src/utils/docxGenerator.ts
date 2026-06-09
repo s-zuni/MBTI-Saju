@@ -27,8 +27,10 @@ function parseContentToParagraphs(text: string): Paragraph[] {
         spacing: { after: 80 },
       });
     }
+    // Remove bold markdown tags ** in DOCX simple preview if any
+    const cleanText = trimmed.replace(/\*\*/g, '');
     return new Paragraph({
-      children: [new TextRun({ text: trimmed, size: 22, font: 'Malgun Gothic' })],
+      children: [new TextRun({ text: cleanText, size: 22, font: 'Malgun Gothic' })],
       spacing: { after: 100 },
     });
   });
@@ -101,6 +103,7 @@ function createSajuTable(saju: any): Table | null {
 
 export async function generateDocx(parsedContent: any, sajuData: any, clientName: string) {
   const sections: any[] = [];
+  const isCounseling = parsedContent?.counselingAndAdvice !== undefined;
 
   // --- Cover Page ---
   sections.push({
@@ -108,7 +111,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     children: [
       new Paragraph({ spacing: { before: 4000 } }),
       new Paragraph({
-        children: [new TextRun({ text: 'VIP 프리미엄 전략 보고서', size: 24, color: '94A3B8', font: 'Malgun Gothic' })],
+        children: [new TextRun({ text: isCounseling ? '1:1 사주 고민 상담 리포트' : 'VIP 프리미엄 전략 보고서', size: 24, color: '94A3B8', font: 'Malgun Gothic' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 600 },
       }),
@@ -118,7 +121,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
         spacing: { after: 400 },
       }),
       new Paragraph({
-        children: [new TextRun({ text: parsedContent?.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계', size: 24, color: '64748B', font: 'Malgun Gothic' })],
+        children: [new TextRun({ text: parsedContent?.cover?.subTitle || (isCounseling ? '명리학적 해법을 통한 1:1 맞춤 고민 카운셀링' : '명리학과 심리학의 융합을 통한 인생 설계'), size: 24, color: '64748B', font: 'Malgun Gothic' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 800 },
       }),
@@ -149,14 +152,14 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
       },
       headers: {
         default: new Header({
-          children: [new Paragraph({ children: [new TextRun({ text: 'VIP 프리미엄 전략 보고서', size: 16, color: '94A3B8', font: 'Malgun Gothic' })], alignment: AlignmentType.RIGHT })],
+          children: [new Paragraph({ children: [new TextRun({ text: isCounseling ? '1:1 사주 고민 상담 리포트' : 'VIP 프리미엄 전략 보고서', size: 16, color: '94A3B8', font: 'Malgun Gothic' })], alignment: AlignmentType.RIGHT })],
         }),
       },
       footers: {
         default: new Footer({
           children: [new Paragraph({
             children: [
-              new TextRun({ text: 'VIP 프리미엄 전략 보고서 | ', size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
+              new TextRun({ text: (isCounseling ? '1:1 사주 고민 상담 리포트 | ' : 'VIP 프리미엄 전략 보고서 | '), size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
               new TextRun({ children: [PageNumber.CURRENT], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
               new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
               new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
@@ -169,10 +172,9 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     });
   };
 
-  // --- 00. Natal Chart Analysis ---
-  const natalChildren: any[] = [createSectionTitle(parsedContent?.natalChartAnalysis?.title || '00. 사주원국(四柱原局) 심층 분석')];
+  // --- 00. Natal Chart Analysis (Common for both) ---
+  const natalChildren: any[] = [createSectionTitle(parsedContent?.natalChartAnalysis?.title || (isCounseling ? '01. 사주 및 만세력 분석' : '00. 사주원국(四柱原局) 심층 분석'))];
   
-  // Day Master info
   const dm = sajuData?.userSaju?.dayMaster;
   if (dm) {
     natalChildren.push(new Paragraph({
@@ -186,16 +188,14 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     }));
   }
   
-  // Saju table
   const sajuTable = createSajuTable(sajuData?.userSaju);
   if (sajuTable) natalChildren.push(sajuTable);
   natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
 
-  // Five elements
   const elRatio = sajuData?.userSaju?.elementRatio;
   if (elRatio) {
     const elemNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
-    natalChildren.push(createSubTitle('오행(五行) 에너지 분포'));
+    natalChildren.push(createSubTitle('오행(五행) 에너지 분포'));
     Object.entries(elemNames).forEach(([key, label]) => {
       const val = elRatio[key] || 0;
       natalChildren.push(new Paragraph({
@@ -206,8 +206,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     });
     natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
   }
-
-  // Natal chart details
+ 
   parsedContent?.natalChartAnalysis?.details?.forEach((detail: any) => {
     if (detail.subtitle) natalChildren.push(createSubTitle(detail.subtitle));
     natalChildren.push(...parseContentToParagraphs(detail.content));
@@ -218,35 +217,37 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     children: natalChildren,
   });
 
-  // --- 01~03 Standard sections ---
-  addSection(parsedContent?.coreIdentity?.title || '01. 선천적 기질 및 운명적 본질', parsedContent?.coreIdentity?.details);
-  addSection(parsedContent?.wealthAndCareer?.title || '02. 재물 그릇의 크기와 사회적 성취', parsedContent?.wealthAndCareer?.details, '0369A1');
-  addSection(parsedContent?.relationship?.title || '03. 인연의 지형도와 감정의 흐름', parsedContent?.relationship?.details, 'BE185D');
+  if (isCounseling) {
+    // --- Saju Counseling Report specific sections ---
+    addSection(parsedContent?.thisYearFortune?.title || '02. 올해 대운세 분석', parsedContent?.thisYearFortune?.details, '10B981');
+    addSection(parsedContent?.counselingAndAdvice?.title || '03. 고민 분석 및 조언', parsedContent?.counselingAndAdvice?.details, 'EF4444');
+  } else {
+    // --- 4-Year standard report specific sections ---
+    addSection(parsedContent?.coreIdentity?.title || '01. 선천적 기질 및 운명적 본질', parsedContent?.coreIdentity?.details);
+    addSection(parsedContent?.wealthAndCareer?.title || '02. 재물 그릇의 크기와 사회적 성취', parsedContent?.wealthAndCareer?.details, '0369A1');
+    addSection(parsedContent?.relationship?.title || '03. 인연의 지형도와 감정의 흐름', parsedContent?.relationship?.details, 'BE185D');
 
-  // --- 04. Yearly Roadmap ---
-  if (parsedContent?.threeYearRoadmap?.details) {
-    const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '04. 핵심 4개년 냉철한 심층 분석')];
-    parsedContent.threeYearRoadmap.details.forEach((yearData: any) => {
-      roadmapChildren.push(new Paragraph({
-        children: [new TextRun({ text: `${yearData.year}년: ${yearData.yearlyTheme}`, bold: true, size: 28, color: '4338CA', font: 'Malgun Gothic' })],
-        spacing: { before: 400, after: 200 },
-      }));
-      yearData.subtopics?.forEach((subtopic: any) => {
-        if (subtopic.subtitle) roadmapChildren.push(createSubTitle(subtopic.subtitle));
-        roadmapChildren.push(...parseContentToParagraphs(subtopic.content));
+    if (parsedContent?.threeYearRoadmap?.details) {
+      const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '04. 핵심 4개년 냉철한 심층 분석')];
+      parsedContent.threeYearRoadmap.details.forEach((yearData: any) => {
+        roadmapChildren.push(new Paragraph({
+          children: [new TextRun({ text: `${yearData.year}년: ${yearData.yearlyTheme}`, bold: true, size: 28, color: '4338CA', font: 'Malgun Gothic' })],
+          spacing: { before: 400, after: 200 },
+        }));
+        yearData.subtopics?.forEach((subtopic: any) => {
+          if (subtopic.subtitle) roadmapChildren.push(createSubTitle(subtopic.subtitle));
+          roadmapChildren.push(...parseContentToParagraphs(subtopic.content));
+        });
       });
-    });
-    sections.push({
-      properties: { page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } },
-      children: roadmapChildren,
-    });
+      sections.push({
+        properties: { page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } },
+        children: roadmapChildren,
+      });
+    }
+
+    addSection(parsedContent?.specialRequestAnalysis?.title || '05. 내담자 특별 요청사항에 대한 명리적 해답', parsedContent?.specialRequestAnalysis?.details, '4F46E5');
+    addSection(parsedContent?.actionPlan?.title || '06. 운명을 바꾸는 마스터의 마스터플랜', parsedContent?.actionPlan?.details, '1E293B');
   }
-
-  // --- 05. Special Request Analysis ---
-  addSection(parsedContent?.specialRequestAnalysis?.title || '05. 내담자 특별 요청사항에 대한 명리적 해답', parsedContent?.specialRequestAnalysis?.details, '4F46E5');
-
-  // --- 06. Action Plan ---
-  addSection(parsedContent?.actionPlan?.title || '06. 운명을 바꾸는 마스터의 마스터플랜', parsedContent?.actionPlan?.details, '1E293B');
 
   // Build and download
   const doc = new Document({

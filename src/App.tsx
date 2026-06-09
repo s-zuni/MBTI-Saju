@@ -306,7 +306,7 @@ function AppContent({
                   <Route path="/support" element={<SupportPage session={session} />} />
                   <Route path="/mypage" element={
                     <MyPage
-                      onOpenDeepReport={() => openModal('deepReport')}
+                      onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })}
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
                       onJamidusuClick={() => navigate('/jamidusu')}
                       onOpenCompatibility={() => openModal('compatibility')}
@@ -361,7 +361,7 @@ function AppContent({
                   <Route path="/room" element={<ChatPage session={session} />} />
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
-                  <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={() => openModal('deepReport')} />} />
+                  <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })} />} />
                   <Route path="/today-fortune" element={<TodayFortunePage />} />
                   <Route path="/today-tarot" element={<TarotPage />} />
                   <Route path="/trip" element={<TripPage />} />
@@ -398,12 +398,13 @@ function AppContent({
                 }}
                 credits={credits}
                 session={session}
-                onOpenDeepReport={() => openModal('deepReport')}
+                onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })}
               />
               <DeepReportModal
                 isOpen={modals?.deepReport?.isOpen || false}
                 onClose={() => closeModal('deepReport')}
                 session={session}
+                initialReportType={modals?.deepReport?.data?.reportType}
               />
 
               <RecommendationModal
