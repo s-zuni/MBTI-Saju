@@ -1,13 +1,11 @@
 import React, { useEffect } from 'react';
-import { ArrowRight, CheckCircle2, Star, Quote, ShieldCheck, Zap, Users, BarChart3, Clock } from 'lucide-react';
-
+import { ArrowRight, Star, Quote, Zap, BarChart3, Clock } from 'lucide-react';
 
 interface DeepReportLandingPageProps {
   onOpenDeepReport: (reportType?: string) => void;
 }
 
 const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDeepReport }) => {
-
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -17,32 +15,25 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
     {
       name: "김*현",
       tag: "30대 직장인",
-      content: "그동안 봤던 사주랑은 차원이 달라요. 20페이지가 넘는 분량에 제 성격부터 미래 3년 운세까지 정말 디테일하게 분석되어 있어서 놀랐습니다. 특히 MBTI랑 결합된 분석이 정말 정확해요.",
-      rating: 5,
-      date: "2026.05.18"
+      content: "그동안 봤던 사주랑은 차원이 달라요. 20페이지가 넘는 분량에 제 성격부터 미래 4년 운세까지 정말 디테일하게 분석되어 있어서 놀랐습니다. 특히 MBTI랑 결합된 분석이 정말 정확해요.",
+      rating: 5
     },
     {
       name: "이*우",
       tag: "사업가",
-      content: "사업 방향성을 잡는 데 큰 도움이 되었습니다. 1,000만 건의 데이터를 기반으로 했다더니 통계적으로 납득이 가는 분석들이 많더라고요. 3년치 운세가 다 들어있어서 돈이 아깝지 않습니다.",
-      rating: 5,
-      date: "2026.05.17"
+      content: "사업 방향성을 잡는 데 큰 도움이 되었습니다. 1,000만 건의 데이터를 기반으로 했다더니 통계적으로 납득이 가는 분석들이 많더라고요. 향후 4년 운세가 다 들어있어서 돈이 전혀 아깝지 않습니다.",
+      rating: 5
     },
     {
       name: "박*아",
-      tag: "취준생",
-      content: "단순히 '좋다 나쁘다'가 아니라, 구체적으로 어떤 시기에 무엇을 조심해야 할지 알려줘서 좋았어요. 리포트 디자인도 너무 고급스러워서 소장 가치가 있습니다.",
-      rating: 5,
-      date: "2026.05.15"
+      tag: "프리랜서",
+      content: "단순히 '좋다 나쁘다'가 아니라, 구체적으로 어떤 시기에 무엇을 조심해야 할지 알려줘서 좋았어요. 리포트 디자인도 너무 고급스러워서 태블릿에 넣고 계속 보고 있습니다.",
+      rating: 5
     }
   ];
 
   return (
     <div className="premium-bg font-manrope min-h-screen overflow-x-hidden selection:bg-silver-200 selection:text-black">
-      {/* Navigation */}
-      {/* Navigation removed - handled by global Navbar */}
-
-
       {/* Hero Section */}
       <section id="hero" className="relative pt-40 pb-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
@@ -58,7 +49,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
           
           <p className="text-body-lg text-slate-400 max-w-2xl mx-auto mb-12 animate-fade-up [animation-delay:400ms]">
             국내 최대 규모의 사주-성향 데이터를 기반으로 분석합니다.<br />
-            당신의 미래 3년을 완벽하게 설계하는 프리미엄 심층 리포트를 만나보세요.
+            당신의 미래를 완벽하게 설계하는 프리미엄 심층 리포트를 만나보세요.
           </p>
 
           <div className="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 text-left animate-fade-up [animation-delay:600ms] px-4">
@@ -110,7 +101,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-white mb-2">1:1 사주 고민 상담 리포트</h3>
                 <p className="text-slate-400 text-xs leading-relaxed mb-6">
-                  당신의 고민에 대해 전문 사주 상담가가 사주 원국과 올해 대운세를 면밀히 해독하여 개인 맞춤형 명리학적 답변을 전달합니다. (A4 5장 분량)
+                  당신의 구체적인 질문/고민에 대해 국보급 명리 마스터가 사주 원국과 올해 대운세를 해독하여 1:1 맞춤 대답을 집필합니다. (A4 5장 분량)
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
@@ -120,7 +111,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                     <span className="text-rose-400 font-bold">✓</span> 올해 대운세 분석 및 길흉 흐름
                   </div>
                   <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
-                    <span className="text-rose-400 font-bold">✓</span> 개인적인 고민(직업/애정 등) 집중 분석
+                    <span className="text-rose-400 font-bold">✓</span> 개인적인 고민(연애/직업/재물) 집중 분석
                   </div>
                   <div className="flex items-center gap-2 text-slate-300 text-xs font-medium">
                     <span className="text-rose-400 font-bold">✓</span> 명리학적 해안 및 구체적 개운 방책
@@ -149,8 +140,58 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="absolute top-1/4 right-0 translate-x-1/3 w-[400px] h-[400px] bg-blue-900/10 rounded-full blur-[100px] pointer-events-none"></div>
       </section>
 
+      {/* 고민 해결 카테고리 Section */}
+      <section className="py-24 px-6 bg-[#0B0B0B] border-y border-white/5 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-label-caps text-rose-400 bg-rose-950/40 px-3 py-1.5 rounded-full border border-rose-900/40 text-xs font-black tracking-widest uppercase">Myungri & Psychology Solution</span>
+            <h2 className="text-headline-xl text-white mt-6 mb-4">어떤 고민을 갖고 계시든,<br />명확한 인생의 이정표를 세워드립니다.</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed">
+              사주 원국과 오행 대운의 흐름, 현대 성격 심리학(MBTI) 데이터를 융합하여 당신의 막힌 고민을 정밀하게 풀어 드립니다.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: "favorite",
+                title: "연애 & 궁합 고민",
+                desc: "이별의 원인, 나를 도울 이상형 사주, 올해 연애 대운과 인연이 닿는 구체적인 시기 및 상대 분석",
+                color: "text-rose-400 border-rose-900/30 bg-rose-950/10 hover:border-rose-500/30"
+              },
+              {
+                icon: "work",
+                title: "진로 & 이직 고민",
+                desc: "현재 직장의 슬럼프 극복법, 나의 천직(天職) 업종 분석 및 가장 기운이 상승하는 이직 승부처 포착",
+                color: "text-violet-400 border-violet-900/30 bg-violet-950/10 hover:border-violet-500/30"
+              },
+              {
+                icon: "payments",
+                title: "재물 & 사업 성공",
+                desc: "선천적으로 타고난 재물 그릇 크기와 흐름, 자산 축적 방식 및 투자 성공 확률이 극대화되는 시기 조언",
+                color: "text-amber-400 border-amber-900/30 bg-amber-950/10 hover:border-amber-500/30"
+              },
+              {
+                icon: "psychology",
+                title: "자아 성찰 & 심리 처방",
+                desc: "나의 성격 유형(MBTI)과 사주 에너지가 충돌/융합할 때 생기는 무의식적 욕망과 마스터의 맞춤 개운 처방",
+                color: "text-blue-400 border-blue-900/30 bg-blue-950/10 hover:border-blue-500/30"
+              }
+            ].map((item, idx) => (
+              <div key={idx} className={`premium-glass-card p-8 rounded-[28px] border transition-all duration-300 ${item.color}`}>
+                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                  <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Featured Images / Mockups */}
-      <section id="features" className="py-20 px-6 bg-[#0F0F0F]">
+      <section id="features" className="py-20 px-6 bg-[#050505]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-headline-xl mb-4 italic text-white">프리미엄 리포트 경험</h2>
@@ -186,7 +227,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
-            <div className="text-label-caps text-silver-400 mb-6">왜 MBTIJU 프리미엄인가?</div>
+              <div className="text-label-caps text-silver-400 mb-6">왜 MBTIJU 프리미엄인가?</div>
               <h2 className="text-headline-xl mb-10 text-white">
                 단순한 운세가 아닌,<br />
                 <span className="italic">데이터로 입증된</span> 인생 가이드
@@ -209,7 +250,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                   </div>
                   <div>
                     <h3 className="text-xl font-medium mb-2 text-white">1회 사주 비용으로 3년 운세를 한 번에</h3>
-                    <p className="text-slate-400 text-body-md">여러 번 볼 필요 없습니다. 단 1회 분석 비용만으로 향후 3년 동안의 모든 대운과 세운을 월별로 꼼꼼히 분석해 드립니다. 가장 경제적이고 확실한 미래 설계입니다.</p>
+                    <p className="text-slate-400 text-body-md">여러 번 볼 필요 없습니다. 단 1회 분석 비용만으로 향후 4년 동안의 모든 대운과 세운을 월별로 꼼꼼히 분석해 드립니다. 가장 경제적이고 확실한 미래 설계입니다.</p>
                   </div>
                 </div>
 
@@ -240,8 +281,102 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         </div>
       </section>
 
+      {/* 리포트 신청 절차 Section */}
+      <section className="py-24 px-6 bg-[#050505] border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-headline-xl text-white">신청부터 수령까지 간편한 3단계</h2>
+            <p className="text-slate-500 mt-3 text-sm">전문가의 정밀 감명 리포트를 가장 신속하게 받아보실 수 있습니다.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-xl font-bold text-white shadow-lg">
+                1
+              </div>
+              <h3 className="text-lg font-bold text-white mb-3">정보 및 고민 입력</h3>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
+                내담자분의 생년월일시와 해결하고 싶은 구체적인 질문/고민을 작성합니다. (궁합 요청 시 상대방 정보 입력 가능)
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-xl font-bold text-white shadow-lg">
+                2
+              </div>
+              <h3 className="text-lg font-bold text-white mb-3">정밀 분석 및 리포트 작성</h3>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
+                50년 전통의 명리학 데이터베이스 연산 알고리즘과 AI 국보급 마스터의 융합 분석을 통해 맞춤형 리포트를 즉시 집필합니다.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-16 h-16 rounded-full bg-rose-600 border border-rose-500 flex items-center justify-center mb-6 text-xl font-bold text-white shadow-lg">
+                3
+              </div>
+              <h3 className="text-lg font-bold text-white mb-3">이메일 전달 및 평생 소장</h3>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
+                예약하신 일자에 맞춰 고해상도 PDF 보고서가 이메일로 자동 발송되며, 모바일이나 PC에서 평생 소장 및 조회가 가능합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 상품 비교 표 Section */}
+      <section className="py-24 px-6 bg-[#0B0B0B] border-t border-white/5">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-headline-xl text-white">나에게 맞는 리포트 선택하기</h2>
+            <p className="text-slate-500 mt-3 text-sm">고민의 유형과 원하시는 분석 분량에 따라 선택하실 수 있습니다.</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-3xl border border-white/5 bg-white/[0.01] backdrop-blur-xl">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 bg-white/[0.02]">
+                  <th className="p-6 text-sm font-black text-slate-400 uppercase tracking-widest">분석 기준</th>
+                  <th className="p-6 text-sm font-black text-rose-400">1:1 고민 상담 리포트</th>
+                  <th className="p-6 text-sm font-black text-violet-400">4년 사주 심층 리포트</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-xs">
+                <tr>
+                  <td className="p-6 font-bold text-slate-300">추천 대상</td>
+                  <td className="p-6 text-slate-400">당면한 구체적 인생 고민(연애, 이직, 궁합 등)의 즉각적인 해법이 필요한 분</td>
+                  <td className="p-6 text-slate-400">인생 전반의 흐름, 장기 운세 및 성향의 총체적 로드맵을 설계하고 싶으신 분</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-slate-300">리포트 분량</td>
+                  <td className="p-6 text-slate-400">A4 5장 내외 (고밀도 집중 해설)</td>
+                  <td className="p-6 text-slate-400">A4 20장 내외 (인생 종합 지침서)</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-slate-300">주요 분석 내용</td>
+                  <td className="p-6 text-slate-400">사주 만세력, 올해 대운세, 입력한 구체적 고민 집중 분석 및 맞춤 개운 조언</td>
+                  <td className="p-6 text-slate-400">선천적 천간/지지 오행 분석, MBTI 결합 성향, 4개년 연간/월별 디테일 로드맵, 직업/재물/인연 집중 해독</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-slate-300">고민 입력 필수 여부</td>
+                  <td className="p-6 text-slate-400">필수 (작성하신 내용 맞춤 분석)</td>
+                  <td className="p-6 text-slate-400">선택 (요청 사항 없을 시 종합 분석)</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-slate-300">가격</td>
+                  <td className="p-6 text-slate-200 font-bold">₩9,900</td>
+                  <td className="p-6 text-slate-200 font-bold">₩29,900</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* Reviews Section */}
-      <section id="reviews" className="py-32 px-6 bg-[#050505]">
+      <section id="reviews" className="py-32 px-6 bg-[#050505] border-t border-white/5">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-headline-xl italic text-white">50,000명 이상의 내담자가 신뢰하는 분석</h2>
@@ -270,8 +405,6 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                     <div className="text-white font-medium text-sm">{review.name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-slate-500 text-xs">{review.tag}</span>
-                      <span className="text-white/20 text-[10px]">•</span>
-                      <span className="text-slate-500 text-xs">{review.date}</span>
                     </div>
                   </div>
                 </div>
@@ -281,8 +414,44 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-24 px-6 bg-[#0B0B0B] border-t border-white/5">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-headline-xl text-white">자주 묻는 질문 (FAQ)</h2>
+            <p className="text-slate-500 mt-3 text-sm">리포트 신청 전 궁금하신 점들을 확인해 보세요.</p>
+          </div>
+
+          <div className="space-y-6">
+            {[
+              {
+                q: "Q. 비회원이나 카카오 로그인을 하지 않고도 구매할 수 있나요?",
+                a: "네, 회원 가입 여부와 관계없이 간편하게 이메일 주소와 결제 정보만 입력하여 즉시 리포트를 신청하고 받아보실 수 있습니다."
+              },
+              {
+                q: "Q. 고민 상담 리포트에서 상대방 정보(궁합)는 어떻게 입력하나요?",
+                a: "신청 폼 내에서 '상대방 정보 포함' 토글을 켜시면 상대방의 이름, 생년월일시, 관계 및 MBTI를 입력할 수 있습니다. 이를 기반으로 고민 해결을 위한 관계 분석(궁합)을 함께 제공합니다."
+              },
+              {
+                q: "Q. 결제 후 리포트는 언제 배송되나요?",
+                a: "정교한 명리학 데이터 연산 및 마스터의 최종 검증에 하루 정도가 소요됩니다. 신청일 기준 빠르면 내일, 늦어도 이틀 뒤에 기재하신 이메일로 완성된 PDF 리포트 파일이 발송됩니다."
+              },
+              {
+                q: "Q. 분석 결과가 마음에 들지 않으면 환불이 가능한가요?",
+                a: "리포트는 결제 즉시 사주 연산 및 마스터 분석 맞춤 설계가 시작되는 1:1 주문제작 디지털 상품 특성상 작성 시작 후에는 취소가 어렵습니다. 단, 시스템 장애나 전송 누락 등의 사유 발생 시 고객센터(070-8095-3075)로 연락 주시면 100% 신속히 처리해 드립니다."
+              }
+            ].map((faq, idx) => (
+              <div key={idx} className="premium-glass-card p-8 rounded-[24px] border border-white/5">
+                <h4 className="text-sm font-bold text-white mb-3">{faq.q}</h4>
+                <p className="text-slate-400 text-xs leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action Footer */}
-      <section className="py-40 px-6 relative text-center">
+      <section className="py-40 px-6 relative text-center border-t border-white/5">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-display-lg mb-12 text-white">
             지금 바로 당신의<br />
@@ -310,18 +479,21 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             <p className="text-slate-500 text-xs font-bold">커피 값으로 평생 간직할 인생 지도를 만나보세요.</p>
           </div>
           
-          <div className="mt-12 flex flex-wrap justify-center gap-10 opacity-40">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">안전한 보안 결제</span>
+          {/* Trust Badges */}
+          <div className="mt-16 p-8 rounded-[28px] border border-white/5 bg-white/[0.01] max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-around gap-6 text-slate-300">
+            <div className="flex flex-col items-center">
+              <span className="material-symbols-outlined text-amber-400 text-3xl mb-2">verified_user</span>
+              <span className="text-white text-xs font-bold">100% 암호화 보안 결제</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">전문가 정밀 분석</span>
+            <div className="w-[1px] h-10 bg-white/10 hidden sm:block"></div>
+            <div className="flex flex-col items-center">
+              <span className="material-symbols-outlined text-rose-400 text-3xl mb-2">sentiment_very_satisfied</span>
+              <span className="text-white text-xs font-bold">5만명 만족도 98.7%</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest text-white">100% 만족 보장</span>
+            <div className="w-[1px] h-10 bg-white/10 hidden sm:block"></div>
+            <div className="flex flex-col items-center">
+              <span className="material-symbols-outlined text-blue-400 text-3xl mb-2">mail</span>
+              <span className="text-white text-xs font-bold">PDF 파일 평생 소장</span>
             </div>
           </div>
         </div>

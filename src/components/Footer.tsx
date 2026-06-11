@@ -1,4 +1,5 @@
 import React from 'react';
+import Logo from './Logo';
 
 const Footer = () => {
 
@@ -7,7 +8,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="MBTIJU logo" className="w-7 h-7 object-contain rounded-full" />
+            <Logo className="text-slate-400" size={24} />
             <span className="font-bold text-slate-500 tracking-tight text-lg">MBTIJU</span>
           </div>
           <div className="text-xs text-slate-500 leading-relaxed space-y-1 font-medium">

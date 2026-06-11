@@ -7,6 +7,7 @@ import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
 import { useShopCart } from '../hooks/useShopCart';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import Logo from './Logo';
 
 interface NavbarProps { }
 
@@ -92,7 +93,7 @@ const Navbar: React.FC<NavbarProps> = () => {
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>
           <div className="w-10 h-10 relative flex items-center justify-center transition-transform group-hover:scale-105">
-            <img src="/logo.png" alt="MBTIJU Logo" className="w-full h-full object-contain drop-shadow-md rounded-full" />
+            <Logo className="text-slate-900 group-hover:text-violet-600 transition-colors" size={36} />
           </div>
           <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors font-sans`}>MBTIJU</span>
         </div>
