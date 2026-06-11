@@ -18,8 +18,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { action } = req.query;
 
     if (action === 'confirm') {
+        if (req.method !== 'POST') {
+            return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST for confirmation.' });
+        }
         return confirmPayment(req, res);
     } else if (action === 'cancel') {
+        if (req.method !== 'POST') {
+            return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST for cancellation.' });
+        }
         return cancelPayment(req, res);
     } else if (action === 'info') {
         return getPaymentInfo(req, res);
@@ -38,7 +44,7 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { paymentKey, orderId, amount, userId: bodyUserId } = req.body;
+    const { paymentKey, orderId, amount, userId: bodyUserId } = req.body || {};
 
     if (!paymentKey || !orderId || !amount) {
         return res.status(400).json({ success: false, message: '필수 파라미터가 누락되었습니다.' });
@@ -245,7 +251,7 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { purchaseId, cancelReason, type } = req.body;
+    const { purchaseId, cancelReason, type } = req.body || {};
 
     if (!purchaseId) {
         return res.status(400).json({ success: false, message: 'Missing purchaseId' });
