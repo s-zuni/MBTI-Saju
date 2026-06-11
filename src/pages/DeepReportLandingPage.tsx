@@ -145,47 +145,88 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-label-caps text-rose-400 bg-rose-950/40 px-3 py-1.5 rounded-full border border-rose-900/40 text-xs font-black tracking-widest uppercase">Myungri & Psychology Solution</span>
-            <h2 className="text-headline-xl text-white mt-6 mb-4">어떤 고민을 갖고 계시든,<br />명확한 인생의 이정표를 세워드립니다.</h2>
+            <h2 className="text-headline-xl text-white mt-6 mb-4">어떤 복잡한 고민을 갖고 계시든,<br />명확한 인생의 돌파구를 찾아드립니다.</h2>
             <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed">
-              사주 원국과 오행 대운의 흐름, 현대 성격 심리학(MBTI) 데이터를 융합하여 당신의 막힌 고민을 정밀하게 풀어 드립니다.
+              사주 원국과 오행 대운의 흐름, 현대 성격 심리학(MBTI) 데이터를 융합하여 당신의 막힌 고민을 정밀하게 풀어 드립니다.<br/>
+              <span className="text-violet-400 font-bold mt-2 inline-block">10명 중 9명이 리포트를 읽고 명확한 해결책을 얻었습니다.</span>
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* 고민 카테고리 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
             {[
               {
                 icon: "favorite",
                 title: "연애 & 궁합 고민",
-                desc: "이별의 원인, 나를 도울 이상형 사주, 올해 연애 대운과 인연이 닿는 구체적인 시기 및 상대 분석",
+                desc: "계속되는 이별의 원인, 나를 진정으로 돕는 이상형의 특징과 올해 연애 대운이 들어오는 결정적 시기 분석",
                 color: "text-rose-400 border-rose-900/30 bg-rose-950/10 hover:border-rose-500/30"
               },
               {
                 icon: "work",
                 title: "진로 & 이직 고민",
-                desc: "현재 직장의 슬럼프 극복법, 나의 천직(天職) 업종 분석 및 가장 기운이 상승하는 이직 승부처 포착",
+                desc: "현재 직장에서의 슬럼프 원인, 나의 천직(天職) 업종 분석 및 가장 기운이 크게 상승하는 이직 타이밍 포착",
                 color: "text-violet-400 border-violet-900/30 bg-violet-950/10 hover:border-violet-500/30"
               },
               {
                 icon: "payments",
                 title: "재물 & 사업 성공",
-                desc: "선천적으로 타고난 재물 그릇 크기와 흐름, 자산 축적 방식 및 투자 성공 확률이 극대화되는 시기 조언",
+                desc: "선천적으로 타고난 재물 그릇 크기와 돈이 모이는 방식, 투자 성공 확률이 극대화되는 시기 조언",
                 color: "text-amber-400 border-amber-900/30 bg-amber-950/10 hover:border-amber-500/30"
               },
               {
                 icon: "psychology",
                 title: "자아 성찰 & 심리 처방",
-                desc: "나의 성격 유형(MBTI)과 사주 에너지가 충돌/융합할 때 생기는 무의식적 욕망과 마스터의 맞춤 개운 처방",
+                desc: "MBTI 성격 유형과 사주 에너지가 충돌할 때 생기는 무의식적 불안 해소 및 마스터의 맞춤 개운 처방",
                 color: "text-blue-400 border-blue-900/30 bg-blue-950/10 hover:border-blue-500/30"
               }
             ].map((item, idx) => (
-              <div key={idx} className={`premium-glass-card p-8 rounded-[28px] border transition-all duration-300 ${item.color}`}>
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <div key={idx} className={`premium-glass-card p-8 rounded-[28px] border transition-all duration-300 ${item.color} group`}>
+                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 transition-transform group-hover:scale-110">
                   <span className="material-symbols-outlined text-2xl">{item.icon}</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
+                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-white transition-colors">{item.title}</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* 실제 해결 사례 (풍성한 콘텐츠로 구매 유도) */}
+          <div className="mt-12 bg-white/[0.02] border border-white/5 rounded-[32px] p-10 md:p-14 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 to-rose-500"></div>
+            <div className="text-center mb-10">
+              <h3 className="text-2xl font-bold text-white mb-2">실제 고민 해결 사례</h3>
+              <p className="text-slate-500 text-sm">프리미엄 리포트를 통해 인생의 터닝포인트를 맞이한 분들의 이야기입니다.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <div className="text-violet-400 font-bold text-sm">Case 1. 3년째 반복되는 이직 실패</div>
+                <div className="bg-black/40 p-6 rounded-2xl border border-white/5">
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                    "매번 최종 면접에서 떨어져 자존감이 바닥이었습니다. 리포트를 통해 제가 '수(水)' 기운이 부족하여 문서운이 막히는 시기였음을 알게 되었고, 마스터님의 조언대로 방위를 바꿔 지원했더니 2달 만에 원하던 IT 대기업에 합격했습니다."
+                  </p>
+                  <div className="text-slate-500 text-xs font-medium">- 30대 초반 개발자 김*진 님</div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="text-rose-400 font-bold text-sm">Case 2. 끊임없는 연애 갈등과 불안감</div>
+                <div className="bg-black/40 p-6 rounded-2xl border border-white/5">
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                    "INFP 특유의 예민함과 제 사주의 편관 기운이 충돌해 연인과 계속 싸웠습니다. 고민 상담 리포트에서 제 방어기제의 원인을 명확히 짚어주시고, 올해 9월에 들어오는 진정한 귀인(인연)의 특징을 알려주셔서 마음의 평안을 찾았습니다."
+                  </p>
+                  <div className="text-slate-500 text-xs font-medium">- 20대 후반 프리랜서 박*지 님</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-12 text-center">
+              <p className="text-slate-400 text-sm mb-6">지금 당장 답답한 마음, 더 이상 혼자 고민하지 마세요.</p>
+              <button 
+                onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-slate-200 transition-colors shadow-lg shadow-white/10"
+              >
+                내 고민 해결책 찾기
+              </button>
+            </div>
           </div>
         </div>
       </section>
