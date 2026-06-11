@@ -36,9 +36,11 @@ const schemas: Record<string, any> = {
     }),
     jamidusu: z.object({
         main_character: z.string(),
-        love_style: z.string(),
-        wealth_style: z.string(),
-        charm_points: z.array(z.string()).length(3),
+        palaces: z.array(z.object({
+            name: z.string(),
+            stars: z.string(),
+            analysis: z.string()
+        })).length(12),
         summary: z.string()
     }),
     trip: z.object({
@@ -228,19 +230,18 @@ export default async function handler(req: Request) {
         if (!finalTargetSaju && targetBirthDate) {
             finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
         }
-        userQuery = `[자미두수 기반 수호별 캐릭터 분석 요청]
+        userQuery = `[정통 자미두수 12궁 명반 분석 요청]
 성별: ${targetGender === 'male' ? '남성' : '여성'}
 생년월일시: ${targetBirthDate} ${targetBirthTime || '시간모름'}
 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}
 
-[생성 작업 지침]
-1. 위 명식을 자미두수의 주요 별(자미, 칠살, 파군, 탐랑, 천기, 태음, 천동 등)이 가진 성향으로 치환하여 20대 여성이 호기심을 가질 만한 '나의 메인 수호별 캐릭터'를 도출하세요. (예: "어디서나 시선집중! 매력 만점 탐랑성", "거침없는 팩폭러 칠살성")
-2. 'destiny_palace'는 자미두수 명궁 관점에서 타고난 본성과 메인 주성의 특징을 트렌디하고 감각적인 설명으로 풀어주세요.
-3. 'career_palace'는 관록궁 관점에서 직업적 성향과 가장 빛날 수 있는 분야를 추천하세요.
-4. 'wealth_style'은 재백궁 관점에서 돈을 쓰는 성향과 재물운을 재미있게 분석하세요.
-5. 'love_style'은 부처궁 관점에서 나의 연애 스타일과 시너지가 나는 인연을 설명하세요.
-6. 'lucky_items'는 자미두수에서 나를 돕는 길성(예: 문창, 천괴, 좌보, 우필 등)이나 행운의 요소 3가지를 명확하게 제시하세요.
-7. 절대로 결과에 영어를 포함하지 마세요. 모두 한국어로 작성하고 어려운 한자는 쉽게 풀어쓰되, 자미두수의 전문 용어(명궁, 주성, 관록궁 등)는 살려서 신비로움을 더해주세요.`;
+[생성 작업 지침 - 12궁 상세 분석]
+1. 위 명식을 자미두수의 주요 주성(자미, 천기, 태양, 무곡, 천동, 염정, 천부, 태음, 탐랑, 거문, 천상, 천량, 칠살, 파군)과 길성/흉성이 각 궁에 어떻게 배치되었을지 추론하여 명반을 가상으로 구성하세요.
+2. 'main_character'는 20대 여성이 호기심을 가질 만한 '나의 메인 수호별 캐릭터'로 트렌디하게 도출하세요. (예: "거침없는 팩폭러 칠살성")
+3. 'palaces'는 12궁(명궁, 형제궁, 부처궁, 자녀궁, 재백궁, 질액궁, 천이궁, 노복궁, 관록궁, 전택궁, 복덕궁, 부모궁) 전체에 대해 정확히 12개의 배열 아이템을 생성하세요.
+4. 각 궁에 자리한 주성/부성(stars)을 1-3개 명시하고, 해당 궁이 의미하는 인생의 영역에 대해 매우 압도적이고 상세한 분량으로 트렌디한 해설(analysis)을 작성하세요.
+5. 'summary'는 이 전체 12궁 명반에 대한 총평과 뼈때리는 조언을 작성하세요.
+6. 절대로 결과에 영어를 포함하지 마세요. (MBTI 제외)`;
     } else if (type === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (type === 'trip') {

@@ -570,7 +570,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     <Star className="w-6 h-6 text-indigo-500" />
                   </span>
                   <div>
-                    <h3 className="font-bold text-lg">나의 수호별 찾기</h3>
+                    <h3 className="font-bold text-lg">자미두수</h3>
                     <p className="text-slate-500 text-sm">자미두수 메인 캐릭터</p>
                   </div>
                 </button>

@@ -56,7 +56,7 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   COMPATIBILITY_TRIP: '궁합여행',
   COMPATIBILITY: '심층 궁합',
   TRIP: '여행지 추천',
-  JAMIDUSU: '나의 수호별 찾기 (자미두수)',
+  JAMIDUSU: '자미두수',
   KBO: 'KBO 프로야구 성향 분석',
   RELATIONSHIP_ADD: '인연 추가',
   AI_CHAT_5: '운명 심층 상담 (5회)',
