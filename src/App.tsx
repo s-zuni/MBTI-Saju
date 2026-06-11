@@ -5,7 +5,6 @@ import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import Footer from './components/Footer';
 import FeatureGrids from './components/FeatureGrids';
-import { supabase } from './supabaseClient';
 import ReviewCollectionPage from './pages/ReviewCollectionPage';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
