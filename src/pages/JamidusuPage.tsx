@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, Sparkles, Star, Briefcase, Heart, User } from 'lucide-react';
+import { Download, ChevronLeft, Coins, Lock, Star } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
