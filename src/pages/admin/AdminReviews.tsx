@@ -5,11 +5,9 @@ import {
     Search,
     Loader2,
     AlertCircle,
-    Calendar,
     Plus,
     X,
     Star,
-    Check,
     ToggleLeft,
     ToggleRight,
     MessageSquare

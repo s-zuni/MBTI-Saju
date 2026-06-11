@@ -4,7 +4,6 @@ import {
     Users,
     CreditCard,
     RotateCcw,
-    MessageSquare,
     TrendingUp,
     ArrowUpRight,
     Loader2,
