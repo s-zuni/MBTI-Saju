@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     Users,
     CreditCard,
-    RotateCcw,
     Settings,
     LogOut,
     MessageSquare
