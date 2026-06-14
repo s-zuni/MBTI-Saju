@@ -169,11 +169,9 @@ function AppContent({
   // Handle automatic modal opening from share link
   useEffect(() => {
     if (location.state?.openCompatibility && session) {
-      openModal('compatibility');
-      // Clear state to prevent re-opening
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate('/relationship');
     }
-  }, [location.state, session, openModal, navigate, location.pathname]);
+  }, [location.state, session, navigate]);
 
   // 라우트 변경 시 모든 모달 닫기 (타로 등 모달이 열린 채로 다른 화면 이동 방지)
   useEffect(() => {
@@ -284,7 +282,7 @@ function AppContent({
                             </button>
 
                             <button
-                              onClick={() => openModal('compatibility')}
+                              onClick={() => navigate('/relationship')}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
                               <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-pink-100 transition-colors">
@@ -308,7 +306,7 @@ function AppContent({
                       onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })}
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
                       onJamidusuClick={() => navigate('/jamidusu')}
-                      onOpenCompatibility={() => openModal('compatibility')}
+                      onOpenCompatibility={() => navigate('/relationship')}
                       credits={credits}
                       refreshCredits={refreshCredits}
                       purchaseCredits={purchaseCredits}
@@ -330,7 +328,7 @@ function AppContent({
                       onTripClick={() => openModal('trip')}
                       onJamidusuClick={() => navigate('/jamidusu')}
                       onKboClick={() => openModal('kbo')}
-                      onCompatibilityClick={() => openModal('compatibility')}
+                      onCompatibilityClick={() => navigate('/relationship')}
                     />
                   } />
                   <Route path="/store" element={

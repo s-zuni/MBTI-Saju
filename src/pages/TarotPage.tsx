@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, ArrowLeft, Coins, Lock } from 'lucide-react';
+import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, ArrowLeft, Coins, Lock, Instagram } from 'lucide-react';
+import { generateImage } from '../utils/exportUtils';
+import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
 import SpreadSelector, { SpreadType } from '../components/Tarot/SpreadSelector';
 import { supabase } from '../supabaseClient';
@@ -53,6 +55,8 @@ const TarotPage: React.FC = () => {
     const [question, setQuestion] = useState("");
     const [deck, setDeck] = useState<TarotCard[]>([]);
     const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
+    const shareRef = useRef<HTMLDivElement>(null);
+    const [isSharing, setIsSharing] = useState(false);
 
     // Streaming Hook
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
@@ -160,6 +164,20 @@ const TarotPage: React.FC = () => {
             alert("타로 해석 중 오류가 발생했습니다. 다시 시도해 주세요.");
             setStep('select');
             setSelectedCards([]);
+        }
+    };
+
+    const handleShareInstagram = async () => {
+        if (!shareRef.current || !reading) return;
+        setIsSharing(true);
+        try {
+            const fileName = `MBTIJU_Tarot_Story_${new Date().getTime()}`;
+            await generateImage(shareRef.current, fileName);
+            alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
+        } catch (err) {
+            alert('이미지 생성 중 오류가 발생했습니다.');
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -386,6 +404,19 @@ const TarotPage: React.FC = () => {
                                                         {stripMarkdown(reading.overallReading ?? '')}
                                                     </p>
                                                 </div>
+                                                
+                                                {/* Hidden Instagram sharing card */}
+                                                <div className="fixed left-[-9999px] top-[-9999px]">
+                                                    {reading && (
+                                                        <TarotShareCard
+                                                            ref={shareRef}
+                                                            reading={reading as any}
+                                                            question={question}
+                                                            userName={session?.user?.user_metadata?.full_name || '사용자'}
+                                                        />
+                                                    )}
+                                                </div>
+
                                                 <div className="bg-white p-10 rounded-[3rem] border-4 border-purple-50 shadow-inner">
                                                     <h4 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-4">
                                                         <Sun className="w-6 h-6 text-purple-500" /> 
@@ -397,8 +428,16 @@ const TarotPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col sm:flex-row gap-4 justify-center pb-20 px-4">
-                                                <button onClick={() => { setStep('question'); setQuestion(""); }} className="px-10 py-5 rounded-[1.8rem] bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all border border-slate-100 order-2 sm:order-1">다시 물어보기</button>
-                                                <button onClick={() => setStep('spread')} className="px-10 py-5 rounded-[1.8rem] bg-purple-600 text-white font-black hover:bg-purple-700 shadow-xl transition-all order-1 sm:order-2">다른 주제 선택</button>
+                                                <button onClick={() => { setStep('question'); setQuestion(""); }} className="px-10 py-5 rounded-[1.8rem] bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all border border-slate-100 order-3">다시 물어보기</button>
+                                                <button 
+                                                    onClick={handleShareInstagram}
+                                                    disabled={isSharing}
+                                                    className="px-10 py-5 rounded-[1.8rem] bg-purple-600 text-white font-black hover:bg-purple-700 shadow-xl transition-all order-1 flex items-center justify-center gap-2 disabled:opacity-75"
+                                                >
+                                                    {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                                    결과 이미지 저장 (인스타 공유)
+                                                </button>
+                                                <button onClick={() => setStep('spread')} className="px-10 py-5 rounded-[1.8rem] bg-slate-900 text-white font-black hover:bg-slate-800 shadow-xl transition-all order-2">다른 주제 선택</button>
                                             </div>
                                         </div>
                                     )}

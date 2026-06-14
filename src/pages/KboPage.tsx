@@ -245,7 +245,7 @@ const KboPage: React.FC = () => {
                     <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/50 overflow-hidden border border-white p-10 animate-fade-up">
                         <div className="text-center mb-12">
                             <div className="flex items-center justify-center gap-2 text-[#000666] font-black tracking-widest text-[10px] uppercase mb-4">
-                                <BaseballIcon className="w-5 h-5" /> KBO FAN COMPATIBILITY
+                                <BaseballIcon className="w-5 h-5" /> KBO 팬 궁합
                             </div>
                             <h1 className="text-4xl font-black text-slate-950 tracking-tighter">구단 궁합 분석</h1>
                             <p className="text-slate-400 font-bold mt-4">응원하는 구단을 선택해주세요</p>
@@ -286,7 +286,7 @@ const KboPage: React.FC = () => {
                             className="w-full py-6 bg-[#000666] text-white font-black text-xl rounded-[32px] shadow-2xl hover:bg-[#000444] transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2"
                         >
                             <span>궁합 분석 시작하기</span>
-                            <span className="text-xs text-[#E5E5E5]/60 font-bold tracking-widest">{SERVICE_COSTS.KBO} CREDITS</span>
+                            <span className="text-xs text-[#E5E5E5]/60 font-bold tracking-widest">{SERVICE_COSTS.KBO} 크레딧</span>
                         </button>
                     </div>
                 ) : (
@@ -375,7 +375,7 @@ const KboPage: React.FC = () => {
                                             </div>
 
                                             <div className="text-center">
-                                                <p className="text-[#775a19] text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-60">Compatibility Score</p>
+                                                <p className="text-[#775a19] text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-60">궁합 지수</p>
                                                 <div className="flex items-baseline justify-center gap-1">
                                                     <p className="text-9xl font-black text-[#000666] tracking-tighter leading-none">
                                                         {result.score}
@@ -388,7 +388,7 @@ const KboPage: React.FC = () => {
                                         <section className="space-y-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">Victory Fairy Report</span>
+                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">승리 요정 리포트</span>
                                                 <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
                                             </div>
                                             
@@ -405,7 +405,7 @@ const KboPage: React.FC = () => {
                                         <section className="space-y-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">Luck Guide</span>
+                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">행운의 가이드</span>
                                                 <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
                                             </div>
 
@@ -413,11 +413,11 @@ const KboPage: React.FC = () => {
                                                 {selectedTeam === '없음 (아직 없음)' ? (
                                                     <>
                                                         <div className="bg-white p-8 rounded-[32px] border border-slate-50 flex items-center justify-between shadow-sm">
-                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">BEST MATCH</span>
+                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">가장 잘 맞는 구단</span>
                                                             <span className="text-2xl font-black text-[#000666]">{result.bestTeam}</span>
                                                         </div>
                                                         <div className="bg-white p-8 rounded-[32px] border border-slate-50 flex items-center justify-between shadow-sm opacity-60">
-                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">NEED CAUTION</span>
+                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">주의가 필요한 구단</span>
                                                             <span className="text-2xl font-black text-slate-600">{result.worstTeam}</span>
                                                         </div>
                                                     </>
@@ -426,7 +426,7 @@ const KboPage: React.FC = () => {
                                                         <div className="bg-white p-8 rounded-[40px] border border-slate-50 space-y-4 shadow-sm">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-2 h-2 rounded-full bg-[#775a19]"></div>
-                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">Recommended Seat</span>
+                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">추천 좌석</span>
                                                             </div>
                                                             <p className="text-xl text-slate-800 font-black leading-tight break-keep">
                                                                 {result.recommendedSeat}
@@ -435,7 +435,7 @@ const KboPage: React.FC = () => {
                                                         <div className="bg-white p-8 rounded-[40px] border border-slate-50 space-y-4 shadow-sm">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-2 h-2 rounded-full bg-[#775a19]"></div>
-                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">Lucky Ballpark Food</span>
+                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">오늘의 추천 푸드</span>
                                                             </div>
                                                             <p className="text-xl text-slate-800 font-black leading-tight break-keep">
                                                                 {result.luckyFood}
@@ -449,7 +449,7 @@ const KboPage: React.FC = () => {
                                         <section className="pt-8">
                                             <div className="flex items-center gap-4 mb-10">
                                                 <div className="h-[2px] flex-1 bg-slate-200"></div>
-                                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">Dimension Analysis</span>
+                                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">역량 분석</span>
                                                 <div className="h-[2px] flex-1 bg-slate-200"></div>
                                             </div>
                                             <div className="bg-white rounded-[48px] p-8 border border-slate-50 shadow-sm">
@@ -470,7 +470,7 @@ const KboPage: React.FC = () => {
                                                 onClick={() => { setHasStarted(false); setSelectedTeam(null); }}
                                                 className="w-full text-slate-400 font-black py-4 text-xs tracking-widest hover:text-[#000666] transition-colors uppercase underline underline-offset-8"
                                             >
-                                                Analyze Different Team
+                                                다른 구단 궁합 분석하기
                                             </button>
                                         </footer>
                                     </main>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { MapPin, Plane, Calendar, Download, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart } from 'lucide-react';
-import { generatePDF } from '../utils/pdfGenerator';
+import { MapPin, Plane, Calendar, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart, Loader2, Instagram } from 'lucide-react';
+import { generateImage } from '../utils/exportUtils';
+import TripShareCard from '../components/TripShareCard';
 import { stripMarkdown } from '../utils/textUtils';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
@@ -38,6 +39,8 @@ const TripPage: React.FC = () => {
     const [requirements, setRequirements] = useState('');
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const shareRef = useRef<HTMLDivElement>(null);
+    const [isSharing, setIsSharing] = useState(false);
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
@@ -107,12 +110,17 @@ const TripPage: React.FC = () => {
         fetchRecommendation();
     };
 
-    const handleDownloadPDF = async () => {
-        if (!reportRef.current || !result) return;
+    const handleShareInstagram = async () => {
+        if (!shareRef.current || !result) return;
+        setIsSharing(true);
         try {
-            await generatePDF(reportRef.current, `MBTIJU_Trip_Report_${new Date().getTime()}`);
+            const fileName = `MBTIJU_Trip_Story_${new Date().getTime()}`;
+            await generateImage(shareRef.current, fileName);
+            alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
         } catch (err) {
-            alert('PDF 생성 중 오류가 발생했습니다.');
+            alert('이미지 생성 중 오류가 발생했습니다.');
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -159,7 +167,7 @@ const TripPage: React.FC = () => {
                     <div className="p-10 pb-4 border-b border-slate-50">
                         <div className="flex justify-between items-end">
                             <div className="flex items-center gap-2 text-sky-600 font-black tracking-widest text-[10px] uppercase mb-2">
-                                <Plane className="w-5 h-5 text-sky-400" /> Travel Recommendation
+                                <Plane className="w-5 h-5 text-sky-400" /> 여행 추천
                             </div>
                         </div>
                         <h1 className="text-4xl font-black text-slate-950 tracking-tighter leading-none">행운의 여행지 분석</h1>
@@ -237,7 +245,7 @@ const TripPage: React.FC = () => {
                                         className="w-full py-6 bg-slate-950 hover:bg-sky-600 text-white rounded-[32px] font-black text-xl shadow-2xl hover:shadow-sky-200/50 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2"
                                     >
                                         <span>운명의 여행지 찾기</span>
-                                        <span className="text-xs text-sky-400 font-bold tracking-widest">{SERVICE_COSTS.TRIP} CREDITS</span>
+                                        <span className="text-xs text-sky-400 font-bold tracking-widest">{SERVICE_COSTS.TRIP} 크레딧</span>
                                     </button>
                                 </div>
                             </div>
@@ -294,22 +302,22 @@ const TripPage: React.FC = () => {
                                                         </div>
                                                         <div className="space-y-6">
                                                             <div className="space-y-2">
-                                                                <p className="text-xs font-black text-sky-600 uppercase tracking-widest">Why this place?</p>
+                                                                <p className="text-xs font-black text-sky-600 uppercase tracking-widest">추천 이유</p>
                                                                 <p className="text-slate-700 leading-relaxed font-medium text-lg break-keep">{stripMarkdown(place.reason)}</p>
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <p className="text-xs font-black text-sky-600 uppercase tracking-widest">Recommended Activities</p>
+                                                                <p className="text-xs font-black text-sky-600 uppercase tracking-widest">추천 활동</p>
                                                                 <p className="text-slate-700 leading-relaxed font-medium text-lg break-keep">{stripMarkdown(place.activity)}</p>
                                                             </div>
                                                             {place.photoSpot && (
                                                                 <div className="space-y-2 bg-sky-50 p-4 rounded-2xl">
-                                                                    <p className="text-xs font-black text-sky-600 uppercase tracking-widest flex items-center gap-1"><Camera className="w-4 h-4"/> Photo Spot</p>
+                                                                    <p className="text-xs font-black text-sky-600 uppercase tracking-widest flex items-center gap-1"><Camera className="w-4 h-4"/> 인생샷 포토스팟</p>
                                                                     <p className="text-slate-700 leading-relaxed font-medium break-keep">{stripMarkdown(place.photoSpot)}</p>
                                                                 </div>
                                                             )}
                                                             {place.food && (
                                                                 <div className="space-y-2 bg-orange-50 p-4 rounded-2xl">
-                                                                    <p className="text-xs font-black text-orange-600 uppercase tracking-widest flex items-center gap-1"><Coffee className="w-4 h-4"/> Lucky Food</p>
+                                                                    <p className="text-xs font-black text-orange-600 uppercase tracking-widest flex items-center gap-1"><Coffee className="w-4 h-4"/> 행운의 음식</p>
                                                                     <p className="text-slate-700 leading-relaxed font-medium break-keep">{stripMarkdown(place.food)}</p>
                                                                 </div>
                                                             )}
@@ -351,7 +359,7 @@ const TripPage: React.FC = () => {
                                                             <Users className="w-6 h-6 text-indigo-500" />
                                                         </div>
                                                         <div>
-                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Best Travel Mate</h5>
+                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">최고의 여행 메이트</h5>
                                                             <p className="text-slate-950 font-bold text-lg break-keep">{stripMarkdown(result.companion)}</p>
                                                         </div>
                                                     </div>
@@ -362,7 +370,7 @@ const TripPage: React.FC = () => {
                                                             <Sparkles className="w-6 h-6 text-amber-500" />
                                                         </div>
                                                         <div>
-                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Lucky Item</h5>
+                                                            <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">행운의 아이템</h5>
                                                             <p className="text-slate-950 font-bold text-lg break-keep">{stripMarkdown(result.luckyItem)}</p>
                                                         </div>
                                                     </div>
@@ -377,16 +385,16 @@ const TripPage: React.FC = () => {
                                                 </h4>
                                                 <div className="space-y-6">
                                                     <div>
-                                                        <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest">Summary</p>
+                                                        <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest">여행 총평</p>
                                                         <p className="text-lg font-medium leading-relaxed break-keep">{stripMarkdown(result.summary || '')}</p>
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-800">
                                                         <div>
-                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Clock className="w-4 h-4"/> Best Time</p>
+                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Clock className="w-4 h-4"/> 가장 좋은 시기</p>
                                                             <p className="text-slate-200 font-medium break-keep">{stripMarkdown(result.bestTime || '')}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Lightbulb className="w-4 h-4"/> Advice</p>
+                                                            <p className="text-slate-400 text-sm font-bold mb-2 uppercase tracking-widest flex items-center gap-2"><Lightbulb className="w-4 h-4"/> 추천 조언</p>
                                                             <p className="text-slate-200 font-medium break-keep">{stripMarkdown(result.tip || '')}</p>
                                                         </div>
                                                     </div>
@@ -394,18 +402,31 @@ const TripPage: React.FC = () => {
                                             </div>
                                         </section>
 
+                                        {/* Hidden Instagram sharing card */}
+                                        <div className="fixed left-[-9999px] top-[-9999px]">
+                                            {result && (
+                                                <TripShareCard
+                                                    ref={shareRef}
+                                                    result={result as any}
+                                                    userName={session?.user?.user_metadata?.full_name || '사용자'}
+                                                />
+                                            )}
+                                        </div>
+
                                         <div className="flex flex-col items-center pt-12 border-t border-slate-100 gap-6">
                                             <button 
-                                                onClick={handleDownloadPDF} 
-                                                className="w-full sm:w-auto px-12 py-6 bg-slate-950 text-white rounded-[32px] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-sky-600 transition-all"
+                                                onClick={handleShareInstagram}
+                                                disabled={isSharing}
+                                                className="w-full sm:w-auto px-12 py-6 bg-slate-950 text-white rounded-[32px] font-black text-xl shadow-2xl flex items-center justify-center gap-4 hover:bg-sky-600 transition-all disabled:opacity-75"
                                             >
-                                                <Download className="w-6 h-6" /> 결과서 PDF 다운로드
+                                                {isSharing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Instagram className="w-6 h-6" />}
+                                                결과 이미지 저장 (인스타 공유)
                                             </button>
                                             <button 
                                                 onClick={() => setIsFormSubmitted(false)} 
                                                 className="text-slate-400 text-sm font-black hover:text-sky-600 transition-colors uppercase tracking-widest underline underline-offset-8"
                                             >
-                                                Try Again with New Plan
+                                                새로운 계획으로 다시 분석하기
                                             </button>
                                         </div>
                                     </div>

@@ -46,8 +46,8 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
                     <p className="text-[12px] font-bold text-slate-400 tracking-[0.25em] uppercase">정교한 사주 분석 리포트</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-[11px] font-black text-slate-300 tracking-[0.2em] leading-[1.4] uppercase">
-                        KBO FAN<br />DESTINY REPORT
+                    <p className="text-[14px] font-black text-slate-300 tracking-[0.2em] leading-[1.4] uppercase">
+                        KBO 팬<br />운명 리포트
                     </p>
                 </div>
             </div>
@@ -55,10 +55,10 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
             {/* Main Title Section */}
             <div className="mt-40 flex-grow z-10">
                 <p 
-                    className="text-[16px] font-black tracking-[0.4em] mb-12 uppercase"
+                    className="text-[18px] font-black tracking-[0.4em] mb-12 uppercase"
                     style={{ color: primaryColor }}
                 >
-                    Analytical Record
+                    분석 기록
                 </p>
                 
                 <div className="space-y-4">
@@ -78,7 +78,7 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
             <div className="grid grid-cols-12 gap-8 items-end z-10 pb-12">
                 {/* Compatibility Score */}
                 <div className="col-span-5">
-                    <p className="text-[12px] font-bold text-slate-400 tracking-[0.15em] mb-8 uppercase">궁합 지수</p>
+                    <p className="text-[20px] font-bold text-slate-500 tracking-[0.15em] mb-8 uppercase">궁합 지수</p>
                     <div className="flex items-baseline">
                         <span className="text-[180px] font-bold leading-none tracking-tighter" style={{ color: primaryColor }}>
                             {score}
@@ -88,15 +88,15 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
 
                 {/* Victory Fairy Probability & Lucky Seat */}
                 <div className="col-span-4">
-                    <p className="text-[12px] font-bold text-slate-400 tracking-[0.15em] mb-8 uppercase">승리 요정 확률</p>
+                    <p className="text-[20px] font-bold text-slate-500 tracking-[0.15em] mb-8 uppercase">승리 요정 확률</p>
                     <div className="flex items-baseline mb-12">
                         <span className="text-[100px] font-bold leading-none text-slate-900">{winFairyScore}</span>
                         <span className="text-[32px] font-medium text-slate-300 ml-2 tracking-tighter">%</span>
                     </div>
                     
                     <div className="space-y-3">
-                        <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>행운의 자리</p>
-                        <p className="text-[16px] font-medium leading-relaxed text-slate-600 max-w-[280px] break-keep">
+                        <p className="text-[20px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>행운의 자리</p>
+                        <p className="text-[22px] font-bold leading-relaxed text-slate-800 max-w-[280px] break-keep">
                             {luckySeat}
                         </p>
                     </div>
@@ -105,8 +105,8 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
                 {/* Lucky Food */}
                 <div className="col-span-3">
                     <div className="space-y-3">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">행운의 음식</p>
-                        <p className="text-[16px] font-medium leading-relaxed text-slate-600 break-keep">
+                        <p className="text-[20px] font-black text-slate-500 uppercase tracking-widest">행운의 음식</p>
+                        <p className="text-[22px] font-bold leading-relaxed text-slate-800 break-keep">
                             {luckyFood}
                         </p>
                     </div>
@@ -117,7 +117,7 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
             <div className="absolute bottom-10 right-20 flex items-center gap-4 opacity-20 pointer-events-none">
                 <div className="w-12 h-[1px] bg-slate-900"></div>
                 <span className="text-[10px] font-bold text-slate-900 tracking-[0.4em] uppercase">
-                    MBTIJU SPECIAL REPORT
+                    MBTIJU 특별 리포트
                 </span>
             </div>
         </div>
