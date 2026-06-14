@@ -46,13 +46,15 @@ const JamidusuPage: React.FC = () => {
         }
     }, [session]);
 
-    const { object: result, submit, isLoading } = useObject({
+    const { object: result, submit, isLoading, error: objectError } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
         }
     });
+
+    const displayError = error || objectError?.message;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -150,7 +152,7 @@ const JamidusuPage: React.FC = () => {
                     </div>
 
                     <div className="p-8">
-                        {!result && !isLoading ? (
+                        {!result && !isLoading && !displayError ? (
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-4">
                                     <label className="block text-sm font-medium text-slate-700">성별</label>
@@ -211,9 +213,9 @@ const JamidusuPage: React.FC = () => {
                                         <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
                                         <p className="text-slate-800 font-medium text-lg">자미두수 12궁 명반을 세우는 중...</p>
                                     </div>
-                                ) : error ? (
+                                ) : displayError ? (
                                     <div className="text-center py-16">
-                                        <p className="text-red-500 mb-6 font-medium">분석 중 오류가 발생했습니다.</p>
+                                        <p className="text-red-500 mb-6 font-medium">분석 중 오류가 발생했습니다.<br/>{displayError}</p>
                                         <button 
                                             onClick={() => window.location.reload()} 
                                             className="px-8 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
@@ -247,7 +249,7 @@ const JamidusuPage: React.FC = () => {
                                                                 <div key={idx} className="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
                                                                     <div className="flex items-start justify-between mb-3 gap-2">
                                                                         <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 whitespace-nowrap">
-                                                                            <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-black shadow-sm border border-indigo-200">{palace.name.substring(0, 1)}</span>
+                                                                            <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-black shadow-sm border border-indigo-200">{palace.name?.substring(0, 1) || ''}</span>
                                                                             {palace.name}
                                                                         </h3>
                                                                         <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-md border border-rose-100 text-right">{palace.stars}</span>
