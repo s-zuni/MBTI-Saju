@@ -24,10 +24,25 @@ export const analysisSchema = z.object({
         auxiliaryFunction: z.string()
     }),
     deepIntegration: z.object({
-        integrationPoints: z.array(z.object({
+        sajuBaseAnalysis: z.string(),
+        mbtiIntegration: z.string(),
+        synergyPoints: z.array(z.object({
             subtitle: z.string(),
             content: z.string()
         }))
+    }),
+    lifeGuideline: z.object({
+        lightAndShadow: z.object({
+            light: z.string(),
+            shadow: z.string(),
+            solution: z.string()
+        }),
+        luckyBooster: z.object({
+            luckyColor: z.string(),
+            luckyItem: z.string(),
+            luckyPlace: z.string(),
+            dailyRoutine: z.string()
+        })
     })
 });
 
@@ -137,13 +152,13 @@ export const kboSchema = z.object({
 
 // Special Analysis: Jamidusu
 export const jamidusuSchema = z.object({
-    main_character: z.string().describe("나의 메인 수호별 캐릭터 (예: 거침없는 팩폭러, 칠살성)"),
-    destiny_palace: z.string().describe("명궁(Life Palace) 분석: 타고난 본성과 나의 주성 특징"),
-    career_palace: z.string().describe("관록궁(Career Palace) 분석: 직업 성향과 추천 분야"),
-    wealth_style: z.string().describe("재백궁(Wealth Palace) 분석: 재물 및 소비 성향 분석"),
-    love_style: z.string().describe("부처궁(Love Palace) 분석: 연애 스타일과 잘 맞는 인연"),
-    lucky_items: z.array(z.string()).length(3).describe("운을 높여주는 자미두수 길성이나 행운 요소 3가지"),
-    summary: z.string().describe("한 줄 요약 메세지")
+    main_character: z.string().describe("나의 메인 자미두수 캐릭터 (예: 거침없는 팩폭러, 칠살성)"),
+    palaces: z.array(z.object({
+        name: z.string().describe("12궁의 이름 (명궁, 형제궁, 부처궁, 자녀궁, 재백궁, 질액궁, 천이궁, 노복궁, 관록궁, 전택궁, 복덕궁, 부모궁)"),
+        stars: z.string().describe("해당 궁에 자리한 주요 주성/길성/흉성 (예: 탐랑, 영성, 지겁)"),
+        analysis: z.string().describe("해당 궁에 대한 압도적이고 상세한 운명 분석 내용 (분량 풍성하게)")
+    })).length(12).describe("자미두수 12궁 전체 분석"),
+    summary: z.string().describe("전체 명반에 대한 총평 및 조언")
 });
 
 // Special Analysis: Compatibility
