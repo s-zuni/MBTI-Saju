@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, XCircle } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, XCircle, Palette, Gift, MapPin, Coffee, Sun, Moon, Award, Gem } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
@@ -268,12 +268,59 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
 
         <div className="space-y-10">
           {/* [1순위] 심층 융합 진단 - MBTI×사주 교차 분석의 핵심 */}
-          {analysis.deepIntegration?.integrationPoints && (
+          {analysis.deepIntegration && (analysis.deepIntegration.sajuBaseAnalysis || analysis.deepIntegration.mbtiIntegration) && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-violet-600" /> MBTI × 사주 심층 융합 진단</h4>
+              <p className="text-xs text-slate-400 font-bold mb-4 pl-1">두 시스템의 교차점에서 발견된 핵심 통찰입니다.</p>
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="report-card border-l-4 border-violet-500 bg-slate-50/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-violet-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded">1단계</span>
+                    <h5 className="font-black text-slate-900 text-xs">타고난 운명적 본질 (사주 풀이)</h5>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.deepIntegration.sajuBaseAnalysis || '')}</p>
+                </div>
+
+                <div className="report-card border-l-4 border-indigo-500 bg-slate-50/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-indigo-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded">2단계</span>
+                    <h5 className="font-black text-slate-900 text-xs">현실적 성격의 역동 (사주 × MBTI 융합)</h5>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.deepIntegration.mbtiIntegration || '')}</p>
+                </div>
+              </div>
+
+              {analysis.deepIntegration.synergyPoints && analysis.deepIntegration.synergyPoints.length > 0 && (
+                <div className="space-y-3">
+                  <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">핵심 시너지 포인트</h5>
+                  <div className="grid md:grid-cols-3 gap-3">
+                    {analysis.deepIntegration.synergyPoints.map((point: any, idx: number) => (
+                      <div key={idx} className="bg-white border border-slate-100 p-4 rounded-xl relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-violet-400"></div>
+                        <h6 className="font-bold text-slate-800 text-xs mb-1.5 flex items-center gap-1">
+                          <span className="text-violet-500 font-extrabold text-[10px]">#{idx + 1}</span>
+                          {stripMarkdown(point.subtitle)}
+                        </h6>
+                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                          {stripMarkdown(point.content)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* 구 버전 호환용 융합 분석 렌더링 */}
+          {(!analysis.deepIntegration || (!analysis.deepIntegration.sajuBaseAnalysis && !analysis.deepIntegration.mbtiIntegration)) && 
+           (analysis.deepIntegration?.integrationPoints || (analysis as any).commonalities) && (
             <section className="report-section">
               <h4 className="report-section-title"><Sparkles className="w-5 h-5 text-violet-600" /> MBTI × 사주 심층 융합 진단</h4>
               <p className="text-xs text-slate-400 font-bold mb-4 pl-1">두 시스템의 교차점에서 발견된 핵심 통찰입니다.</p>
               <div className="space-y-4">
-                {analysis.deepIntegration.integrationPoints.map((p: any, i: number) => (
+                {(analysis.deepIntegration?.integrationPoints || []).map((p: any, i: number) => (
                   <div key={i} className="report-card border-l-4 border-violet-500 !pl-5">
                     <div className="flex items-start gap-2 mb-3">
                       <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
@@ -468,6 +515,89 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   <p className="text-emerald-800 text-sm font-bold leading-relaxed">{stripMarkdown(analysis.solution)}</p>
                 </div>
               )}
+            </section>
+          )}
+
+          {/* [8순위] 나만의 인생 지침서 (Life Guideline) */}
+          {analysis.lifeGuideline && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Award className="w-5 h-5 text-amber-500" /> 성격의 빛과 그림자 (무의식 분석)</h4>
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div className="report-card bg-amber-50/40 border-amber-100/60 relative overflow-hidden">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <h5 className="font-bold text-slate-800 text-xs">타고난 성향의 빛 (강점)</h5>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.lifeGuideline.lightAndShadow.light)}</p>
+                </div>
+
+                <div className="report-card bg-slate-50 border-slate-200/60 relative overflow-hidden">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Moon className="w-4 h-4 text-slate-500" />
+                    <h5 className="font-bold text-slate-800 text-xs">무의식 속 그림자 (팩폭)</h5>
+                  </div>
+                  <p className="text-slate-650 text-xs leading-relaxed whitespace-pre-wrap">{stripMarkdown(analysis.lifeGuideline.lightAndShadow.shadow)}</p>
+                </div>
+              </div>
+
+              <div className="report-card bg-emerald-50 border-emerald-100 !p-4 flex gap-3 items-start">
+                <Zap className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h6 className="font-bold text-slate-800 text-xs mb-1">그림자 극복 라이프 솔루션</h6>
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                    {stripMarkdown(analysis.lifeGuideline.lightAndShadow.solution)}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* [9순위] 럭키 부스터 */}
+          {analysis.lifeGuideline?.luckyBooster && (
+            <section className="report-section">
+              <h4 className="report-section-title"><Gem className="w-5 h-5 text-rose-500" /> 나만의 럭키 부스터</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="report-card text-center !p-4">
+                  <span className="mx-auto mb-2 bg-rose-50 text-rose-500 p-2.5 rounded-full flex items-center justify-center w-10 h-10">
+                    <Palette className="w-5 h-5" />
+                  </span>
+                  <h5 className="font-bold text-slate-700 text-[11px] mb-1">행운의 색상</h5>
+                  <p className="text-[10px] text-slate-500 leading-normal font-bold">
+                    {stripMarkdown(analysis.lifeGuideline.luckyBooster.luckyColor)}
+                  </p>
+                </div>
+
+                <div className="report-card text-center !p-4">
+                  <span className="mx-auto mb-2 bg-amber-50 text-amber-600 p-2.5 rounded-full flex items-center justify-center w-10 h-10">
+                    <Gift className="w-5 h-5" />
+                  </span>
+                  <h5 className="font-bold text-slate-700 text-[11px] mb-1">행운의 아이템</h5>
+                  <p className="text-[10px] text-slate-500 leading-normal font-bold">
+                    {stripMarkdown(analysis.lifeGuideline.luckyBooster.luckyItem)}
+                  </p>
+                </div>
+
+                <div className="report-card text-center !p-4">
+                  <span className="mx-auto mb-2 bg-indigo-50 text-indigo-500 p-2.5 rounded-full flex items-center justify-center w-10 h-10">
+                    <MapPin className="w-5 h-5" />
+                  </span>
+                  <h5 className="font-bold text-slate-700 text-[11px] mb-1">행운의 장소</h5>
+                  <p className="text-[10px] text-slate-500 leading-normal font-bold">
+                    {stripMarkdown(analysis.lifeGuideline.luckyBooster.luckyPlace)}
+                  </p>
+                </div>
+
+                <div className="report-card text-center !p-4">
+                  <span className="mx-auto mb-2 bg-emerald-50 text-emerald-600 p-2.5 rounded-full flex items-center justify-center w-10 h-10">
+                    <Coffee className="w-5 h-5" />
+                  </span>
+                  <h5 className="font-bold text-slate-700 text-[11px] mb-1">추천 루틴</h5>
+                  <p className="text-[10px] text-slate-500 leading-normal font-bold">
+                    {stripMarkdown(analysis.lifeGuideline.luckyBooster.dailyRoutine)}
+                  </p>
+                </div>
+              </div>
             </section>
           )}
         </div>

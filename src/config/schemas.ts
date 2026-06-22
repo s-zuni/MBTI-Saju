@@ -24,10 +24,25 @@ export const analysisSchema = z.object({
         auxiliaryFunction: z.string()
     }),
     deepIntegration: z.object({
-        integrationPoints: z.array(z.object({
+        sajuBaseAnalysis: z.string(),
+        mbtiIntegration: z.string(),
+        synergyPoints: z.array(z.object({
             subtitle: z.string(),
             content: z.string()
         }))
+    }),
+    lifeGuideline: z.object({
+        lightAndShadow: z.object({
+            light: z.string(),
+            shadow: z.string(),
+            solution: z.string()
+        }),
+        luckyBooster: z.object({
+            luckyColor: z.string(),
+            luckyItem: z.string(),
+            luckyPlace: z.string(),
+            dailyRoutine: z.string()
+        })
     })
 });
 

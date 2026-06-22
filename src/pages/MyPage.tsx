@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText, Gem, Star } from 'lucide-react';
+import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText, Gem, Star, Palette, Gift, MapPin, Coffee, Sun, Moon, Zap, Award } from 'lucide-react';
 import AnalysisModal from '../components/AnalysisModal';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
@@ -20,6 +20,7 @@ interface Profile {
 interface Analysis {
   keywords: string;
   reportTitle?: string;
+  fusionNickname?: string;
   nature?: {
     title: string;
     dayPillarSummary: string;
@@ -41,8 +42,24 @@ interface Analysis {
     inferiorFunction: string;
   };
   deepIntegration?: {
-    title: string;
-    integrationPoints: Array<{ subtitle: string; content: string }>;
+    sajuBaseAnalysis?: string;
+    mbtiIntegration?: string;
+    synergyPoints?: Array<{ subtitle: string; content: string }>;
+    title?: string;
+    integrationPoints?: Array<{ subtitle: string; content: string }>;
+  };
+  lifeGuideline?: {
+    lightAndShadow: {
+      light: string;
+      shadow: string;
+      solution: string;
+    };
+    luckyBooster: {
+      luckyColor: string;
+      luckyItem: string;
+      luckyPlace: string;
+      dailyRoutine: string;
+    };
   };
   yearlyFortune?: any;
   monthlyFortune?: any;
@@ -369,14 +386,29 @@ const MyPage: React.FC<MyPageProps> = ({
           </div>
 
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
-              <p className="text-lg font-semibold text-slate-700 mb-4">{profile.name}님의 분석 리포트</p>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 font-medium mb-6">
-                <span>MBTI: <span className="font-bold text-slate-950">{profile.mbti}</span></span>
-                <span>성별: <span className="font-bold text-slate-950">{formattedGender}</span></span>
-                <span>생년월일: <span className="font-bold text-slate-950">{profile.birth_date}</span></span>
-                <span>태어난 시간: <span className="font-bold text-slate-950">{profile.birth_time || '모름'}</span></span>
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <p className="text-lg font-semibold text-slate-700 mb-4">{profile.name}님의 분석 리포트</p>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 font-medium mb-6">
+                  <span>MBTI: <span className="font-bold text-slate-950">{profile.mbti}</span></span>
+                  <span>성별: <span className="font-bold text-slate-950">{formattedGender}</span></span>
+                  <span>생년월일: <span className="font-bold text-slate-950">{profile.birth_date}</span></span>
+                  <span>태어난 시간: <span className="font-bold text-slate-950">{profile.birth_time || '모름'}</span></span>
+                </div>
               </div>
+
+              {analysis?.fusionNickname && (
+                <div className="mt-2 p-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl text-white shadow-md relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none group-hover:scale-125 transition-transform duration-500"></div>
+                  <span className="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-md uppercase tracking-wider">융합 소울 시그니처</span>
+                  <h3 className="text-lg font-black mt-1 flex items-center gap-1.5">
+                    🔮 {analysis.fusionNickname}
+                  </h3>
+                  <p className="text-[11px] text-violet-100 mt-1 font-medium leading-relaxed">
+                    {analysis.persona?.mbtiNickname ? `[${analysis.persona.mbtiNickname}] 성향과 사주 명리가 조합해 낸 특유의 기운과 아우라` : '당신의 성향과 운명이 조화를 이루어 뿜어내는 고유한 소울 컬러'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Credit & Account Management Card */}
@@ -533,13 +565,188 @@ const MyPage: React.FC<MyPageProps> = ({
                         ? (analysis.keywords as string[]).join(', ') 
                         : (typeof analysis.keywords === 'string' ? analysis.keywords : '')
                     )}
-            {(analysis.deepIntegration || (analysis as any).commonalities) &&
+
+            {/* 1. MBTI × 사주 심층 융합 진단 */}
+            {analysis.deepIntegration && (analysis.deepIntegration.sajuBaseAnalysis || analysis.deepIntegration.mbtiIntegration) && (
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <Sparkles className="w-6 h-6 text-violet-600" />
+                  <h2 className="text-xl font-black text-slate-800">MBTI × 사주 심층 융합 분석</h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* 사주 명리적 해석 */}
+                  <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="inline-block bg-violet-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">1단계</span>
+                        <h4 className="text-sm font-bold text-slate-850">타고난 운명적 본질 (사주 풀이)</h4>
+                      </div>
+                      <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium">
+                        {analysis.deepIntegration.sajuBaseAnalysis}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* MBTI 심리 결합 */}
+                  <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="inline-block bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">2단계</span>
+                        <h4 className="text-sm font-bold text-slate-850">현실적 성격의 역동 (사주 × MBTI 융합)</h4>
+                      </div>
+                      <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium">
+                        {analysis.deepIntegration.mbtiIntegration}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 시너지 포인트 */}
+                {analysis.deepIntegration.synergyPoints && analysis.deepIntegration.synergyPoints.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                    <h4 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">핵심 융합 시너지 포인트</h4>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {analysis.deepIntegration.synergyPoints.map((point: any, idx: number) => (
+                        <div key={idx} className="bg-white border border-slate-150 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-violet-500"></div>
+                          <h5 className="font-bold text-slate-800 mb-2 flex items-center gap-1.5 text-xs">
+                            <span className="text-violet-500 font-extrabold text-xs">#{idx + 1}</span>
+                            {point.subtitle}
+                          </h5>
+                          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                            {point.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 구 버전 호환용 융합 분석 렌더링 */}
+            {(!analysis.deepIntegration || (!analysis.deepIntegration.sajuBaseAnalysis && !analysis.deepIntegration.mbtiIntegration)) && 
+             (analysis.deepIntegration?.integrationPoints || (analysis as any).commonalities) && (
               renderAnalysisSection(Users, "두 결과의 공통점 및 융합 분석",
                 analysis.deepIntegration?.integrationPoints 
                   ? analysis.deepIntegration.integrationPoints.map((p: any) => p.content).join('\n\n') 
                   : (analysis as any).commonalities, 
                 true)
-            }
+            )}
+
+            {/* 2. 나만의 인생 지침서 (Life Guideline) */}
+            {analysis.lifeGuideline && (
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <Award className="w-6 h-6 text-amber-500" />
+                  <h2 className="text-xl font-black text-slate-800">성격의 빛과 그림자 (무의식 분석)</h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* 빛 (강점) */}
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-50/50 to-orange-50/20 border border-amber-100/60 relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                      <Sun className="w-24 h-24 text-amber-500" />
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="bg-amber-100 text-amber-800 p-1.5 rounded-lg">
+                        <Sun className="w-4 h-4" />
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-850">내가 가진 성향적 빛 (강점)</h4>
+                    </div>
+                    <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
+                      {analysis.lifeGuideline.lightAndShadow.light}
+                    </p>
+                  </div>
+
+                  {/* 그림자 (약점 & 팩폭) */}
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                      <Moon className="w-24 h-24 text-slate-500" />
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="bg-slate-200 text-slate-700 p-1.5 rounded-lg">
+                        <Moon className="w-4 h-4" />
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-850">무의식적인 어둠의 그림자 (팩폭)</h4>
+                    </div>
+                    <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
+                      {analysis.lifeGuideline.lightAndShadow.shadow}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 그림자 해결 솔루션 */}
+                <div className="p-5 bg-emerald-50/30 rounded-xl border border-emerald-100/50 flex gap-4 items-start">
+                  <span className="bg-emerald-100 text-emerald-800 p-2 rounded-lg shrink-0 mt-0.5">
+                    <Zap className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h5 className="font-bold text-slate-800 text-xs mb-1">그림자를 극복하기 위한 라이프 솔루션</h5>
+                    <p className="text-xs text-slate-650 leading-relaxed font-medium">
+                      {analysis.lifeGuideline.lightAndShadow.solution}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. 나를 깨우는 행운의 부스터 (Lucky Booster) */}
+            {analysis.lifeGuideline && analysis.lifeGuideline.luckyBooster && (
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <Gem className="w-6 h-6 text-rose-500" />
+                  <h2 className="text-xl font-black text-slate-800">기운을 돋우는 나만의 럭키 부스터</h2>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* 행운의 색 */}
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center hover:bg-slate-100/50 transition-colors">
+                    <span className="mx-auto mb-3 bg-rose-50 text-rose-500 p-3 rounded-full flex items-center justify-center w-12 h-12">
+                      <Palette className="w-6 h-6" />
+                    </span>
+                    <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 색상</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
+                      {analysis.lifeGuideline.luckyBooster.luckyColor}
+                    </p>
+                  </div>
+
+                  {/* 행운의 아이템 */}
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center hover:bg-slate-100/50 transition-colors">
+                    <span className="mx-auto mb-3 bg-amber-50 text-amber-600 p-3 rounded-full flex items-center justify-center w-12 h-12">
+                      <Gift className="w-6 h-6" />
+                    </span>
+                    <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 아이템</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
+                      {analysis.lifeGuideline.luckyBooster.luckyItem}
+                    </p>
+                  </div>
+
+                  {/* 행운의 장소 */}
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center hover:bg-slate-100/50 transition-colors">
+                    <span className="mx-auto mb-3 bg-indigo-50 text-indigo-500 p-3 rounded-full flex items-center justify-center w-12 h-12">
+                      <MapPin className="w-6 h-6" />
+                    </span>
+                    <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 장소</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
+                      {analysis.lifeGuideline.luckyBooster.luckyPlace}
+                    </p>
+                  </div>
+
+                  {/* 데일리 루틴 */}
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center hover:bg-slate-100/50 transition-colors">
+                    <span className="mx-auto mb-3 bg-emerald-50 text-emerald-600 p-3 rounded-full flex items-center justify-center w-12 h-12">
+                      <Coffee className="w-6 h-6" />
+                    </span>
+                    <h4 className="font-bold text-slate-700 text-xs mb-1">추천 데일리 루틴</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
+                      {analysis.lifeGuideline.luckyBooster.dailyRoutine}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
 
             {/* Navigation Buttons for Deep Analysis */}
