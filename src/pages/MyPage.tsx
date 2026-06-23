@@ -6,6 +6,9 @@ import AnalysisModal from '../components/AnalysisModal';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
 import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { analysisSchema } from '../config/schemas';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface Profile {
   id: string;
@@ -113,6 +116,44 @@ const MyPage: React.FC<MyPageProps> = ({
   const navigate = useNavigate();
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Core Streaming Hook
+  const { object: coreObj, submit: submitCore, isLoading: isCoreLoading, error: coreError } = useObject({
+    api: '/api/analyze',
+    schema: analysisSchema,
+    headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
+    onFinish: ({ object }) => {
+      if (object && profile) {
+        const sajuData = calculateSaju(profile.birth_date, profile.birth_time);
+        const finalData = { ...object, saju: sajuData };
+        setAnalysis(finalData as any);
+        
+        supabase.auth.updateUser({
+          data: { ...profile, analysis: finalData }
+        }).then(() => {
+          if (refreshCredits) refreshCredits();
+        });
+      }
+      setAnalysisLoading(false);
+    },
+    onError: (err) => {
+      console.error('Core Analysis Error:', err);
+      setError(err.message || '분석 중 오류가 발생했습니다.');
+      setAnalysisLoading(false);
+    }
+  });
+
+  // Sync partial results
+  useEffect(() => {
+    if (coreObj) {
+      const sajuData = profile ? calculateSaju(profile.birth_date, profile.birth_time) : null;
+      setAnalysis((prev: any) => ({
+        ...(prev || {}),
+        ...coreObj,
+        saju: sajuData || prev?.saju,
+      }));
+    }
+  }, [coreObj, profile]);
 
 
 
@@ -226,6 +267,7 @@ const MyPage: React.FC<MyPageProps> = ({
         const spendSuccess = await spendCredits(serviceType);
         if (!spendSuccess) {
           setIsNavigating(false);
+          setAnalysisLoading(false);
           return;
         }
       }
@@ -238,40 +280,17 @@ const MyPage: React.FC<MyPageProps> = ({
         mbti: profile.mbti,
       };
 
-      const authHeader = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${activeSession.access_token}`,
-      };
+      // Clear previous analysis to show clean streaming results
+      setAnalysis(null);
 
-      // 1. Core analysis (Nature, Persona, Keywords)
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: authHeader,
-        body: JSON.stringify(requestPayload)
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(`분석 실패: ${errData.error || errData.message || res.statusText}`);
-      }
-
-      const coreData = await res.json().catch((err) => {
-        console.error('JSON parsing error:', err);
-        throw new Error('분석 결과를 읽어오는 중 오류가 발생했습니다. (데이터 형식이 올바르지 않습니다.)');
-      });
-      const initialAnalysisData = { ...coreData };
-      setAnalysis(initialAnalysisData);
-
-      // Save to Supabase metadata for persistence
-      await supabase.auth.updateUser({
-        data: { ...profile, analysis: initialAnalysisData }
-      });
+      // Trigger the streaming hook
+      submitCore(requestPayload);
 
     } catch (e: any) {
       setError(e.message);
+      setAnalysisLoading(false);
     } finally {
       setIsNavigating(false);
-      setAnalysisLoading(false);
     }
   };
 

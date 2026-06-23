@@ -11,7 +11,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 
 // Model Constants
 export const MODELS = {
-    GEMINI_PRIMARY: 'gemini-1.5-flash',
+    GEMINI_PRIMARY: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
     GEMINI_FALLBACK: 'gemini-1.5-flash',
     GPT_PRIMARY: 'gpt-4o-mini',
     GPT_FALLBACK: 'gpt-4o-mini',
@@ -30,8 +30,7 @@ export function getAIProvider(attempt: number = 0) {
     const google = createGoogleGenerativeAI({ apiKey: GEMINI_KEY || '' });
     const openai = createOpenAI({ apiKey: OPENAI_KEY || '' });
 
-    // Fallback Sequence (GPT First - Gemini high demand issues)
-    // 0: GPT Primary, 1: GPT Fallback, 2: Gemini Primary, 3: Gemini Fallback
+    // Fallback Sequence (Alternate between OpenAI and Gemini immediately to avoid double-retries on a failed provider)
     switch (attempt) {
         case 0:
             if (OPENAI_KEY) {
@@ -39,12 +38,12 @@ export function getAIProvider(attempt: number = 0) {
             }
             return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary (No GPT Key)' };
         case 1:
+            return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
+        case 2:
             if (OPENAI_KEY) {
                 return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT Fallback' };
             }
             return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Fallback (No GPT Key)' };
-        case 2:
-            return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
         case 3:
         default:
             return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Final Fallback' };

@@ -227,7 +227,7 @@ export default async function handler(req: Request) {
     let userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, ${sajuContext}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender}`;
 
     try {
-        if (part === 'full') {
+        if (part === 'full' || part === 'core') {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
@@ -242,13 +242,13 @@ export default async function handler(req: Request) {
                     return result.toTextStreamResponse({ headers: corsHeaders });
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt + 1} failed for full analysis:`, error);
+                    console.warn(`Attempt ${attempt + 1} failed for ${part} analysis:`, error);
                     if (!isRetryableAIError(error)) break;
                 }
             }
             throw lastError;
         } else {
-            // Non-streaming for core, fortune, strategy
+            // Non-streaming for fortune, strategy
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
