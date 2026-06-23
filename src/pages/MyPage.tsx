@@ -118,7 +118,7 @@ const MyPage: React.FC<MyPageProps> = ({
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Core Streaming Hook
-  const { object: coreObj, submit: submitCore, isLoading: isCoreLoading, error: coreError } = useObject({
+  const { object: coreObj, submit: submitCore } = useObject({
     api: '/api/analyze',
     schema: analysisSchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
