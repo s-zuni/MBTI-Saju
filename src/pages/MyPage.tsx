@@ -675,7 +675,7 @@ const MyPage: React.FC<MyPageProps> = ({
                       <h4 className="text-sm font-bold text-slate-850">내가 가진 성향적 빛 (강점)</h4>
                     </div>
                     <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
-                      {analysis.lifeGuideline.lightAndShadow.light}
+                      {analysis.lifeGuideline.lightAndShadow?.light}
                     </p>
                   </div>
 
@@ -691,7 +691,7 @@ const MyPage: React.FC<MyPageProps> = ({
                       <h4 className="text-sm font-bold text-slate-850">무의식적인 어둠의 그림자 (팩폭)</h4>
                     </div>
                     <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
-                      {analysis.lifeGuideline.lightAndShadow.shadow}
+                      {analysis.lifeGuideline.lightAndShadow?.shadow}
                     </p>
                   </div>
                 </div>
@@ -704,7 +704,7 @@ const MyPage: React.FC<MyPageProps> = ({
                   <div>
                     <h5 className="font-bold text-slate-800 text-xs mb-1">그림자를 극복하기 위한 라이프 솔루션</h5>
                     <p className="text-xs text-slate-650 leading-relaxed font-medium">
-                      {analysis.lifeGuideline.lightAndShadow.solution}
+                      {analysis.lifeGuideline.lightAndShadow?.solution}
                     </p>
                   </div>
                 </div>
@@ -727,7 +727,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     </span>
                     <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 색상</h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
-                      {analysis.lifeGuideline.luckyBooster.luckyColor}
+                      {analysis.lifeGuideline.luckyBooster?.luckyColor}
                     </p>
                   </div>
 
@@ -738,7 +738,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     </span>
                     <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 아이템</h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
-                      {analysis.lifeGuideline.luckyBooster.luckyItem}
+                      {analysis.lifeGuideline.luckyBooster?.luckyItem}
                     </p>
                   </div>
 
@@ -749,7 +749,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     </span>
                     <h4 className="font-bold text-slate-700 text-xs mb-1">행운의 장소</h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
-                      {analysis.lifeGuideline.luckyBooster.luckyPlace}
+                      {analysis.lifeGuideline.luckyBooster?.luckyPlace}
                     </p>
                   </div>
 
@@ -760,7 +760,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     </span>
                     <h4 className="font-bold text-slate-700 text-xs mb-1">추천 데일리 루틴</h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-medium font-bold">
-                      {analysis.lifeGuideline.luckyBooster.dailyRoutine}
+                      {analysis.lifeGuideline.luckyBooster?.dailyRoutine}
                     </p>
                   </div>
                 </div>
