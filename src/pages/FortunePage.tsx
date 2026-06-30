@@ -7,7 +7,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 // 각 카테고리별 크레딧 비용 및 이용자 수
 const subCategories = [
     { id: 'fortune', img: '/assets/icons/3d_fortune.png', label: '오늘의 운세', sub: '매일 행운 확인', cost: SERVICE_COSTS.FORTUNE_TODAY, userCount: '12,000+', isPopular: false, colorClass: 'amber' },
-    { id: 'mbti', img: '/assets/icons/3d_mbti.png', label: '심층 리포트', sub: '전문가 수기 결합 분석', cost: 49000, userCount: '5,300+', isPopular: true, colorClass: 'violet' },
+    { id: 'mbti', img: '/assets/icons/3d_mbti.png', label: '나의 대운세 리포트 받으러 가기', sub: '전문가 수기 결합 분석', cost: 49000, userCount: '5,300+', isPopular: true, colorClass: 'violet' },
     { id: 'tarot', img: '/assets/icons/3d_tarot.png', label: '타로', sub: '운명의 타로 점술', cost: SERVICE_COSTS.TAROT, userCount: '2,500+', isPopular: false, isNew: true, colorClass: 'purple' },
     { id: 'trip', img: '/assets/icons/3d_trip.png', label: '여행', sub: '나만의 행운 여행지', cost: SERVICE_COSTS.COMPATIBILITY_TRIP, userCount: '800+', isPopular: false, colorClass: 'sky' },
     { id: 'jamidusu', img: '/assets/icons/3d_healing.png', label: '수호별 찾기', sub: '자미두수 기반 분석', cost: SERVICE_COSTS.JAMIDUSU, userCount: '1,200+', isPopular: false, colorClass: 'indigo' },
