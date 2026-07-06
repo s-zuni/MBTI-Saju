@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Heart, Menu, LogOut } from 'lucide-react';
+import { User, Heart, Menu, LogOut, ShoppingCart } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
 import { useCredits } from '../hooks/useCredits';
+import { useShopCart } from '../hooks/useShopCart';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import Logo from './Logo';
 
@@ -20,6 +21,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   const { session } = useAuth();
   const { openModal, isAnyModalOpen } = useModalStore();
   const { credits } = useCredits(session);
+  const { cartCount } = useShopCart();
 
   // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
@@ -107,6 +109,9 @@ const Navbar: React.FC<NavbarProps> = () => {
           <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             타로
           </button>
+          <button onClick={() => navigate('/shop')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
+            운세 상점
+          </button>
           <button onClick={() => navigate('/reviews')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             이용후기
           </button>
@@ -130,6 +135,18 @@ const Navbar: React.FC<NavbarProps> = () => {
                   >
                     <User className="w-6 h-6" />
                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">마이페이지</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/shop/cart')}
+                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
+                  >
+                    <ShoppingCart className="w-6 h-6" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-violet-600 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
+                        {cartCount}
+                      </span>
+                    )}
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
                   </button>
                   <button
                     onClick={handleLogout}
@@ -174,6 +191,7 @@ const Navbar: React.FC<NavbarProps> = () => {
               <button onClick={() => { navigate('/fortune'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
               <button onClick={() => { handleChatClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
               <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
+              <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 상점</button>
               <button onClick={() => { navigate('/reviews'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">이용후기</button>
               <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">요금제</button>
             </div>

@@ -58,7 +58,6 @@ const ReviewsSection: React.FC = () => {
                                     <p className="font-black text-slate-950 text-sm mb-0.5">{review.name}님</p>
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{review.service}</p>
                                 </div>
-                                <span className="text-[10px] text-slate-400 font-medium">{review.date}</span>
                             </div>
                         </div>
                     ))}

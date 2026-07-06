@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, Star } from 'lucide-react';
+import { Download, ChevronLeft, Coins, Lock, Sparkles, Star, Briefcase, Heart, User } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
@@ -46,15 +46,13 @@ const JamidusuPage: React.FC = () => {
         }
     }, [session]);
 
-    const { object: result, submit, isLoading, error: objectError } = useObject({
+    const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
         }
     });
-
-    const displayError = error || objectError?.message;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,7 +93,7 @@ const JamidusuPage: React.FC = () => {
             });
             const image = canvas.toDataURL('image/png', 1.0);
             const link = document.createElement('a');
-            link.download = `자미두수_명반_${new Date().getTime()}.png`;
+            link.download = `나의_수호별_${new Date().getTime()}.png`;
             link.href = image;
             link.click();
         } catch (err) {
@@ -111,7 +109,7 @@ const JamidusuPage: React.FC = () => {
                     <Lock className="w-10 h-10 text-indigo-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8">자미두수 분석 서비스를 이용하시려면 로그인이 필요합니다.</p>
+                <p className="text-slate-500 mb-8">나의 수호별 찾기 서비스를 이용하시려면 로그인이 필요합니다.</p>
                 <button
                     onClick={() => {
                         navigate('/');
@@ -147,12 +145,12 @@ const JamidusuPage: React.FC = () => {
                         <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-sm mb-4">
                             <Star className="w-6 h-6 text-indigo-500" />
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900 mb-2">자미두수</h1>
-                        <p className="text-slate-500 text-sm">운명 분석의 최고봉, 12궁 정통 자미두수</p>
+                        <h1 className="text-2xl font-bold text-slate-900 mb-2">나의 수호별 찾기</h1>
+                        <p className="text-slate-500 text-sm">자미두수 기반 별자리 심리테스트</p>
                     </div>
 
                     <div className="p-8">
-                        {!result && !isLoading && !displayError ? (
+                        {!result && !isLoading ? (
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-4">
                                     <label className="block text-sm font-medium text-slate-700">성별</label>
@@ -211,11 +209,11 @@ const JamidusuPage: React.FC = () => {
                                 {isLoading && !result ? (
                                     <div className="flex flex-col justify-center items-center py-20 text-center">
                                         <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-                                        <p className="text-slate-800 font-medium text-lg">자미두수 12궁 명반을 세우는 중...</p>
+                                        <p className="text-slate-800 font-medium text-lg">나의 운명의 수호별을 찾는 중...</p>
                                     </div>
-                                ) : displayError ? (
+                                ) : error ? (
                                     <div className="text-center py-16">
-                                        <p className="text-red-500 mb-6 font-medium">분석 중 오류가 발생했습니다.<br/>{displayError}</p>
+                                        <p className="text-red-500 mb-6 font-medium">분석 중 오류가 발생했습니다.</p>
                                         <button 
                                             onClick={() => window.location.reload()} 
                                             className="px-8 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
@@ -236,27 +234,62 @@ const JamidusuPage: React.FC = () => {
                                             
                                             <div className="relative z-10">
                                                 <div className="text-center mb-8">
-                                                    <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold mb-4">자미두수 12궁 분석 결과</span>
+                                                    <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold mb-4">나의 수호별 찾기 결과</span>
                                                     <h2 className="text-2xl font-bold text-slate-900 leading-tight">
                                                         {result.main_character || '분석 중...'}
                                                     </h2>
                                                 </div>
 
                                                 <div className="space-y-6">
-                                                    {result.palaces && result.palaces.length > 0 && (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            {result.palaces.map((palace: any, idx: number) => (
-                                                                <div key={idx} className="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
-                                                                    <div className="flex items-start justify-between mb-3 gap-2">
-                                                                        <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 whitespace-nowrap">
-                                                                            <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-black shadow-sm border border-indigo-200">{palace.name?.substring(0, 1) || ''}</span>
-                                                                            {palace.name}
-                                                                        </h3>
-                                                                        <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-md border border-rose-100 text-right">{palace.stars}</span>
-                                                                    </div>
-                                                                    <p className="text-slate-600 text-sm leading-relaxed break-keep whitespace-pre-line mt-2">{palace.analysis}</p>
-                                                                </div>
-                                                            ))}
+                                                    {result.destiny_palace && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <User className="w-4 h-4 text-indigo-500" /> 타고난 본성 (명궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.destiny_palace}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {result.career_palace && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <Briefcase className="w-4 h-4 text-blue-500" /> 나의 재능과 성공 (관록궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.career_palace}</p>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {result.wealth_style && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <Coins className="w-4 h-4 text-amber-500" /> 재물운 (재백궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.wealth_style}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {result.love_style && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                                                <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" /> 연애 스타일 (부처궁)
+                                                            </h3>
+                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.love_style}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {result.lucky_items && result.lucky_items.length > 0 && (
+                                                        <div className="bg-slate-50 p-5 rounded-2xl">
+                                                            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                                                <Sparkles className="w-4 h-4 text-purple-500" /> 나를 돕는 길성 & 행운 요소
+                                                            </h3>
+                                                            <ul className="space-y-2">
+                                                                {result.lucky_items.map((point: any, idx: number) => (
+                                                                    <li key={idx} className="text-slate-600 text-sm flex items-start gap-2">
+                                                                        <span className="text-purple-500 font-bold mt-0.5">•</span>
+                                                                        <span className="break-keep">{point}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
                                                         </div>
                                                     )}
 

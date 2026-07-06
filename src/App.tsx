@@ -14,6 +14,7 @@ import FortunePage from './pages/FortunePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
+import GoldPage from './pages/GoldPage';
 import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
@@ -58,6 +59,12 @@ const TarotPage = lazy(() => import('./pages/TarotPage'));
 const TripPage = lazy(() => import('./pages/TripPage'));
 const JamidusuPage = lazy(() => import('./pages/JamidusuPage'));
 const KboPage = lazy(() => import('./pages/KboPage'));
+
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const AdminShopProducts = lazy(() => import('./pages/admin/AdminShopProducts'));
+const AdminShopOrders = lazy(() => import('./pages/admin/AdminShopOrders'));
 
 function App() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
@@ -207,6 +214,8 @@ function AppContent({
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="plans" element={<PlanManagement />} />
+            <Route path="shop/products" element={<AdminShopProducts />} />
+            <Route path="shop/orders" element={<AdminShopOrders />} />
           </Route>
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
@@ -349,6 +358,9 @@ function AppContent({
                       }}
                     />
                   } />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/shop/:productId" element={<ProductDetailPage />} />
+                  <Route path="/shop/cart" element={<CartPage />} />
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/fail" element={<PaymentFail />} />
                   <Route path="/usage-history" element={<UsageHistoryPage session={session} />} />
@@ -358,6 +370,7 @@ function AppContent({
                   <Route path="/room" element={<ChatPage session={session} />} />
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
+                  <Route path="/gold" element={<GoldPage session={session} />} />
                   <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })} />} />
                   <Route path="/today-fortune" element={<TodayFortunePage />} />
                   <Route path="/today-tarot" element={<TarotPage />} />

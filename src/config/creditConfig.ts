@@ -39,7 +39,16 @@ export const SERVICE_COSTS = {
   RELATIONSHIP_ADD: 5,
   AI_CHAT_5: 20,
   TAROT: 2,
-  REGENERATE_MBTI_SAJU: 10
+  REGENERATE_MBTI_SAJU: 10,
+  GOLD_WEALTH: 5,
+  GOLD_BUSINESS: 5,
+  GOLD_JOB: 5,
+  GOLD_JOBCHANGE: 5,
+  LOVE_COUPLE: 5,
+  LOVE_MARRIED: 5,
+  LOVE_MARRIAGE: 5,
+  LOVE_REUNION: 5,
+  LOVE_CRUSH: 5
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
@@ -61,5 +70,14 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   RELATIONSHIP_ADD: '인연 추가',
   AI_CHAT_5: '운명 심층 상담 (5회)',
   TAROT: '신비타로',
-  REGENERATE_MBTI_SAJU: 'MBTI & 사주 재분석'
+  REGENERATE_MBTI_SAJU: 'MBTI & 사주 재분석',
+  GOLD_WEALTH: '내 재물운 보기',
+  GOLD_BUSINESS: '창업 및 사업 사주',
+  GOLD_JOB: '취직 사주',
+  GOLD_JOBCHANGE: '이직 사주',
+  LOVE_COUPLE: '연인 궁합',
+  LOVE_MARRIED: '부부 궁합',
+  LOVE_MARRIAGE: '결혼 궁합',
+  LOVE_REUNION: '재회 사주',
+  LOVE_CRUSH: '짝사랑 사주'
 };

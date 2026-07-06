@@ -557,7 +557,6 @@ const ReviewCollectionPage: React.FC = () => {
                                     </div>
                                     
                                     <div className="flex flex-col items-end gap-0.5 text-right">
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{rev.date}</span>
                                         {rev.is_verified && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-violet-600 bg-violet-50/50 px-1.5 py-0.5 rounded">
                                                 <CheckCircle2 className="w-2.5 h-2.5 fill-violet-600 text-white" /> 구매인증

@@ -110,6 +110,52 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
             });
         }
 
+        // 쇼핑몰 주문 결제 처리
+        if (productId === 'shop_order') {
+            if (isGuestUser) {
+                return res.status(400).json({ success: false, message: '로그인이 필요합니다.' });
+            }
+
+            try {
+                const itemsRaw = tossData.metadata?.items;
+                const items = typeof itemsRaw === 'string' ? JSON.parse(itemsRaw) : itemsRaw;
+
+                if (!items || !Array.isArray(items) || items.length === 0) {
+                    return res.status(400).json({ success: false, message: '주문 상품 정보가 없습니다.' });
+                }
+
+                const { data: orderResult, error: orderError } = await supabaseAdmin.rpc('process_shop_order', {
+                    p_user_id: userId,
+                    p_order_number: orderId,
+                    p_total_amount: amount,
+                    p_payment_key: paymentKey,
+                    p_shipping_name: tossData.metadata?.shippingName || '',
+                    p_shipping_phone: tossData.metadata?.shippingPhone || '',
+                    p_shipping_address: tossData.metadata?.shippingAddress || '',
+                    p_shipping_memo: tossData.metadata?.shippingMemo || '',
+                    p_items: items,
+                    p_shipping_fee: Number(tossData.metadata?.shippingFee || 0)
+                });
+
+                if (orderError) {
+                    console.error('Shop order processing failed:', orderError);
+                    throw orderError;
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: '쇼핑몰 주문 결제가 완료되었습니다.',
+                    data: { orderId: orderResult, toss: tossData }
+                });
+            } catch (shopError: any) {
+                console.error('Shop order error:', shopError);
+                return res.status(500).json({
+                    success: false,
+                    message: shopError.message || '주문 처리 중 오류가 발생했습니다.'
+                });
+            }
+        }
+
         if (isGuestUser) {
             return res.status(400).json({ success: false, message: '사용자 장치 식별에 실패했습니다.' });
         }

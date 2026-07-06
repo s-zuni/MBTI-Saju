@@ -15,10 +15,21 @@ export const Logo: React.FC<LogoProps> = ({ className = "text-slate-900", size =
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Stitch MCP Inspired Minimalist Corporate Logo */}
-      <rect x="20" y="20" width="40" height="40" rx="8" fill="#2E5A44" />
-      <rect x="40" y="40" width="40" height="40" rx="8" fill="#FACC15" />
-      <path d="M20 60 L60 20" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+      {/* Dynamic Monogram M (MBTI) & J (Saju) */}
+      <path 
+        d="M22 66 V24 L50 49 L78 24 V56 C78 68, 66 76, 53 76" 
+        stroke="currentColor" 
+        strokeWidth="13" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      {/* Floating celestial star/energy node (representing destiny/saju) */}
+      <circle 
+        cx="50" 
+        cy="27" 
+        r="7.5" 
+        fill="var(--primary-pink, #FFB7B2)" 
+      />
     </svg>
   );
 };
