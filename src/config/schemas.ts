@@ -153,11 +153,11 @@ export const kboSchema = z.object({
 // Special Analysis: Jamidusu
 export const jamidusuSchema = z.object({
     main_character: z.string().describe("나의 메인 자미두수 캐릭터 (예: 거침없는 팩폭러, 칠살성)"),
-    palaces: z.array(z.object({
-        name: z.string().describe("12궁의 이름 (명궁, 형제궁, 부처궁, 자녀궁, 재백궁, 질액궁, 천이궁, 노복궁, 관록궁, 전택궁, 복덕궁, 부모궁)"),
-        stars: z.string().describe("해당 궁에 자리한 주요 주성/길성/흉성 (예: 탐랑, 영성, 지겁)"),
-        analysis: z.string().describe("해당 궁에 대한 압도적이고 상세한 운명 분석 내용 (분량 풍성하게)")
-    })).length(12).describe("자미두수 12궁 전체 분석"),
+    destiny_palace: z.string().describe("타고난 본성 (명궁) 분석"),
+    career_palace: z.string().describe("나의 재능과 성공 (관록궁) 분석"),
+    wealth_style: z.string().describe("재물운 (재백궁) 분석"),
+    love_style: z.string().describe("연애 스타일 (부처궁) 분석"),
+    lucky_items: z.array(z.string()).describe("나를 돕는 길성 & 행운 요소 3가지"),
     summary: z.string().describe("전체 명반에 대한 총평 및 조언")
 });
 
@@ -190,4 +190,62 @@ export const relationshipSchema = z.object({
         score: z.number(),
         msg: z.string()
     }))
+});
+
+// 재물 사주 (Gold/Wealth Fortune)
+export const goldSchema = z.object({
+    wealthType: z.string(),
+    overview: z.string(),
+    sajuAnalysis: z.object({
+        dayMasterWealth: z.string(),
+        wealthStructure: z.string(),
+        elementBalance: z.string(),
+    }),
+    timingAnalysis: z.object({
+        currentYear: z.string(),
+        nextYear: z.string(),
+        peakPeriod: z.string(),
+        cautionPeriod: z.string(),
+    }),
+    fieldAnalysis: z.string().optional(),
+    comparison: z.string().optional(),
+    mbtiAdvice: z.object({
+        strength: z.string(),
+        weakness: z.string(),
+        actionPlan: z.string(),
+    }),
+    score: z.number(),
+    luckyElements: z.array(z.string()),
+    verdict: z.string(),
+});
+
+// 연애 사주 (Love Saju)
+export const loveSajuSchema = z.object({
+    analysisType: z.string(),
+    overallScore: z.number(),
+    summary: z.string(),
+    sajuCompatibility: z.object({
+        dayMasterRelation: z.string(),
+        fiveElementHarmony: z.string(),
+        specialStars: z.string(),
+        hiddenConflicts: z.string(),
+    }),
+    dimensions: z.array(z.object({
+        label: z.string(),
+        value: z.number(),
+        description: z.string(),
+    })),
+    timingForecast: z.object({
+        threeMonths: z.string(),
+        oneYear: z.string(),
+        threeYears: z.string(),
+    }),
+    mbtiStrategy: z.object({
+        myApproach: z.string(),
+        partnerApproach: z.string(),
+        conflictResolution: z.string(),
+    }),
+    specialSection: z.string().optional(),
+    verdict: z.string(),
+    keywords: z.array(z.string()),
 });

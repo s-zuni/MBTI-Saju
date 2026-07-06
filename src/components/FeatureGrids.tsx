@@ -33,10 +33,10 @@ const FeatureGrids: React.FC = () => {
             badge: 'HOT',
             badgeClass: 'bg-rose-50 text-rose-500',
             subItems: [
-                { label: '내 재물운 보기',    ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 🪙') },
-                { label: '창업 및 사업 사주', ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 🏢') },
-                { label: '취직 사주',         ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 💼') },
-                { label: '이직 사주',         ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 🔄') },
+                { label: '내 재물운 보기',    ready: true, action: () => navigate('/gold?type=wealth') },
+                { label: '창업 및 사업 사주', ready: true, action: () => navigate('/gold?type=business') },
+                { label: '취직 사주',         ready: true, action: () => navigate('/gold?type=job') },
+                { label: '이직 사주',         ready: true, action: () => navigate('/gold?type=jobchange') },
             ],
         },
         {
@@ -49,11 +49,11 @@ const FeatureGrids: React.FC = () => {
             badge: '인기',
             badgeClass: 'bg-violet-50 text-violet-500',
             subItems: [
-                { label: '연인 궁합',   ready: true,  action: () => navigate('/relationship') },
-                { label: '부부 궁합',   ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 💍') },
-                { label: '결혼 궁합',   ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 💒') },
-                { label: '재회 사주',   ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 💌') },
-                { label: '짝사랑 사주', ready: false, action: () => alert('준비 중입니다. 곧 만나보실 수 있습니다! 💕') },
+                { label: '연인 궁합',   ready: true,  action: () => navigate('/relationship?type=couple') },
+                { label: '부부 궁합',   ready: true,  action: () => navigate('/relationship?type=married') },
+                { label: '결혼 궁합',   ready: true,  action: () => navigate('/relationship?type=marriage') },
+                { label: '재회 사주',   ready: true,  action: () => navigate('/relationship?type=reunion') },
+                { label: '짝사랑 사주', ready: true,  action: () => navigate('/relationship?type=crush') },
             ],
         },
     ], [navigate]);
@@ -68,6 +68,7 @@ const FeatureGrids: React.FC = () => {
             badge: '매일 갱신',
             wide: true,
             action: () => navigate('/today-fortune'),
+        },
         {
             img: '/assets/icons/3d_tarot.png',
             label: '타로',

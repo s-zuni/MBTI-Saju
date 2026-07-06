@@ -14,6 +14,7 @@ import FortunePage from './pages/FortunePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import RelationshipPage from './pages/RelationshipPage';
+import GoldPage from './pages/GoldPage';
 import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
@@ -371,6 +372,7 @@ function AppContent({
                   <Route path="/room" element={<ChatPage session={session} />} />
                   <Route path="/chat" element={<ChatPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
+                  <Route path="/gold" element={<GoldPage session={session} />} />
                   <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })} />} />
                   <Route path="/today-fortune" element={<TodayFortunePage />} />
                   <Route path="/today-tarot" element={<TarotPage />} />

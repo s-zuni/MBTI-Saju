@@ -36,9 +36,11 @@ const schemas: Record<string, any> = {
     }),
     jamidusu: z.object({
         main_character: z.string(),
-        love_style: z.string(),
+        destiny_palace: z.string(),
+        career_palace: z.string(),
         wealth_style: z.string(),
-        charm_points: z.array(z.string()).length(3),
+        love_style: z.string(),
+        lucky_items: z.array(z.string()),
         summary: z.string()
     }),
     trip: z.object({

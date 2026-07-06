@@ -1,7 +1,7 @@
 import React from 'react';
-import { Compass, Plane, PenTool, Heart, X, CircleDot } from 'lucide-react';
+import { Compass, Plane, PenTool, Heart, X, CircleDot, Coins } from 'lucide-react';
 
-export type ServiceType = 'fortune' | 'mbti' | 'trip' | 'naming' | 'kbo' | 'compatibility';
+export type ServiceType = 'fortune' | 'mbti' | 'trip' | 'naming' | 'kbo' | 'compatibility' | 'gold';
 
 interface ServiceNavigationProps {
     currentService: ServiceType;
@@ -16,6 +16,7 @@ const services = [
     { id: 'naming', label: '작명', icon: PenTool, color: 'text-teal-500', userCount: '1,200+', isPopular: false },
     { id: 'kbo', label: '야구 궁합', icon: CircleDot, color: 'text-blue-500', userCount: '1,500+', isPopular: true },
     { id: 'compatibility', label: '궁합', icon: Heart, color: 'text-pink-500', userCount: '3,300+', isPopular: true },
+    { id: 'gold', label: '재물', icon: Coins, color: 'text-amber-500', userCount: '2,800+', isPopular: true },
 ] as const;
 
 const ServiceNavigation: React.FC<ServiceNavigationProps> = ({ currentService, onNavigate, onClose }) => {
