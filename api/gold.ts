@@ -18,10 +18,10 @@ const goldSchema = z.object({
         elementBalance: z.string(),
     }),
     timingAnalysis: z.object({
-        currentYear: z.string(),
-        nextYear: z.string(),
-        peakPeriod: z.string(),
-        cautionPeriod: z.string(),
+        currentYear: z.string().describe('올해(2026년) 재물운 시기적 분석'),
+        nextYear: z.string().describe('내년(2027년) 재물운 전망'),
+        peakPeriod: z.string().describe('향후 3년 내 재물운 최고조 시기와 이유 (2026년 이후 기준)'),
+        cautionPeriod: z.string().describe('재물적으로 주의해야 할 시기와 이유 (2026년 이후 기준)'),
     }),
     fieldAnalysis: z.string().describe('분야별 적합도 분석 - 창업/취직/이직 시에만 해당 분야와 사주의 적합도를 면밀히 분석 (300자 이상). 해당없을시 빈 문자열'),
     comparison: z.string().describe('현직 vs 이직 비교 - 이직 사주일 때만 두 직장의 사주적 적합도를 비교 분석 (300자 이상). 해당없을시 빈 문자열'),
@@ -102,6 +102,9 @@ export default async (req: Request) => {
             const richSajuContext = buildRichSajuContext(saju);
 
             const systemPrompt = `당신은 50년 경력의 냉철한 재물 명리학 전문가이자, MBTI 심리분석을 겸비한 최고의 커리어 전략가입니다.
+
+[시간적 기준 정보]
+현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
 
 [핵심 원칙]
 1. 일간(日干)의 재성(偏財/正財) 배치를 면밀히 분석하세요.
