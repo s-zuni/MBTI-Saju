@@ -34,7 +34,7 @@ const loveSajuSchema = z.object({
         partnerApproach: z.string(),
         conflictResolution: z.string(),
     }),
-    specialSection: z.string().optional(),
+    specialSection: z.string().describe('유형별 특화 섹션 (연인: 데이트 조언, 부부: 자녀운과 노후, 결혼: 결혼 시기와 조건, 재회: 재회 가능성 냉정 판단, 짝사랑: 호감도 예측) (300자 이상). 해당없을시 빈 문자열 반환'),
     verdict: z.string(),
     keywords: z.array(z.string()),
 });

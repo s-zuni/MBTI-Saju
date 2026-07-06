@@ -90,12 +90,12 @@ const fortuneItemSchema = z.object({
         number: z.string(),
         direction: z.string()
     }),
-    mission: z.string().optional(),
+    mission: z.string().describe("오늘의 미션 (해당없을시 빈 문자열)"),
     charm_stats: z.array(z.object({
         label: z.string(),
         value: z.number()
-    })).optional(),
-    lucky_ootd: z.string().optional()
+    })).describe("매력 스탯 (해당없을시 빈 배열 반환)"),
+    lucky_ootd: z.string().describe("행운의 ootd (해당없을시 빈 문자열)")
 });
 
 export const dailyFortuneSchema = z.object({
@@ -112,20 +112,20 @@ export const singleDayFortuneSchema = z.object({
 
 // Special Analysis: Trip
 export const tripSchema = z.object({
-    concept: z.string().describe("이번 여행의 메인 컨셉 (예: '갑목과 INFP가 만나는 감성 힐링 여행')").optional(),
+    concept: z.string().describe("이번 여행의 메인 컨셉 (예: '갑목과 INFP가 만나는 감성 힐링 여행'. 해당없을시 빈문자열)"),
     places: z.array(z.object({
         name: z.string().describe("여행지 이름 (구체적인 장소나 도시)"),
         reason: z.string().describe("사주와 MBTI 기반 추천 이유"),
         activity: z.string().describe("이곳에서 꼭 해야 할 활동"),
-        photoSpot: z.string().describe("인생샷 포토스팟 및 사진 꿀팁").optional(),
-        food: z.string().describe("행운을 부르는 추천 맛집/메뉴").optional()
+        photoSpot: z.string().describe("인생샷 포토스팟 및 사진 꿀팁 (해당없을시 빈문자열)"),
+        food: z.string().describe("행운을 부르는 추천 맛집/메뉴 (해당없을시 빈문자열)")
     })),
     itinerary: z.array(z.object({
         day: z.string(),
         schedule: z.array(z.string())
     })),
-    companion: z.string().describe("함께 가면 시너지가 나는 MBTI 또는 사주 일간 추천").optional(),
-    luckyItem: z.string().describe("여행에 챙겨가면 좋은 행운의 아이템 (OOTD, 소품 등)").optional(),
+    companion: z.string().describe("함께 가면 시너지가 나는 MBTI 또는 사주 일간 추천 (해당없을시 빈문자열)"),
+    luckyItem: z.string().describe("여행에 챙겨가면 좋은 행운의 아이템 (OOTD, 소품 등) (해당없을시 빈문자열)"),
     summary: z.string(),
     bestTime: z.string(),
     tip: z.string()
@@ -163,7 +163,7 @@ export const jamidusuSchema = z.object({
 
 // Special Analysis: Compatibility
 export const compatibilitySchema = z.object({
-    score: z.number().optional(),
+    score: z.number().describe("점수 (해당없을시 0)"),
     summary: z.string(),
     keywords: z.array(z.string()),
     details: z.object({
@@ -207,8 +207,8 @@ export const goldSchema = z.object({
         peakPeriod: z.string(),
         cautionPeriod: z.string(),
     }),
-    fieldAnalysis: z.string().optional(),
-    comparison: z.string().optional(),
+    fieldAnalysis: z.string().describe("해당없을시 빈 문자열"),
+    comparison: z.string().describe("해당없을시 빈 문자열"),
     mbtiAdvice: z.object({
         strength: z.string(),
         weakness: z.string(),
@@ -245,7 +245,7 @@ export const loveSajuSchema = z.object({
         partnerApproach: z.string(),
         conflictResolution: z.string(),
     }),
-    specialSection: z.string().optional(),
+    specialSection: z.string().describe("해당없을시 빈 문자열"),
     verdict: z.string(),
     keywords: z.array(z.string()),
 });

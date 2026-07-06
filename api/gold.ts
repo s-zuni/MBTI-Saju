@@ -23,8 +23,8 @@ const goldSchema = z.object({
         peakPeriod: z.string(),
         cautionPeriod: z.string(),
     }),
-    fieldAnalysis: z.string().optional(),
-    comparison: z.string().optional(),
+    fieldAnalysis: z.string().describe('분야별 적합도 분석 - 창업/취직/이직 시에만 해당 분야와 사주의 적합도를 면밀히 분석 (300자 이상). 해당없을시 빈 문자열'),
+    comparison: z.string().describe('현직 vs 이직 비교 - 이직 사주일 때만 두 직장의 사주적 적합도를 비교 분석 (300자 이상). 해당없을시 빈 문자열'),
     mbtiAdvice: z.object({
         strength: z.string(),
         weakness: z.string(),
