@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, Sparkles, Star, Download, ChevronLeft, Coins, Lock, Info, Calendar, AlertCircle } from 'lucide-react';
+import { Heart, Sparkles, Download, ChevronLeft, Coins, Lock, Info, Calendar, AlertCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { loveSajuSchema } from '../config/schemas';
