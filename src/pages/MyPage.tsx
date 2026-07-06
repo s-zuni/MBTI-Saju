@@ -6,7 +6,9 @@ import AnalysisModal from '../components/AnalysisModal';
 import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
 import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
-
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { analysisSchema } from '../config/schemas';
+import { calculateSaju } from '../utils/sajuUtils';
 
 interface Profile {
   id: string;
