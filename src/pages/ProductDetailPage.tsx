@@ -41,6 +41,11 @@ const ProductDetailPage: React.FC = () => {
     const { requestDirectPurchase, loading: paymentLoading } = useShopPayment();
 
     const [product, setProduct] = useState<ShopProduct | null>(null);
+
+    useEffect(() => {
+        alert('운세 상점은 현재 준비 중입니다. 곧 찾아뵙겠습니다!');
+        navigate('/');
+    }, [navigate]);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);

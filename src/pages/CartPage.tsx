@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShopCart } from '../hooks/useShopCart';
 import { useShopPayment } from '../hooks/useShopPayment';
@@ -17,6 +17,12 @@ import {
 
 const CartPage: React.FC = () => {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        alert('운세 상점은 현재 준비 중입니다. 곧 찾아뵙겠습니다!');
+        navigate('/');
+    }, [navigate]);
+
     const {
         cart,
         loading,
