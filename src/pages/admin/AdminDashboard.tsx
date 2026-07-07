@@ -85,8 +85,8 @@ const AdminDashboard: React.FC = () => {
                 supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekISO),
                 // 5. 최근 가입자 5명 (이름 + 이메일 + 가입일)
                 supabase.from('profiles').select('email, created_at, name').order('created_at', { ascending: false }).limit(5),
-                // 6. 서비스별 크레딧 사용 내역 (usage_history 테이블 있다고 가정, 없으면 패스)
-                supabase.from('usage_history').select('service_type', { count: 'exact' }).gte('created_at', weekISO),
+                // 6. 서비스별 크레딧 사용 내역
+                supabase.from('credit_usages').select('service_type').gte('used_at', weekISO),
             ]);
 
             // 기본 통계
