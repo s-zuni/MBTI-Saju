@@ -1,0 +1,63 @@
+<svg 
+  width="1200" 
+  height="630" 
+  viewBox="0 0 1200 630" 
+  fill="none" 
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background gradient -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)" />
+  
+  <!-- Centered monogram logo container -->
+  <g transform="translate(485, 120)">
+    <!-- SVG Monogram scaled to 230x230 -->
+    <g transform="scale(2.3)">
+      <path 
+        d="M22 66 V24 L50 49 L78 24 V56 C78 68, 66 76, 53 76" 
+        stroke="#1E293B" 
+        stroke-width="11" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+      />
+      <circle 
+        cx="50" 
+        cy="27" 
+        r="7.5" 
+        fill="#FFB7B2" 
+      />
+    </g>
+  </g>
+
+  <!-- Title Text -->
+  <text 
+    x="600" 
+    y="440" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-weight="800" 
+    font-size="64" 
+    fill="#0F172A" 
+    text-anchor="middle" 
+    letter-spacing="-0.02em"
+  >MBTIJU</text>
+
+  <!-- Subtitle Text -->
+  <text 
+    x="600" 
+    y="500" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-weight="600" 
+    font-size="28" 
+    fill="#64748B" 
+    text-anchor="middle" 
+    letter-spacing="-0.01em"
+  >심층 사주 &amp; MBTI 분석</text>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="50%" stop-color="#EEF2F6" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+  </defs>
+</svg>
