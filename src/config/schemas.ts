@@ -217,6 +217,7 @@ export const goldSchema = z.object({
     score: z.number(),
     luckyElements: z.array(z.string()),
     verdict: z.string(),
+    mbtiSajuWealthReport: z.string().optional().describe("MBTI-사주 뼈 때리는 재물 보고서 (마크다운)"),
 });
 
 // 연애 사주 (Love Saju)
