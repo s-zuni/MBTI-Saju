@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Loader2, Menu, Plus, MessageSquare, Coins, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { createSession, loadMessages, sendMessage, ChatMessage } from '../utils/chatService';
+import { stripMarkdown } from '../utils/textUtils';
 import { useNavigate } from 'react-router-dom';
 import { useCredits } from '../hooks/useCredits';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -203,8 +204,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                 userContext,
                 (token) => {
                     accumulatedText += token;
+                    const cleanText = stripMarkdown(accumulatedText);
                     setMessages(prev => prev.map(m => 
-                        m.id === botMessageId ? { ...m, content: accumulatedText } : m
+                        m.id === botMessageId ? { ...m, content: cleanText } : m
                     ));
                     setShouldAutoScroll(true);
                 }
@@ -369,7 +371,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                                     rounded-2xl p-4 shadow-sm text-sm md:text-base leading-relaxed whitespace-pre-wrap
                                     ${msg.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white text-slate-800 border border-slate-200'}
                                 `}>
-                                    {msg.content}
+                                    {stripMarkdown(msg.content)}
                                 </div>
                             </div>
                         </div>
@@ -413,9 +415,19 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                                     setInputText(e.target.value);
                                     setShouldAutoScroll(true); // User interaction enables auto-scroll
                                 }}
+                                onFocus={() => {
+                                    setShouldAutoScroll(true);
+                                    setTimeout(() => {
+                                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                                    }, 200);
+                                }}
                                 placeholder="운세, 사주, 고민거리를 물어보세요..."
                                 disabled={isTyping}
-                                className="w-full pl-4 md:pl-6 pr-12 md:pr-14 py-3 md:py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner"
+                                autoCapitalize="sentences"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                style={{ fontSize: '16px' }}
+                                className="w-full pl-4 md:pl-6 pr-12 md:pr-14 py-3 md:py-4 bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-violet-500/20 text-slate-800 placeholder:text-slate-400 resize-none shadow-inner text-base"
                             />
                             <button
                                 type="submit"

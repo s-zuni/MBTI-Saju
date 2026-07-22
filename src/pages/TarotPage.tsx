@@ -269,7 +269,10 @@ const TarotPage: React.FC = () => {
                                             value={question} 
                                             onChange={(e) => setQuestion(e.target.value)} 
                                             placeholder="예: 이번 이직이 저에게 좋은 기회일까요?" 
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-[2rem] px-8 py-6 text-slate-900 placeholder-slate-300 text-lg outline-none focus:border-purple-100 focus:bg-white focus:shadow-xl transition-all" 
+                                            style={{ fontSize: '16px' }}
+                                            autoComplete="off"
+                                            autoCorrect="off"
+                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-[2rem] px-8 py-6 text-slate-900 placeholder-slate-300 text-base md:text-lg outline-none focus:border-purple-100 focus:bg-white focus:shadow-xl transition-all" 
                                             onKeyDown={(e) => e.key === 'Enter' && handleStart()} 
                                         />
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-100 transition-opacity">

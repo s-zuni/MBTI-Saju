@@ -1,10 +1,13 @@
 /**
- * 텍스트에서 마크다운 볼드 기호(**) 및 언더바(__)를 제거합니다.
+ * 텍스트에서 마크다운 볼드 기호(**), 언더바(__), 헤더(#) 등 마크다운 기호를 제거합니다.
  */
 export const stripMarkdown = (text: any): string => {
-    if (typeof text !== 'string') return text;
-    // ** 및 __ 제거
-    return text.replace(/\*\*/g, '').replace(/__/g, '');
+    if (typeof text !== 'string') return text || '';
+    return text
+        .replace(/\*\*/g, '')
+        .replace(/__/g, '')
+        .replace(/^#+\s+/gm, '')
+        .replace(/`{1,3}/g, '');
 };
 
 /**
