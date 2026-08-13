@@ -220,6 +220,16 @@ ${sajuContextBlock}
 10. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
 11. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.`;
 
+    const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
+    const translateRatio = (ratio: any) => {
+        if (!ratio) return {};
+        const result: any = {};
+        for (const [k, v] of Object.entries(ratio)) {
+            result[elementNames[k] || k] = v;
+        }
+        return result;
+    };
+
     let userQuery = '';
 
     if (type === 'healing') {
@@ -233,9 +243,6 @@ ${sajuContextBlock}
 성별: ${targetGender === 'male' ? '남성' : '여성'}
 생년월일시: ${targetBirthDate} ${targetBirthTime || '시간모름'}
 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}
-
-
-`;
 
 [생성 작업 지침]
 1. 위 명식을 자미두수의 주요 별(자미, 칠살, 파군, 탐랑, 천기, 태음, 천동 등)이 가진 성향으로 치환하여 20대 여성이 호기심을 가질 만한 '나의 메인 수호별 캐릭터'를 도출하세요. (예: "어디서나 시선집중! 매력 만점 탐랑성", "거침없는 팩폭러 칠살성")
