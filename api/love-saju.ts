@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { streamObject } from 'ai';
 import { z } from 'zod';
-import { calculateSaju, buildRichSajuContext } from './_utils/saju';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
 
@@ -66,9 +66,10 @@ export default async (req: Request) => {
                 headers: corsHeaders 
             });
         }
-        const body = await req.json();
-        const url = new URL(req.url);
-        const type = url.searchParams.get('type') || body.type || 'couple';
+        if (req.method === 'POST') {
+            const body = await req.json();
+            const url = new URL(req.url);
+            const type = url.searchParams.get('type') || body.type || 'couple';
 
         const {
             birthDate, birthTime, mbti, name, gender,
