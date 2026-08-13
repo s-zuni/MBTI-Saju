@@ -43,7 +43,7 @@ const TarotCardPlaceholder = ({ name }: { name: string }) => (
     </div>
 );
 
-const TarotPage: React.FC = () => {
+const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, useCredits: consumeCredits } = useCredits(session);
@@ -73,54 +73,60 @@ const TarotPage: React.FC = () => {
                     await supabase.from('tarot_readings').insert({
                         user_id: activeSession.user.id,
                         spread_type: selectedSpread,
-                        question: question,
+                        question: question || '일상 타로 점술',
                         selected_cards: selectedCards,
-                        reading_result: object
+                        result_data: object
                     });
                 }
             }
+        },
+        onError: (error) => {
+            console.error('[TarotPage] Analysis failed:', error);
+            alert('타로 해석을 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
 
-    const fisherYatesShuffle = (array: TarotCard[]): TarotCard[] => {
-        const shuffled: TarotCard[] = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const temp = shuffled[i] as TarotCard;
-            shuffled[i] = shuffled[j] as TarotCard;
-            shuffled[j] = temp;
-        }
-        return shuffled;
-    };
-
     useEffect(() => {
         closeAllModals();
-        setDeck(fisherYatesShuffle(TAROT_DECK));
     }, [closeAllModals]);
 
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
-        setSelectedCards([]);
-        setStep('question');
+        if (spread === 'daily') {
+            setStep('shuffle');
+            handleShuffle();
+        } else {
+            setStep('question');
+        }
     };
 
-    const handleStart = () => {
+    const handleQuestionSubmit = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!question.trim()) {
-            alert("무엇이 궁금하신지 질문을 입력해주세요!");
+            alert("질문을 입력해 주세요.");
             return;
         }
-        setDeck(fisherYatesShuffle(TAROT_DECK));
         setStep('shuffle');
-        setTimeout(() => setStep('select'), 2200);
+        handleShuffle();
+    };
+
+    const handleStart = () => handleQuestionSubmit();
+
+    const handleShuffle = () => {
+        const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
+        setDeck(shuffled);
+        setSelectedCards([]);
+        setTimeout(() => {
+            setStep('select');
+        }, 1200);
     };
 
     const getRequiredCardCount = () => {
-        switch (selectedSpread) {
-            case 'daily': return 1;
-            case 'love': return 3;
-            case 'career': return 3;
-            default: return 3;
-        }
+        return selectedSpread === 'daily' ? 1 : 3;
+    };
+
+    const handleCardClick = (card: TarotCard) => {
+        handleCardSelect(card);
     };
 
     const handleCardSelect = (card: TarotCard) => {
@@ -128,20 +134,23 @@ const TarotPage: React.FC = () => {
         if (selectedCards.length >= requiredCount) return;
         if (selectedCards.find(c => c.id === card.id)) return;
 
-        const newSelection = [...selectedCards, card];
-        setSelectedCards(newSelection);
+        const newSelected = [...selectedCards, card];
+        setSelectedCards(newSelected);
 
-        if (newSelection.length === requiredCount) {
-            setTimeout(() => handleAnalyze(newSelection), 600);
+        if (newSelected.length === requiredCount) {
+            setTimeout(() => handleAnalyze(newSelected), 600);
         }
     };
 
     const handleAnalyze = async (cards: TarotCard[]) => {
-        if (!question.trim()) return;
+        if (!session?.user) {
+            openModal('analysis', 'login');
+            return;
+        }
 
-        const cost = SERVICE_COSTS.TAROT;
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
+        const tarotCost = SERVICE_COSTS.TAROT;
+        if (credits !== undefined && credits < tarotCost) {
+            openModal('creditPurchase', undefined, { requiredCredits: tarotCost });
             return;
         }
 
@@ -211,28 +220,8 @@ const TarotPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-white pb-32">
+        <div className={isEmbedded ? "pb-12" : "min-h-screen bg-white pb-32"}>
             {/* Header */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-6 h-6 text-slate-600" />
-                    </button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
-                            <Moon className="w-4 h-4 text-white fill-white" />
-                        </div>
-                        <h1 className="text-lg font-black text-slate-900">타로 오라클</h1>
-                    </div>
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-full text-xs font-bold">
-                        <Coins className="w-4 h-4" />
-                        {credits}
-                    </div>
-                </div>
-            </div>
 
             <div className="max-w-5xl mx-auto px-4 py-8">
                 <div className="relative w-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col min-h-[70vh]">

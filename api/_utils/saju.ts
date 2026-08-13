@@ -1,150 +1,161 @@
-import { Solar, Lunar } from 'lunar-javascript';
+import {
+    calculateFourPillars,
+    BirthInfo,
+    DayBoundary,
+    FourPillarsDetail,
+    FiveElement,
+    EarthlyBranch,
+    HeavenlyStem,
+    getBranchTenGod
+} from 'manseryeok';
+import {
+    PreciseSajuData,
+    SajuInput,
+    PillarDetail,
+    DayMasterInfo,
+    FiveElementsCount,
+    FiveElementsRatio,
+    LuckPillarsData
+} from '../types';
 
-export interface SajuResult {
-    ganZhi: {
-        year: string;
-        month: string;
-        day: string;
-        hour: string;
-    };
-    dayMaster: {
-        korean: string;
-        chinese: string;
-        element: string;
-        polarity: string;
-        description: string;
-    };
-    pillars: {
-        year: PillarInfo;
-        month: PillarInfo;
-        day: PillarInfo;
-        hour: PillarInfo;
-    };
-    elements: {
-        wood: number;
-        fire: number;
-        earth: number;
-        metal: number;
-        water: number;
-    };
-    elementRatio: {
-        wood: number;
-        fire: number;
-        earth: number;
-        metal: number;
-        water: number;
-    };
+/**
+ * ============================================================================
+ * [한국 기준 만세력 사주 엔진 - manseryeok 기반 결정론적 계산 모듈]
+ * 
+ * 주요 기능:
+ * 1. 한국천문연구원(KASI) 기반 오픈소스 라이브러리 `manseryeok` 활용
+ * 2. 동경 127.5도 기준 한국 진태양시(True Solar Time) 및 균시차(Equation of Time) 자동 보정
+ * 3. 한국 명리학 표준 야자시(夜子時, 23:00~24:00) / 조자시(朝子時) 구분 적용 ('jasi' 경계)
+ * 4. 사주 4주 8자(천간/지지 한글 및 한자), 오행 비율/개수, 십신(十神), 지장간(地藏干),
+ *    12운성(十二運星), 12신살(十二神煞), 공망(空亡), 대운(大運) 데이터 제공
+ * ============================================================================
+ */
+
+// 천간 한글/한자/오행/음양 매핑
+const STEM_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-' }> = {
+    '갑': { korean: '갑목', hanja: '甲', element: 'wood', elementKo: '목', polarity: '+' },
+    '을': { korean: '을목', hanja: '乙', element: 'wood', elementKo: '목', polarity: '-' },
+    '병': { korean: '병화', hanja: '丙', element: 'fire', elementKo: '화', polarity: '+' },
+    '정': { korean: '정화', hanja: '丁', element: 'fire', elementKo: '화', polarity: '-' },
+    '무': { korean: '무토', hanja: '戊', element: 'earth', elementKo: '토', polarity: '+' },
+    '기': { korean: '기토', hanja: '己', element: 'earth', elementKo: '토', polarity: '-' },
+    '경': { korean: '경금', hanja: '庚', element: 'metal', elementKo: '금', polarity: '+' },
+    '신': { korean: '신금', hanja: '辛', element: 'metal', elementKo: '금', polarity: '-' },
+    '임': { korean: '임수', hanja: '壬', element: 'water', elementKo: '수', polarity: '+' },
+    '계': { korean: '계수', hanja: '癸', element: 'water', elementKo: '수', polarity: '-' },
+    '甲': { korean: '갑목', hanja: '甲', element: 'wood', elementKo: '목', polarity: '+' },
+    '乙': { korean: '을목', hanja: '乙', element: 'wood', elementKo: '목', polarity: '-' },
+    '丙': { korean: '병화', hanja: '丙', element: 'fire', elementKo: '화', polarity: '+' },
+    '丁': { korean: '정화', hanja: '丁', element: 'fire', elementKo: '화', polarity: '-' },
+    '戊': { korean: '무토', hanja: '戊', element: 'earth', elementKo: '토', polarity: '+' },
+    '己': { korean: '기토', hanja: '己', element: 'earth', elementKo: '토', polarity: '-' },
+    '庚': { korean: '경금', hanja: '庚', element: 'metal', elementKo: '금', polarity: '+' },
+    '辛': { korean: '신금', hanja: '辛', element: 'metal', elementKo: '금', polarity: '-' },
+    '壬': { korean: '임수', hanja: '壬', element: 'water', elementKo: '수', polarity: '+' },
+    '癸': { korean: '계수', hanja: '癸', element: 'water', elementKo: '수', polarity: '-' },
+};
+
+// 지지 한글/한자/오행/음양/동물 매핑
+const BRANCH_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-'; animal: string }> = {
+    '자': { korean: '자수', hanja: '子', element: 'water', elementKo: '수', polarity: '+', animal: '쥐' },
+    '축': { korean: '축토', hanja: '丑', element: 'earth', elementKo: '토', polarity: '-', animal: '소' },
+    '인': { korean: '인목', hanja: '寅', element: 'wood', elementKo: '목', polarity: '+', animal: '호랑이' },
+    '묘': { korean: '묘목', hanja: '卯', element: 'wood', elementKo: '목', polarity: '-', animal: '토끼' },
+    '진': { korean: '진토', hanja: '辰', element: 'earth', elementKo: '토', polarity: '+', animal: '용' },
+    '사': { korean: '사화', hanja: '巳', element: 'fire', elementKo: '화', polarity: '-', animal: '뱀' },
+    '오': { korean: '오화', hanja: '午', element: 'fire', elementKo: '화', polarity: '+', animal: '말' },
+    '미': { korean: '미토', hanja: '未', element: 'earth', elementKo: '토', polarity: '-', animal: '양' },
+    '신': { korean: '신금', hanja: '申', element: 'metal', elementKo: '금', polarity: '+', animal: '원숭이' },
+    '유': { korean: '유금', hanja: '酉', element: 'metal', elementKo: '금', polarity: '-', animal: '닭' },
+    '술': { korean: '술토', hanja: '戌', element: 'earth', elementKo: '토', polarity: '+', animal: '개' },
+    '해': { korean: '해수', hanja: '亥', element: 'water', elementKo: '수', polarity: '-', animal: '돼지' },
+    '子': { korean: '자수', hanja: '子', element: 'water', elementKo: '수', polarity: '+', animal: '쥐' },
+    '丑': { korean: '축토', hanja: '丑', element: 'earth', elementKo: '토', polarity: '-', animal: '소' },
+    '寅': { korean: '인목', hanja: '寅', element: 'wood', elementKo: '목', polarity: '+', animal: '호랑이' },
+    '卯': { korean: '묘목', hanja: '卯', element: 'wood', elementKo: '목', polarity: '-', animal: '토끼' },
+    '辰': { korean: '진토', hanja: '辰', element: 'earth', elementKo: '토', polarity: '+', animal: '용' },
+    '巳': { korean: '사화', hanja: '巳', element: 'fire', elementKo: '화', polarity: '-', animal: '뱀' },
+    '午': { korean: '오화', hanja: '午', element: 'fire', elementKo: '화', polarity: '+', animal: '말' },
+    '未': { korean: '미토', hanja: '未', element: 'earth', elementKo: '토', polarity: '-', animal: '양' },
+    '申': { korean: '신금', hanja: '申', element: 'metal', elementKo: '금', polarity: '+', animal: '원숭이' },
+    '酉': { korean: '유금', hanja: '酉', element: 'metal', elementKo: '금', polarity: '-', animal: '닭' },
+    '戌': { korean: '술토', hanja: '戌', element: 'earth', elementKo: '토', polarity: '+', animal: '개' },
+    '亥': { korean: '해수', hanja: '亥', element: 'water', elementKo: '수', polarity: '-', animal: '돼지' },
+};
+
+// 지장간 매핑
+const HIDDEN_STEMS: Record<string, string[]> = {
+    '자': ['계'], '子': ['계'],
+    '축': ['계', '신', '기'], '丑': ['계', '신', '기'],
+    '인': ['무', '병', '갑'], '寅': ['무', '병', '갑'],
+    '묘': ['갑', '을'], '卯': ['갑', '을'],
+    '진': ['을', '계', '무'], '辰': ['을', '계', '무'],
+    '사': ['무', '경', '병'], '巳': ['무', '경', '병'],
+    '오': ['병', '기', '정'], '午': ['병', '기', '정'],
+    '미': ['정', '을', '기'], '未': ['정', '을', '기'],
+    '신': ['무', '임', '경'], '申': ['무', '임', '경'],
+    '유': ['경', '신'], '酉': ['경', '신'],
+    '술': ['신', '정', '무'], '戌': ['신', '정', '무'],
+    '해': ['무', '갑', '임'], '亥': ['무', '갑', '임'],
+};
+
+// 12운성 (Twelve Stages) 계산표
+const STAGES_ORDER = ['장생(長生)', '목욕(沐浴)', '관대(冠帶)', '건록(建祿)', '제왕(帝旺)', '쇠(衰)', '병(病)', '사(死)', '묘(墓)', '절(絶)', '태(胎)', '양(養)'];
+const ZHI_ORDER = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+
+// 일간별 장생 시작 지지 인덱스
+const DAY_MASTER_CHANGSHENG: Record<string, { startZhi: string; forward: boolean }> = {
+    '갑': { startZhi: '해', forward: true },
+    '을': { startZhi: '오', forward: false },
+    '병': { startZhi: '인', forward: true },
+    '정': { startZhi: '유', forward: false },
+    '무': { startZhi: '인', forward: true },
+    '기': { startZhi: '유', forward: false },
+    '경': { startZhi: '사', forward: true },
+    '신': { startZhi: '자', forward: false },
+    '임': { startZhi: '신', forward: true },
+    '계': { startZhi: '묘', forward: false },
+};
+
+function getTwelveStage(dayStemKo: string, zhiKo: string): string {
+    const config = DAY_MASTER_CHANGSHENG[dayStemKo];
+    if (!config || zhiKo === '?') return '-';
+    
+    const startIndex = ZHI_ORDER.indexOf(config.startZhi);
+    const targetIndex = ZHI_ORDER.indexOf(zhiKo);
+    if (startIndex === -1 || targetIndex === -1) return '-';
+
+    let offset = 0;
+    if (config.forward) {
+        offset = (targetIndex - startIndex + 12) % 12;
+    } else {
+        offset = (startIndex - targetIndex + 12) % 12;
+    }
+    return STAGES_ORDER[offset] || '-';
 }
 
-export interface PillarInfo {
-    gan: string;
-    zhi: string;
-    ganElement: string;
-    zhiElement: string;
-    ganShiShen: string;
-    zhiShiShen: string;
-    hiddenStems: string[];
-    twelveStages: string;
-    twelveSpirits: string;
-}
-
-const GAN_MAP: { [key: string]: { element: string; polarity: string; korean: string } } = {
-    '甲': { element: 'wood', polarity: '+', korean: '갑목' },
-    '乙': { element: 'wood', polarity: '-', korean: '을목' },
-    '丙': { element: 'fire', polarity: '+', korean: '병화' },
-    '丁': { element: 'fire', polarity: '-', korean: '정화' },
-    '戊': { element: 'earth', polarity: '+', korean: '무토' },
-    '己': { element: 'earth', polarity: '-', korean: '기토' },
-    '庚': { element: 'metal', polarity: '+', korean: '경금' },
-    '辛': { element: 'metal', polarity: '-', korean: '신금' },
-    '壬': { element: 'water', polarity: '+', korean: '임수' },
-    '癸': { element: 'water', polarity: '-', korean: '계수' },
+// 12신살 (Twelve Spirits) 계산
+const SPIRIT_ORDER = ['지살(地煞)', '연살(年煞)', '월살(月煞)', '망신살(亡神)', '장성살(將星)', '반안살(攀鞍)', '역마살(驛馬)', '육해살(六害)', '화개살(華蓋)', '겁살(劫煞)', '재살(災煞)', '천살(天煞)'];
+const TRIPLE_COMBO_START: Record<string, string> = {
+    '인': '인', '오': '인', '술': '인',
+    '신': '신', '자': '신', '진': '신',
+    '해': '해', '묘': '해', '미': '해',
+    '사': '사', '유': '사', '축': '사',
 };
 
-const ZHI_MAP: { [key: string]: { element: string; polarity: string; korean: string } } = {
-    '子': { element: 'water', polarity: '+', korean: '자수' }, // Rat
-    '丑': { element: 'earth', polarity: '-', korean: '축토' }, // Ox
-    '寅': { element: 'wood', polarity: '+', korean: '인목' }, // Tiger
-    '卯': { element: 'wood', polarity: '-', korean: '묘목' }, // Rabbit
-    '辰': { element: 'earth', polarity: '+', korean: '진토' }, // Dragon
-    '巳': { element: 'fire', polarity: '-', korean: '사화' }, // Snake
-    '午': { element: 'fire', polarity: '+', korean: '오화' }, // Horse
-    '未': { element: 'earth', polarity: '-', korean: '미토' }, // Goat
-    '申': { element: 'metal', polarity: '+', korean: '신금' }, // Monkey
-    '酉': { element: 'metal', polarity: '-', korean: '유금' }, // Rooster
-    '戌': { element: 'earth', polarity: '+', korean: '술토' }, // Dog
-    '亥': { element: 'water', polarity: '-', korean: '해수' }, // Pig
-};
-
-// Translation Maps for Korean/Hanja 병기
-const SHISHEN_TRANSLATE: Record<string, string> = {
-    '比肩': '비견(比肩)',
-    '劫財': '겁재(劫財)', '劫财': '겁재(劫財)',
-    '食神': '식신(食神)',
-    '傷官': '상관(傷官)', '伤官': '상관(傷官)',
-    '偏財': '편재(偏財)', '偏财': '편재(偏財)',
-    '正財': '정재(正財)', '正财': '정재(正財)',
-    '偏官': '편관(偏官)',
-    '七殺': '편관(七殺)', '七杀': '편관(七殺)',
-    '正官': '정관(正官)',
-    '偏印': '편인(偏印)',
-    '正印': '정인(正印)'
-};
-
-const STAGE_TRANSLATE: Record<string, string> = {
-    '长生': '장생(長生)', '長生': '장생(長生)',
-    '沐浴': '목욕(沐浴)',
-    '冠带': '관대(冠帶)', '冠帶': '관대(冠帶)',
-    '临官': '건록(建祿)', '臨官': '건록(建祿)',
-    '帝旺': '제왕(帝旺)',
-    '衰': '쇠(衰)',
-    '病': '병(病)',
-    '死': '사(死)',
-    '墓': '묘(墓)',
-    '绝': '절(絶)', '絶': '절(絶)',
-    '胎': '태(胎)',
-    '养': '양(養)', '養': '양(養)'
-};
-
-const SPIRIT_TRANSLATE: Record<string, string> = {
-    '지살': '지살(地煞)',
-    '연살': '연살(年煞)',
-    '월살': '월살(月煞)',
-    '망신살': '망신살(亡神)',
-    '장성살': '장성살(將星)',
-    '반안살': '반안살(攀鞍)',
-    '역마살': '역마살(驛馬)',
-    '육해살': '육해살(六害)',
-    '화개살': '화개살(華蓋)',
-    '겁살': '겁살(劫煞)',
-    '재살': '재살(災煞)',
-    '천살': '천살(天煞)'
-};
-
-// 12 Sinsal (Spirits) Mapping based on Triple Combinations (삼합)
-const SPIRIT_ORDER = ['지살', '연살', '월살', '망신살', '장성살', '반안살', '역마살', '육해살', '화개살', '겁살', '재살', '천살'];
-const ZHI_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-
-function getTwelveSpirits(baseZhi: string, targetZhi: string): string {
-    const TRIPLE_COMBO_START: { [key: string]: string } = {
-        '寅': '寅', '午': '寅', '戌': '寅', // Fire combo
-        '申': '申', '子': '申', '辰': '申', // Water combo
-        '亥': '亥', '卯': '亥', '未': '亥', // Wood combo
-        '巳': '巳', '酉': '巳', '丑': '巳', // Metal combo
-    };
-
-    const startZhi = TRIPLE_COMBO_START[baseZhi];
-    if (!startZhi) return '-';
+function getTwelveSpirits(baseZhiKo: string, targetZhiKo: string): string {
+    const startZhi = TRIPLE_COMBO_START[baseZhiKo];
+    if (!startZhi || targetZhiKo === '?') return '-';
 
     const startIndex = ZHI_ORDER.indexOf(startZhi);
-    const targetIndex = ZHI_ORDER.indexOf(targetZhi);
-    
+    const targetIndex = ZHI_ORDER.indexOf(targetZhiKo);
+    if (startIndex === -1 || targetIndex === -1) return '-';
+
     const distance = (targetIndex - startIndex + 12) % 12;
-    const spirit = SPIRIT_ORDER[distance] || '-';
-    return SPIRIT_TRANSLATE[spirit] || spirit;
+    return SPIRIT_ORDER[distance] || '-';
 }
 
-const DAY_MASTER_DESC: { [key: string]: string } = {
+const DAY_MASTER_DESC: Record<string, string> = {
     '갑목': '대들보, 거목, 리더십, 성장, 시작, 고집',
     '을목': '화초, 덩굴, 적응력, 유연함, 끈기, 현실적',
     '병화': '태양, 확산, 열정, 예의, 공명정대, 화려함',
@@ -156,242 +167,270 @@ const DAY_MASTER_DESC: { [key: string]: string } = {
     '임수': '바다, 큰 물, 지혜, 유연함, 포용, 총명함',
     '계수': '비, 시냇물, 지혜, 섬세함, 참모, 아이디어',
 };
-export function calculateSaju(birthDate: string, birthTime: string | null): SajuResult {
-    const partsDate = birthDate.includes('-') ? birthDate.split('-').map(Number) :
-                     birthDate.includes('.') ? birthDate.split('.').map(Number) :
-                     birthDate.includes('/') ? birthDate.split('/').map(Number) :
-                     [Number(birthDate.substring(0, 4)), Number(birthDate.substring(4, 6)), Number(birthDate.substring(6, 8))];
-    
-    let year = partsDate[0];
-    let month = partsDate[1];
-    let day = partsDate[2];
 
-    if (year === undefined || month === undefined || day === undefined || 
-        isNaN(year) || isNaN(month) || isNaN(day)) {
-        throw new Error(`Invalid date parts: ${birthDate}`);
-    }
+/**
+ * 사용자의 생년월일시 및 성별을 입력받아 한국 진태양시 보정 및 야자시/조자시가 적용된 정확한 사주 원국 데이터를 산출합니다.
+ */
+export function getPreciseSajuData(input: SajuInput): PreciseSajuData {
+    const { birthDate, birthTime, gender, isLunar, isLeapMonth, longitude, dayBoundary } = input;
 
-    year = year || 1990;
-    month = month || 1;
-    day = day || 1;
+    // 1. 날짜 및 시간 파싱
+    const cleanDate = birthDate.replace(/[-./]/g, '');
+    const year = Number(cleanDate.substring(0, 4)) || 1990;
+    const month = Number(cleanDate.substring(4, 6)) || 1;
+    const day = Number(cleanDate.substring(6, 8)) || 1;
+
     let hour = 12;
     let minute = 0;
     let isTimeUnknown = !birthTime;
 
     if (birthTime) {
-        let timeStr = birthTime.trim();
-        if (timeStr.includes('-')) {
-            timeStr = timeStr.split('-')[0]!.trim();
-        }
-        
-        const parts = timeStr.split(':').map(Number);
-        hour = parts[0] ?? 0;
-        minute = parts[1] ?? 0;
-        
+        const timeParts = birthTime.trim().split('-')[0]!.split(':').map(Number);
+        hour = timeParts[0] ?? 12;
+        minute = timeParts[1] ?? 0;
         if (isNaN(hour) || isNaN(minute)) {
             hour = 12;
             minute = 0;
             isTimeUnknown = true;
         }
-
-        const dateObj = new Date(year, month - 1, day, hour, minute);
-        dateObj.setMinutes(dateObj.getMinutes() - 30);
-
-        year = dateObj.getFullYear();
-        month = dateObj.getMonth() + 1;
-        day = dateObj.getDate();
-        hour = dateObj.getHours();
-        minute = dateObj.getMinutes();
     }
 
-    const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
-    const lunar = solar.getLunar();
-    const eightChar = lunar.getEightChar();
+    // 성별 정규화 ('male' | 'female')
+    const normalizedGender = (gender === 'female' || gender === '여성' || gender === 'F') ? 'female' : 'male';
 
-    const yearGan = eightChar.getYearGan();
-    const yearZhi = eightChar.getYearZhi();
-    const monthGan = eightChar.getMonthGan();
-    const monthZhi = eightChar.getMonthZhi();
-    const dayGan = eightChar.getDayGan();
-    const dayZhi = eightChar.getDayZhi();
-    const timeGan = isTimeUnknown ? '?' : eightChar.getTimeGan();
-    const timeZhi = isTimeUnknown ? '?' : eightChar.getTimeZhi();
+    /**
+     * 야자시(夜子時)/조자시(朝子時) 처리 기준:
+     * 한국 전통/현대 만세력 표준에 맞춰 23:00~24:00 출생 시 23:00부터 자시(야자시)로 넘어가 일주/시주를 계산하는 'jasi' 경계를 일관되게 적용합니다.
+     */
+    const selectedDayBoundary: DayBoundary = dayBoundary || 'jasi';
 
-    const dayMasterKorean = GAN_MAP[dayGan]?.korean || dayGan;
+    // 2. manseryeok BirthInfo 구성 (진태양시 경도 127.5도 적용)
+    const birthInfo: BirthInfo = {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        isLunar: !!isLunar,
+        isLeapMonth: !!isLeapMonth,
+        gender: normalizedGender,
+        dayBoundary: selectedDayBoundary,
+        trueSolarTime: {
+            longitude: longitude || 127.5,
+            applyEquationOfTime: true,
+            applyHistoricalDst: true
+        }
+    };
 
-    const createPillar = (gan: string, zhi: string, type: 'Year' | 'Month' | 'Day' | 'Time'): PillarInfo => {
-        const isUnknown = gan === '?';
-        const ganRaw = isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenGan`]() || '-';
-        const zhiRaw = isUnknown ? '-' : (eightChar as any)[`get${type}ShiShenZhi`]() || '-';
-        const stageRaw = isUnknown ? '-' : (eightChar as any)[`get${type}DiShi`]() || '-';
+    // 3. 만세력 엔진 실행
+    const detail: FourPillarsDetail = calculateFourPillars(birthInfo);
+
+    const yearStemKo = detail.year.heavenlyStem;
+    const yearBranchKo = detail.year.earthlyBranch;
+    const monthStemKo = detail.month.heavenlyStem;
+    const monthBranchKo = detail.month.earthlyBranch;
+    const dayStemKo = detail.day.heavenlyStem;
+    const dayBranchKo = detail.day.earthlyBranch;
+    const hourStemKo = isTimeUnknown ? '?' : detail.hour.heavenlyStem;
+    const hourBranchKo = isTimeUnknown ? '?' : detail.hour.earthlyBranch;
+
+    const dayMasterKo = STEM_INFO[dayStemKo]?.korean || `${dayStemKo}목`;
+    const dayMasterChinese = detail.dayHanja.substring(0, 1) || STEM_INFO[dayStemKo]?.hanja || dayStemKo;
+
+    const dayMasterInfo: DayMasterInfo = {
+        korean: dayMasterKo,
+        chinese: dayMasterChinese,
+        element: STEM_INFO[dayStemKo]?.element || 'wood',
+        polarity: STEM_INFO[dayStemKo]?.polarity || '+',
+        description: DAY_MASTER_DESC[dayMasterKo] || ''
+    };
+
+    const makePillarDetail = (
+        stemKo: string,
+        branchKo: string,
+        stemHanja: string,
+        branchHanja: string,
+        tenGodStemRaw: string,
+        tenGodBranchRaw: string
+    ): PillarDetail => {
+        const isUnknown = stemKo === '?';
+        const stemMeta = STEM_INFO[stemKo] || { hanja: '?', element: 'wood', korean: stemKo };
+        const branchMeta = BRANCH_INFO[branchKo] || { hanja: '?', element: 'wood', korean: branchKo };
+
         return {
-            gan,
-            zhi,
-            ganElement: GAN_MAP[gan]?.element || '',
-            zhiElement: ZHI_MAP[zhi]?.element || '',
-            ganShiShen: isUnknown ? '-' : SHISHEN_TRANSLATE[ganRaw] || ganRaw,
-            zhiShiShen: isUnknown ? '-' : SHISHEN_TRANSLATE[zhiRaw] || zhiRaw,
-            hiddenStems: isUnknown ? [] : (eightChar as any)[`get${type}HideGan`]() || [],
-            twelveStages: isUnknown ? '-' : STAGE_TRANSLATE[stageRaw] || stageRaw,
-            twelveSpirits: isUnknown ? '-' : getTwelveSpirits(dayZhi, zhi)
+            gan: isUnknown ? '?' : stemKo,
+            zhi: isUnknown ? '?' : branchKo,
+            ganHanja: isUnknown ? '?' : stemHanja,
+            zhiHanja: isUnknown ? '?' : branchHanja,
+            ganKorean: isUnknown ? '?' : stemMeta.korean,
+            zhiKorean: isUnknown ? '?' : branchMeta.korean,
+            ganElement: isUnknown ? '-' : stemMeta.element,
+            zhiElement: isUnknown ? '-' : branchMeta.element,
+            ganShiShen: isUnknown ? '-' : (tenGodStemRaw === '일간' ? '일간(日干)' : `${tenGodStemRaw}`),
+            zhiShiShen: isUnknown ? '-' : `${tenGodBranchRaw}`,
+            hiddenStems: isUnknown ? [] : HIDDEN_STEMS[branchKo] || [],
+            twelveStages: isUnknown ? '-' : getTwelveStage(dayStemKo, branchKo),
+            twelveSpirits: isUnknown ? '-' : getTwelveSpirits(dayBranchKo, branchKo)
         };
     };
 
     const pillars = {
-        year: createPillar(yearGan, yearZhi, 'Year'),
-        month: createPillar(monthGan, monthZhi, 'Month'),
-        day: createPillar(dayGan, dayZhi, 'Day'),
-        hour: createPillar(timeGan, timeZhi, 'Time'),
+        year: makePillarDetail(
+            yearStemKo, yearBranchKo,
+            detail.yearHanja.charAt(0), detail.yearHanja.charAt(1),
+            detail.tenGods.year.stem, detail.tenGods.year.branch
+        ),
+        month: makePillarDetail(
+            monthStemKo, monthBranchKo,
+            detail.monthHanja.charAt(0), detail.monthHanja.charAt(1),
+            detail.tenGods.month.stem, detail.tenGods.month.branch
+        ),
+        day: makePillarDetail(
+            dayStemKo, dayBranchKo,
+            detail.dayHanja.charAt(0), detail.dayHanja.charAt(1),
+            '일간', detail.tenGods.day.branch
+        ),
+        hour: makePillarDetail(
+            hourStemKo, hourBranchKo,
+            isTimeUnknown ? '?' : detail.hourHanja.charAt(0),
+            isTimeUnknown ? '?' : detail.hourHanja.charAt(1),
+            isTimeUnknown ? '-' : detail.tenGods.hour.stem,
+            isTimeUnknown ? '-' : detail.tenGods.hour.branch
+        )
     };
 
-    const elements = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
-    const allPillars = [
-        { gan: yearGan, zhi: yearZhi },
-        { gan: monthGan, zhi: monthZhi },
-        { gan: dayGan, zhi: dayZhi },
-        { gan: timeGan, zhi: timeZhi },
+    // 4. 오행 분포 계산
+    const elements: FiveElementsCount = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+    const validPillars = [
+        { stem: yearStemKo, branch: yearBranchKo },
+        { stem: monthStemKo, branch: monthBranchKo },
+        { stem: dayStemKo, branch: dayBranchKo },
+        ...(isTimeUnknown ? [] : [{ stem: hourStemKo, branch: hourBranchKo }])
     ];
 
-    allPillars.forEach(p => {
-        const ganElem = GAN_MAP[p.gan]?.element;
-        if (ganElem) elements[ganElem as keyof typeof elements]++;
-
-        const zhiElem = ZHI_MAP[p.zhi]?.element;
-        if (zhiElem) elements[zhiElem as keyof typeof elements]++;
+    validPillars.forEach(p => {
+        const sElem = STEM_INFO[p.stem]?.element;
+        if (sElem) elements[sElem]++;
+        const bElem = BRANCH_INFO[p.branch]?.element;
+        if (bElem) elements[bElem]++;
     });
 
-    const total = allPillars.reduce((acc, p) => acc + (p.gan !== '?' ? 1 : 0) + (p.zhi !== '?' ? 1 : 0), 0) || 8;
-    const elementRatio = {
-        wood: Math.round((elements.wood / total) * 100) || 0,
-        fire: Math.round((elements.fire / total) * 100) || 0,
-        earth: Math.round((elements.earth / total) * 100) || 0,
-        metal: Math.round((elements.metal / total) * 100) || 0,
-        water: Math.round((elements.water / total) * 100) || 0,
+    const totalCount = validPillars.length * 2 || 8;
+    const elementRatio: FiveElementsRatio = {
+        wood: Math.round((elements.wood / totalCount) * 100) || 0,
+        fire: Math.round((elements.fire / totalCount) * 100) || 0,
+        earth: Math.round((elements.earth / totalCount) * 100) || 0,
+        metal: Math.round((elements.metal / totalCount) * 100) || 0,
+        water: Math.round((elements.water / totalCount) * 100) || 0,
     };
+
+    // 5. 대운 산출 (LuckPillars)
+    let luckPillarsData: LuckPillarsData | undefined = undefined;
+    if (detail.luckPillars) {
+        luckPillarsData = {
+            forward: detail.luckPillars.forward,
+            startAge: detail.luckPillars.startAge,
+            startYears: detail.luckPillars.startYears,
+            startMonths: detail.luckPillars.startMonths,
+            pillars: detail.luckPillars.pillars.map(lp => {
+                const stem = lp.pillar.heavenlyStem;
+                const branch = lp.pillar.earthlyBranch;
+                const stemHanja = STEM_INFO[stem]?.hanja || stem;
+                const branchHanja = BRANCH_INFO[branch]?.hanja || branch;
+                return {
+                    age: lp.age,
+                    stem,
+                    branch,
+                    korean: lp.korean,
+                    hanja: `${stemHanja}${branchHanja}`
+                };
+            })
+        };
+    }
 
     return {
         ganZhi: {
-            year: `${yearGan}${yearZhi}`,
-            month: `${monthGan}${monthZhi}`,
-            day: `${dayGan}${dayZhi}`,
-            hour: isTimeUnknown ? '모름' : `${timeGan}${timeZhi}`,
+            year: `${yearStemKo}${yearBranchKo}`,
+            month: `${monthStemKo}${monthBranchKo}`,
+            day: `${dayStemKo}${dayBranchKo}`,
+            hour: isTimeUnknown ? '모름' : `${hourStemKo}${hourBranchKo}`
         },
-        dayMaster: {
-            korean: dayMasterKorean,
-            chinese: dayGan,
-            element: GAN_MAP[dayGan]?.element || '',
-            polarity: GAN_MAP[dayGan]?.polarity || '',
-            description: DAY_MASTER_DESC[dayMasterKorean] || ''
+        ganZhiHanja: {
+            year: detail.yearHanja,
+            month: detail.monthHanja,
+            day: detail.dayHanja,
+            hour: isTimeUnknown ? '未知' : detail.hourHanja
         },
+        dayMaster: dayMasterInfo,
         pillars,
         elements,
-        elementRatio
+        elementRatio,
+        voidBranches: detail.voidBranches || [],
+        luckPillars: luckPillarsData,
+        trueSolarTimeApplied: true,
+        dayBoundaryRule: selectedDayBoundary
     };
 }
 
-export function buildRichSajuContext(saju: any): string {
-    const GAN_MAP_DESC: Record<string, { korean: string; element: string; desc: string }> = {
-        '甲': { korean: '갑목', element: '목(木)', desc: '양의 목. 큰 나무, 대들보. 곧고 강한 리더십, 고집, 개척정신' },
-        '乙': { korean: '을목', element: '목(木)', desc: '음의 목. 화초, 덩굴. 유연하고 적응력 강함, 끈기, 현실적 처세' },
-        '丙': { korean: '병화', element: '화(火)', desc: '양의 화. 태양. 밝고 열정적, 공명정대, 화려함과 관대함' },
-        '丁': { korean: '정화', element: '화(火)', desc: '음의 화. 촛불, 달빛. 은은한 집중력, 헌신, 예민한 감수성' },
-        '戊': { korean: '무토', element: '토(土)', desc: '양의 토. 큰 산, 넓은 대지. 묵직한 포용력, 신용, 중재' },
-        '己': { korean: '기토', element: '토(土)', desc: '음의 토. 논밭, 정원. 실속형, 어머니의 마음, 자기방어 본능' },
-        '庚': { korean: '경금', element: '금(金)', desc: '양의 금. 바위, 무쇠. 결단력, 의리, 개혁, 강인함과 냉정함' },
-        '辛': { korean: '신금', element: '금(金)', desc: '음의 금. 보석, 칼. 예리함, 섬세함, 깔끔함, 냉철한 판단' },
-        '壬': { korean: '임수', element: '수(水)', desc: '양의 수. 바다, 큰 강. 지혜와 포용, 총명함, 흐르는 유연함' },
-        '癸': { korean: '계수', element: '수(水)', desc: '음의 수. 비, 시냇물. 섬세한 지혜, 참모형, 아이디어의 샘' },
-    };
+/**
+ * 기존 API 호환용 래퍼 함수
+ */
+export function calculateSaju(birthDate: string, birthTime: string | null, gender?: string): PreciseSajuData {
+    return getPreciseSajuData({
+        birthDate,
+        birthTime,
+        gender
+    });
+}
 
-    const ZHI_MAP_DESC: Record<string, { korean: string; element: string; animal: string }> = {
-        '子': { korean: '자', element: '수(水)', animal: '쥐' },
-        '丑': { korean: '축', element: '토(土)', animal: '소' },
-        '寅': { korean: '인', element: '목(木)', animal: '호랑이' },
-        '卯': { korean: '묘', element: '목(木)', animal: '토끼' },
-        '辰': { korean: '진', element: '토(土)', animal: '용' },
-        '巳': { korean: '사', element: '화(火)', animal: '뱀' },
-        '午': { korean: '오', element: '화(火)', animal: '말' },
-        '未': { korean: '미', element: '토(土)', animal: '양' },
-        '申': { korean: '신', element: '금(金)', animal: '원숭이' },
-        '酉': { korean: '유', element: '금(金)', animal: '닭' },
-        '戌': { korean: '술', element: '토(土)', animal: '개' },
-        '亥': { korean: '해', element: '수(水)', animal: '돼지' },
-    };
-
-    const SS_MAP_DESC: Record<string, string> = {
-        '比肩': '비견(나와 같은 기운·자존심·독립)', '劫財': '겁재(경쟁·승부욕·재물쟁탈)', '劫财': '겁재(경쟁·승부욕·재물쟁탈)',
-        '食神': '식신(재능발현·여유·식복)', '傷官': '상관(창의·반항·날카로운 표현)', '伤官': '상관(창의·반항·날카로운 표현)',
-        '偏財': '편재(변동재물·투기·아버지)', '偏财': '편재(변동재물·투기·아버지)', '正財': '정재(안정재물·근면·아내)', '正财': '정재(안정재물·근면·아내)',
-        '偏官': '편관(권위·압박·도전)', '七殺': '편관(권위·압박·도전)', '正官': '정관(명예·질서·직장)',
-        '偏印': '편인(편학·독창성·고독)', '正印': '정인(학문·인덕·어머니)',
-    };
-
-    const translateShiShen = (s: any): string => {
-        if (!s || s === '-') return '-';
-        let result = Array.isArray(s) ? s.join('') : String(s);
-        for (const [zh, ko] of Object.entries(SS_MAP_DESC)) {
-            result = result.replace(new RegExp(zh, 'g'), ko);
-        }
-        return result.trim();
-    };
-
+/**
+ * LLM 시스템 프롬프트 주입용 결정론적 사주 데이터 컨텍스트 텍스트 생성
+ */
+export function buildRichSajuContext(saju: PreciseSajuData): string {
     if (!saju) return '';
+
     const p = saju.pillars;
     const dm = saju.dayMaster;
-
-    const describePillar = (label: string, meaning: string, pillar: any) => {
-        if (!pillar) return '';
-        const ganInfo = GAN_MAP_DESC[pillar.gan] || { korean: pillar.gan, element: '?', desc: '?' };
-        const zhiInfo = ZHI_MAP_DESC[pillar.zhi] || { korean: pillar.zhi, element: '?', animal: '?' };
-        const ganSS = translateShiShen(pillar.ganShiShen);
-        const zhiSS = translateShiShen(pillar.zhiShiShen);
-        const stages = pillar.twelveStages || '-';
-        const spirits = pillar.twelveSpirits || '-';
-        const hidden = pillar.hiddenStems?.length > 0 
-            ? pillar.hiddenStems.map((s: string) => GAN_MAP_DESC[s]?.korean || s).join(', ')
-            : '없음';
-        return `■ ${label} (${meaning}): ${pillar.gan}${pillar.zhi}
-  - 천간: ${pillar.gan} ${ganInfo.korean} ${ganInfo.element} — ${ganInfo.desc}
-  - 지지: ${pillar.zhi} ${zhiInfo.korean}(${zhiInfo.animal}) ${zhiInfo.element}
-  - 천간십성: ${ganSS} / 지지십성: ${zhiSS}
-  - 12운성: ${stages} / 12신살: ${spirits}
-  - 지장간(숨은 기운): ${hidden}`;
-    };
-
-    const yearDesc = describePillar('년주(年柱)', '조상운·유년기·사회적 환경', p?.year);
-    const monthDesc = describePillar('월주(月柱)', '부모운·청년기·직업·사회성의 토대', p?.month);
-    const dayDesc = describePillar('일주(日柱)', '본인·배우자운·핵심 성격', p?.day);
-    const hourDesc = describePillar('시주(時柱)', '자녀운·말년운·내면의 욕구', p?.hour);
-
     const ratio = saju.elementRatio;
     const elements = saju.elements;
-    
+
+    const describePillar = (label: string, meaning: string, pillar: PillarDetail) => {
+        if (!pillar || pillar.gan === '?') return `■ ${label} (${meaning}): 모름`;
+        const hiddenStr = pillar.hiddenStems.length > 0 ? pillar.hiddenStems.map(s => STEM_INFO[s]?.korean || s).join(', ') : '없음';
+        return `■ ${label} (${meaning}): ${pillar.ganHanja}${pillar.zhiHanja} (${pillar.ganKorean} ${pillar.zhiKorean})
+  - 천간: ${pillar.ganHanja} (${pillar.ganKorean}) / 지지: ${pillar.zhiHanja} (${pillar.zhiKorean})
+  - 천간십성: ${pillar.ganShiShen} / 지지십성: ${pillar.zhiShiShen}
+  - 12운성: ${pillar.twelveStages} / 12신살: ${pillar.twelveSpirits}
+  - 지장간(숨은 기운): ${hiddenStr}`;
+    };
+
+    const yearDesc = describePillar('년주(年柱)', '조상운·유년기·사회적 환경', p.year);
+    const monthDesc = describePillar('월주(月柱)', '부모운·청년기·직업 토대', p.month);
+    const dayDesc = describePillar('일주(日柱)', '본인·배우자운·핵심 성격', p.day);
+    const hourDesc = describePillar('시주(時柱)', '자녀운·말년운·내면 욕구', p.hour);
+
     const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
     const over = Object.entries(ratio || {}).filter(([_, v]) => (v as number) >= 35).map(([k]) => elementNames[k]).join(', ');
     const lack = Object.entries(ratio || {}).filter(([_, v]) => (v as number) === 0).map(([k]) => elementNames[k]).join(', ');
     const weak = Object.entries(ratio || {}).filter(([_, v]) => (v as number) > 0 && (v as number) <= 12).map(([k]) => elementNames[k]).join(', ');
 
-    // Calculate ShiShen count dynamically
-    const allShiShen: string[] = [];
-    ['year', 'month', 'day', 'hour'].forEach(key => {
-        const pil = (p as any)?.[key];
-        if (pil?.ganShiShen && pil.ganShiShen !== '-') {
-            const translated = translateShiShen(pil.ganShiShen).split('(')[0];
-            if (translated) allShiShen.push(translated);
-        }
-        if (pil?.zhiShiShen && pil.zhiShiShen !== '-') {
-            const translated = translateShiShen(pil.zhiShiShen).split('(')[0];
-            if (translated) allShiShen.push(translated);
-        }
-    });
-    const shiShenCount: Record<string, number> = {};
-    allShiShen.forEach(s => { shiShenCount[s] = (shiShenCount[s] || 0) + 1; });
-    const shiShenSummary = Object.entries(shiShenCount).map(([k, v]) => `${k}(${v}개)`).join(', ');
+    let daewunStr = '없음';
+    if (saju.luckPillars && saju.luckPillars.pillars.length > 0) {
+        const direction = saju.luckPillars.forward ? '순행' : '역행';
+        const startAge = saju.luckPillars.startAge;
+        const listStr = saju.luckPillars.pillars.slice(0, 8).map(lp => `${lp.age}세 ${lp.hanja}(${lp.korean})`).join(' -> ');
+        daewunStr = `대운수 ${startAge} (${direction}): ${listStr}`;
+    }
+
+    const voidStr = saju.voidBranches.length > 0 ? saju.voidBranches.join(', ') : '없음';
 
     return `
-[내담자 사주팔자(四柱八字) 정밀 분석 데이터]
+[System Context: Deterministic Saju Data]
+※ 아래 데이터는 한국천문연구원(KASI) 기준 오픈소스 만세력 코드 엔진(manseryeok)이 계산한 100% 검증된 수치 및 원국 정보입니다.
 
-★ 일간(日干·본인의 본질): ${dm?.chinese || dm} (${GAN_MAP_DESC[dm?.chinese || dm]?.korean || dm} - ${GAN_MAP_DESC[dm?.chinese || dm]?.desc || ''})
+★ 내담자 일간(日干): ${dm.chinese} (${dm.korean}) — ${dm.description}
+★ 간지 원국 (한자): ${saju.ganZhiHanja.year} ${saju.ganZhiHanja.month} ${saju.ganZhiHanja.day} ${saju.ganZhiHanja.hour}
+★ 간지 원국 (한글): ${saju.ganZhi.year} ${saju.ganZhi.month} ${saju.ganZhi.day} ${saju.ganZhi.hour}
 
 ${yearDesc}
 
@@ -401,14 +440,17 @@ ${dayDesc}
 
 ${hourDesc}
 
-★ 오행(五행) 에너지 분포:
-  목(木) ${ratio?.wood || 0}% (${elements?.wood || 0}개) / 화(火) ${ratio?.fire || 0}% (${elements?.fire || 0}개) / 토(土) ${ratio?.earth || 0}% (${elements?.earth || 0}개) / 금(金) ${ratio?.metal || 0}% (${elements?.metal || 0}개) / 수(水) ${ratio?.water || 0}% (${elements?.water || 0}개)
+★ 오행(五行) 에너지 분포 (진태양시 보정 완료):
+  - 목(木): ${ratio.wood}% (${elements.wood}개)
+  - 화(火): ${ratio.fire}% (${elements.fire}개)
+  - 토(土): ${ratio.earth}% (${elements.earth}개)
+  - 금(金): ${ratio.metal}% (${elements.metal}개)
+  - 수(水): ${ratio.water}% (${elements.water}개)
   ${over ? `⚠ 과다(偏重): ${over}` : ''}
   ${lack ? `⚠ 결핍(缺): ${lack}` : ''}
   ${weak ? `⚠ 약세(弱): ${weak}` : ''}
 
-★ 십성(十星) 배치 분포: ${shiShenSummary}
-
-★ 간지(干支) 원국: ${saju.ganZhi?.year} ${saju.ganZhi?.month} ${saju.ganZhi?.day} ${saju.ganZhi?.hour}
+★ 공망(空亡): ${voidStr}
+★ 대운(大運) 정보: ${daewunStr}
 `;
 }

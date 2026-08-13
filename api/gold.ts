@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { streamObject } from 'ai';
 import { z } from 'zod';
-import { calculateSaju, buildRichSajuContext } from './_utils/saju';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 export const config = {
     runtime: 'edge',
@@ -88,21 +89,13 @@ export default async (req: Request) => {
                 });
             }
 
-            let saju = body.sajuData;
-            if (!saju) {
-                saju = calculateSaju(birthDate, birthTime);
-            }
-
-            if (!saju) {
-                return new Response(JSON.stringify({ error: '사주 명식을 계산할 수 없습니다.' }), { 
-                    status: 400, 
-                    headers: corsHeaders 
-                });
-            }
-
+            const saju = getPreciseSajuData({ birthDate, birthTime, gender });
             const richSajuContext = buildRichSajuContext(saju);
 
-            const systemPrompt = `당신은 50년 경력의 대한민국 최고 사주명리학자이자, 현대 심리학인 MBTI를 완벽하게 통달한 운명 분석 전문가입니다. 당신의 분석은 뜬구름 잡는 위로가 아니라, 내담자의 뼈를 때리는 날카로운 통찰과 소름 돋는 적중률을 자랑합니다. 듣기 좋은 뻔한 소리는 절대 하지 마십시오.
+            const systemPrompt = `
+${BASE_SYSTEM_PROMPT}
+
+당신은 사주명리학과 MBTI 심리를 결합해 내담자의 재물 흐름을 분석하는 냉철한 운명 분석가이자 재물 전략 전문가입니다.
 
 [시간적 기준 정보]
 현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
@@ -110,15 +103,15 @@ export default async (req: Request) => {
 [핵심 분석 원칙]
 1. 일간(日干)의 재성(偏財/正財) 배치를 면밀히 분석하세요.
 2. 재성의 강약, 관성과의 관계, 식상생재 여부를 반드시 판단하세요.
-3. 대운(大運)/세운(歲運) 흐름에서 재물운의 시기적 변화를 구체적으로 제시하세요. (예: '2026년 하반기부터 정재가 투간하여 안정적 수입이 기대된다')
-4. MBTI 성향에 기반한 재물 관리 습관, 투자 성향, 커리어 전략을 조언하세요.
-5. 쓸데없는 비유나 추상적 표현을 배제하고, 명리학 용어를 정확하게 사용하되 알기 쉽게 풀이하세요.
+3. 대운(大運)/세운(歲運) 흐름에서 재물운의 시기적 변화를 건조하고 담담한 팩트(날씨)로 객관적으로 제시하세요.
+4. MBTI 성향에 기반한 재물 관리 습관, 투자 성향, 커리어 전략을 극도로 실용적이고 구체적인 맞춤형 행동 지침으로 처방하세요.
+5. 쓸데없는 감성적 위로나 추상적 비유를 배제하고, 명리학 용어를 정확하게 사용하되 알기 쉽게 풀이하세요.
 6. 한자는 반드시 한글과 병기하세요: 편재(偏財), 정재(正財), 식신(食神) 등.
 7. 오행 언급 시 영어를 절대 사용하지 마세요: 목(木) O, 목(Wood) X.
 8. 마크다운 강조 기호(**)는 일반 필드에선 사용을 피하고 글머리표(-)와 줄바꿈(\n\n)으로 가독성을 확보하세요. 단, mbtiSajuWealthReport 마크다운 보고서 필드의 헤더 및 볼드 강조는 허용됩니다.
 9. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
 10. 예리하고 냉철하게 분석하되, 건설적인 방향을 제시하세요.
-11. "노력하면 성공한다", "때가 오면 돈을 번다" 같은 바넘 효과(Barnum Effect) 문장을 철저히 배제하고, MBTI 성향(P의 충동성, J의 계획성 등)이 사주 특정 기운(재성 혼잡, 무재사주 등)과 만났을 때 현실에서 어떤 방식으로 돈을 벌고 잃는지를 구체적인 예시로 뼈 때리며 현실적이고 구체적인 재물 대안을 제공하십시오.
+11. "노력하면 성공한다", "때가 오면 돈을 번다" 같은 바넘 효과(Barnum Effect) 문장을 철저히 배제하고, MBTI 성향(P의 충동성, J의 계획성 등)이 사주 특정 기운(재성 혼잡, 무재사주 등)과 만났을 때 현실에서 어떤 방식으로 돈을 벌고 잃는지를 구체적인 예시로 짚어내어 현실적이고 구체적인 재물 솔루션을 제공하십시오.
 12. mbtiSajuWealthReport 필드에는 반드시 공백 포함 1000자 이상, 1500자 이하의 분량으로 지정된 [마크다운 출력 형식]을 엄격하게 지켜 작성하십시오.`;
 
             let userQuery = `[이용자 정보]

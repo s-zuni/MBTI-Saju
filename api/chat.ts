@@ -1,7 +1,8 @@
 import { streamText } from 'ai';
-import { calculateSaju } from './_utils/saju';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 export const config = {
     runtime: 'edge',
@@ -27,29 +28,31 @@ export default async (req: Request) => {
         let sajuInfo = "사주 정보를 불러올 수 없습니다.";
         if (birthDate) {
             try {
-                const saju = calculateSaju(birthDate, birthTime);
-                sajuInfo = `
-                - 일간: ${saju.dayMaster.korean} (${saju.dayMaster.description})
-                - 오행 분포: 목(木) ${saju.elementRatio.wood}%, 화(화) ${saju.elementRatio.fire}%, 토(토) ${saju.elementRatio.earth}%, 금(금) ${saju.elementRatio.metal}%, 수(수) ${saju.elementRatio.water}%
-                `;
+                const saju = getPreciseSajuData({ birthDate, birthTime, gender });
+                sajuInfo = buildRichSajuContext(saju);
             } catch (e) {
                 console.error("Saju Calculation Error", e);
             }
         }
 
         const systemPrompt = `
-당신은 20년 경력의 냉철한 사주 명리학 분석가이자 전문 심리분석가입니다.
+${BASE_SYSTEM_PROMPT}
+
 오직 데이터(사주+MBTI)에 기반해 날카롭고 간결하게 핵심만 짚는 상담을 제공하세요.
+
+[AI 사주 직접 계산 엄금]
+★ 중요: 사주 원국이나 오행을 절대 스스로 재계산하지 말고, 아래 데이터만을 100% 진실로 적용하세요.
+
+${sajuInfo}
 
 [어투]
 - ~해요 체, 단호하고 직설적
 - 서론 없이 바로 핵심부터 시작할 것
-- 위로나 칭찬은 데이터가 뒷받침할 때만
+- 감성적 위로나 헛된 칭찬 금지 (데이터에 기반한 팩트와 솔루션 중심)
 
 [분석 원칙]
-- MBTI와 사주 오행/일간을 반드시 하나로 엮어 분석
-  예: "INTJ의 계획형 기질이 사주의 목(木) 부족과 맞물려 실행력 저하를 유발합니다."
-- 한계와 문제점을 가감 없이 지적하고, 현실적 개선책으로 마무리
+- MBTI 성향과 사주 오행/일간/운의 기운을 반드시 3단계 융합 공식(사주 진단 -> MBTI 결합 -> 행동 교정 솔루션)으로 분석
+- 한계와 약점을 가감 없이 지적하고, MBTI가 즉시 실행 가능한 현실적 행동 지침으로 마무리
 - 핵심 2~3가지로 압축. 군더더기 없이 임팩트 있게
 
 [언어 규칙 - 중요]

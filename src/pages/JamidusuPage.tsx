@@ -25,7 +25,7 @@ const BIRTH_TIME_SLOTS = [
     { value: '21:00-23:00', label: '해시 (21:00~23:00)' },
 ];
 
-const JamidusuPage: React.FC = () => {
+const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, useCredits: consumeCredits } = useCredits(session);
     const { openModal } = useModalStore();
@@ -124,21 +124,23 @@ const JamidusuPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-32 pt-20">
+        <div className={isEmbedded ? "pb-12" : "min-h-screen bg-slate-50 pb-32 pt-20"}>
             <div className="max-w-xl mx-auto px-4">
                 {/* Header Navigation */}
-                <div className="flex items-center justify-between mb-8 px-2">
-                    <button 
-                        onClick={() => navigate('/fortune')}
-                        className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-                    >
-                        <ChevronLeft className="w-6 h-6 text-slate-600" />
-                    </button>
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
-                        <Coins className="w-4 h-4" />
-                        {credits}
+                {!isEmbedded && (
+                    <div className="flex items-center justify-between mb-8 px-2">
+                        <button 
+                            onClick={() => navigate('/fortune')}
+                            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-slate-600" />
+                        </button>
+                        <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
+                            <Coins className="w-4 h-4" />
+                            {credits}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
                     <div className="p-8 border-b border-slate-100 text-center bg-gradient-to-br from-indigo-50 to-purple-50">

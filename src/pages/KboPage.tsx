@@ -119,7 +119,7 @@ const KBO_TEAMS = [
     '없음 (아직 없음)'
 ];
 
-const KboPage: React.FC = () => {
+const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, useCredits: consumeCredits } = useCredits(session);
     const { openModal } = useModalStore();
@@ -225,21 +225,23 @@ const KboPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F9F7F2] pb-32 pt-20 animate-fade-in font-sans">
+        <div className={isEmbedded ? "pb-12 animate-fade-in font-sans" : "min-h-screen bg-[#F9F7F2] pb-32 pt-20 animate-fade-in font-sans"}>
             <div className="max-w-2xl mx-auto px-4">
                 {/* Header Navigation */}
-                <div className="flex items-center justify-between mb-8 px-4">
-                    <button 
-                        onClick={() => hasStarted ? setHasStarted(false) : navigate('/fortune')}
-                        className="p-2 hover:bg-white rounded-full transition-colors"
-                    >
-                        <ChevronLeft className="w-6 h-6 text-slate-600" />
-                    </button>
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-[#000666]/10 text-[#000666] rounded-full text-sm font-bold">
-                        <Coins className="w-4 h-4" />
-                        {credits}
+                {!isEmbedded && (
+                    <div className="flex items-center justify-between mb-8 px-4">
+                        <button 
+                            onClick={() => hasStarted ? setHasStarted(false) : navigate('/fortune')}
+                            className="p-2 hover:bg-white rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-slate-600" />
+                        </button>
+                        <div className="flex items-center gap-1 px-3 py-1.5 bg-[#000666]/10 text-[#000666] rounded-full text-sm font-bold">
+                            <Coins className="w-4 h-4" />
+                            {credits}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {!hasStarted ? (
                     <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/50 overflow-hidden border border-white p-10 animate-fade-up">

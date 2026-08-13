@@ -3,7 +3,8 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { calculateSaju, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 export const config = {
     runtime: 'edge',
@@ -65,72 +66,54 @@ export default async (req: Request) => {
                 headers: corsHeaders 
             });
         }
+        const body = await req.json();
+        const url = new URL(req.url);
+        const type = url.searchParams.get('type') || body.type || 'couple';
 
-        if (req.method === 'POST') {
-            const body = await req.json();
-            const url = new URL(req.url);
-            const type = url.searchParams.get('type') || body.type || 'couple'; // couple, married, marriage, reunion, crush
+        const {
+            birthDate, birthTime, mbti, name, gender,
+            targetName, targetBirthDate, targetBirthTime, targetMbti, targetGender,
+            separationDate, separationReason,
+        } = body;
 
-            const {
-                birthDate, birthTime, mbti, name, gender,
-                targetName, targetBirthDate, targetBirthTime, targetMbti, targetGender,
-                separationDate,    // for reunion
-                separationReason,  // for reunion
-            } = body;
+        if (!birthDate) {
+            return new Response(JSON.stringify({ error: '본인 생년월일 정보가 필요합니다.' }), { 
+                status: 400, 
+                headers: corsHeaders 
+            });
+        }
 
-            if (!birthDate) {
-                return new Response(JSON.stringify({ error: '본인 생년월일 정보가 필요합니다.' }), { 
-                    status: 400, 
-                    headers: corsHeaders 
-                });
-            }
+        const mySaju = getPreciseSajuData({ birthDate, birthTime, gender });
+        let targetSaju = null;
+        if (targetBirthDate) {
+            targetSaju = getPreciseSajuData({ birthDate: targetBirthDate, birthTime: targetBirthTime, gender: targetGender });
+        }
 
-            let mySaju = body.sajuData;
-            if (!mySaju) {
-                mySaju = calculateSaju(birthDate, birthTime);
-            }
+        if (type !== 'crush' && !targetSaju && targetBirthDate) {
+            return new Response(JSON.stringify({ error: '상대방 생년월일 정보가 필요합니다.' }), { 
+                status: 400, 
+                headers: corsHeaders 
+            });
+        }
 
-            let targetSaju = body.targetSajuData;
-            if (!targetSaju && targetBirthDate) {
-                targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
-            }
+        const myRichSaju = buildRichSajuContext(mySaju);
+        const targetRichSaju = targetSaju ? buildRichSajuContext(targetSaju) : '상대방 정보 없음';
 
-            if (!mySaju || (!targetSaju && type !== 'crush' && targetBirthDate)) {
-                // If partner data is needed but missing
-                if (type !== 'crush' && !targetBirthDate) {
-                    return new Response(JSON.stringify({ error: '상대방 생년월일 정보가 필요합니다.' }), { 
-                        status: 400, 
-                        headers: corsHeaders 
-                    });
-                }
-            }
+        const systemPrompt = `
+${BASE_SYSTEM_PROMPT}
 
-            // Calculate target saju if missing but birth date provided (e.g. crush)
-            if (!targetSaju && targetBirthDate) {
-                targetSaju = calculateSaju(targetBirthDate, targetBirthTime);
-            }
-
-            const myRichSaju = buildRichSajuContext(mySaju);
-            const targetRichSaju = targetSaju ? buildRichSajuContext(targetSaju) : '상대방 정보 없음';
-
-            const systemPrompt = `당신은 50년 경력의 냉철한 연애 명리학 전문가입니다. 합(合)·충(沖)·형(刑)·해(害)·원진(怨嗔)을 정밀 분석하여 두 사람의 인연을 낱낱이 해부합니다.
+당신은 사주 합충과 MBTI 심리를 정밀 융합하여 인연의 기운과 실전 대처 전략을 도출하는 냉철한 연애 명리학 전문가입니다.
 
 [시간적 기준 정보]
 현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
 
 [핵심 원칙]
-1. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 해당 여부를 반드시 먼저 확인하세요.
-2. 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 면밀히 분석하세요.
-3. 특수 신살(도화살, 홍염살, 원진살, 귀문관살 등)이 있으면 반드시 언급하고 그 영향을 솔직하게 풀이하세요.
-4. 배우자궁(일지)의 글자가 상대의 일간/일지와 어떤 관계인지 분석하세요.
-5. 대운(大運) 흐름에서 인연의 시기를 구체적으로 제시하세요. (예: '2026년 하반기 도화운이 들어 새로운 인연의 가능성이 높다')
-6. 재회 사주: 냉정하고 현실적으로 분석하세요. 일시적 재회와 진정한 재결합을 구분하세요.
-7. 짝사랑 사주: 상대방의 사주에서 나와의 인연 가능성을 분석하고, MBTI 기반 구체적 공략법을 제시하세요.
-8. 쓸데없는 비유 없이 알기 쉽게 풀이하되, 핵심 명리학 용어는 한자 병기하세요.
-9. 마크다운 강조 기호(**) 절대 사용 금지. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
-10. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-11. 부부 궁합: 자녀궁(시주)과 장기적 인생 흐름에 더 집중하세요.
-12. 결혼 궁합: 솔직하게 분석하되, 노력으로 개선할 수 있는 방향을 반드시 제시하세요.`;
+1. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 및 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 객관적 팩트로 정밀 분석하세요.
+2. 도화살, 홍염살, 원진살 등 특수 신살이 있으면 과도한 겁주기 없이 건조하고 담담하게 풀이하세요.
+3. 연애운/인연의 기운은 '사주 진단(날씨)'으로 전달하고, 실질적 만남이나 관계 개선 조언은 'MBTI에 최적화된 행동 지침(행동, 장소, 대화법)'으로 제시하세요.
+4. 재회/짝사랑 사주: 헛된 위로나 공포 조장 없이, 냉정하게 기운의 흐름을 짚어주고 MBTI 기반 구체적 공략 및 대응 행동을 제시하세요.
+5. 마크다운 강조 기호(**) 절대 사용 금지. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
+6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (핵심 명리학 용어는 한자 병기)`;
 
             let userQuery = `[본인 정보]
 이름: ${name || '본인'}

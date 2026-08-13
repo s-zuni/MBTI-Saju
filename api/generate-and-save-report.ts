@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { generateText } from 'ai';
-import { calculateSaju, buildRichSajuContext } from './_utils/saju';
-import { getAIProvider } from './_utils/ai-provider';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
+import { getAIProvider, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -41,20 +42,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const name = request.profiles?.name || '내담자';
-        const { mbti, birth_info, report_type, special_requests, partner_info } = request;
+        const { mbti, birth_info, report_type, special_requests, partner_info, gender } = request;
 
         let userSaju = null;
         if (birth_info) {
             const [bDate, bTime] = birth_info.split(' ');
-            userSaju = calculateSaju(bDate, bTime || '12:00');
+            userSaju = getPreciseSajuData({ birthDate: bDate, birthTime: bTime || '12:00', gender });
         }
 
         const sajuContext = userSaju ? buildRichSajuContext(userSaju) : '';
 
-        const expertPersona = `당신은 대한민국 명리학계의 살아있는 전설, 50년 경력의 '국보급 사주 마스터'이자 심리학 박사입니다.
-수만 명의 정재계 인사들의 운명을 감명하며 그들의 삶을 승리로 이끈 전략가이기도 합니다.
-당신의 분석은 단순히 미래를 점치는 '점술'이 아니라, 내담자의 타고난 에너지 설계도(사주 원국)를 정밀하게 해독하여 최적의 삶의 전략을 도출하는 '운명 공학'입니다.
-말투는 극도로 품격 있고 정중하면서도, 때로는 내담자의 잘못된 선택을 꾸짖는 추상같은 권위가 느껴져야 합니다.`;
+        const expertPersona = `
+${BASE_SYSTEM_PROMPT}
+
+당신은 대한민국 명리학계의 깊은 내공을 가진 냉철한 사주 분석 마스터이자 전략가입니다.
+당신의 분석은 단순히 미래를 점치는 '점술'이나 감성적 위로가 아니라, 내담자의 사주 원국을 객관적으로 진단(날씨)하고 MBTI 성향에 맞춘 실용적 인생 행동 지침을 도출하는 '운명 전략 리포트'입니다.
+
+[AI 사주 직접 계산 엄금 및 사실 수용 규칙]
+★ 중요: 너는 생년월일시를 보고 사주 원국(연주, 월주, 일주, 시주)을 직접 계산하려 시도하지 마라!
+★ 주입된 [System Context: Deterministic Saju Data] 사주 데이터를 100% 사실로 간주하고 명리 해석 및 지침을 작성하라.
+
+${sajuContext}`;
 
         const isCounseling = report_type === '사주 상담 리포트';
 

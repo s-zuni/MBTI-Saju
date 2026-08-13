@@ -11,7 +11,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { singleDayFortuneSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 
-const TodayFortunePage: React.FC = () => {
+const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, useCredits: consumeCredits } = useCredits(session);
@@ -59,19 +59,16 @@ const TodayFortunePage: React.FC = () => {
         }
     }, [session, fetchFortune, closeAllModals, fortune, isFortuneLoading]);
 
-    // 로딩 메시지 순환 효과
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        const isLoading = tab === 'today' ? (isFortuneLoading && !fortune) : (isTomorrowLoading && !tomorrowFortune);
-
-        if (isLoading) {
+        if (isFortuneLoading && !fortune) {
             setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
             interval = setInterval(() => {
                 setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
-            }, 5000);
+            }, 3000);
         }
         return () => clearInterval(interval);
-    }, [isFortuneLoading, isTomorrowLoading, fortune, tomorrowFortune, tab]);
+    }, [isFortuneLoading, fortune]);
 
     if (isAuthLoading) {
         return (
@@ -106,9 +103,14 @@ const TodayFortunePage: React.FC = () => {
     const activeDate = tab === 'today' ? fortune?.date : tomorrowFortune?.date;
     const tomorrowCost = SERVICE_COSTS.FORTUNE_TOMORROW;
 
-    const handleTomorrowClick = async () => {
-        if (tomorrowUnlocked) {
+    const handleTomorrowClick = () => {
+        if (tomorrowUnlocked || tomorrowFortune) {
             setTab('tomorrow');
+            return;
+        }
+
+        if (!session?.user) {
+            openModal('analysis', 'login');
             return;
         }
 
@@ -133,24 +135,8 @@ const TodayFortunePage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#faf8fe] pb-32">
+        <div className={isEmbedded ? "pb-12" : "min-h-screen bg-[#faf8fe] pb-32"}>
             {/* Header */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-6 h-6 text-slate-600" />
-                    </button>
-                    <h1 className="text-lg font-black text-slate-900">당신의 운세</h1>
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-600 rounded-full text-xs font-bold">
-                        <Coins className="w-4 h-4" />
-                        {credits}
-                    </div>
-                </div>
-            </div>
-
             <div className="max-w-2xl mx-auto px-4 pt-8">
                 {/* Date and Tabs */}
                 <div className="mb-8">

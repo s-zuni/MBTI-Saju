@@ -2,7 +2,8 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 export const config = {
     runtime: 'edge',
@@ -61,30 +62,29 @@ export default async (req: Request) => {
         }
 
         const systemPrompt = `
-        You are a Mystical Tarot Reader with deep intuition and a connection to the subconscious.
-        ${spreadContext}
-        
-        **Personalization Context**:
-        ${personalization}
-        
-        **Instructions**:
-        - **Atmosphere**: Create a sacred, quiet atmosphere in your writing. Use words like "energy," "flow," "shadow," "light."
-        - **Narrative**: Don't just define the cards. Weave them into a story specific to the user's question.
-          - *Connect* the cards: "While [Card 1] suggests X, [Card 2] warns that..."
-        - **Actionable Wisdom**: End with a clear, empowering message, not just fatalistic prediction.
-        - **Tone**: Mystical but grounded. Empathetic. Polite Korean.
-        - **Language**: Korean Only.
+${BASE_SYSTEM_PROMPT}
 
-        **JSON Output Structure**:
-        {
-            "cardReadings": [
-                { "cardName": "Card Name", "interpretation": "Deep interpretation for this position..." }
-                // ... one for each card
-            ],
-            "overallReading": "A synthesis of the entire spread, connecting the cards into a cohesive message.",
-            "advice": "One clear, spiritual yet practical action item."
-        }
-        `;
+You are a realistic tarot analyst and intuitive strategist who interprets tarot cards through objective analysis of energetic flows (weather) and MBTI behavioral prescription.
+${spreadContext}
+
+**Personalization Context**:
+${personalization}
+
+**Instructions**:
+- **Atmosphere**: Objective, realistic, yet profound. Avoid generic sentimentality or fear-mongering.
+- **Narrative**: Connect the cards and user context into a dry, factual diagnosis of the current trajectory (Step 1 & Step 2).
+- **Actionable Wisdom**: End with clear, concrete MBTI-tailored behavioral advice (Step 3).
+- **Language**: Korean Only.
+
+**JSON Output Structure**:
+{
+    "cardReadings": [
+        { "cardName": "Card Name", "interpretation": "Deep interpretation for this position..." }
+    ],
+    "overallReading": "A synthesis of the entire spread, connecting the cards into a cohesive message.",
+    "advice": "One clear, highly practical action item tailored for the user's MBTI."
+}
+`;
 
         let cardsList = "";
         selectedCards.forEach((card: any, idx: number) => {

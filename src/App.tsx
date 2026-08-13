@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -53,12 +53,8 @@ const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
 
-// New standalone pages
-const TodayFortunePage = lazy(() => import('./pages/TodayFortunePage'));
-const TarotPage = lazy(() => import('./pages/TarotPage'));
-const TripPage = lazy(() => import('./pages/TripPage'));
-const JamidusuPage = lazy(() => import('./pages/JamidusuPage'));
-const KboPage = lazy(() => import('./pages/KboPage'));
+// Consolidated fortune page
+const MyLuckPage = lazy(() => import('./pages/MyLuckPage'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
@@ -169,7 +165,7 @@ function AppContent({
   const isInToss = isTossApp();
   
   const handleStart = () => {
-    if (session) navigate('/today-fortune');
+    if (session) navigate('/myluck?type=today');
     else openModal('analysis', 'signup');
   };
 
@@ -271,7 +267,7 @@ function AppContent({
 
                             <button
                               onClick={() => {
-                                navigate('/kbo');
+                                navigate('/myluck?type=kbo');
                               }}
                               className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 hover:-translate-y-2 transition-transform text-left group"
                             >
@@ -314,7 +310,7 @@ function AppContent({
                     <MyPage
                       onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })}
                       onOpenMbtiSaju={() => openModal('mbtiSaju')}
-                      onJamidusuClick={() => navigate('/jamidusu')}
+                      onJamidusuClick={() => navigate('/myluck?type=jamidusu')}
                       onOpenCompatibility={() => navigate('/relationship')}
                       credits={credits}
                       refreshCredits={refreshCredits}
@@ -329,14 +325,14 @@ function AppContent({
                   <Route path="/community" element={<ReviewCollectionPage />} />
                   <Route path="/fortune" element={
                     <FortunePage
-                      onFortuneClick={() => navigate('/today-fortune')}
+                      onFortuneClick={() => navigate('/myluck?type=today')}
                       onMbtiSajuClick={() => {
                         navigate('/premium');
                       }}
-                      onTarotClick={() => openModal('tarot')}
-                      onTripClick={() => openModal('trip')}
-                      onJamidusuClick={() => navigate('/jamidusu')}
-                      onKboClick={() => openModal('kbo')}
+                      onTarotClick={() => navigate('/myluck?type=tarot')}
+                      onTripClick={() => navigate('/myluck?type=trip')}
+                      onJamidusuClick={() => navigate('/myluck?type=jamidusu')}
+                      onKboClick={() => navigate('/myluck?type=kbo')}
                       onCompatibilityClick={() => navigate('/relationship')}
                     />
                   } />
@@ -372,11 +368,12 @@ function AppContent({
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
                   <Route path="/gold" element={<GoldPage session={session} />} />
                   <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })} />} />
-                  <Route path="/today-fortune" element={<TodayFortunePage />} />
-                  <Route path="/today-tarot" element={<TarotPage />} />
-                  <Route path="/trip" element={<TripPage />} />
-                  <Route path="/jamidusu" element={<JamidusuPage />} />
-                  <Route path="/kbo" element={<KboPage />} />
+                  <Route path="/myluck" element={<MyLuckPage session={session} />} />
+                  <Route path="/today-fortune" element={<Navigate to="/myluck?type=today" replace />} />
+                  <Route path="/today-tarot" element={<Navigate to="/myluck?type=tarot" replace />} />
+                  <Route path="/trip" element={<Navigate to="/myluck?type=trip" replace />} />
+                  <Route path="/jamidusu" element={<Navigate to="/myluck?type=jamidusu" replace />} />
+                  <Route path="/kbo" element={<Navigate to="/myluck?type=kbo" replace />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
@@ -399,7 +396,7 @@ function AppContent({
                 onClose={() => closeModal('mbtiSaju')}
                 onNavigate={(service) => {
                   closeAllModals();
-                  if (service === 'fortune') navigate('/today-fortune');
+                  if (service === 'fortune') navigate('/myluck?type=today');
                   else openModal((service === 'mbti' ? 'deepReport' : service) as any);
                 }}
                 onUseCredit={async (isRegenerate?: boolean) => {
@@ -427,7 +424,7 @@ function AppContent({
                 onClose={() => closeModal('compatibility')}
                 onNavigate={(service: any) => {
                   closeAllModals();
-                  if (service === 'fortune') navigate('/today-fortune');
+                  if (service === 'fortune') navigate('/myluck?type=today');
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
                 onUseCredit={async () => {

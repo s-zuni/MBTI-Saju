@@ -1,8 +1,9 @@
 import { streamObject } from 'ai';
 import { z } from 'zod';
-import { calculateSaju } from './_utils/saju';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 const luckySchema = z.object({
     color: z.string().describe("행운의 색상"),
@@ -191,35 +192,33 @@ export default async function handler(req: Request) {
 
     // API Key checking is now handled centrally in ai-provider.ts
 
-    let saju = sajuData;
-    if (!saju && birthDate) {
-        try { saju = calculateSaju(birthDate, birthTime); } catch (e) { console.error('Saju error:', e); }
-    }
+    // Always compute deterministic Saju data
+    let saju = getPreciseSajuData({ birthDate, birthTime, gender: body.gender });
+    let sajuContextBlock = buildRichSajuContext(saju);
 
-    const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
-    const translateRatio = (ratio: any) => {
-        if (!ratio) return {};
-        const result: any = {};
-        for (const [k, v] of Object.entries(ratio)) {
-            result[elementNames[k] || k] = v;
-        }
-        return result;
-    };
+    let systemPrompt = `
+${BASE_SYSTEM_PROMPT}
 
-    let systemPrompt = `당신은 20대 여성의 감성과 니즈를 완벽하게 파악하고 있는 '트렌디 웰니스 & 라이프 컨설턴트'입니다.
+당신은 사주와 MBTI를 정밀 융합하여 실용적 라이프 가이드를 제안하는 냉철한 운명 분석가이자 라이프 컨설턴트입니다.
     
-    [핵심 규칙]
-    1. 모든 답변은 20대 여성이 흥미를 느낄 수 있도록 친근하고 감각적인 어투를 사용하세요.
-    2. 압도적인 디테일과 풍성한 분량: 사용자가 깊은 감동과 만족을 느낄 수 있도록, 내용의 깊이를 더하고 분량을 매우 풍성하게 작성하세요.
-    3. 가독성 최우선: 분량이 많더라도 읽기 편하도록, 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)을 매우 자주 사용하세요.
-    3. 모든 나열 방식은 반드시 '글머리표(-)'를 사용하여 시각적으로 깔끔하게 정리하세요.
-    4. '오늘의 미션'은 소소하지만 확실한 행복(소확행)이나, 인스타 인증하기 좋은 챌린지 형태로 제안하세요.
-    5. 'charm_stats'는 오늘 사용자의 기운이 어디에 집중되어 있는지 5가지 항목으로 분석하세요.
-    6. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
-    7. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
-    8. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-    9. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-    10. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.`;
+[AI 사주 직접 계산 엄금 및 사실 수용 규칙]
+★ 중요: 너는 생년월일시를 바탕으로 사주 원국(연주, 월주, 일주, 시주), 오행 비율, 십신을 절대로 직접 계산하려고 시도하지 마라!
+★ 아래 [System Context: Deterministic Saju Data]로 제공된 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 검증 데이터이다. 제공된 데이터만을 사실로 받아들이고 이를 기반으로 트렌디한 해석 가이드를 제시하라.
+
+${sajuContextBlock}
+
+[핵심 규칙]
+1. 모든 답변은 사주의 흐름을 건조한 팩트로 해석하되, MBTI에 최적화된 매우 구체적이고 실행 가능한 행동 지침으로 전달하세요.
+2. 압도적인 디테일과 풍성한 분량: 사용자가 깊은 통찰과 만족을 느낄 수 있도록, 내용의 깊이를 더하고 분량을 풍성하게 작성하세요.
+3. 가독성 최우선: 분량이 많더라도 읽기 편하도록, 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)을 매우 자주 사용하세요.
+4. 모든 나열 방식은 반드시 '글머리표(-)'를 사용하여 시각적으로 깔끔하게 정리하세요.
+5. '오늘의 미션'은 사용자가 즉시 오프라인/일상에서 수행할 수 있는 실용적 챌린지 형태로 제안하세요.
+6. 'charm_stats'는 오늘 사용자의 기운이 어디에 집중되어 있는지 5가지 항목으로 분석하세요.
+7. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
+8. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
+9. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
+10. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
+11. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.`;
 
     let userQuery = '';
 
@@ -228,7 +227,7 @@ export default async function handler(req: Request) {
     } else if (type === 'jamidusu') {
         let finalTargetSaju = targetSajuData;
         if (!finalTargetSaju && targetBirthDate) {
-            finalTargetSaju = calculateSaju(targetBirthDate, targetBirthTime);
+            finalTargetSaju = getPreciseSajuData({ birthDate: targetBirthDate, birthTime: targetBirthTime, gender: targetGender });
         }
         userQuery = `[정통 자미두수 12궁 명반 분석 요청]
 성별: ${targetGender === 'male' ? '남성' : '여성'}

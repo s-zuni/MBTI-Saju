@@ -1,7 +1,8 @@
 import { streamText } from 'ai';
-import { calculateSaju, buildRichSajuContext } from './_utils/saju';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors } from './_utils/cors';
-import { getAIProvider, isRetryableAIError } from './_utils/ai-provider';
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+
 
 export const config = {
     runtime: 'edge', 
@@ -13,7 +14,7 @@ export default async function handler(req: Request) {
 
     try {
         const body = await req.json();
-        const { mbti, birthInfo, name, specialRequest, report_type, partnerInfo } = body;
+        const { mbti, birthInfo, name, specialRequest, report_type, partnerInfo, gender } = body;
         
         let birthDate = '';
         let birthTime = '';
@@ -22,14 +23,21 @@ export default async function handler(req: Request) {
             birthDate = parts[0];
             birthTime = parts[1] || '12:00';
         }
-        let userSaju = calculateSaju(birthDate, birthTime);
+        let userSaju = getPreciseSajuData({ birthDate, birthTime, gender });
         
         const sajuContext = buildRichSajuContext(userSaju);
 
-        const expertPersona = `당신은 대한민국 명리학계의 살아있는 전설, 50년 경력의 '국보급 사주 마스터'이자 심리학 박사입니다.
-수만 명의 정재계 인사들의 운명을 감명하며 그들의 삶을 승리로 이끈 전략가이기도 합니다.
-당신의 분석은 단순히 미래를 점치는 '점술'이 아니라, 내담자의 타고난 에너지 설계도(사주 원국)를 정밀하게 해독하여 최적의 삶의 전략을 도출하는 '운명 공학'입니다.
-말투는 극도로 품격 있고 정중하면서도, 때로는 내담자의 잘못된 선택을 꾸짖는 추상같은 권위가 느껴져야 합니다.`;
+        const expertPersona = `
+${BASE_SYSTEM_PROMPT}
+
+당신은 대한민국 명리학계의 깊은 내공을 가진 냉철한 사주 분석 마스터이자 전략가입니다.
+당신의 분석은 단순히 미래를 점치는 '점술'이나 감성적 위로가 아니라, 내담자의 사주 원국을 객관적으로 진단(날씨)하고 MBTI 성향에 맞춘 실용적 인생 행동 지침을 도출하는 '운명 전략 리포트'입니다.
+
+[AI 사주 직접 계산 엄금 및 사실 수용 규칙]
+★ 중요: 너는 생년월일시를 보고 사주 원국(연주, 월주, 일주, 시주)을 직접 계산하지 마라!
+★ 아래 [System Context: Deterministic Saju Data]에 수록된 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 사실 데이터이다. 이를 100% 진실로 적용하여 해석만 진행하라.
+
+${sajuContext}`;
 
         const isCounseling = report_type === '사주 상담 리포트';
 

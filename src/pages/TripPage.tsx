@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 import { MapPin, Plane, Calendar, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart, Loader2, Instagram } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import TripShareCard from '../components/TripShareCard';
@@ -25,7 +24,7 @@ const INTERNATIONAL_REGIONS = [
     '남유럽 (이탈리아/스페인 등)', '오세아니아 (호주/뉴질랜드)', '기타 (중남미/아프리카 등)'
 ];
 
-const TripPage: React.FC = () => {
+const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, useCredits: consumeCredits } = useCredits(session);
     const { openModal } = useModalStore();
@@ -61,53 +60,55 @@ const TripPage: React.FC = () => {
             setCurrentLoadingMessage(getRandomLoadingMessage('trip'));
             interval = setInterval(() => {
                 setCurrentLoadingMessage(getRandomLoadingMessage('trip'));
-            }, 5000);
+            }, 3000);
         }
         return () => clearInterval(interval);
     }, [isLoading, result]);
 
-    const fetchRecommendation = useCallback(async () => {
-        const cost = SERVICE_COSTS.TRIP;
+    const handleAnalyzeClick = (e?: any) => {
+        handleSubmit(e || ({ preventDefault: () => {} } as any));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!session?.user?.user_metadata) {
+            openModal('analysis', 'login');
+            return;
+        }
+
+        const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
         if (credits !== undefined && credits < cost) {
             openModal('creditPurchase', undefined, { requiredCredits: cost });
             return;
         }
 
-        try {
-            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-            const activeSession = fetchedSession || session;
-            
-            const metadata = activeSession?.user?.user_metadata;
-            if (!metadata) throw new Error('로그인이 필요합니다.');
-            if (!metadata.birth_date || !metadata.mbti) {
-                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');
-            }
-
-            setError(null);
-            
-            const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
-            submit({
-                type: 'trip',
-                name: metadata.full_name || '사용자',
-                mbti: metadata.mbti,
-                birthDate: metadata.birth_date,
-                birthTime: metadata.birth_time,
-                sajuData,
-                region: selectedRegion,
-                startDate: '1일차',
-                endDate: `${duration}일차 (총 ${duration}일)`,
-                requirements: requirements || '특별한 요청사항 없음'
-            });
-
-            await consumeCredits('TRIP');
-        } catch (e: any) {
-            setError(e.message);
+        const success = await consumeCredits('COMPATIBILITY_TRIP');
+        if (!success) {
+            alert('크레딧 사용에 실패했습니다.');
+            return;
         }
-    }, [credits, session, submit, consumeCredits, selectedRegion, duration, requirements, openModal]);
 
-    const handleAnalyzeClick = () => {
         setIsFormSubmitted(true);
-        fetchRecommendation();
+        setError(null);
+
+        try {
+            const user = session.user.user_metadata;
+            const sajuData = calculateSaju(user.birth_date, user.birth_time);
+
+            submit({
+                serviceType: 'trip',
+                birthDate: user.birth_date,
+                mbti: user.mbti,
+                sajuData,
+                tripType,
+                selectedRegion,
+                duration,
+                requirements
+            });
+        } catch (err: any) {
+            console.error(err);
+            setError('분석 중 오류가 발생했습니다.');
+        }
     };
 
     const handleShareInstagram = async () => {
@@ -124,14 +125,20 @@ const TripPage: React.FC = () => {
         }
     };
 
-    if (isAuthLoading) return null;
+    if (isAuthLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
+            </div>
+        );
+    }
     if (!session) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
                 <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
                     <Lock className="w-10 h-10 text-indigo-600" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
+                <h2 className="text-2xl font-black text-slate-950 mb-4">로그인이 필요합니다</h2>
                 <p className="text-slate-500 mb-8">여행 운세 서비스를 이용하시려면 로그인이 필요합니다.</p>
                 <button
                     onClick={() => {
@@ -147,21 +154,23 @@ const TripPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-32 pt-20 animate-fade-in">
+        <div className={isEmbedded ? "pb-12 animate-fade-in" : "min-h-screen bg-slate-50 pb-32 pt-20 animate-fade-in"}>
             <div className="max-w-2xl mx-auto px-4">
                 {/* Header Navigation */}
-                <div className="flex items-center justify-between mb-8 px-4">
-                    <button 
-                        onClick={() => navigate('/fortune')}
-                        className="p-2 hover:bg-white rounded-full transition-colors"
-                    >
-                        <ChevronLeft className="w-6 h-6 text-slate-600" />
-                    </button>
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-sky-100 text-sky-600 rounded-full text-sm font-bold">
-                        <Coins className="w-4 h-4" />
-                        {credits}
+                {!isEmbedded && (
+                    <div className="flex items-center justify-between mb-8 px-4">
+                        <button 
+                            onClick={() => navigate('/fortune')}
+                            className="p-2 hover:bg-white rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-slate-600" />
+                        </button>
+                        <div className="flex items-center gap-1 px-3 py-1.5 bg-sky-100 text-sky-600 rounded-full text-sm font-bold">
+                            <Coins className="w-4 h-4" />
+                            {credits}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="bg-white rounded-[48px] shadow-2xl shadow-sky-100/50 overflow-hidden border border-white flex flex-col">
                     <div className="p-10 pb-4 border-b border-slate-50">

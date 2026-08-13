@@ -67,7 +67,7 @@ const FeatureGrids: React.FC = () => {
             bgColor: 'bg-amber-50',
             badge: '매일 갱신',
             wide: true,
-            action: () => navigate('/today-fortune'),
+            action: () => navigate('/myluck?type=today'),
         },
         {
             img: '/assets/icons/3d_tarot.png',
@@ -75,7 +75,7 @@ const FeatureGrids: React.FC = () => {
             sub: '카드로 보는 미래',
             bgColor: 'bg-violet-50',
             wide: false,
-            action: () => { if (!session) openModal('analysis', 'login'); else navigate('/today-tarot'); },
+            action: () => { if (!session) openModal('analysis', 'login'); else navigate('/myluck?type=tarot'); },
         },
         {
             img: '/assets/icons/3d_trip.png',
@@ -83,7 +83,7 @@ const FeatureGrids: React.FC = () => {
             sub: '행운 여행지',
             bgColor: 'bg-sky-50',
             wide: false,
-            action: () => navigate('/trip'),
+            action: () => navigate('/myluck?type=trip'),
         },
         {
             img: '/assets/icons/3d_healing.png',
@@ -91,7 +91,7 @@ const FeatureGrids: React.FC = () => {
             sub: '운명 분석',
             bgColor: 'bg-indigo-50',
             wide: false,
-            action: () => navigate('/jamidusu'),
+            action: () => navigate('/myluck?type=jamidusu'),
         },
         {
             img: '/assets/icons/3d_kbo.png',
@@ -99,7 +99,7 @@ const FeatureGrids: React.FC = () => {
             sub: '사주×야구',
             bgColor: 'bg-blue-50',
             wide: false,
-            action: () => { if (!session) openModal('analysis', 'login'); else navigate('/kbo'); },
+            action: () => { if (!session) openModal('analysis', 'login'); else navigate('/myluck?type=kbo'); },
         },
     ];
 
