@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, ArrowLeft, Coins, Lock, Instagram } from 'lucide-react';
+import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, Lock, Instagram } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
@@ -125,9 +125,6 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         return selectedSpread === 'daily' ? 1 : 3;
     };
 
-    const handleCardClick = (card: TarotCard) => {
-        handleCardSelect(card);
-    };
 
     const handleCardSelect = (card: TarotCard) => {
         const requiredCount = getRequiredCardCount();

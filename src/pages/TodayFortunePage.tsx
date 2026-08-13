@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stripMarkdown } from '../utils/textUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { Coins, Lock, ArrowLeft, Loader2, Sparkles, Palette, Hash, Compass } from 'lucide-react';
+import { Coins, Lock, Loader2, Sparkles, Palette, Hash, Compass } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
