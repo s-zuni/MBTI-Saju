@@ -35,20 +35,29 @@ const BIRTH_TIME_SLOTS = [
 
 type LoveSajuType = 'couple' | 'married' | 'marriage' | 'reunion' | 'crush';
 
-// Custom SVG Radar Chart component to avoid external dependencies
+// Custom SVG Radar Chart component to avoid external dependencies with streaming NaN safety
 const RadarChart: React.FC<{ data: { label: string; value: number }[] }> = ({ data }) => {
+    const validData = (data || []).filter(d => d && typeof d.label === 'string');
+    if (validData.length === 0) return null;
+
     const size = 200;
     const center = size / 2;
     const r = size * 0.35;
-    const numPoints = data.length;
+    const numPoints = validData.length;
 
-    // Generate points for the polygon
-    const points = data.map((d, i) => {
+    // Generate points for the polygon with strict NaN guards
+    const points = validData.map((d, i) => {
         const angle = (Math.PI * 2 / numPoints) * i - Math.PI / 2;
-        const valRatio = d.value / 100;
-        const x = center + r * valRatio * Math.cos(angle);
-        const y = center + r * valRatio * Math.sin(angle);
-        return { x, y, label: d.label, val: d.value, angle };
+        const rawVal = typeof d.value === 'number' && !isNaN(d.value) ? d.value : Number(d.value);
+        const safeVal = !isNaN(rawVal) ? Math.min(Math.max(rawVal, 0), 100) : 50;
+        const valRatio = safeVal / 100;
+        
+        let x = center + r * valRatio * Math.cos(angle);
+        let y = center + r * valRatio * Math.sin(angle);
+        if (isNaN(x)) x = center;
+        if (isNaN(y)) y = center;
+
+        return { x, y, label: d.label || '', val: Math.round(safeVal), angle };
     });
 
     const polygonPointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
@@ -616,11 +625,11 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
 
                                         {/* 시기적 전망 */}
                                         <div className="space-y-4">
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">인연의 시간적 변화 흐름</h3>
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">인연의 시간적 변화 흐름 (6개월 / 1년 / 3년)</h3>
                                             <div className="space-y-3">
                                                 <div className="flex gap-4 items-start p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
-                                                    <div className="w-16 text-center font-black text-xs text-rose-500 bg-rose-50 px-2 py-1 rounded shrink-0">3개월 후</div>
-                                                    <p className="text-slate-600 text-xs leading-normal font-medium break-keep">{result.timingForecast?.threeMonths}</p>
+                                                    <div className="w-16 text-center font-black text-xs text-rose-500 bg-rose-50 px-2 py-1 rounded shrink-0">6개월 후</div>
+                                                    <p className="text-slate-600 text-xs leading-normal font-medium break-keep">{(result.timingForecast as any)?.sixMonths || (result.timingForecast as any)?.threeMonths}</p>
                                                 </div>
                                                 <div className="flex gap-4 items-start p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
                                                     <div className="w-16 text-center font-black text-xs text-rose-500 bg-rose-50 px-2 py-1 rounded shrink-0">1년 후</div>

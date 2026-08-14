@@ -233,6 +233,7 @@ ${sajuContextBlock}
                         schema: currentSchema,
                         system: systemPrompt,
                         prompt: userQuery,
+                        maxTokens: 16384,
                         maxRetries: 0, // Faster fallback
                     });
                     return result.toTextStreamResponse({ headers: corsHeaders });

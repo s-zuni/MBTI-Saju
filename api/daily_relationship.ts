@@ -79,6 +79,8 @@ ${BASE_SYSTEM_PROMPT}
                         }),
                         system: systemPrompt,
                         prompt: userQuery,
+                        maxTokens: 16384,
+                        maxRetries: 0,
                     });
                     return result.toTextStreamResponse({ headers: corsHeaders });
                 } catch (error) {

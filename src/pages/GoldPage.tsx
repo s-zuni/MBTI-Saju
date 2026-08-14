@@ -480,105 +480,105 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
                                             </h2>
                                         </div>
 
-                                        {/* 총평 ~ MBTI 조언 영역 분기 */}
-                                        {result.mbtiSajuWealthReport ? (
-                                            renderWealthReport(result.mbtiSajuWealthReport)
-                                        ) : (
-                                            <>
-                                                {/* 총평 */}
-                                                <div className="space-y-2">
-                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">총평 및 재물 형세</h3>
-                                                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-medium bg-slate-50/50 p-5 rounded-2xl border border-slate-100 break-keep">{result.overview}</p>
-                                                </div>
+                                        {/* 총평 */}
+                                        <div className="space-y-2 text-left">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">총평 및 재물 형세</h3>
+                                            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-medium bg-slate-50/50 p-5 rounded-2xl border border-slate-100 break-keep">{result.overview}</p>
+                                        </div>
 
-                                                {/* 사주 명리 분석 */}
-                                                <div className="space-y-4">
-                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">사주 명리학 분석</h3>
-                                                    <div className="space-y-3">
-                                                        <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
-                                                            <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-                                                                <DollarSign className="w-4 h-4 text-amber-500" /> 일간과 재성의 밸런스
-                                                            </h4>
-                                                            <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.dayMasterWealth}</p>
-                                                        </div>
-                                                        <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
-                                                            <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-                                                                <Briefcase className="w-4 h-4 text-indigo-500" /> 재물 원국 구조 (격국)
-                                                            </h4>
-                                                            <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.wealthStructure}</p>
-                                                        </div>
-                                                        <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
-                                                            <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-                                                                <Sparkles className="w-4 h-4 text-sky-500" /> 오행 균형과 재물 공급력
-                                                            </h4>
-                                                            <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.elementBalance}</p>
-                                                        </div>
-                                                    </div>
+                                        {/* 사주 명리 분석 */}
+                                        <div className="space-y-4 text-left">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">사주 명리학 분석</h3>
+                                            <div className="space-y-3">
+                                                <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
+                                                    <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                                                        <DollarSign className="w-4 h-4 text-amber-500" /> 일간과 재성의 밸런스
+                                                    </h4>
+                                                    <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.dayMasterWealth}</p>
                                                 </div>
-
-                                                {/* 시기 및 흐름 */}
-                                                <div className="space-y-4">
-                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">재물 대운 / 세운 흐름</h3>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-left">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">올해 (2026년)</span>
-                                                            <p className="text-slate-600 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.currentYear}</p>
-                                                        </div>
-                                                        <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-left">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">내년 (2027년)</span>
-                                                            <p className="text-slate-600 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.nextYear}</p>
-                                                        </div>
-                                                        <div className="p-4 bg-amber-50/30 border border-amber-100 rounded-2xl text-left col-span-2">
-                                                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">재물 피크 시기</span>
-                                                            <p className="text-slate-700 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.peakPeriod}</p>
-                                                        </div>
-                                                        <div className="p-4 bg-rose-50/30 border border-rose-100 rounded-2xl text-left col-span-2">
-                                                            <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">주의가 필요한 위험기</span>
-                                                            <p className="text-slate-700 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.cautionPeriod}</p>
-                                                        </div>
-                                                    </div>
+                                                <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
+                                                    <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                                                        <Briefcase className="w-4 h-4 text-indigo-500" /> 재물 원국 구조 (격국)
+                                                    </h4>
+                                                    <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.wealthStructure}</p>
                                                 </div>
+                                                <div className="p-5 border border-slate-100 rounded-2xl hover:bg-slate-50/30 transition-colors">
+                                                    <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                                                        <Sparkles className="w-4 h-4 text-sky-500" /> 오행 균형과 재물 공급력
+                                                    </h4>
+                                                    <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.sajuAnalysis?.elementBalance}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                {/* 맞춤 적합도 분석 (창업/취직/이직 시에만 제공) */}
-                                                {(result.fieldAnalysis || result.comparison) && (
-                                                    <div className="space-y-4">
-                                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">유형별 맞춤 분석</h3>
-                                                        {result.fieldAnalysis && (
-                                                            <div className="p-5 border border-slate-100 rounded-2xl">
-                                                                <h4 className="text-xs font-bold text-slate-800 mb-2">분야 적합도 판정</h4>
-                                                                <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.fieldAnalysis}</p>
-                                                            </div>
-                                                        )}
-                                                        {result.comparison && (
-                                                            <div className="p-5 border border-amber-100 bg-amber-50/10 rounded-2xl">
-                                                                <h4 className="text-xs font-bold text-amber-700 mb-2">현 직장 vs 이직 처 비교</h4>
-                                                                <p className="text-slate-700 text-xs leading-relaxed break-keep font-medium">{result.comparison}</p>
-                                                            </div>
-                                                        )}
+                                        {/* 시기 및 흐름 */}
+                                        <div className="space-y-4 text-left">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">재물 대운 / 세운 흐름</h3>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-left">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">올해 (2026년)</span>
+                                                    <p className="text-slate-600 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.currentYear}</p>
+                                                </div>
+                                                <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-left">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">내년 (2027년)</span>
+                                                    <p className="text-slate-600 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.nextYear}</p>
+                                                </div>
+                                                <div className="p-4 bg-amber-50/30 border border-amber-100 rounded-2xl text-left col-span-2">
+                                                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">재물 피크 시기</span>
+                                                    <p className="text-slate-700 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.peakPeriod}</p>
+                                                </div>
+                                                <div className="p-4 bg-rose-50/30 border border-rose-100 rounded-2xl text-left col-span-2">
+                                                    <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">주의가 필요한 위험기</span>
+                                                    <p className="text-slate-700 text-xs leading-normal mt-1.5 font-medium break-keep">{result.timingAnalysis?.cautionPeriod}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 맞춤 적합도 분석 (창업/취직/이직 시에만 제공) */}
+                                        {(result.fieldAnalysis || result.comparison) && (
+                                            <div className="space-y-4 text-left">
+                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">유형별 맞춤 분석</h3>
+                                                {result.fieldAnalysis && (
+                                                    <div className="p-5 border border-slate-100 rounded-2xl">
+                                                        <h4 className="text-xs font-bold text-slate-800 mb-2">분야 적합도 판정</h4>
+                                                        <p className="text-slate-600 text-xs leading-relaxed break-keep font-medium">{result.fieldAnalysis}</p>
                                                     </div>
                                                 )}
-
-                                                {/* MBTI 조언 */}
-                                                <div className="space-y-4">
-                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">MBTI 기반 행동 처방전</h3>
-                                                    <div className="p-5 bg-slate-900 text-slate-100 rounded-[24px] space-y-4 text-left">
-                                                        <div>
-                                                            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">강점 발휘</span>
-                                                            <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.strength}</p>
-                                                        </div>
-                                                        <div className="h-[1px] bg-slate-800"></div>
-                                                        <div>
-                                                            <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest">약점 제어</span>
-                                                            <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.weakness}</p>
-                                                        </div>
-                                                        <div className="h-[1px] bg-slate-800"></div>
-                                                        <div>
-                                                            <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">실천 계획</span>
-                                                            <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.actionPlan}</p>
-                                                        </div>
+                                                {result.comparison && (
+                                                    <div className="p-5 border border-amber-100 bg-amber-50/10 rounded-2xl">
+                                                        <h4 className="text-xs font-bold text-amber-700 mb-2">현 직장 vs 이직 처 비교</h4>
+                                                        <p className="text-slate-700 text-xs leading-relaxed break-keep font-medium">{result.comparison}</p>
                                                     </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* MBTI 조언 */}
+                                        <div className="space-y-4 text-left">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">MBTI 기반 행동 처방전</h3>
+                                            <div className="p-5 bg-slate-900 text-slate-100 rounded-[24px] space-y-4 text-left">
+                                                <div>
+                                                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">강점 발휘</span>
+                                                    <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.strength}</p>
                                                 </div>
-                                            </>
+                                                <div className="h-[1px] bg-slate-800"></div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest">약점 제어</span>
+                                                    <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.weakness}</p>
+                                                </div>
+                                                <div className="h-[1px] bg-slate-800"></div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">실천 계획</span>
+                                                    <p className="text-slate-200 text-xs leading-relaxed mt-1 font-medium break-keep">{result.mbtiAdvice?.actionPlan}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 심층 보고서 (선택적 서술) */}
+                                        {result.mbtiSajuWealthReport && (
+                                            <div className="mt-8 text-left">
+                                                {renderWealthReport(result.mbtiSajuWealthReport)}
+                                            </div>
                                         )}
 
                                         {/* 행운의 요소 */}

@@ -336,6 +336,7 @@ MBTI: ${mbti}
                     schema: currentSchema,
                     system: systemPrompt,
                     prompt: userQuery,
+                    maxTokens: 16384,
                     maxRetries: 0, // Disable SDK retries to allow our custom fallback loop to switch models faster
                 });
                 return result.toTextStreamResponse({ headers: corsHeaders });

@@ -119,6 +119,7 @@ ${personalization}
                         schema,
                         system: fullSystemPrompt,
                         prompt: userQuery,
+                        maxTokens: 16384,
                         maxRetries: 0, // Faster switching
                     });
                     return result.toTextStreamResponse({ headers: corsHeaders });

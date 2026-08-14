@@ -280,7 +280,7 @@ ${sajuContext}`;
                     system: systemPrompt,
                     prompt: userQuery,
                     maxRetries: 0,
-                    maxTokens: 24000,
+                    maxTokens: 32000,
                 } as any);
                 return result.toTextStreamResponse({ headers: corsHeaders });
             } catch (error) {

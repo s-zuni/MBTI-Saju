@@ -13,12 +13,12 @@ export const config = {
 const loveSajuSchema = z.object({
     analysisType: z.string(),
     overallScore: z.number(),
-    summary: z.string(),
+    summary: z.string().describe("두 사람의 궁합 핵심을 총평하는 350자 이상의 정밀 요약 서술"),
     sajuCompatibility: z.object({
-        dayMasterRelation: z.string(),
-        fiveElementHarmony: z.string(),
-        specialStars: z.string(),
-        hiddenConflicts: z.string(),
+        dayMasterRelation: z.string().describe("일간 합충 정밀 분석: 잘 맞는 부분과 안 맞는 부분을 명리학적 이유를 들어 냉철하게 500자 이상(3단락 구조)으로 정밀 진단"),
+        fiveElementHarmony: z.string().describe("오행 조화 분석: 오행의 과다/부족 및 상생 시너지와 상극 마찰 요인을 500자 이상(3단락 구조)으로 정밀 진단"),
+        specialStars: z.string().describe("특수 신살 및 기운: 도화, 홍염, 원진, 귀문 등 신살의 영향과 액땜 실천법을 500자 이상(3단락 구조)으로 정밀 분석"),
+        hiddenConflicts: z.string().describe("내재된 잠재 갈등: 겉으로 드러나지 않는 사주/성격적 마찰과 위기 발생 모멘트를 500자 이상(3단락 구조)으로 뼈 때리게 분석"),
     }),
     dimensions: z.array(z.object({
         label: z.string(),
@@ -26,16 +26,16 @@ const loveSajuSchema = z.object({
         description: z.string(),
     })),
     timingForecast: z.object({
-        threeMonths: z.string(),
-        oneYear: z.string(),
-        threeYears: z.string(),
+        sixMonths: z.string().describe("6개월 후: 사주 운세 흐름 정보(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
+        oneYear: z.string().describe("1년 후: 사주 운세 흐름 정보(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
+        threeYears: z.string().describe("3년 후: 장기적 사주 운세 흐름(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
     }),
     mbtiStrategy: z.object({
-        myApproach: z.string(),
-        partnerApproach: z.string(),
-        conflictResolution: z.string(),
+        myApproach: z.string().describe("나의 관계 지향적 접근법: 내 MBTI 약점/주의점을 상대방 MBTI와 긴밀히 연계하여 400자 이상으로 뼈 때리게 서술"),
+        partnerApproach: z.string().describe("상대를 끌어당기는 공략법: 상대방 MBTI 성향과 사주 기운을 고려해 실전 데이트/소통 냉철한 조언을 400자 이상 서술"),
+        conflictResolution: z.string().describe("갈등 임계점 해소법: 사주와 MBTI 궁합을 종합 분석한 갈등 극복 및 즉각 적용 가능한 실전 솔루션을 400자 이상 서술"),
     }),
-    specialSection: z.string().describe('유형별 특화 섹션 (연인: 데이트 조언, 부부: 자녀운과 노후, 결혼: 결혼 시기와 조건, 재회: 재회 가능성 냉정 판단, 짝사랑: 호감도 예측) (300자 이상). 해당없을시 빈 문자열 반환'),
+    specialSection: z.string().describe("마음 포착 및 승부 솔루션: '향후 N개월 안에 승부를 봐야 합니다' 등 사주 기운과 사실적 타임라인을 선제시한 후 500자 이상으로 종합 제언 및 승부 지침 서술"),
     verdict: z.string(),
     keywords: z.array(z.string()),
 });
@@ -130,35 +130,42 @@ MBTI: ${targetMbti || '알수없음'}
 [상대방 사주]
 ${targetRichSaju}
 
-[요청 서비스 유형]: `;
+[요청 서비스 유형]: ${type}
+[필수 출력 필드별 작성 템플릿 - 단문 작성 절대 금지, 모든 필드 3단락 작성]
+1. sajuCompatibility.dayMasterRelation (일간 합충):
+   - 반드시 다음 3단락 포맷으로 작성하고 총 500자 이상 채우세요.
+   - [잘 맞는 부분]: 두 사람 일간(日干) 기운 융합과 잘 맞는 명리학적 이유 (200자 이상)
+   - [안 맞는 부분]: 일간 합충 및 마찰 원인과 명리학적 이유 (200자 이상)
+   - [실전 행동 지침]: 현실 연애에서 서로 조심해야 할 대처법 (100자 이상)
 
-            if (type === 'couple') {
-                userQuery += `연인 궁합
-- 두 사람의 현재 연애 궁합과 잘 맞는 점, 부딪히는 점을 명리학적으로 상세히 분석하세요.
-- 지지 합충과 원진살 등의 신살을 상세히 풀이해 주세요.
-- 5개 시각화 지표(정서적 교감, 성적 궁합, 재물 시너지, 소통력, 성장 가능성)의 점수를 사주에 근거하여 상세히 산정해 주세요.`;
-            } else if (type === 'married') {
-                userQuery += `부부 궁합
-- 연인을 넘어 평생을 약속한 부부의 관점에서 분석하세요.
-- 두 사람의 자녀운(시주 관점)과 노후 및 장기적인 대운 흐름을 면밀히 분석하세요.
-- 서로의 단점을 보완할 수 있는 동반자적 기운 밸런스를 풀이해 주세요.`;
-            } else if (type === 'marriage') {
-                userQuery += `결혼 궁합
-- 두 사람이 결혼을 고민할 때 고려해야 할 핵심 사주적 조건들을 제시해 주세요.
-- 결혼하기 가장 길(吉)한 시기와 결혼 생활 중 조심해야 할 위기의 시기를 짚어 주세요.
-- 갈등이 오더라도 서로 노력해서 극복할 수 있는 명리학적 솔루션을 함께 제시하세요.`;
-            } else if (type === 'reunion') {
-                userQuery += `재회 사주
-- 이별 시기: "${separationDate || '미상'}", 이별 사유: "${separationReason || '미상'}"
-- 이별하게 된 근본적인 사주적 요인(예: 세운에서의 일지 충 등)을 짚어 주세요.
-- 향후 1년, 3년 간의 두 사람의 인연의 흐름을 분석해 주세요.
-- 재회했을 때 다시 예전과 같이 헤어질지(일시적 재회), 아니면 극복하고 잘 살 수 있을지 냉정하고 냉철하게 결론을 내려 주세요.`;
-            } else if (type === 'crush') {
-                userQuery += `짝사랑 사주
-- 내가 좋아하는 그 사람이 나에 대해 가지고 있을 호감도와 사주적 짝사랑 가능성을 분석하세요.
-- 상대방의 마음을 공략할 수 있는 비법을 상대방의 MBTI와 사주 일간 특징에 맞추어 맞춤 설계해 주세요.
-- 향후 3개월 이내에 관계의 진전이 일어날 확률과 시점을 예측해 주세요.`;
-            }
+2. sajuCompatibility.fiveElementHarmony (오행 조화):
+   - 반드시 다음 3단락 포맷으로 작성하고 총 500자 이상 채우세요.
+   - [상생 시너지]: 오행(木火土金水) 배치가 만들어내는 긍정적 기운 (200자 이상)
+   - [상극 마찰 요인]: 상대 사주 오행의 결핍/과다로 인해 부딪히는 부분 (200자 이상)
+   - [오행 보완책]: 기운의 불균형을 극복하기 위한 생활 속 처방 (100자 이상)
+
+3. sajuCompatibility.specialStars (특수 신살 및 기운):
+   - 반드시 다음 3단락 포맷으로 작성하고 총 500자 이상 채우세요.
+   - [길살 작용]: 도화살, 홍염살, 천을귀인 등 호감과 끌림의 신살 작용 (200자 이상)
+   - [흉살 마찰]: 원진살, 귀문관살, 백호살 등 마찰과 오해를 부르는 신살 작용 (200자 이상)
+   - [신살 액땜 수칙]: 흉살의 부정적 영향을 피하기 위한 액땜 실천법 (100자 이상)
+
+4. sajuCompatibility.hiddenConflicts (내재된 잠재 갈등):
+   - 반드시 다음 3단락 포맷으로 작성하고 총 500자 이상 채우세요.
+   - [잠재 사주 마찰]: 겉으로는 안 드러나는 사주 원국과 성격적 마찰 (200자 이상)
+   - [위기 발생 순간]: 관계가 지속될 때 갑작스럽게 폭발할 수 있는 갈등 (200자 이상)
+   - [갈등 예방 수칙]: 잠재 갈등을 예방하는 소통 솔루션 (100자 이상)
+
+5. timingForecast (인연의 시간적 변화 흐름):
+   - sixMonths, oneYear, threeYears 각각 400자 이상 서술하세요.
+   - 각 항목마다 [1] 사주 운세 기운 흐름 정보(예: "내년에 OO 사주는 OO한 연애운이 흘러 관계에 주의가 필요합니다") (200자 이상) + [2] 시기별 구체적인 자세한 행동강령(예: "따라서 OO하고 주의를 기울이세요") (200자 이상)을 결합하여 작성하십시오.
+
+6. mbtiStrategy (MBTI 관계소통 매뉴얼):
+   - myApproach (나의 접근법), partnerApproach (상대 공략법), conflictResolution (갈등 해소법) 각각 400자 이상 서술하세요.
+   - 내 MBTI 약점을 상대방 MBTI 성향과 긴밀히 직결시키고 실전 데이트/갈등 시나리오 예시와 함께 뼈 때리게 서술하십시오.
+
+7. specialSection (마음 포착 솔루션):
+   - "향후 N개월 안에 승부를 봐야 합니다" 또는 "사주명리학적으로 1년간은 서로 간의 흐름이 불리합니다" 등 사실적 타임라인 기운을 선제시하고 500자 이상으로 종합 제언 및 승부 행동 지침을 서술하십시오.`;
 
             try {
                 let lastError;

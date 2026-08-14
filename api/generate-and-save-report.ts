@@ -298,7 +298,7 @@ ${sajuContext}`;
         const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birth_info}, 유형: ${report_type}, 요청: ${special_requests || '없음'}${partnerDetailsText}\n${sajuContext}`;
 
         const { model } = getAIProvider(0);
-        const { text } = await generateText({ model, system: systemPrompt, prompt: userQuery, maxTokens: 24000 } as any);
+        const { text } = await generateText({ model, system: systemPrompt, prompt: userQuery, maxTokens: 32000 } as any);
 
         let cleanedText = text.trim();
         if (cleanedText.startsWith('```')) {
