@@ -249,6 +249,17 @@ const MyPage: React.FC<MyPageProps> = ({
       return;
     }
 
+    if (!profile) {
+      setError('프로필 정보가 없습니다.');
+      return;
+    }
+
+    if (!profile.birth_date || !profile.mbti) {
+      setError('생년월일과 MBTI 정보가 필요합니다. [정보 수정] 버튼을 눌러 프로필을 먼저 등록해 주세요.');
+      setIsEditModalOpen(true);
+      return;
+    }
+
     setAnalysisLoading(true);
     setError(null);
 
@@ -258,15 +269,11 @@ const MyPage: React.FC<MyPageProps> = ({
       if (!activeSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
       }
-      if (!profile) throw new Error('프로필 정보가 없습니다.');
-
-      setIsNavigating(true);
       
       // 크레딧 차감 시도 (첫 분석은 무료이므로 skip)
       if (!isFirstTime) {
         const spendSuccess = await spendCredits(serviceType);
         if (!spendSuccess) {
-          setIsNavigating(false);
           setAnalysisLoading(false);
           return;
         }
@@ -289,8 +296,6 @@ const MyPage: React.FC<MyPageProps> = ({
     } catch (e: any) {
       setError(e.message);
       setAnalysisLoading(false);
-    } finally {
-      setIsNavigating(false);
     }
   };
 
@@ -486,7 +491,57 @@ const MyPage: React.FC<MyPageProps> = ({
           </div>
         </div>
 
-        {analysis ? (
+        {analysisLoading ? (
+          <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-indigo-100 text-center animate-fade-in relative overflow-hidden my-6">
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10">
+              {/* Spinner & Pulsing Sparkles Icon */}
+              <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-t-indigo-600 border-r-violet-600 rounded-full animate-spin"></div>
+                <Sparkles className="w-8 h-8 text-indigo-600 animate-pulse" />
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-3">
+                {profile?.name || '내담자'}님의 운명을 정밀 분석하고 있습니다
+              </h2>
+              <p className="text-slate-500 font-medium max-w-md mx-auto mb-8 text-sm md:text-base leading-relaxed">
+                만세력 사주 원국과 MBTI 심리 유형을 교차 해독하여<br className="hidden sm:inline" />
+                나만을 위한 '초밀착 융합 소울 리포트'를 도출 중입니다.
+              </p>
+
+              {/* Progress Steps Card */}
+              <div className="max-w-md mx-auto bg-slate-50/80 rounded-2xl p-5 border border-slate-200/80 mb-6 text-left space-y-3 shadow-inner">
+                <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-indigo-900">
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">1</div>
+                  <span>한국천문연구원(KASI) 기준 정밀 만세력 사주 계산</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-slate-800">
+                  <div className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs shrink-0 animate-pulse shadow-sm">2</div>
+                  <span>MBTI 심리 기질 & 사주 오행 기운 교차 분석</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs md:text-sm font-medium text-slate-500">
+                  <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs shrink-0">3</div>
+                  <span>타고난 빛과 그림자 & 맞춤형 라이프 솔루션 작성</span>
+                </div>
+              </div>
+
+              {coreObj?.reportTitle && (
+                <div className="mb-4 inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-xs md:text-sm font-bold animate-pulse">
+                  <span>🔮 {coreObj.reportTitle}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                <span>약 10~15초 소요됩니다. 잠시만 기다려주세요.</span>
+              </div>
+            </div>
+          </div>
+        ) : analysis ? (
           <div className="space-y-6 animate-fade-up">
             {/* Saju Type Section */}
             {(analysis.nature || (analysis as any).typeDescription) && (
