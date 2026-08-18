@@ -123,15 +123,26 @@ const MyPage: React.FC<MyPageProps> = ({
     schema: analysisSchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
     onFinish: ({ object }) => {
-      if (object && profile) {
-        const sajuData = calculateSaju(profile.birth_date, profile.birth_time);
+      if (object) {
+        const activeBirthDate = profile?.birth_date;
+        const activeBirthTime = profile?.birth_time;
+        const sajuData = activeBirthDate ? calculateSaju(activeBirthDate, activeBirthTime ?? null) : null;
         const finalData = { ...object, saju: sajuData };
+        
         setAnalysis(finalData as any);
         
+        try {
+          localStorage.setItem('mbti_saju_analysis', JSON.stringify(finalData));
+        } catch (e) {
+          console.error('localStorage backup save error:', e);
+        }
+
         supabase.auth.updateUser({
-          data: { ...profile, analysis: finalData }
+          data: { analysis: finalData }
         }).then(() => {
           if (refreshCredits) refreshCredits();
+        }).catch((err) => {
+          console.error('Supabase metadata update error:', err);
         });
       }
       setAnalysisLoading(false);
@@ -146,7 +157,7 @@ const MyPage: React.FC<MyPageProps> = ({
   // Sync partial results
   useEffect(() => {
     if (coreObj) {
-      const sajuData = profile ? calculateSaju(profile.birth_date, profile.birth_time) : null;
+      const sajuData = profile?.birth_date ? calculateSaju(profile.birth_date, profile.birth_time ?? null) : null;
       setAnalysis((prev: any) => ({
         ...(prev || {}),
         ...coreObj,
@@ -154,8 +165,6 @@ const MyPage: React.FC<MyPageProps> = ({
       }));
     }
   }, [coreObj, profile]);
-
-
 
   const fetchProfileData = React.useCallback(async () => {
     let attempts = 0;
@@ -197,6 +206,15 @@ const MyPage: React.FC<MyPageProps> = ({
 
         if (metaAnalysis) {
           setAnalysis(metaAnalysis);
+        } else {
+          try {
+            const savedLocal = localStorage.getItem('mbti_saju_analysis');
+            if (savedLocal) {
+              setAnalysis(JSON.parse(savedLocal));
+            }
+          } catch (e) {
+            console.error('Failed to restore local analysis backup:', e);
+          }
         }
         
         if (refreshCredits) {
@@ -288,14 +306,12 @@ const MyPage: React.FC<MyPageProps> = ({
         mbti: profile.mbti,
       };
 
-      // Clear previous analysis to show clean streaming results
-      setAnalysis(null);
-
       // Trigger the streaming hook
       submitCore(requestPayload);
 
     } catch (e: any) {
-      setError(e.message);
+      console.error('handleGenerateAnalysis Error:', e);
+      setError(e.message || '분석을 시작하는 중 오류가 발생했습니다.');
       setAnalysisLoading(false);
     }
   };
@@ -372,13 +388,13 @@ const MyPage: React.FC<MyPageProps> = ({
     );
   }
 
-  if (error) {
+  if (error && !profile) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 p-4">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl font-bold text-red-700 mb-2">오류가 발생했습니다</h2>
         <p className="text-red-500 text-center">{error}</p>
-        <button onClick={() => navigate('/')} className="mt-6 btn-primary px-6 py-3">홈으로 돌아가기</button>
+        <button onClick={() => { setError(null); navigate('/'); }} className="mt-6 btn-primary px-6 py-3">홈으로 돌아가기</button>
       </div>
     );
   }
@@ -399,6 +415,16 @@ const MyPage: React.FC<MyPageProps> = ({
   return (
     <div className="min-h-screen bg-slate-50/50 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-rose-700 text-sm font-bold animate-fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-600 font-black px-2 py-1">✕</button>
+          </div>
+        )}
+
         <div className="bg-white shadow-xl rounded-2xl p-8 mb-10 border border-slate-100 relative">
           <div className='flex justify-between items-start mb-3'>
             <div className="flex items-center gap-3">
