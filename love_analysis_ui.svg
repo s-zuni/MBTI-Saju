@@ -1,0 +1,130 @@
+<svg width="420" height="1950" viewBox="0 0 420 1950" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+  .font-title { font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif; font-weight: 900; }
+  .font-bold { font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif; font-weight: 700; }
+  .font-medium { font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif; font-weight: 500; }
+</style>
+<rect width="420" height="1950" fill="#F8FAFC"/>
+<rect x="20" y="60" width="380" height="1830" rx="24" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+<text x="210.0" y="100" text-anchor="middle" class="font-title" font-size="16" fill="#0F172A">연애 사주 및 궁합 분석 결과</text>
+<circle cx="210.0" cy="210" r="64" stroke="#F1F5F9" stroke-width="8" fill="none"/>
+<circle cx="210.0" cy="210" r="64" stroke="#F43F5E" stroke-width="8" stroke-dasharray="402.1" stroke-dashoffset="60.3" stroke-linecap="round" fill="none" transform="rotate(-90 210.0 210)"/>
+<text x="210.0" y="218" text-anchor="middle" class="font-title" font-size="32" fill="#0F172A">85</text>
+<text x="210.0" y="235" text-anchor="middle" class="font-bold" font-size="10" fill="#F43F5E" letter-spacing="1">궁합점수</text>
+<text x="210.0" y="310" text-anchor="middle" class="font-title" font-size="18" fill="#0F172A">서로의 다름을 채워주는 보완적 관계</text>
+<rect x="45" y="340" width="71" height="24" rx="12" fill="#FFF1F2" stroke="#FFE4E6" stroke-width="1"/>
+<text x="80.5" y="355" text-anchor="middle" class="font-bold" font-size="10" fill="#E11D48">#상호보완</text>
+<rect x="122" y="340" width="71" height="24" rx="12" fill="#FFF1F2" stroke="#FFE4E6" stroke-width="1"/>
+<text x="157.5" y="355" text-anchor="middle" class="font-bold" font-size="10" fill="#E11D48">#배려필수</text>
+<rect x="199" y="340" width="71" height="24" rx="12" fill="#FFF1F2" stroke="#FFE4E6" stroke-width="1"/>
+<text x="234.5" y="355" text-anchor="middle" class="font-bold" font-size="10" fill="#E11D48">#티키타카</text>
+<rect x="276" y="340" width="82" height="24" rx="12" fill="#FFF1F2" stroke="#FFE4E6" stroke-width="1"/>
+<text x="317.0" y="355" text-anchor="middle" class="font-bold" font-size="10" fill="#E11D48">#소울메이트</text>
+<text x="40" y="390" class="font-title" font-size="12" fill="#94A3B8" letter-spacing="1.5">인연 총평</text>
+<rect x="40" y="405" width="340" height="164" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<text x="56" y="429" class="font-medium" font-size="12" fill="#475569">두 사람의 원국은 목(木)과 금(金)의</text>
+<text x="56" y="449" class="font-medium" font-size="12" fill="#475569">상호 보완적 오행 배열을 이루고 있어, 한</text>
+<text x="56" y="469" class="font-medium" font-size="12" fill="#475569">사람이 아이디어를 내면 다른 한 사람이</text>
+<text x="56" y="489" class="font-medium" font-size="12" fill="#475569">이를 현실화하는 뛰어난 시너지를 냅니다.</text>
+<text x="56" y="509" class="font-medium" font-size="12" fill="#475569">갈등이 생겨도 MBTI 성향의 유연성 덕분에</text>
+<text x="56" y="529" class="font-medium" font-size="12" fill="#475569">빠르게 대화로 풀어나갈 수 있는 든든한</text>
+<text x="56" y="549" class="font-medium" font-size="12" fill="#475569">동반자적 인연입니다.</text>
+<text x="40" y="604" class="font-title" font-size="12" fill="#94A3B8" letter-spacing="1.5">5차원 인연 밸런스</text>
+<rect x="40" y="624" width="340" height="230" rx="20" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<polygon points="210.0,717.8 225.5,729.0 219.6,747.1 200.4,747.1 194.5,729.0" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="210.0,701.5 240.9,724.0 229.1,760.3 190.9,760.3 179.1,724.0" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="210.0,685.2 256.4,718.9 238.7,773.4 181.3,773.4 163.6,718.9" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="210.0,669.0 271.8,713.9 248.2,786.6 171.8,786.6 148.2,713.9" fill="none" stroke="#E2E8F0" stroke-width="1" />
+<line x1="210.0" y1="734" x2="210.0" y2="669.0" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="210.0" y1="734" x2="271.8" y2="713.9" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="210.0" y1="734" x2="248.2" y2="786.6" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="210.0" y1="734" x2="171.8" y2="786.6" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="210.0" y1="734" x2="148.2" y2="713.9" stroke="#E2E8F0" stroke-width="1"/>
+<polygon points="210.0,675.5 256.4,718.9 240.6,776.1 177.5,778.7 151.3,714.9" fill="rgba(244, 63, 94, 0.15)" stroke="#F43F5E" stroke-width="2.5"/>
+<circle cx="210.0" cy="675.5" r="4" fill="#F43F5E"/>
+<circle cx="256.4" cy="718.9" r="4" fill="#F43F5E"/>
+<circle cx="240.6" cy="776.1" r="4" fill="#F43F5E"/>
+<circle cx="177.5" cy="778.7" r="4" fill="#F43F5E"/>
+<circle cx="151.3" cy="714.9" r="4" fill="#F43F5E"/>
+<text x="185.0" y="659" class="font-bold" font-size="10" fill="#64748B">성향 조화</text>
+<text x="185.0" y="671" class="font-bold" font-size="9" fill="#F43F5E">90점</text>
+<text x="265.0" y="709" class="font-bold" font-size="10" fill="#64748B">소통 방식</text>
+<text x="265.0" y="721" class="font-bold" font-size="9" fill="#F43F5E">75점</text>
+<text x="240.0" y="784" class="font-bold" font-size="10" fill="#64748B">가치관 일치</text>
+<text x="240.0" y="796" class="font-bold" font-size="9" fill="#F43F5E">80점</text>
+<text x="140.0" y="784" class="font-bold" font-size="10" fill="#64748B">갈등 해결</text>
+<text x="140.0" y="796" class="font-bold" font-size="9" fill="#F43F5E">85점</text>
+<text x="125.0" y="709" class="font-bold" font-size="10" fill="#64748B">미래 지향</text>
+<text x="125.0" y="721" class="font-bold" font-size="9" fill="#F43F5E">95점</text>
+<text x="40" y="889" class="font-title" font-size="12" fill="#94A3B8" letter-spacing="1.5">명리학 궁합 정밀 분석</text>
+<rect x="40" y="909" width="340" height="126" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+<text x="56" y="933" class="font-bold" font-size="12" fill="#1E293B">일간 합충 (日干 合沖)</text>
+<text x="56" y="953" class="font-medium" font-size="11" fill="#475569">갑목(甲木) 일간과 기토(己土) 일간이</text>
+<text x="56" y="971" class="font-medium" font-size="11" fill="#475569">만나 갑기합토(甲己合土)의 부부지합을</text>
+<text x="56" y="989" class="font-medium" font-size="11" fill="#475569">이룹니다. 서로 첫눈에 끌리기 쉬우며</text>
+<text x="56" y="1007" class="font-medium" font-size="11" fill="#475569">깊은 안정감을 공유하는 조화로운 인연</text>
+<text x="56" y="1025" class="font-medium" font-size="11" fill="#475569">구조입니다.</text>
+<rect x="40" y="1047" width="340" height="108" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+<text x="56" y="1071" class="font-bold" font-size="12" fill="#1E293B">오행 조화 (五行 調和)</text>
+<text x="56" y="1091" class="font-medium" font-size="11" fill="#475569">상대에게 부족한 화(火) 기운을 내가</text>
+<text x="56" y="1109" class="font-medium" font-size="11" fill="#475569">채워주고, 나에게 부족한 금(金) 기운을</text>
+<text x="56" y="1127" class="font-medium" font-size="11" fill="#475569">상대방이 다수 보유하고 있어 상호 운기</text>
+<text x="56" y="1145" class="font-medium" font-size="11" fill="#475569">보완이 완벽히 이루어지는 구조입니다.</text>
+<rect x="40" y="1167" width="340" height="90" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+<text x="56" y="1191" class="font-bold" font-size="12" fill="#1E293B">특수 신살 및 기운 (神煞)</text>
+<text x="56" y="1211" class="font-medium" font-size="11" fill="#475569">천을귀인(天乙貴人)의 기운이 양방향으로</text>
+<text x="56" y="1229" class="font-medium" font-size="11" fill="#475569">작용하여, 함께할수록 서로의 인생 난관을</text>
+<text x="56" y="1247" class="font-medium" font-size="11" fill="#475569">해결해 주는 귀인 궁합에 해당합니다.</text>
+<rect x="40" y="1269" width="340" height="108" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+<text x="56" y="1293" class="font-bold" font-size="12" fill="#1E293B">내재된 잠재 갈등</text>
+<text x="56" y="1313" class="font-medium" font-size="11" fill="#475569">각자의 사주에 원진살의 작용력이 약하게</text>
+<text x="56" y="1331" class="font-medium" font-size="11" fill="#475569">존재하여, 사소한 말꼬투리나 오해로 인해</text>
+<text x="56" y="1349" class="font-medium" font-size="11" fill="#475569">냉랭한 기류가 생길 수 있으니 평소 대화</text>
+<text x="56" y="1367" class="font-medium" font-size="11" fill="#475569">소통이 중요합니다.</text>
+<text x="40" y="1407" class="font-title" font-size="12" fill="#94A3B8" letter-spacing="1.5">인연의 시간적 변화 흐름</text>
+<rect x="40" y="1427" width="340" height="90" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="52" y="1439" width="55" height="20" rx="4" fill="#FFF1F2"/>
+<text x="79" y="1453" text-anchor="middle" class="font-bold" font-size="10" fill="#F43F5E">6개월 후</text>
+<text x="120" y="1451" class="font-medium" font-size="11" fill="#475569">서로의 생활 패턴과 습관 차이를</text>
+<text x="120" y="1469" class="font-medium" font-size="11" fill="#475569">조율하는 적응기입니다. 감정적</text>
+<text x="120" y="1487" class="font-medium" font-size="11" fill="#475569">서운함을 억누르지 않고 솔직히</text>
+<text x="120" y="1505" class="font-medium" font-size="11" fill="#475569">말해야 하는 시점입니다.</text>
+<rect x="40" y="1527" width="340" height="90" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="52" y="1539" width="55" height="20" rx="4" fill="#FFF1F2"/>
+<text x="79" y="1553" text-anchor="middle" class="font-bold" font-size="10" fill="#F43F5E">1년 후</text>
+<text x="120" y="1551" class="font-medium" font-size="11" fill="#475569">완전한 상호 신뢰가 구축되며</text>
+<text x="120" y="1569" class="font-medium" font-size="11" fill="#475569">공동의 미래 계획이나 현실적인</text>
+<text x="120" y="1587" class="font-medium" font-size="11" fill="#475569">정착을 논의하는 깊은 안정기에</text>
+<text x="120" y="1605" class="font-medium" font-size="11" fill="#475569">진입합니다.</text>
+<rect x="40" y="1627" width="340" height="108" rx="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="52" y="1639" width="55" height="20" rx="4" fill="#FFF1F2"/>
+<text x="79" y="1653" text-anchor="middle" class="font-bold" font-size="10" fill="#F43F5E">3년 후</text>
+<text x="120" y="1651" class="font-medium" font-size="11" fill="#475569">결혼 대운의 기운이 강하게</text>
+<text x="120" y="1669" class="font-medium" font-size="11" fill="#475569">결합하는 시기입니다. 양가</text>
+<text x="120" y="1687" class="font-medium" font-size="11" fill="#475569">인사나 현실적인 가구 구성 등</text>
+<text x="120" y="1705" class="font-medium" font-size="11" fill="#475569">중대한 결단을 내리기에</text>
+<text x="120" y="1723" class="font-medium" font-size="11" fill="#475569">최적입니다.</text>
+<text x="40" y="1765" class="font-title" font-size="12" fill="#94A3B8" letter-spacing="1.5">MBTI 관계 소통 매뉴얼</text>
+<rect x="40" y="1785" width="340" height="320" rx="24" fill="#0F172A"/>
+<text x="56" y="1815" class="font-bold" font-size="10" fill="#F43F5E" letter-spacing="1.2">나의 관계 지향적 접근법 (INFJ)</text>
+<text x="56" y="1833" class="font-medium" font-size="11" fill="#E2E8F0">감정 표현을 조심스럽게 하되 진심을</text>
+<text x="56" y="1851" class="font-medium" font-size="11" fill="#E2E8F0">보여주며, 상대의 말 이면에 담긴 니즈를</text>
+<text x="56" y="1869" class="font-medium" font-size="11" fill="#E2E8F0">파악해 묵묵히 챙겨주는 조력형 케어가</text>
+<text x="56" y="1887" class="font-medium" font-size="11" fill="#E2E8F0">효과적입니다.</text>
+<line x1="56" y1="1909" x2="364" y2="1909" stroke="#334155" stroke-width="1"/>
+<text x="56" y="1927" class="font-bold" font-size="10" fill="#38BDF8" letter-spacing="1.2">상대를 끌어당기는 공략법 (ESTP)</text>
+<text x="56" y="1945" class="font-medium" font-size="11" fill="#E2E8F0">지나치게 추상적이거나 무거운</text>
+<text x="56" y="1963" class="font-medium" font-size="11" fill="#E2E8F0">주제보다는 활동적이고 즉흥적인 경험을</text>
+<text x="56" y="1981" class="font-medium" font-size="11" fill="#E2E8F0">공유하고, 상대방의 유쾌한 행동을 적극</text>
+<text x="56" y="1999" class="font-medium" font-size="11" fill="#E2E8F0">리액션해 줄 때 호감이 증폭됩니다.</text>
+<line x1="56" y1="2021" x2="364" y2="2021" stroke="#334155" stroke-width="1"/>
+<text x="56" y="2039" class="font-bold" font-size="10" fill="#A78BFA" letter-spacing="1.2">갈등 임계점 해소법</text>
+<text x="56" y="2057" class="font-medium" font-size="11" fill="#E2E8F0">논리적 팩트 체크와 상충될 때 한 걸음</text>
+<text x="56" y="2075" class="font-medium" font-size="11" fill="#E2E8F0">물러나 상대의 현실 감각을 인정하고,</text>
+<text x="56" y="2093" class="font-medium" font-size="11" fill="#E2E8F0">'나의 감정 상태'를 조용히 1:1 대화로</text>
+<text x="56" y="2111" class="font-medium" font-size="11" fill="#E2E8F0">전달해야 갈등이 풀립니다.</text>
+<rect x="40" y="2140" width="165" height="48" rx="16" fill="#F1F5F9"/>
+<text x="122.5" y="2168" text-anchor="middle" class="font-bold" font-size="12" fill="#0F172A">이미지 저장</text>
+<rect x="215" y="2140" width="165" height="48" rx="16" fill="#0F172A"/>
+<text x="297.5" y="2168" text-anchor="middle" class="font-bold" font-size="12" fill="#FFFFFF">다시 분석하기</text>
+</svg>

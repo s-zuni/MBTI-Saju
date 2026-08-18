@@ -119,7 +119,7 @@ const MyPage: React.FC<MyPageProps> = ({
 
   // Core Streaming Hook
   const { object: coreObj, submit: submitCore } = useObject({
-    api: '/api/analyze',
+    api: '/api/analyze?part=core',
     schema: analysisSchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
     onFinish: ({ object }) => {
@@ -280,6 +280,7 @@ const MyPage: React.FC<MyPageProps> = ({
       }
 
       const requestPayload = {
+        part: 'core',
         name: profile.name,
         gender: profile.gender,
         birthDate: profile.birth_date,
@@ -883,9 +884,13 @@ const MyPage: React.FC<MyPageProps> = ({
           </div>
         ) : (
           <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-slate-100">
-            <Sparkles className="w-12 h-12 text-slate-950 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-3">아직 분석 결과가 없습니다</h2>
-            <p className="text-slate-500 font-medium mb-8">아래 버튼을 눌러 종합 분석을 받아보세요.</p>
+            <Sparkles className={`w-12 h-12 mx-auto mb-4 ${analysisLoading ? 'animate-pulse text-indigo-600' : 'text-slate-950'}`} />
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+              {analysisLoading ? "운명을 분석하고 있습니다..." : "아직 분석 결과가 없습니다"}
+            </h2>
+            <p className="text-slate-500 font-medium mb-8">
+              {analysisLoading ? "사주 원국과 MBTI 기질을 융합 해독 중입니다. 잠시만 기다려주세요." : "아래 버튼을 눌러 종합 분석을 받아보세요."}
+            </p>
             <button
               onClick={handleGenerateAnalysis}
               className="btn-primary w-full sm:w-auto px-10 py-4 text-lg font-bold flex items-center justify-center gap-2 mx-auto"

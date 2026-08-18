@@ -12,6 +12,7 @@ export const analysisSchema = z.object({
         monthBranchAnalysis: z.string()
     }),
     fiveElements: z.object({
+        summary: z.string().optional(),
         elements: z.array(z.object({
             element: z.string(),
             count: z.number(),
