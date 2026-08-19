@@ -82,6 +82,6 @@ OPENAI_API_KEY=your_openai_api_key
 ---
 
 ## 📜 라이선스 및 문의
-- 문의: support@mbtiju.com
+- 문의: axw0208@gmail.com
 - 저작권: &copy; MBTIJU. All rights reserved.
 
