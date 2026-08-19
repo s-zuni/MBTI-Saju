@@ -4,7 +4,7 @@ import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, Lock, Insta
 import { generateImage } from '../utils/exportUtils';
 import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
-import SpreadSelector, { SpreadType } from '../components/Tarot/SpreadSelector';
+import SpreadSelector, { SpreadType } from '../components/tarot/SpreadSelector';
 import { supabase } from '../supabaseClient';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { stripMarkdown } from '../utils/textUtils';

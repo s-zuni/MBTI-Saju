@@ -1,44 +1,50 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
-# production
+# Production & Build Artifacts
 /build
+/dist
+*.ait
+*.ait.zip
+/apps-in-toss-examples-main
+/apps-in-toss-examples-main.zip
 
-# misc
-.DS_Store
+# Granite & Toss Temp
+.granite
+
+# Environment Variables & Secrets
+.env
+.env*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# Testing & Coverage
+/coverage
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
+# Vercel
 .vercel
-.env*.local
 
-.env
-
-# VS Code settings (may contain sensitive tokens)
+# IDE & Editors
 .vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-.granite
-
-# build artifacts
-/build
-
-# examples
-/apps-in-toss-examples-main
-/apps-in-toss-examples-main.zip
-
-.granite
-
-.granite
+# OS Generated Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
