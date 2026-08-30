@@ -43,7 +43,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
     // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
-        api: '/api/analysis-special',
+        api: '/api/analysis-special?type=trip',
         schema: tripSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
@@ -96,6 +96,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             const sajuData = calculateSaju(user.birth_date, user.birth_time);
 
             submit({
+                type: 'trip',
                 serviceType: 'trip',
                 birthDate: user.birth_date,
                 mbti: user.mbti,

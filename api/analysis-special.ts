@@ -58,6 +58,20 @@ const schemas: Record<string, any> = {
         bestTime: z.string(),
         tip: z.string()
     }),
+    travel: z.object({
+        places: z.array(z.object({
+            name: z.string(),
+            reason: z.string(),
+            activity: z.string()
+        })),
+        itinerary: z.array(z.object({
+            day: z.string(),
+            schedule: z.array(z.string())
+        })),
+        summary: z.string(),
+        bestTime: z.string(),
+        tip: z.string()
+    }),
     kbo: z.object({
         score: z.number().describe("선택한 구단과의 궁합 점수 (0-100)"),
         supportedTeamAnalysis: z.string().describe("사주와 MBTI 기반 궁합 분석 (서버 생성)"),
@@ -166,19 +180,20 @@ export default async function handler(req: Request) {
 
     const url = new URL(req.url, 'http://localhost');
     const body = await req.json();
-    const type = url.searchParams.get('type') || body.type;
-    const scope = url.searchParams.get('scope') || body.scope;
+    const rawType = url.searchParams.get('type') || body?.type || body?.serviceType || body?.analysisType || 'trip';
+    const scope = url.searchParams.get('scope') || body?.scope;
     
-    let targetType = type as string;
-    if (type === 'fortune') {
+    let targetType = rawType as string;
+    if (targetType === 'travel') targetType = 'trip';
+    if (targetType === 'fortune') {
         if (scope === 'today') targetType = 'fortune_today';
         else if (scope === 'tomorrow') targetType = 'fortune_tomorrow';
     }
     
-    const currentSchema = schemas[targetType];
+    const currentSchema = schemas[targetType] || schemas.trip;
 
     if (!currentSchema) {
-        return new Response(JSON.stringify({ error: `Invalid analysis type: ${type}` }), { 
+        return new Response(JSON.stringify({ error: `Invalid analysis type: ${rawType}` }), { 
             status: 400, 
             headers: corsHeaders 
         });
