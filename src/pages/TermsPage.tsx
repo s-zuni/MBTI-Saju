@@ -11,7 +11,7 @@ const TermsPage: React.FC = () => {
                 <div className="prose prose-slate max-w-none text-slate-600 space-y-6 text-sm">
                     <section>
                         <h2 className="text-lg font-bold text-slate-800">제1조 (목적)</h2>
-                        <p>본 약관은 엠비티아이주(이하 "회사")가 제공하는 플랫폼 및 관련 제반 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무, 책임사항 및 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+                        <p>본 약관은 스즈니 (SZUNI)(이하 "회사")가 제공하는 플랫폼 및 관련 제반 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무, 책임사항 및 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
                     </section>
 
                     <section>

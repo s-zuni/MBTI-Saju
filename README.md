@@ -37,6 +37,9 @@ MBTI-Saju/
 │   └── utils/               # 유틸리티 (사주 계산, 내보내기, AI 챗 서비스 등)
 ├── supabase/                # 데이터베이스 설정 및 마이그레이션
 │   └── migrations/          # SQL 마이그레이션 스크립트
+├── agent.md                 # [AI 명세] 서비스 아키텍처, 데이터 모델, 개발 규칙 정의서
+├── skills.md                # [AI 스킬] 만세력 연산, AI 오케스트레이션, 결제 스킬 명세서
+├── design.md                # [디자인] 디자인 시스템, 색상 토큰, UI 컴포넌트, AIT 가이드
 ├── .gitignore               # 최적화된 Git 무시 규칙 (AIT 번들, 환경변수 등)
 ├── granite.config.ts        # 앱인토스(AIT) Granite 프레임워크 설정
 ├── craco.config.js          # CRA 빌드 오버라이드 설정 (Tailwind, PostCSS)

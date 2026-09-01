@@ -13,7 +13,7 @@ const Footer = () => {
           </div>
           <div className="text-xs text-slate-500 leading-relaxed space-y-1 font-medium">
             <p>
-              <span className="text-slate-400">상호명</span> 엠비티아이주
+              <span className="text-slate-400">상호명</span> 스즈니 (SZUNI)
               <span className="mx-2 text-slate-300">|</span>
               <span className="text-slate-400">대표명</span> 이승준
               <span className="mx-2 text-slate-300">|</span>

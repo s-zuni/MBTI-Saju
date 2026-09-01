@@ -9,7 +9,7 @@ const PrivacyPage: React.FC = () => {
             <div className="max-w-4xl mx-auto px-6 py-24">
                 <h1 className="text-3xl font-bold mb-8 text-slate-900">MBTIJU 개인정보처리방침</h1>
                 <div className="prose prose-slate max-w-none text-slate-600 space-y-6 text-sm">
-                    <p>엠비티아이주(이하 "회사")는 「개인정보 보호법」 제30조에 따라 정보주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.</p>
+                    <p>스즈니 (SZUNI)(이하 "회사")는 「개인정보 보호법」 제30조에 따라 정보주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.</p>
 
                     <section>
                         <h2 className="text-lg font-bold text-slate-800">1. 개인정보의 처리 목적 및 수집 항목</h2>
