@@ -24,8 +24,8 @@ export const MODELS = {
  */
 export function getAIProvider(attempt: number = 0) {
     // 1. Fetch Keys (Server-side ONLY)
-    const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
 
     const google = createGoogleGenerativeAI({ apiKey: GEMINI_KEY || '' });
     const openai = createOpenAI({ apiKey: OPENAI_KEY || '' });
@@ -60,41 +60,17 @@ export function getAIProvider(attempt: number = 0) {
  * Checks if OpenAI is properly configured in the environment.
  */
 export function isOpenAIConfigured(): boolean {
-    return !!process.env.OPENAI_API_KEY;
+    return !!(process.env.OPENAI_API_KEY || process.env.OPENAI_KEY);
 }
 
 /**
  * Helper to determine if an error should trigger a provider fallback.
+ * Allows falling back to alternative providers/models whenever an attempt fails.
  */
 export function isRetryableAIError(error: any): boolean {
     if (!error) return false;
-
-    // 1. Check SDK's own retryable flag
-    if (error.isRetryable === true) return true;
-
-    // 2. Extract underlying error if this is an AI_RetryError
-    const lastError = error.lastError || (error.errors ? error.errors[error.errors.length - 1] : null);
-    const targetError = lastError || error;
-
-    // 3. Check status codes
-    const statusCode = targetError.statusCode || targetError.status;
-    if (statusCode === 503 || statusCode === 429 || statusCode === 500 || statusCode === 504) {
-        return true;
-    }
-
-    // 4. Check error message strings
-    const msg = (targetError.message || String(targetError)).toLowerCase();
-    return (
-        msg.includes('503') || 
-        msg.includes('unavailable') || 
-        msg.includes('429') || 
-        msg.includes('requests') ||
-        msg.includes('overloaded') ||
-        msg.includes('high demand') ||
-        msg.includes('rate limit') ||
-        msg.includes('deadline exceeded')
-    );
+    // Always allow fallback loop to try the next available provider on any error
+    return true;
 }
 
 export * from './prompts';
-
