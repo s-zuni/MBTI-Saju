@@ -6,15 +6,12 @@ export interface CreditPackage {
   originalPrice: number;
   price: number;
   isDiscount: boolean;
-  aitProductId?: string | undefined; // 앱인토스 전용 상품 ID (SKU)
 }
 
-export const AIT_DEEP_REPORT_PRODUCT_ID = 'ait.0000028985.c768a922.be48a69c7b.7821907657';
-
 export const COIN_PACKAGES: CreditPackage[] = [
-  { id: 'credit_100', credits: 100, originalPrice: 15000, price: 12000, isDiscount: true, aitProductId: 'ait.0000028985.7b691d9f.fdc11ac895.7822835073' },
-  { id: 'credit_50', credits: 50, originalPrice: 10000, price: 6900, isDiscount: true, aitProductId: 'credit_50_pack' }, // No ID provided for 50
-  { id: 'credit_10', credits: 10, originalPrice: 3000, price: 1500, isDiscount: true, aitProductId: 'ait.0000028985.07b29acd.41888d489a.7823137772' }
+  { id: 'credit_100', credits: 100, originalPrice: 15000, price: 12000, isDiscount: true },
+  { id: 'credit_50', credits: 50, originalPrice: 10000, price: 6900, isDiscount: true },
+  { id: 'credit_10', credits: 10, originalPrice: 3000, price: 1500, isDiscount: true }
 ];
 
 // 심층 리포트 구매 고객 전용 이벤트 패키지 (일반 웹 전용)
@@ -24,6 +21,26 @@ export const EVENT_CREDIT_PACKAGE = {
   price: 9900,
   originalPrice: 49000,
   eventType: 'deep_report_credit_500',
+} as const;
+
+// 운명 심층 상담 (유료 비동기 전문가 상담) 패키지
+export const CONSULTATION_PACKAGES = {
+  // 첫 구매: 19,900원 → 질문 3회권
+  PACKAGE: {
+    id: 'consultation_package_3',
+    price: 19900,
+    questions: 3,
+    name: '운명 심층 상담 3회 패키지',
+    description: '전문 상담사가 사주·MBTI를 바탕으로 24시간 내 답변',
+  },
+  // 추가 질문: 9,900원 → 1회
+  EXTRA: {
+    id: 'consultation_extra_question',
+    price: 9900,
+    questions: 1,
+    name: '운명 심층 상담 1회 추가',
+    description: '기존 패키지 소진 후 추가 질문 1회',
+  },
 } as const;
 
 

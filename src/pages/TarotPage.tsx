@@ -46,7 +46,7 @@ const TarotCardPlaceholder = ({ name }: { name: string }) => (
 const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
     const { session, loading: isAuthLoading } = useAuth();
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal, closeAllModals } = useModalStore();
     const { tier } = useSubscription(session);
 
@@ -65,7 +65,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
         onFinish: async ({ object }) => {
             if (object) {
-                await consumeCredits('TAROT');
+                await refreshCredits();
                 
                 const { data: { session: fetchedSession } } = await supabase.auth.getSession();
                 const activeSession = fetchedSession || session;

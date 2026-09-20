@@ -26,7 +26,7 @@ const INTERNATIONAL_REGIONS = [
 
 const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal } = useModalStore();
     const navigate = useNavigate();
     const reportRef = useRef<HTMLDivElement>(null);
@@ -47,6 +47,9 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         schema: tripSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: () => {
+            refreshCredits();
         }
     });
 
@@ -79,12 +82,6 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
         if (credits !== undefined && credits < cost) {
             openModal('creditPurchase', undefined, { requiredCredits: cost });
-            return;
-        }
-
-        const success = await consumeCredits('COMPATIBILITY_TRIP');
-        if (!success) {
-            alert('크레딧 사용에 실패했습니다.');
             return;
         }
 

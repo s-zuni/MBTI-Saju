@@ -1,8 +1,8 @@
 import { streamText } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
+import { authenticateUser } from './_utils/auth';
 
 export const config = {
     runtime: 'edge', 
@@ -11,6 +11,32 @@ export const config = {
 export default async function handler(req: Request) {
     const corsResult = handleCors(req);
     if (corsResult) return corsResult;
+
+    const reqCorsHeaders = getCorsHeaders(req);
+
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: reqCorsHeaders 
+        });
+    }
+
+    // 관리자 인증 및 인가 검증
+    const authResult = await authenticateUser(req);
+    if (authResult.errorResponse) return authResult.errorResponse;
+
+    const { data: profile } = await authResult.supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', authResult.user!.id)
+        .maybeSingle();
+
+    if (profile?.role !== 'admin') {
+        return new Response(JSON.stringify({ error: '관리자 권한이 필요합니다.' }), {
+            status: 403,
+            headers: reqCorsHeaders
+        });
+    }
 
     try {
         const body = await req.json();
@@ -35,9 +61,7 @@ ${BASE_SYSTEM_PROMPT}
 
 [AI 사주 직접 계산 엄금 및 사실 수용 규칙]
 ★ 중요: 너는 생년월일시를 보고 사주 원국(연주, 월주, 일주, 시주)을 직접 계산하지 마라!
-★ 아래 [System Context: Deterministic Saju Data]에 수록된 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 사실 데이터이다. 이를 100% 진실로 적용하여 해석만 진행하라.
-
-${sajuContext}`;
+★ 아래 사용자 입력에 제공되는 [System Context: Deterministic Saju Data] 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 사실 데이터이다. 이를 100% 진실로 적용하여 해석만 진행하라.`;
 
         const isCounseling = report_type === '사주 상담 리포트';
 
@@ -269,7 +293,11 @@ ${sajuContext}`;
             partnerDetailsText = `\n[상대방 정보 (궁합 및 고민 분석용)]\n이름: ${partnerInfo.name}, 생년월일시: ${partnerInfo.birth_info}, MBTI: ${partnerInfo.mbti || '모름'}, 관계: ${partnerInfo.relationship}`;
         }
 
-        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}, 유형: ${report_type}, 요청: ${specialRequest || '없음'}${partnerDetailsText}\n${sajuContext}`;
+        const userQuery = `[분석 대상자 정보]
+이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birthInfo}, 유형: ${report_type}, 요청: ${specialRequest || '없음'}${partnerDetailsText}
+
+[System Context: Deterministic Saju Data]
+${sajuContext}`;
 
         let lastError;
         for (let attempt = 0; attempt < 4; attempt++) {
@@ -280,9 +308,9 @@ ${sajuContext}`;
                     system: systemPrompt,
                     prompt: userQuery,
                     maxRetries: 0,
-                    maxTokens: 32000,
-                } as any);
-                return result.toTextStreamResponse({ headers: corsHeaders });
+                    maxOutputTokens: 16384,
+                });
+                return result.toTextStreamResponse({ headers: reqCorsHeaders });
             } catch (error) {
                 lastError = error;
                 if (!isRetryableAIError(error)) break;
@@ -290,6 +318,6 @@ ${sajuContext}`;
         }
         throw lastError;
     } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: reqCorsHeaders });
     }
 }

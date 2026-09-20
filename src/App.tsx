@@ -36,7 +36,6 @@ import AdminDeepReports from './pages/admin/AdminDeepReports';
 import { useAuth } from './hooks/useAuth';
 import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
-import { isTossApp } from './utils/envUtils';
 import AuthCallback from './components/auth/AuthCallback';
 // Lazy load modals for better initial performance
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
@@ -46,6 +45,7 @@ const RecommendationModal = lazy(() => import('./components/RecommendationModal'
 const CompatibilityModal = lazy(() => import('./components/CompatibilityModal'));
 const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'));
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
+const AdminConsultations = lazy(() => import('./pages/admin/AdminConsultations'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModal'));
 
@@ -55,6 +55,7 @@ const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage
 
 // Consolidated fortune page
 const MyLuckPage = lazy(() => import('./pages/MyLuckPage'));
+const ConsultationPage = lazy(() => import('./pages/ConsultationPage'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
@@ -162,8 +163,7 @@ function AppContent({
   const navigate = useNavigate();
   const isChatPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/room');
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isInToss = isTossApp();
-  
+
   const handleStart = () => {
     if (session) navigate('/myluck?type=today');
     else openModal('analysis', 'signup');
@@ -209,6 +209,7 @@ function AppContent({
             <Route path="users" element={<UserManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="inquiries" element={<AdminInquiries />} />
+            <Route path="consultations" element={<AdminConsultations />} />
             <Route path="plans" element={<PlanManagement />} />
             <Route path="shop/products" element={<AdminShopProducts />} />
             <Route path="shop/orders" element={<AdminShopOrders />} />
@@ -216,8 +217,8 @@ function AppContent({
 
           {/* 나머지 모든 경로는 로딩 상태에 따라 분기 */}
           <Route path="*" element={
-            <div className={`selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden ${isInToss ? 'pt-0 pb-safe' : 'pb-20 md:pb-0'}`}>
-              {!isInToss && <Navbar />}
+            <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
+              <Navbar />
 
               {isAuthLoading && !session && location.pathname !== '/premium' ? (
                 <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
@@ -363,8 +364,8 @@ function AppContent({
                   <Route path="/tarot" element={<ChatPage session={session} defaultService="tarot" />} />
                   <Route path="/saju" element={<ChatPage session={session} defaultService="saju" />} />
                   <Route path="/share/compatibility/:userId" element={<CompatibilitySharePage />} />
-                  <Route path="/room" element={<ChatPage session={session} />} />
-                  <Route path="/chat" element={<ChatPage session={session} />} />
+                  <Route path="/room" element={<ConsultationPage session={session} />} />
+                  <Route path="/chat" element={<ConsultationPage session={session} />} />
                   <Route path="/relationship" element={<RelationshipPage session={session} />} />
                   <Route path="/gold" element={<GoldPage session={session} />} />
                   <Route path="/premium" element={<DeepReportLandingPage onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })} />} />
@@ -379,8 +380,8 @@ function AppContent({
                 </Routes>
               )}
 
-              {!isChatPage && !isInToss && <Footer />}
-              {!isAdminPage && !isInToss && <BottomNav />}
+              {!isChatPage && <Footer />}
+              {!isAdminPage && <BottomNav />}
 
 
               {/* Modals are now lazy loaded and managed by openModal store */}
@@ -399,10 +400,7 @@ function AppContent({
                   if (service === 'fortune') navigate('/myluck?type=today');
                   else openModal((service === 'mbti' ? 'deepReport' : service) as any);
                 }}
-                onUseCredit={async (isRegenerate?: boolean) => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits(isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU');
-                }}
+                refreshCredits={refreshCredits}
                 credits={credits}
                 session={session}
                 onOpenDeepReport={(reportType) => openModal('deepReport', undefined, { reportType })}
@@ -427,10 +425,7 @@ function AppContent({
                   if (service === 'fortune') navigate('/myluck?type=today');
                   else openModal((service === 'mbti' ? 'mbtiSaju' : service) as any);
                 }}
-                onUseCredit={async () => {
-                  if (!session?.user?.id) return false;
-                  return await consumeCredits('COMPATIBILITY_TRIP');
-                }}
+                refreshCredits={refreshCredits}
                 credits={credits}
                 session={session}
               />
@@ -453,13 +448,11 @@ function AppContent({
                 userName={session?.user?.user_metadata?.full_name}
               />
 
-              {!isTossApp() && (
-                <DeepReportEventModal
-                  isOpen={modals?.deepReportEvent?.isOpen || false}
-                  onClose={() => closeModal('deepReportEvent')}
-                  session={session}
-                />
-              )}
+              <DeepReportEventModal
+                isOpen={modals?.deepReportEvent?.isOpen || false}
+                onClose={() => closeModal('deepReportEvent')}
+                session={session}
+              />
 
               <PremiumBanner
                 isVisible={showPremiumBanner}

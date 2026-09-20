@@ -3,7 +3,6 @@ import { X, Sparkles, Coins, Gift, ArrowRight, Loader2, CheckCircle2 } from 'luc
 import { supabase } from '../supabaseClient';
 import { requestPayment } from '../payment';
 import { EVENT_CREDIT_PACKAGE } from '../config/creditConfig';
-import { isTossApp } from '../utils/envUtils';
 
 interface DeepReportEventModalProps {
     isOpen: boolean;
@@ -18,7 +17,7 @@ const DeepReportEventModal: React.FC<DeepReportEventModalProps> = ({ isOpen, onC
 
     // 이벤트 참여 여부 확인
     useEffect(() => {
-        if (!isOpen || !session?.user?.id || isTossApp()) {
+        if (!isOpen || !session?.user?.id) {
             setChecking(false);
             return;
         }
@@ -54,7 +53,7 @@ const DeepReportEventModal: React.FC<DeepReportEventModalProps> = ({ isOpen, onC
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
 
-    if (!isOpen || isTossApp()) return null;
+    if (!isOpen) return null;
 
     // 이미 참여했거나, 체크 중이면 표시하지 않음
     if (checking) return null;

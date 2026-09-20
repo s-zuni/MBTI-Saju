@@ -18,8 +18,6 @@ export interface TossPaymentConfig {
     metadata?: Record<string, any> | undefined;
     successUrl?: string | undefined;
     failUrl?: string | undefined;
-    aitProductId?: string | undefined;
-    onAitGrant?: ((orderId: string, productId: string) => Promise<boolean>) | undefined;
 }
 
 export interface PaymentResponse {

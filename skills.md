@@ -13,10 +13,9 @@
 |---|---|---|---|
 | `saju-engine` | 만세력 및 사주명식 연산 | `src/utils/sajuUtils.ts`, `api/_utils/saju.ts` | 생년월일시 기반 4주 8자, 오행 분포, 십신, 신살 정밀 산출 |
 | `mbti-fusion` | MBTI x 사주 융합 분석 | `api/analysis-main.ts`, `api/_utils/prompts.ts` | 사주 일간/오행과 MBTI 16유형의 성향 교차 분석 및 공명도 산출 |
-| `ai-orchestrator` | AI 멀티 프로바이더 폴백 | `api/_utils/ai-provider.ts`, `src/config/schemas.ts` | Gemini 3.1 Flash / GPT-4o 멀티 스트리밍 및 Zod 구조화 보장 |
+| `ai-orchestrator` | AI 멀티 프로바이더 폴백 | `api/_utils/ai-provider.ts`, `src/config/schemas.ts` | GPT-4o-mini(주) / Gemini 3.1 Flash(폴백) 멀티 스트리밍 및 Zod 구조화 보장 |
 | `deep-report` | 심층 리포트 생성 & PDF 출력 | `src/components/pdf/DeepReportReactPDF.tsx`, `api/generate-deep-report.ts` | 20+ 페이지 분량의 고해상도 A4 PDF 및 Word 문서 생성 |
-| `toss-bridge` | 앱인토스(AIT) 플랫폼 연동 | `src/payment/ait/`, `granite.config.ts`, `docs/toss/` | 토스 네이티브 로그인, 인앱결제(IAP), Safe Area, 애널리틱스 |
-| `credit-payment` | 크레딧 & 결제 관리 | `src/hooks/useCredits.ts`, `src/payment/`, `src/config/creditConfig.ts` | Supabase RPC 원자적 크레딧 차감, 웹/AIT 멀티 결제 라우팅 |
+| `credit-payment` | 크레딧 & 결제 관리 | `src/hooks/useCredits.ts`, `src/payment/`, `src/config/creditConfig.ts` | Supabase RPC 원자적 크레딧 차감, 웹 TossPayments 결제 라우팅 |
 | `specialized-fortune` | 도메인 특화 운세 모듈 | `api/tarot.ts`, `api/gold.ts`, `api/love-saju.ts`, `src/pages/` | 타로 78장, KBO 야구 궁합, 자미두수, 금전/이직/연애 사주 |
 
 ---
@@ -86,13 +85,13 @@ export function getTenGods(dayMaster: string, pillars: SajuPillars): Record<stri
 ```text
 [요청 시작 (Attempt 0)]
      ↓
-1순위: Google Gemini 3.1 Flash Lite (빠른 속도 & 정밀 한국어)
+1순위: OpenAI GPT-4o-mini (주 모델)
      ↓ (실패 또는 Rate Limit 시)
-2순위: OpenAI GPT-4o-mini (Attempt 1)
+2순위: Google Gemini 3.1 Flash Lite (Attempt 1, 폴백)
      ↓ (실패 시)
-3순위: Google Gemini Fallback (Attempt 2)
+3순위: OpenAI GPT-4o-mini Fallback (Attempt 2)
      ↓ (실패 시)
-4순위: OpenAI GPT-4o-mini Fallback (Attempt 3)
+4순위: Google Gemini Final Fallback (Attempt 3)
 ```
 
 ### Zod 응답 스키마 강제 (`src/config/schemas.ts`)
@@ -116,35 +115,21 @@ export function getTenGods(dayMaster: string, pillars: SajuPillars): Record<stri
 
 ---
 
-## 5. 💎 스킬 5: 앱인토스(AIT) 네이티브 통합 브릿지 (`toss-bridge`)
+## 5. 💳 스킬 5: 크레딧 및 결제 관리 시스템 (`credit-payment`)
 
 ### 기능 설명
-토스(Toss) 슈퍼앱 환경에서 원활하게 구동되도록 `@apps-in-toss/web-framework` SDK를 완벽히 연동합니다.
-
-### 연동 인터페이스
-1. **환경 감지**: `src/utils/envUtils.ts`의 `isTossApp()` 함수를 통해 실행 환경 분기.
-2. **토스 로그인**: 토스 네이티브 계정 인증 및 토큰 교환.
-3. **토스 인앱결제 (IAP)**: `src/payment/ait/aitPaymentHandler.ts`를 통해 토스 결제 모달 호출 및 영수증 검증.
-4. **UI Safe Area**: CSS `.pt-safe`, `.pb-safe` 유틸리티를 통한 상/하단 인셋 영역 자동 보정.
-5. **빌드 도구**: `granite.config.ts` 및 `ait CLI` (`npm run package`, `npm run deploy`).
-
----
-
-## 6. 💳 스킬 6: 크레딧 및 결제 관리 시스템 (`credit-payment`)
-
-### 기능 설명
-사용자의 크레딧 잔액을 안전하게 관리하고, 웹/앱인토스 멀티 플랫폼 결제를 단일 인터페이스로 추상화합니다.
+사용자의 크레딧 잔액을 안전하게 관리하고, 웹 TossPayments 결제를 단일 인터페이스로 추상화합니다.
 
 ### 크레딧 연산 규칙
 - `useCredits.ts`:
   - `deductCredits(amount, serviceType)`: Supabase RPC 호출을 통한 원자적(Atomic) 잔액 차감.
   - `addCredits(amount, reason)`: 결제 승인 후 크레딧 충전.
 - `src/payment/index.ts`:
-  - `processPayment(packageInfo)`: 플랫폼에 따라 `aitPaymentHandler` 또는 `webPaymentHandler`로 자동 라우팅.
+  - `requestPayment(config)`: `webPaymentHandler`를 통해 TossPayments 웹 위젯 결제창을 호출.
 
 ---
 
-## 7. 🔮 스킬 7: 도메인 특화 운세 서브 모듈 (`specialized-fortune`)
+## 6. 🔮 스킬 6: 도메인 특화 운세 서브 모듈 (`specialized-fortune`)
 
 | 서브 모듈 | 설명 | 진입점 |
 |---|---|---|

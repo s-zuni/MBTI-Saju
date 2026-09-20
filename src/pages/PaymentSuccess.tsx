@@ -2,7 +2,6 @@ import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, Home, Receipt } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { isTossApp } from '../utils/envUtils';
 
 const DeepReportEventModal = lazy(() => import('../components/DeepReportEventModal'));
 const PaymentSuccess: React.FC = () => {
@@ -82,19 +81,21 @@ const PaymentSuccess: React.FC = () => {
                       .finally(() => setIsGenerating(false));
 
 
-                    // 이벤트 팝업 노출 (심층 리포트 구매 시 일반 웹에서만 노출)
-                    if (!isTossApp()) {
-                        setTimeout(() => setShowEventModal(true), 1500);
-                    }
+                    // 이벤트 팝업 노출 (심층 리포트 구매 시)
+                    setTimeout(() => setShowEventModal(true), 1500);
                 }
 
                 setLoading(false);
                 
                 // 이벤트 팝업이 없는 경우에만 자동 이동
-                if (!orderId?.startsWith('DEEPREPORT')) {
-                    setTimeout(() => {
-                        navigate('/usage-history', { replace: true });
-                    }, 3000);
+                if (orderId?.startsWith('DEEPREPORT')) {
+                    // DEEPREPORT handles its own modal
+                } else if (orderId?.startsWith('EVT500')) {
+                    setTimeout(() => navigate('/'), 3000);
+                } else if (orderId?.startsWith('CONSULTATION')) {
+                    setTimeout(() => navigate('/chat'), 3000);
+                } else {
+                    setTimeout(() => navigate('/myluck?type=today'), 3000);
                 }
 
             } catch (err: any) {
@@ -163,7 +164,13 @@ const PaymentSuccess: React.FC = () => {
                             이벤트 크레딧으로 다양한 운세 서비스를 마음껏 이용하세요.
                         </p>
                     </div>
-
+                ) : orderId?.startsWith('CONSULTATION') ? (
+                    <div className="space-y-3 mb-6">
+                        <p className="text-slate-900 font-black text-lg">상담권 결제 완료!</p>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                            운명 심층 상담권이 성공적으로 지급되었습니다. 잠시 후 상담 화면으로 이동합니다.
+                        </p>
+                    </div>
                 ) : (
                     <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
                 )}
@@ -186,16 +193,15 @@ const PaymentSuccess: React.FC = () => {
             </div>
 
 
-            {/* 심층 리포트 구매 고객 이벤트 팝업 (일반 웹 전용) */}
-            {!isTossApp() && (
-                <Suspense fallback={null}>
-                    <DeepReportEventModal
-                        isOpen={showEventModal}
-                        onClose={() => setShowEventModal(false)}
-                        session={session}
-                    />
-                </Suspense>
-            )}        </div>
+            {/* 심층 리포트 구매 고객 이벤트 팝업 */}
+            <Suspense fallback={null}>
+                <DeepReportEventModal
+                    isOpen={showEventModal}
+                    onClose={() => setShowEventModal(false)}
+                    session={session}
+                />
+            </Suspense>
+        </div>
     );
 };
 

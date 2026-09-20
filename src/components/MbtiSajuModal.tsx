@@ -13,10 +13,12 @@ interface MbtiSajuModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (service: ServiceType) => void;
-  onUseCredit?: (isRegenerate?: boolean) => Promise<boolean>;
-  credits?: number;
+  onUseCredit?: ((isRegenerate?: boolean) => Promise<boolean>) | undefined;
+  refreshCredits?: (() => Promise<void> | void) | undefined;
+  onSuccess?: (() => void) | undefined;
+  credits?: number | undefined;
   session: any;
-  onOpenDeepReport?: (reportType?: string) => void;
+  onOpenDeepReport?: ((reportType?: string) => void) | undefined;
 }
 
 interface ElementColor {
@@ -42,7 +44,7 @@ const getElementColor = (element: string): ElementColor => {
   return DEFAULT_COLOR;
 };
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session: initialSession, onOpenDeepReport }) => {
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, refreshCredits, onSuccess, credits, session: initialSession, onOpenDeepReport }) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -57,8 +59,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     schema: analysisSchema,
     headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
     onFinish: ({ object }) => {
-      if (object && onUseCredit) {
-        onUseCredit(isRegenerating);
+      if (object) {
+        if (refreshCredits) {
+          refreshCredits();
+        }
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     },
     onError: (err) => {

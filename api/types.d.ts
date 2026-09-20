@@ -80,17 +80,17 @@ export interface PreciseSajuData {
     elements: FiveElementsCount;
     elementRatio: FiveElementsRatio;
     voidBranches: string[];
-    luckPillars?: LuckPillarsData;
+    luckPillars?: LuckPillarsData | undefined;
     trueSolarTimeApplied: boolean;
     dayBoundaryRule: string;
 }
 
 export interface SajuInput {
     birthDate: string;
-    birthTime?: string | null;
-    gender?: Gender | string;
-    isLunar?: boolean;
-    isLeapMonth?: boolean;
-    longitude?: number;
-    dayBoundary?: DayBoundary;
+    birthTime?: string | null | undefined;
+    gender?: Gender | string | undefined;
+    isLunar?: boolean | undefined;
+    isLeapMonth?: boolean | undefined;
+    longitude?: number | undefined;
+    dayBoundary?: DayBoundary | undefined;
 }

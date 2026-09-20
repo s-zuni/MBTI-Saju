@@ -1,8 +1,7 @@
 import { TossPaymentConfig, PaymentResponse } from '../types';
 
 /**
- * 일반 웹 환경 전용 결제 처리 (CDN 방식)
- * 패키지 의존성을 완전히 제거하여 Apps In Toss 심사를 통과하기 위함입니다.
+ * 웹 환경 TossPayments 결제 처리 (CDN 방식으로 SDK 동적 로드)
  */
 export const requestWebPayment = async (config: TossPaymentConfig, clientKey: string): Promise<PaymentResponse> => {
     try {

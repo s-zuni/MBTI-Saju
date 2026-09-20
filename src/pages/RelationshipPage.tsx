@@ -168,7 +168,7 @@ const RadarChart: React.FC<{ data: { label: string; value: number }[] }> = ({ da
 const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
     const { session: hookSession, loading: isAuthLoading } = useAuth();
     const session = propSession || hookSession;
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal } = useModalStore();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -223,6 +223,9 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
         schema: loveSajuSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: () => {
+            refreshCredits();
         }
     });
 
@@ -287,7 +290,6 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
                 separationDate,
                 separationReason
             });
-            await consumeCredits(serviceKey);
         } catch (e: any) {
             setError(e.message);
         }

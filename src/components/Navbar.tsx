@@ -4,9 +4,7 @@ import { supabase } from '../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
-import { useCredits } from '../hooks/useCredits';
 import { useShopCart } from '../hooks/useShopCart';
-import { SERVICE_COSTS } from '../config/creditConfig';
 import Logo from './Logo';
 
 interface NavbarProps { }
@@ -20,13 +18,30 @@ const Navbar: React.FC<NavbarProps> = () => {
 
   const { session } = useAuth();
   const { openModal, isAnyModalOpen } = useModalStore();
-  const { credits } = useCredits(session);
   const { cartCount } = useShopCart();
+  const [answeredCount, setAnsweredCount] = useState(0);
 
   // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // 답변 완료된 상담 수 가져오기 (단순 표시용)
+  useEffect(() => {
+    if (!session) {
+      setAnsweredCount(0);
+      return;
+    }
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('consultation_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+        .eq('status', 'answered');
+      if (count) setAnsweredCount(count);
+    };
+    fetchCount();
+  }, [session, location.pathname]); // 라우트 변경될 때마다 갱신
 
   // 외부 클릭 시 모바일 메뉴 닫기
   useEffect(() => {
@@ -70,11 +85,7 @@ const Navbar: React.FC<NavbarProps> = () => {
       openModal('analysis', 'login');
       return;
     }
-    if (credits >= SERVICE_COSTS.AI_CHAT_5) {
-      navigate('/chat');
-    } else {
-      openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_5 });
-    }
+    navigate('/chat');
   };
 
   const handleTarotClick = () => {
@@ -103,8 +114,11 @@ const Navbar: React.FC<NavbarProps> = () => {
           <button onClick={() => navigate('/myluck')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운세 보기
           </button>
-          <button onClick={handleChatClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
+          <button onClick={handleChatClick} className={`relative text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             운명 심층 상담
+            {answeredCount > 0 && (
+              <span className="absolute -top-1 -right-3 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
+            )}
           </button>
           <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
             타로

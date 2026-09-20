@@ -13,9 +13,7 @@
 
 ### 핵심 기능 및 제공 가치
 1. **사주 x MBTI 융합 분석**: 생년월일시 만세력 8자와 16가지 MBTI 성향을 교차 분석하여 기존 운세 대비 차별화된 심층 통찰 제공.
-2. **멀티 플랫폼 지원**:
-   - **웹 플랫폼 (Web)**: 데스크톱/모바일 반응형 웹 (Supabase Auth, 일반 PG 결제, PDF/Word 다운로드).
-   - **앱인토스 (Apps in Toss, AIT)**: 토스(Toss) 슈퍼앱 내 미니앱으로 구동 (토스 로그인, 토스 인앱결제, Safe Area 대응, 네이티브 브릿지).
+2. **독립 웹 플랫폼 (Web)**: 데스크톱/모바일 반응형 웹 (Supabase Auth, TossPayments 웹 위젯 결제, PDF/Word 다운로드).
 3. **전문가급 심층 리포트 (Deep Report)**:
    - 20~30페이지 분량의 초개인화 평생 총운 리포트 자동 생성 및 `@react-pdf/renderer` 기반 A4 규격 고해상도 PDF 다운로드 지원.
 4. **다채로운 테마 운세 & 인터랙션**:
@@ -29,19 +27,17 @@
 graph TD
     Client["📱 클라이언트 (React 18 + TS + Tailwind)"]
     Web["🌐 웹 브라우저 환경"]
-    AIT["📲 토스(Toss) 앱인토스 환경"]
     
     Client --> Web
-    Client --> AIT
     
     Client --> VercelAPI["⚡ Vercel Serverless API (/api/*)"]
     Client --> Supabase["🗄️ Supabase (PostgreSQL, Auth, RLS, Storage)"]
     
-    VercelAPI --> AI_Provider["🧠 AI 오케스트레이터 (Google Gemini 3.1 & OpenAI GPT-4o)"]
+    VercelAPI --> AI_Provider["🧠 AI 오케스트레이터 (OpenAI GPT-4o-mini 주 / Google Gemini 3.1 폴백)"]
     VercelAPI --> Manseryeok["📜 만세력(사주) 엔진 (Lunar/Solar Engine)"]
     VercelAPI --> Supabase
     
-    AIT --> TossNative["💎 토스 네이티브 브릿지 (IAP 인앱결제, 토스 로그인, Safe Area)"]
+    Web --> TossWidget["💳 TossPayments 웹 결제 위젯"]
 ```
 
 ---
@@ -73,10 +69,6 @@ MBTI-Saju/
 │   ├── tsconfig.json                # API 전용 TypeScript 설정
 │   └── types.d.ts                   # 백엔드 전역 타입 정의
 │
-├── docs/                            # [문서] 플랫폼 연동 및 레퍼런스
-│   ├── toss/                        # 토스 앱인토스 개발/출시/결제 가이드
-│   └── llms.md                      # AI 프롬프트 지침
-│
 ├── public/                          # [정적 자원]
 │   ├── assets/                      # 3D 아이콘, 로고, 디자인 벡터, 프리미엄 썸네일
 │   │   ├── designs/                 # UI 및 리포트 디자인 SVG
@@ -96,7 +88,7 @@ MBTI-Saju/
 │   │   ├── AnalysisModal.tsx        # 사주 & MBTI 기본 분석 결과 모달
 │   │   ├── BottomNav.tsx            # 모바일 하단 내비게이션 바
 │   │   ├── CompatibilityModal.tsx   # 궁합 분석 입력/결과 모달
-│   │   ├── CreditPurchaseModal.tsx  # 크레딧 충전 모달 (AIT IAP 및 웹 결제)
+│   │   ├── CreditPurchaseModal.tsx  # 크레딧 충전 모달 (TossPayments 웹 결제)
 │   │   ├── DeepReportModal.tsx      # 심층 리포트 신청 및 결제 모달
 │   │   ├── FeatureGrids.tsx         # 메인 홈 기능 그리드 카드 목록
 │   │   ├── HeroSection.tsx          # 홈 메인 히어로 배너 및 빠른 입력 폼
@@ -130,15 +122,13 @@ MBTI-Saju/
 │   │   ├── TarotPage.tsx            # 신비타로 카드 뽑기 및 해설
 │   │   └── TripPage.tsx             # 사주 맞춤 여행지 추천
 │   ├── payment/                     # 결제 추상화 레이어
-│   │   ├── ait/                     # 앱인토스 SDK 인앱결제 핸들러
-│   │   ├── web/                     # 웹 환경 결제 핸들러 (PortOne/PG 연동)
-│   │   └── index.ts                 # 실행 환경(`isTossApp()`)에 따른 결제 라우팅
+│   │   ├── web/                     # 웹 환경 결제 핸들러 (TossPayments 위젯)
+│   │   └── index.ts                 # 결제창 호출 진입점
 │   ├── utils/                       # 프론트 유틸리티
 │   │   ├── sajuUtils.ts             # 클라이언트 만세력 계산 및 오행 점수화
 │   │   ├── pdfGenerator.ts          # PDF 다운로드 트리거 유틸리티
 │   │   ├── docxGenerator.ts         # Word(.docx) 다운로드 유틸리티
-│   │   ├── exportUtils.ts           # html2canvas 기반 이미지 카드 저장 유틸리티
-│   │   └── envUtils.ts              # AIT 환경 감지 (`isTossApp()`)
+│   │   └── exportUtils.ts           # html2canvas 기반 이미지 카드 저장 유틸리티
 │   ├── supabaseClient.ts            # Supabase JS 클라이언트 인스턴스
 │   ├── index.css                    # Tailwind + 디자인 토큰 + PDF 스타일
 │   └── App.tsx                      # 글로벌 라우팅, 모달 주입 및 앱 진입점
@@ -146,10 +136,9 @@ MBTI-Saju/
 ├── supabase/                        # [데이터베이스] Supabase 마이그레이션 SQL
 │   └── migrations/                  # 01_reviews.sql, 02_shop.sql, 03_event_claims.sql
 │
-├── granite.config.ts                # 앱인토스(AIT) 빌드/실행 설정
 ├── vercel.json                      # Vercel Serverless 배포 및 URL 리라이트
 ├── package.json                     # 프로젝트 패키지 및 의존성
-└── .gitignore                       # Git 무시 목록 (*.ait 포함)
+└── .gitignore                       # Git 무시 목록
 ```
 
 ---
@@ -181,8 +170,8 @@ MBTI-Saju/
 - 십신(비견, 겁재, 식신, 상관, 편재, 정재, 편관, 정관, 편인, 정인) 및 신살 연산
      ↓
 [AI 프롬프트 오케스트레이션] (api/_utils/ai-provider.ts)
-- 1순위: Google Gemini 3.1 Flash Lite
-- 폴백 체인: OpenAI GPT-4o-mini
+- 1순위: OpenAI GPT-4o-mini
+- 폴백 체인: Google Gemini 3.1 Flash Lite
 - Zod 스키마를 통한 엄격한 JSON 구조 보장
      ↓
 [크레딧 원자적 차감 & 결과 캐싱] (Supabase RPC `deduct_credits`)
@@ -194,23 +183,23 @@ MBTI-Saju/
 - **라이트 (2 C)**: 신비타로 (`TAROT`)
 - **스탠다드 (5 C)**: 내일 운세, 궁합, 여행지, KBO 궁합, 재물운, 사업운, 취업운, 이직운, 연인/부부/결혼/재회/짝사랑 사주
 - **프리미엄 (10~20 C)**: 재분석 (10), 자미두수 (15), MBTI & 사주 메인 분석 (20), AI 1:1 상담 5회 (20)
-- **심층 리포트**: 단건 전용 패키지 결제 (`AIT_DEEP_REPORT_PRODUCT_ID`)
+- **심층 리포트**: 단건 전용 패키지 결제 (`metadata.productId: 'deep_report'`)
 
-### 3) 결제 라우팅 및 샌드박스 대응 (`src/payment/index.ts`)
-- `isTossApp()`이 `true`인 경우: `@apps-in-toss/web-framework` IAP 네이티브 SDK 호출.
-- `isTossApp()`이 `false`인 경우: 일반 웹 환경 토스페이먼츠/포트원 웹 SDK 호출.
+### 3) 결제 라우팅 (`src/payment/index.ts`)
+- `requestPayment()`이 웹 환경 TossPayments 위젯 SDK(`src/payment/web/webPaymentHandler.ts`)를 호출.
+- 결제 승인/취소/조회는 서버(`api/payment.ts`)에서 `TOSS_SECRET_KEY`로 TossPayments API를 직접 호출하여 처리.
 
 ---
 
 ## 6. ⚠️ AI 코딩 에이전트 개발 수칙 (Strict Rules)
 
-1. **플랫폼 브릿지 방어 (`isTossApp()` 필수)**:
-   - 네이티브 API 호출 전 반드시 `isTossApp()`을 검사하여 일반 브라우저에서 에러가 발생하지 않도록 방어 코드를 작성하세요.
-2. **비밀 키 서버 격리**:
-   - `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`는 서버리스 함수(`api/`) 내부에서만 참조하고 프론트엔드 번들에 포함되지 않도록 하세요.
-3. **크레딧 차감 함수 일원화**:
+1. **비밀 키 서버 격리**:
+   - `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `TOSS_SECRET_KEY`는 서버리스 함수(`api/`) 내부에서만 참조하고 프론트엔드 번들에 포함되지 않도록 하세요.
+2. **크레딧 차감 함수 일원화**:
    - 유료 기능 실행 시 반드시 `useCredits.ts`의 `deductCredits()` 함수를 호출하여 DB 원자적 차감 및 UI 상태를 동기화하세요.
-4. **엄격한 스키마 검증**:
+3. **엄격한 스키마 검증**:
    - AI 응답 파싱 시 `src/config/schemas.ts`의 Zod 스키마를 사용하고, 예상치 못한 필드 누락 시 안전한 폴백 데이터를 반환하도록 처리하세요.
-5. **@react-pdf 렌더러 규격 준수**:
+4. **@react-pdf 렌더러 규격 준수**:
    - PDF 리포트는 브라우저 CSS 대신 React-PDF 전용 스타일 및 `NotoSansKR` 폰트를 사용하세요.
+5. **AI 프로바이더 우선순위 유지**:
+   - `api/_utils/ai-provider.ts`의 `getAIProvider()`는 OpenAI GPT-4o-mini를 주 모델로, Google Gemini 3.1 Flash Lite를 폴백으로 사용합니다. 이 우선순위를 임의로 되돌리지 마세요.

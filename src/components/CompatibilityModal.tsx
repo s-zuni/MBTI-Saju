@@ -21,6 +21,8 @@ interface CompatibilityModalProps {
     onClose: () => void;
     onNavigate: (service: ServiceType) => void;
     onUseCredit?: (() => Promise<boolean>) | undefined;
+    refreshCredits?: (() => Promise<void> | void) | undefined;
+    onSuccess?: (() => void) | undefined;
     credits?: number | undefined;
     session: any;
     prefillData?: PrefillData | undefined;
@@ -44,6 +46,8 @@ const BIRTH_TIME_SLOTS = [
 
 interface CompatibilityContentProps {
     onUseCredit?: (() => Promise<boolean>) | undefined;
+    refreshCredits?: (() => Promise<void> | void) | undefined;
+    onSuccess?: (() => void) | undefined;
     credits?: number | undefined;
     session: any;
     onReset: () => void;
@@ -53,6 +57,8 @@ interface CompatibilityContentProps {
 
 const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     onUseCredit,
+    refreshCredits,
+    onSuccess,
     credits,
     session,
     onReset,
@@ -80,8 +86,13 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             'Authorization': `Bearer ${session?.access_token || ''}`
         },
         onFinish: ({ object }) => {
-            if (object && onUseCredit) {
-                onUseCredit();
+            if (object) {
+                if (refreshCredits) {
+                    refreshCredits();
+                }
+                if (onSuccess) {
+                    onSuccess();
+                }
             }
         }
     });
@@ -443,7 +454,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     );
 };
 
-const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, credits, session, prefillData }) => {
+const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, refreshCredits, onSuccess, credits, session, prefillData }) => {
     const [resetKey, setResetKey] = useState(0);
 
     useEffect(() => {
@@ -493,6 +504,8 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ isOpen, onClose
                     key={resetKey}
                     onReset={() => setResetKey(prev => prev + 1)}
                     onUseCredit={onUseCredit}
+                    refreshCredits={refreshCredits}
+                    onSuccess={onSuccess}
                     credits={credits}
                     session={session}
                     prefillData={prefillData}

@@ -287,15 +287,6 @@ const MyPage: React.FC<MyPageProps> = ({
       if (!activeSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
       }
-      
-      // 크레딧 차감 시도 (첫 분석은 무료이므로 skip)
-      if (!isFirstTime) {
-        const spendSuccess = await spendCredits(serviceType);
-        if (!spendSuccess) {
-          setAnalysisLoading(false);
-          return;
-        }
-      }
 
       const requestPayload = {
         part: 'core',

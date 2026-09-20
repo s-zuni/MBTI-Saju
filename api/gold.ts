@@ -1,14 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+import { authenticateUser } from './_utils/auth';
 
 
 export const config = {
     runtime: 'edge',
 };
+
+const STATIC_GOLD_SYSTEM_PROMPT = `
+${BASE_SYSTEM_PROMPT}
+
+당신은 사주명리학과 MBTI 심리를 결합해 내담자의 재물 흐름을 분석하는 냉철한 운명 분석가이자 재물 전략 전문가입니다.
+
+[시간적 기준 정보]
+현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
+
+[필수 상세 분석 지침 - 전 영역 분량 및 디테일 대폭 확대]
+1. **사주 명리학 분석 (sajuAnalysis)**:
+   - **dayMasterWealth (일간과 재성의 밸런스)**: 내담자의 사주를 정밀 분석하여 사업 및 재물 운명은 어떤지 **기존보다 300자 이상 풍부하게** 제시하십시오.
+   - **wealthStructure (재물 원국 구조 / 격국)**: 단순 추상적 경고를 금하고, 반드시 구체적인 리스크/기회 예시를 명확하게 들어 서술하십시오. (예: 단순히 "외부 방해가 있다"가 아니라 "동업자의 기회주의적 차명 거래나 인허가 승인 지연 등 ~~한 외부 방해가 발생할 수 있다")
+   - **elementBalance (오행 균형과 재물 공급력)**: 단순 진단에 그치지 말고, 반드시 **'~~이 충분하여 ~~하나 ~~이 부족하여 사업/재물 활동 중 ~~한 일이 있을 수 있다. 따라서 ~~가 필요하며, 이것의 실천 예시는 ~~가 있다'** 포맷을 엄격하게 지켜 실천 요령까지 구체적으로 서술하십시오.
+
+2. **재물 대운 / 세운 흐름 (timingAnalysis)**:
+   - 시기와 이유를 명확하게 제시하고, 구체적인 액션 조언을 병기하십시오. (예: "2027년은 ~~사주에서 ~~ 기운이 흐르므로 기회가 있다. 이때 사업 모델 확장을 노려라" 등)
+   - currentYear, nextYear, peakPeriod, cautionPeriod 각 항목의 분량을 **기존보다 1.5배 이상 대폭 확대**하십시오.
+
+3. **MBTI 기반 행동 처방전 (mbtiAdvice)**:
+   - 내담자의 MBTI가 재물 및 사업 운에서 **어떻게 발휘될 수 있고, 주의해야 할 점은 무엇이며, 어떻게 실현해야 하는지** 구체적인 비즈니스/재물 실생활 예시를 들어 **분량을 2배 이상 대폭 늘려 서술**하십시오. (strength, weakness, actionPlan 각 항목 2배 이상 분량)
+
+4. 한자는 반드시 한글과 병기하세요: 편재(偏財), 정재(正財), 식신(食神) 등.
+5. 오행 언급 시 영어를 절대 사용하지 마세요: 목(木) O, 목(Wood) X.
+6. 마크다운 강조 기호(**)는 일반 필드에선 사용을 피하고 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요. 단, mbtiSajuWealthReport 마크다운 보고서 필드의 헤더 및 볼드 강조는 허용됩니다.
+7. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
+8. "노력하면 성공한다" 같은 바넘 효과 문장을 철저히 배제하고, 근거와 결론이 명확한 냉철한 솔루션을 제공하십시오.
+9. mbtiSajuWealthReport 필드에는 반드시 공백 포함 1000자 이상, 1500자 이하의 분량으로 지정된 [마크다운 출력 형식]을 엄격하게 지켜 작성하십시오.`;
 
 const goldSchema = z.object({
     wealthType: z.string(),
@@ -41,84 +69,53 @@ export default async (req: Request) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
 
+    const responseHeaders = getCorsHeaders(req);
+
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: responseHeaders 
+        });
+    }
+
     try {
-        const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-        const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        const body = await req.json();
+        const url = new URL(req.url);
+        const type = url.searchParams.get('type') || body.type || 'wealth'; // wealth, business, job, jobchange
 
-        // Authenticate user
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader) {
-            return new Response(JSON.stringify({ error: 'Authorization header is missing.' }), { 
-                status: 401, 
-                headers: corsHeaders 
-            });
-        }
-        const token = authHeader.split(' ')[1]!;
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        let serviceType = 'GOLD_WEALTH';
+        if (type === 'business') serviceType = 'GOLD_BUSINESS';
+        else if (type === 'job') serviceType = 'GOLD_JOB';
+        else if (type === 'jobchange') serviceType = 'GOLD_JOBCHANGE';
 
-        if (authError || !user) {
-            return new Response(JSON.stringify({ error: 'User not authenticated.' }), { 
-                status: 401, 
-                headers: corsHeaders 
-            });
+        // 인증 및 5 크레딧 차감
+        const authResult = await authenticateUser(req, { serviceType, cost: 5 });
+        if (authResult.errorResponse) {
+            return authResult.errorResponse;
         }
 
-        if (req.method === 'POST') {
-            const body = await req.json();
-            const url = new URL(req.url);
-            const type = url.searchParams.get('type') || body.type || 'wealth'; // wealth, business, job, jobchange
+        const {
+            birthDate,
+            birthTime,
+            mbti,
+            name,
+            gender,
+            businessField,     // for business
+            desiredCompany,    // for job
+            desiredRole,       // for job
+            currentJob,        // for jobchange
+            desiredJob         // for jobchange
+        } = body;
 
-            const {
-                birthDate,
-                birthTime,
-                mbti,
-                name,
-                gender,
-                businessField,     // for business
-                desiredCompany,    // for job
-                desiredRole,       // for job
-                currentJob,        // for jobchange
-                desiredJob         // for jobchange
-            } = body;
+        if (!birthDate) {
+            return new Response(JSON.stringify({ error: '생년월일 정보가 필요합니다.' }), { 
+                status: 400, 
+                headers: responseHeaders 
+            });
+        }
 
-            if (!birthDate) {
-                return new Response(JSON.stringify({ error: '생년월일 정보가 필요합니다.' }), { 
-                    status: 400, 
-                    headers: corsHeaders 
-                });
-            }
-
-            const saju = getPreciseSajuData({ birthDate, birthTime, gender });
-            const richSajuContext = buildRichSajuContext(saju);
-
-            const systemPrompt = `
-${BASE_SYSTEM_PROMPT}
-
-당신은 사주명리학과 MBTI 심리를 결합해 내담자의 재물 흐름을 분석하는 냉철한 운명 분석가이자 재물 전략 전문가입니다.
-
-[시간적 기준 정보]
-현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
-
-[필수 상세 분석 지침 - 전 영역 분량 및 디테일 대폭 확대]
-1. **사주 명리학 분석 (sajuAnalysis)**:
-   - **dayMasterWealth (일간과 재성의 밸런스)**: 내담자의 사주를 정밀 분석하여 사업 및 재물 운명은 어떤지 **기존보다 300자 이상 풍부하게** 제시하십시오.
-   - **wealthStructure (재물 원국 구조 / 격국)**: 단순 추상적 경고를 금하고, 반드시 구체적인 리스크/기회 예시를 명확하게 들어 서술하십시오. (예: 단순히 "외부 방해가 있다"가 아니라 "동업자의 기회주의적 차명 거래나 인허가 승인 지연 등 ~~한 외부 방해가 발생할 수 있다")
-   - **elementBalance (오행 균형과 재물 공급력)**: 단순 진단에 그치지 말고, 반드시 **'~~이 충분하여 ~~하나 ~~이 부족하여 사업/재물 활동 중 ~~한 일이 있을 수 있다. 따라서 ~~가 필요하며, 이것의 실천 예시는 ~~가 있다'** 포맷을 엄격하게 지켜 실천 요령까지 구체적으로 서술하십시오.
-
-2. **재물 대운 / 세운 흐름 (timingAnalysis)**:
-   - 시기와 이유를 명확하게 제시하고, 구체적인 액션 조언을 병기하십시오. (예: "2027년은 ~~사주에서 ~~ 기운이 흐르므로 기회가 있다. 이때 사업 모델 확장을 노려라" 등)
-   - currentYear, nextYear, peakPeriod, cautionPeriod 각 항목의 분량을 **기존보다 1.5배 이상 대폭 확대**하십시오.
-
-3. **MBTI 기반 행동 처방전 (mbtiAdvice)**:
-   - 내담자의 MBTI가 재물 및 사업 운에서 **어떻게 발휘될 수 있고, 주의해야 할 점은 무엇이며, 어떻게 실현해야 하는지** 구체적인 비즈니스/재물 실생활 예시를 들어 **분량을 2배 이상 대폭 늘려 서술**하십시오. (strength, weakness, actionPlan 각 항목 2배 이상 분량)
-
-4. 한자는 반드시 한글과 병기하세요: 편재(偏財), 정재(正財), 식신(食神) 등.
-5. 오행 언급 시 영어를 절대 사용하지 마세요: 목(木) O, 목(Wood) X.
-6. 마크다운 강조 기호(**)는 일반 필드에선 사용을 피하고 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요. 단, mbtiSajuWealthReport 마크다운 보고서 필드의 헤더 및 볼드 강조는 허용됩니다.
-7. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-8. "노력하면 성공한다" 같은 바넘 효과 문장을 철저히 배제하고, 근거와 결론이 명확한 냉철한 솔루션을 제공하십시오.
-9. mbtiSajuWealthReport 필드에는 반드시 공백 포함 1000자 이상, 1500자 이하의 분량으로 지정된 [마크다운 출력 형식]을 엄격하게 지켜 작성하십시오.`;
+        const saju = getPreciseSajuData({ birthDate, birthTime, gender });
+        const richSajuContext = buildRichSajuContext(saju);
 
             let userQuery = `[이용자 정보]
 이름: ${name || '이용자'}
@@ -216,12 +213,12 @@ ${richSajuContext}
                         const result = await streamObject({
                             model,
                             schema: goldSchema,
-                            system: systemPrompt,
+                            system: STATIC_GOLD_SYSTEM_PROMPT,
                             prompt: userQuery,
-                            maxTokens: 16384,
+                            maxOutputTokens: 16384,
                             maxRetries: 0,
                         });
-                        return result.toTextStreamResponse({ headers: corsHeaders });
+                        return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {
                         lastError = error;
                         if (!isRetryableAIError(error)) break;
@@ -231,17 +228,11 @@ ${richSajuContext}
             } catch (err) {
                 throw err;
             }
-        } else {
-            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
-                status: 405, 
-                headers: corsHeaders 
-            });
-        }
     } catch (error: any) {
         console.error('Gold API Error:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500, 
-            headers: corsHeaders 
+            headers: responseHeaders 
         });
     }
 };
