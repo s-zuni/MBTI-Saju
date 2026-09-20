@@ -5,7 +5,8 @@
         "moduleResolution": "bundler",
         "target": "es2020",
         "noEmit": false,
-        "ignoreDeprecations": "5.0"
+        "ignoreDeprecations": "5.0",
+        "types": ["node"]
     },
     "include": [
         "**/*"
