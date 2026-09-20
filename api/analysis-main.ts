@@ -1,198 +1,36 @@
-import { streamObject, generateObject } from 'ai';
 import { z } from 'zod';
+import { streamObject, generateObject } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
-const schemas: Record<string, any> = {
-    core: z.object({
-        reportTitle: z.string(),
-        keywords: z.string(),
-        fusionNickname: z.string(),
-        nature: z.object({
-            dayPillarSummary: z.string(),
-            dayMasterAnalysis: z.string(),
-            dayBranchAnalysis: z.string(),
-            monthBranchAnalysis: z.string()
-        }),
-        fiveElements: z.object({
-            summary: z.string().describe("오행의 조화와 특징에 대한 감각적인 요약 (2-3문장)"),
-            elements: z.array(z.object({
-                element: z.string(),
-                count: z.number(),
-                interpretation: z.string()
-            }))
-        }),
-        persona: z.object({
-            mbtiNickname: z.string(),
-            dominantFunction: z.string(),
-            auxiliaryFunction: z.string()
-        }),
-        deepIntegration: z.object({
-            sajuBaseAnalysis: z.string().describe("사주 명리학 관점에서 분석한 본질적인 운명적 기운과 성향 풀이 (최소 5문장 이상 상세하게)"),
-            mbtiIntegration: z.string().describe("사주 기운과 MBTI 심리 유형의 결합 분석. 타고난 사주적 본질이 MBTI 행동 양식으로 어떻게 발현되고 갈등하는지 서술 (최소 5문장 이상 상세하게)"),
-            synergyPoints: z.array(z.object({
-                subtitle: z.string(),
-                content: z.string()
-            })).describe("사주와 MBTI의 결합 시너지로 생겨나는 타고난 강점 및 일상에서의 발현 양상 2-3가지")
-        }),
-        lifeGuideline: z.object({
-            lightAndShadow: z.object({
-                light: z.string().describe("본인이 가진 성향 중 가장 밝게 빛나는 지점과 현실적 강점 (최소 4문장 이상 상세하게)"),
-                shadow: z.string().describe("본인이 빠지기 쉬운 무의식적 함정, 과몰입 시 나타나는 약점과 팩폭 (최소 4문장 이상 상세하게)"),
-                solution: z.string().describe("무의식적 약점을 극복하고 인생을 잘 살기 위한 핵심 극복 솔루션 (최소 4문장 이상 상세하게)")
-            }),
-            luckyBooster: z.object({
-                luckyColor: z.string().describe("나를 보완해주는 행운의 색상과 일상 활용법"),
-                luckyItem: z.string().describe("나의 기운을 끌어올려 주는 행운의 아이템"),
-                luckyPlace: z.string().describe("지친 에너지를 충전할 수 있는 행운의 장소와 그 이유"),
-                dailyRoutine: z.string().describe("하루의 에너지를 다스려 줄 나만의 추천 모닝/이브닝 데일리 루틴 행동")
-            })
-        })
-    }),
-    fortune: z.object({
-        yearlyFortune: z.object({
-            theme: z.string(),
-            overview: z.string(),
-            keywords: z.array(z.string())
-        }),
-        monthlyFortune: z.object({
-            months: z.array(z.object({
-                period: z.string(),
-                energy: z.string(),
-                guide: z.string()
-            }))
-        })
-    }),
-    strategy: z.object({
-        fieldStrategies: z.object({
-            career: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
-            love: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
-            wealth: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() })
-        }),
-        warnings: z.object({
-            watchOut: z.array(z.object({ title: z.string(), description: z.string() })),
-            avoid: z.array(z.object({ title: z.string(), description: z.string() }))
-        }),
-        solution: z.string()
-    }),
-    full: z.object({
-        // Core Part
-        reportTitle: z.string(),
-        keywords: z.string(),
-        fusionNickname: z.string(),
-        nature: z.object({
-            dayPillarSummary: z.string(),
-            dayMasterAnalysis: z.string(),
-            dayBranchAnalysis: z.string(),
-            monthBranchAnalysis: z.string()
-        }),
-        fiveElements: z.object({
-            summary: z.string().describe("오행의 조화와 특징에 대한 감각적인 요약 (2-3문장)"),
-            elements: z.array(z.object({
-                element: z.string(),
-                count: z.number(),
-                interpretation: z.string()
-            }))
-        }),
-        persona: z.object({
-            mbtiNickname: z.string(),
-            dominantFunction: z.string(),
-            auxiliaryFunction: z.string()
-        }),
-        deepIntegration: z.object({
-            sajuBaseAnalysis: z.string().describe("사주 명리학 관점에서 분석한 본질적인 운명적 기운과 성향 풀이 (최소 5문장 이상 상세하게)"),
-            mbtiIntegration: z.string().describe("사주 기운과 MBTI 심리 유형의 결합 분석. 타고난 사주적 본질이 MBTI 행동 양식으로 어떻게 발현되고 갈등하는지 서술 (최소 5문장 이상 상세하게)"),
-            synergyPoints: z.array(z.object({
-                subtitle: z.string(),
-                content: z.string()
-            })).describe("사주와 MBTI의 결합 시너지로 생겨나는 타고난 강점 및 일상에서의 발현 양상 2-3가지")
-        }),
-        lifeGuideline: z.object({
-            lightAndShadow: z.object({
-                light: z.string().describe("본인이 가진 성향 중 가장 밝게 빛나는 지점과 현실적 강점 (최소 4문장 이상 상세하게)"),
-                shadow: z.string().describe("본인이 빠지기 쉬운 무의식적 함정, 과몰입 시 나타나는 약점과 팩폭 (최소 4문장 이상 상세하게)"),
-                solution: z.string().describe("무의식적 약점을 극복하고 인생을 잘 살기 위한 핵심 극복 솔루션 (최소 4문장 이상 상세하게)")
-            }),
-            luckyBooster: z.object({
-                luckyColor: z.string().describe("나를 보완해주는 행운의 색상과 일상 활용법"),
-                luckyItem: z.string().describe("나의 기운을 끌어올려 주는 행운의 아이템"),
-                luckyPlace: z.string().describe("지친 에너지를 충전할 수 있는 행운의 장소와 그 이유"),
-                dailyRoutine: z.string().describe("하루의 에너지를 다스려 줄 나만의 추천 모닝/이브닝 데일리 루틴 행동")
-            })
-        }),
-        // Fortune Part
-        yearlyFortune: z.object({
-            theme: z.string(),
-            overview: z.string(),
-            keywords: z.array(z.string())
-        }),
-        monthlyFortune: z.object({
-            months: z.array(z.object({
-                period: z.string(),
-                energy: z.string(),
-                guide: z.string()
-            }))
-        }),
-        // Strategy Part
-        fieldStrategies: z.object({
-            career: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
-            love: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() }),
-            wealth: z.object({ subtitle: z.string(), analysis: z.string(), advice: z.string() })
-        }),
-        warnings: z.object({
-            watchOut: z.array(z.object({ title: z.string(), description: z.string() })),
-            avoid: z.array(z.object({ title: z.string(), description: z.string() }))
-        }),
-        solution: z.string()
-    })
-};
+import { authenticateUser } from './_utils/auth';
+import { 
+    analysisSchema as coreAnalysisSchema, 
+    yearlyFortuneSchema as fortuneAnalysisSchema, 
+    strategySchema as strategyAnalysisSchema, 
+    fullAnalysisSchema 
+} from '../src/config/schemas';
 
 export const config = {
     runtime: 'edge',
 };
 
-export default async function handler(req: Request) {
-    const corsResponse = handleCors(req);
-    if (corsResponse) return corsResponse;
+const schemas: Record<string, z.ZodType<any>> = {
+    core: coreAnalysisSchema,
+    fortune: fortuneAnalysisSchema,
+    strategy: strategyAnalysisSchema,
+    full: fullAnalysisSchema,
+};
 
-    if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
-            status: 405, 
-            headers: corsHeaders 
-        });
-    }
-
-    const url = new URL(req.url, 'http://localhost');
-    const body = await req.json();
-    const part = url.searchParams.get('part') || body?.part || 'core';
-    const { mbti, birthDate, birthTime, gender, name, sajuData } = body;
-    const currentSchema = schemas[part as string];
-
-    if (!currentSchema) {
-        return new Response(JSON.stringify({ error: 'Invalid part' }), { 
-            status: 400, 
-            headers: corsHeaders 
-        });
-    }
-
-    // API Key checking is now handled centrally in ai-provider.ts
-    // but we can add a quick guard here if needed.
-
-    // Always calculate precise Saju using deterministic engine
-    const finalSaju = getPreciseSajuData({ birthDate, birthTime, gender });
-    const sajuContextBlock = buildRichSajuContext(finalSaju);
-
-    let systemPrompt = `
+// 정적 시스템 프롬프트 (OpenAI Prompt Caching: 1,024+ 토큰 고정 접두사 유지)
+const STATIC_MAIN_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
 당신의 임무는 MBTI와 사주를 결합해, 사용자의 본질을 깊이 있게 파헤치는 '초밀착 소울 리포트'를 작성하는 것입니다.
 
 [AI 사주 직접 계산 엄금 및 사실 수용 규칙]
 ★ 중요: 너는 생년월일시를 바탕으로 사주 원국(연주, 월주, 일주, 시주), 오행 비율, 십신을 절대로 직접 계산하려고 시도하지 마라!
-★ 제공된 [System Context: Deterministic Saju Data]의 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 진실 데이터이다. 이 데이터를 변형 없이 사실 그대로 수용하여 MBTI와 융합된 해석만 수행하라.
-
-${sajuContextBlock}
+★ 사용자 입력에 제공된 [System Context: Deterministic Saju Data]의 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 진실 데이터이다. 이 데이터를 변형 없이 사실 그대로 수용하여 MBTI와 융합된 해석만 수행하라.
 
 [핵심 지침 - DETAILED & DEEP]
 1. **풍성하고 디테일한 분석**: 사용자가 자신의 성향과 운명을 깊이 이해할 수 있도록, 분량을 충분히 길고 구체적으로 작성하세요. 단순한 요약이 아닌 깊이 있는 통찰을 제공해야 합니다. 특히 긴 서술형 텍스트 영역(sajuBaseAnalysis, mbtiIntegration, light, shadow, solution)은 각각 최소 5문장 이상으로 구체적인 상황을 들어 깊게 서술하세요. 토큰을 아끼지 말고 정성껏 작성하는 것이 창업자의 제1 원칙입니다.
@@ -218,9 +56,56 @@ ${sajuContextBlock}
 - 모든 분석 내용은 반드시 한국어만 사용하세요. (MBTI 용어 제외)
 - 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.
 - 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-- **줄 바꿈**: 가급적 매 문장마다 \n\n을 사용하여 텍스트가 뭉쳐 보이지 않게 하세요.`;
+- **줄 바꿈**: 가급적 매 문장마다 \n\n을 사용하여 텍스트가 뭉쳐 보이지 않게 하세요.
+`.trim();
 
-    let userQuery = `사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender || '알수없음'}`;
+export default async function handler(req: Request) {
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
+
+    const reqCorsHeaders = getCorsHeaders(req);
+
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: reqCorsHeaders 
+        });
+    }
+
+    const url = new URL(req.url, 'http://localhost');
+    const body = await req.json();
+    const part = url.searchParams.get('part') || body?.part || 'core';
+    const { mbti, birthDate, birthTime, gender, name, sajuData, isRegenerate } = body;
+    const currentSchema = schemas[part as string];
+
+    if (!currentSchema) {
+        return new Response(JSON.stringify({ error: 'Invalid part' }), { 
+            status: 400, 
+            headers: reqCorsHeaders 
+        });
+    }
+
+    // 인증 및 크레딧 차감 (메인 분석: 20C, 재분석: 10C)
+    // part가 'full' 또는 'core'일 때만 크레딧 차감 (fortune, strategy는 후속 단계)
+    const shouldDeduct = part === 'full' || part === 'core';
+    const serviceType = isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU';
+    const authResult = await authenticateUser(req, {
+        serviceType: shouldDeduct ? serviceType : undefined,
+        cost: shouldDeduct ? undefined : 0
+    });
+
+    if (authResult.errorResponse) {
+        return authResult.errorResponse;
+    }
+
+    // Always calculate precise Saju using deterministic engine
+    const finalSaju = getPreciseSajuData({ birthDate, birthTime, gender });
+    const sajuContextBlock = buildRichSajuContext(finalSaju);
+
+    const userQuery = `[분석 대상자 정보]
+사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender || '알수없음'}
+
+${sajuContextBlock}`;
 
     try {
         if (part === 'full' || part === 'core') {
@@ -231,12 +116,12 @@ ${sajuContextBlock}
                     const result = await streamObject({
                         model,
                         schema: currentSchema,
-                        system: systemPrompt,
+                        system: STATIC_MAIN_SYSTEM_PROMPT,
                         prompt: userQuery,
-                        maxTokens: 16384,
+                        maxOutputTokens: 16384,
                         maxRetries: 0, // Faster fallback
                     });
-                    return result.toTextStreamResponse({ headers: corsHeaders });
+                    return result.toTextStreamResponse({ headers: reqCorsHeaders });
                 } catch (error) {
                     lastError = error;
                     console.warn(`Attempt ${attempt + 1} failed for ${part} analysis:`, error);
@@ -253,13 +138,13 @@ ${sajuContextBlock}
                     const result = await generateObject({
                         model,
                         schema: currentSchema,
-                        system: systemPrompt,
+                        system: STATIC_MAIN_SYSTEM_PROMPT,
                         prompt: userQuery,
                         maxRetries: 0, // Faster fallback
                     });
                     return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
                         status: 200,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                        headers: { ...reqCorsHeaders, 'Content-Type': 'application/json' } 
                     });
                 } catch (error) {
                     lastError = error;
@@ -273,7 +158,7 @@ ${sajuContextBlock}
         console.error(`[Streaming Error - ${part}]:`, error);
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 
             status: 500, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
     }
 }

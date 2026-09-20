@@ -27,7 +27,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
     const [session, setSession] = useState<any>(initialSession);
 
     // 크레딧 시스템
-    const { credits, useCredits: consumeCredits, purchaseCredits } = useCredits(session);
+    const { credits, refreshCredits, purchaseCredits } = useCredits(session);
     const [messageCount, setMessageCount] = useState(0); // 현재 세션 메시지 카운트
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [showCreditWarning, setShowCreditWarning] = useState(false);
@@ -212,17 +212,16 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                 }
             );
 
-            // 10회 도달 시 크레딧 차감
-            if ((messageCount) % MESSAGES_PER_COIN_CHARGE === 0) {
-                const success = await consumeCredits('AI_CHAT_5');
-                if (!success) {
-                    console.error('Failed to spend credits for professional chat');
-                }
-            }
+            // 서버에서 차감된 최신 크레딧 잔액 갱신
+            await refreshCredits();
         } catch (err: any) {
             // Roll back message count and remove the failed bot message
             setMessageCount(prev => prev - 1);
             setMessages(prev => prev.filter(m => m.id !== botMessageId));
+
+            if (err?.message?.includes('402') || err?.message?.includes('크레딧이 부족') || err?.message?.includes('INSUFFICIENT_CREDITS')) {
+                setShowCreditModal(true);
+            }
 
             const errorMsg: ChatMessage = {
                 id: (Date.now() + 2).toString(),

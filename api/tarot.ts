@@ -1,23 +1,57 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamObject } from 'ai';
 import { z } from 'zod';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
+import { authenticateUser } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
 };
 
+// 정적 시스템 프롬프트 (OpenAI Prompt Caching 최적화)
+const STATIC_TAROT_SYSTEM_PROMPT = `
+${BASE_SYSTEM_PROMPT}
+
+You are a realistic tarot analyst and intuitive strategist who interprets tarot cards through objective analysis of energetic flows (weather) and MBTI behavioral prescription.
+
+**Instructions**:
+- **Atmosphere**: Objective, realistic, yet profound. Avoid generic sentimentality or fear-mongering.
+- **Narrative**: Connect the cards and user context into a dry, factual diagnosis of the current trajectory (Step 1 & Step 2).
+- **Actionable Wisdom**: End with clear, concrete MBTI-tailored behavioral advice (Step 3).
+- **Language**: Korean Only.
+- **CRITICAL (절대 준수)**: 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요.
+
+**JSON Output Structure**:
+{
+    "cardReadings": [
+        { "cardName": "Card Name", "interpretation": "Deep interpretation for this position..." }
+    ],
+    "overallReading": "A synthesis of the entire spread, connecting the cards into a cohesive message.",
+    "advice": "One clear, highly practical action item tailored for the user's MBTI."
+}
+`.trim();
+
 export default async (req: Request) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
 
+    const reqCorsHeaders = getCorsHeaders(req);
+
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
             status: 405, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
+    }
+
+    // 신비타로 인증 및 크레딧 차감 (2 크레딧)
+    const authResult = await authenticateUser(req, {
+        serviceType: 'TAROT',
+        cost: 2
+    });
+
+    if (authResult.errorResponse) {
+        return authResult.errorResponse;
     }
 
     try {
@@ -61,31 +95,6 @@ export default async (req: Request) => {
             if (userContext.birthDate) personalization += `User's birth date is ${userContext.birthDate}. Occasionally reference their astrological/elemental energy if it fits the cards. `;
         }
 
-        const systemPrompt = `
-${BASE_SYSTEM_PROMPT}
-
-You are a realistic tarot analyst and intuitive strategist who interprets tarot cards through objective analysis of energetic flows (weather) and MBTI behavioral prescription.
-${spreadContext}
-
-**Personalization Context**:
-${personalization}
-
-**Instructions**:
-- **Atmosphere**: Objective, realistic, yet profound. Avoid generic sentimentality or fear-mongering.
-- **Narrative**: Connect the cards and user context into a dry, factual diagnosis of the current trajectory (Step 1 & Step 2).
-- **Actionable Wisdom**: End with clear, concrete MBTI-tailored behavioral advice (Step 3).
-- **Language**: Korean Only.
-
-**JSON Output Structure**:
-{
-    "cardReadings": [
-        { "cardName": "Card Name", "interpretation": "Deep interpretation for this position..." }
-    ],
-    "overallReading": "A synthesis of the entire spread, connecting the cards into a cohesive message.",
-    "advice": "One clear, highly practical action item tailored for the user's MBTI."
-}
-`;
-
         let cardsList = "";
         selectedCards.forEach((card: any, idx: number) => {
             const position = positionDescriptions[idx] || `Position ${idx + 1}`;
@@ -93,6 +102,8 @@ ${personalization}
         });
 
         const userQuery = `
+        Spread Mode: ${spreadContext}
+        Personalization Context: ${personalization}
         Question: "${question}"
         Spread Type: ${spreadType}
         Selected Cards:
@@ -107,22 +118,21 @@ ${personalization}
             overallReading: z.string(),
             advice: z.string()
         });
-        const fullSystemPrompt = systemPrompt + "\nCRITICAL (절대 준수): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요. ** 을 사용하면 시스템 오류가 발생합니다.";
 
         try {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
-                    const { model, name } = getAIProvider(attempt);
+                    const { model } = getAIProvider(attempt);
                     const result = await streamObject({
                         model,
                         schema,
-                        system: fullSystemPrompt,
+                        system: STATIC_TAROT_SYSTEM_PROMPT,
                         prompt: userQuery,
-                        maxTokens: 16384,
+                        maxOutputTokens: 16384,
                         maxRetries: 0, // Faster switching
                     });
-                    return result.toTextStreamResponse({ headers: corsHeaders });
+                    return result.toTextStreamResponse({ headers: reqCorsHeaders });
                 } catch (error) {
                     lastError = error;
                     console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for tarot:`, error);
@@ -134,14 +144,14 @@ ${personalization}
             console.error("Tarot API Error:", error);
             return new Response(JSON.stringify({ error: error.message }), { 
                 status: 500, 
-                headers: corsHeaders 
+                headers: reqCorsHeaders 
             });
         }
     } catch (error: any) {
         console.error("Tarot API Error:", error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
     }
 };

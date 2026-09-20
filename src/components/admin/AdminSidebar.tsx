@@ -7,8 +7,11 @@ import {
     Settings,
     LogOut,
     MessageSquare,
-    Package,
-    FileText
+    FileText,
+    MessageCircle,
+    ShoppingBag,
+    Truck,
+    Star
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
@@ -26,14 +29,15 @@ const AdminSidebar: React.FC = () => {
 
     const navItems = [
         { name: '대시보드', icon: <LayoutDashboard size={20} />, path: '/admin' },
-        { name: '심층 리포트 관리', icon: <MessageSquare size={20} />, path: '/admin/deep-reports' },
-        { name: '이용 후기 관리', icon: <MessageSquare size={20} />, path: '/admin/reviews' },
+        { name: '심층 리포트 관리', icon: <FileText size={20} />, path: '/admin/deep-reports' },
+        { name: '운명 상담 관리', icon: <MessageSquare size={20} />, path: '/admin/consultations' },
+        { name: '고객 문의 / 환불', icon: <MessageCircle size={20} />, path: '/admin/inquiries' },
+        { name: '쇼핑몰 상품 관리', icon: <ShoppingBag size={20} />, path: '/admin/shop/products' },
+        { name: '쇼핑몰 주문/배송', icon: <Truck size={20} />, path: '/admin/shop/orders' },
+        { name: '사용자 리뷰 승인', icon: <Star size={20} />, path: '/admin/reviews' },
         { name: '회원 관리', icon: <Users size={20} />, path: '/admin/users' },
-        { name: '결제 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
-        { name: '고객 문의/환불 관리', icon: <MessageSquare size={20} />, path: '/admin/inquiries' },
-        { name: '요금제 관리', icon: <Settings size={20} />, path: '/admin/plans' },
-        { name: '운세 상품 관리', icon: <Package size={20} />, path: '/admin/shop/products' },
-        { name: '운세 주문 관리', icon: <FileText size={20} />, path: '/admin/shop/orders' },
+        { name: '결제/크레딧 관리', icon: <CreditCard size={20} />, path: '/admin/payments' },
+        { name: '구독 플랜 관리', icon: <Settings size={20} />, path: '/admin/plans' },
     ];
 
     return (

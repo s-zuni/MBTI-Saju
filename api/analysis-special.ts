@@ -1,9 +1,9 @@
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
+import { authenticateUser } from './_utils/auth';
 
 const luckySchema = z.object({
     color: z.string().describe("행운의 색상"),
@@ -23,9 +23,33 @@ const fortuneItemSchema = z.object({
 });
 
 const fortuneSchemaSingle = z.object({
-    fortune: fortuneItemSchema,
-    date: z.string().describe("날짜 (YYYY-MM-DD)")
+    date: z.string().describe("운세 해당 날짜 (YYYY-MM-DD 형식)"),
+    fortune: fortuneItemSchema
 });
+
+// 정적 시스템 프롬프트 (OpenAI Prompt Caching 최적화: 1,024+ 토큰 정적 접두사 유지)
+const STATIC_SPECIAL_SYSTEM_PROMPT = `
+${BASE_SYSTEM_PROMPT}
+
+당신의 임무는 사주와 MBTI를 정밀 융합하여 실용적 라이프 가이드를 제안하는 냉철한 운명 분석가이자 라이프 컨설턴트입니다.
+    
+[AI 사주 직접 계산 엄금 및 사실 수용 규칙]
+★ 중요: 너는 생년월일시를 바탕으로 사주 원국(연주, 월주, 일주, 시주), 오행 비율, 십신을 절대로 직접 계산하려고 시도하지 마라!
+★ 사용자 입력(User Prompt)에 제공되는 [System Context: Deterministic Saju Data] 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 검증 데이터이다. 제공된 데이터만을 사실로 받아들이고 이를 기반으로 트렌디한 해석 가이드를 제시하라.
+
+[핵심 규칙]
+1. 모든 답변은 사주의 흐름을 건조한 팩트로 해석하되, MBTI에 최적화된 매우 구체적이고 실행 가능한 행동 지침으로 전달하세요.
+2. 압도적인 디테일과 풍성한 분량: 사용자가 깊은 통찰과 만족을 느낄 수 있도록, 내용의 깊이를 더하고 분량을 풍성하게 작성하세요.
+3. 가독성 최우선: 분량이 많더라도 읽기 편하도록, 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)을 매우 자주 사용하세요.
+4. 모든 나열 방식은 반드시 '글머리표(-)'를 사용하여 시각적으로 깔끔하게 정리하세요.
+5. '오늘의 미션'은 사용자가 즉시 오프라인/일상에서 수행할 수 있는 실용적 챌린지 형태로 제안하세요.
+6. 'charm_stats'는 오늘 사용자의 기운이 어디에 집중되어 있는지 5가지 항목으로 분석하세요.
+7. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
+8. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
+9. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
+10. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
+11. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.
+`.trim();
 
 const schemas: Record<string, any> = {
     healing: z.object({
@@ -122,16 +146,10 @@ function getDateString(offsetDays: number = 0): string {
     return d.toISOString().split('T')[0]!; // YYYY-MM-DD
 }
 
-
-
-// Template-based analysis removed in favor of dynamic AI generation to satisfy "MBTI/Saju essential use" requirement.
-
 function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
     const dateStr = getDateString(dateOffset);
-    // Include today's date in the seed so scores change daily
     const mainSeed = `${birthDate}-${mbti}-${dateStr}`;
     
-    // 1. Team rankings based on mainSeed
     const teamScores = KBO_TEAMS.map(team => ({
         team,
         score: getDeterministicValue(mainSeed, team.length + team.charCodeAt(0), 40, 98)
@@ -139,14 +157,9 @@ function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam
 
     const bestTeam = teamScores[0]?.team || KBO_TEAMS[0]!;
     const worstTeam = teamScores[teamScores.length - 1]?.team || KBO_TEAMS[KBO_TEAMS.length - 1]!;
-
-    // 2. Specific score for currentTeam
     const currentTeamScore = teamScores.find(t => t.team === currentTeam)?.score || 50;
-    
-    // 3. Win Fairy Score (User + Stadium synergy)
     const winFairyScore = getDeterministicValue(mainSeed + (currentTeam === '없음 (아직 없음)' ? bestTeam : currentTeam), 777, 30, 95);
 
-    // 4. Dimensions
     const dimensionLabels = ['열정 수치', '직관 에너지', '응원 화력', '승리 행운', '팀 로열티'];
     const dimensions = dimensionLabels.map((label, i) => ({
         label,
@@ -171,10 +184,12 @@ export default async function handler(req: Request) {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
 
+    const reqCorsHeaders = getCorsHeaders(req);
+
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
             status: 405, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
     }
 
@@ -195,8 +210,41 @@ export default async function handler(req: Request) {
     if (!currentSchema) {
         return new Response(JSON.stringify({ error: `Invalid analysis type: ${rawType}` }), { 
             status: 400, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
+    }
+
+    // 서비스별 비용 매핑 및 인증/과금 검증
+    let cost = 5;
+    let serviceType: string | undefined = undefined;
+    let allowAnonymous = false;
+
+    if (targetType === 'fortune_today') {
+        cost = 0;
+        serviceType = 'FORTUNE_TODAY';
+        allowAnonymous = true;
+    } else if (targetType === 'fortune_tomorrow') {
+        cost = 3;
+        serviceType = 'FORTUNE_TOMORROW';
+    } else if (targetType === 'jamidusu') {
+        cost = 15;
+        serviceType = 'JAMIDUSU';
+    } else if (targetType === 'trip') {
+        cost = 5;
+        serviceType = 'TRIP';
+    } else if (targetType === 'kbo') {
+        cost = 5;
+        serviceType = 'KBO';
+    }
+
+    const authResult = await authenticateUser(req, {
+        serviceType,
+        cost,
+        allowAnonymous
+    });
+
+    if (authResult.errorResponse) {
+        return authResult.errorResponse;
     }
 
     const { 
@@ -205,35 +253,9 @@ export default async function handler(req: Request) {
         sajuData, targetSajuData
     } = body;
 
-    // API Key checking is now handled centrally in ai-provider.ts
-
     // Always compute deterministic Saju data
     let saju = getPreciseSajuData({ birthDate, birthTime, gender: body.gender });
     let sajuContextBlock = buildRichSajuContext(saju);
-
-    let systemPrompt = `
-${BASE_SYSTEM_PROMPT}
-
-당신은 사주와 MBTI를 정밀 융합하여 실용적 라이프 가이드를 제안하는 냉철한 운명 분석가이자 라이프 컨설턴트입니다.
-    
-[AI 사주 직접 계산 엄금 및 사실 수용 규칙]
-★ 중요: 너는 생년월일시를 바탕으로 사주 원국(연주, 월주, 일주, 시주), 오행 비율, 십신을 절대로 직접 계산하려고 시도하지 마라!
-★ 아래 [System Context: Deterministic Saju Data]로 제공된 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 검증 데이터이다. 제공된 데이터만을 사실로 받아들이고 이를 기반으로 트렌디한 해석 가이드를 제시하라.
-
-${sajuContextBlock}
-
-[핵심 규칙]
-1. 모든 답변은 사주의 흐름을 건조한 팩트로 해석하되, MBTI에 최적화된 매우 구체적이고 실행 가능한 행동 지침으로 전달하세요.
-2. 압도적인 디테일과 풍성한 분량: 사용자가 깊은 통찰과 만족을 느낄 수 있도록, 내용의 깊이를 더하고 분량을 풍성하게 작성하세요.
-3. 가독성 최우선: 분량이 많더라도 읽기 편하도록, 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)을 매우 자주 사용하세요.
-4. 모든 나열 방식은 반드시 '글머리표(-)'를 사용하여 시각적으로 깔끔하게 정리하세요.
-5. '오늘의 미션'은 사용자가 즉시 오프라인/일상에서 수행할 수 있는 실용적 챌린지 형태로 제안하세요.
-6. 'charm_stats'는 오늘 사용자의 기운이 어디에 집중되어 있는지 5가지 항목으로 분석하세요.
-7. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
-8. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
-9. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-10. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-11. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.`;
 
     const elementNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
     const translateRatio = (ratio: any) => {
@@ -247,9 +269,9 @@ ${sajuContextBlock}
 
     let userQuery = '';
 
-    if (type === 'healing') {
+    if (targetType === 'healing') {
         userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${region || '전국'}`;
-    } else if (type === 'jamidusu') {
+    } else if (targetType === 'jamidusu') {
         let finalTargetSaju = targetSajuData;
         if (!finalTargetSaju && targetBirthDate) {
             finalTargetSaju = getPreciseSajuData({ birthDate: targetBirthDate, birthTime: targetBirthTime, gender: targetGender });
@@ -268,9 +290,9 @@ ${sajuContextBlock}
 6. 'lucky_items'는 자미두수에서 나를 돕는 길성(예: 문창, 천괴, 좌보, 우필 등)이나 행운의 요소 3가지를 명확하게 제시하세요.
 7. 절대로 결과에 영어를 포함하지 마세요. 모두 한국어로 작성하고 어려운 한자는 쉽게 풀어쓰되, 자미두수의 전문 용어(명궁, 주성, 관록궁 등)는 살려서 신비로움을 더해주세요.`;
 
-    } else if (type === 'job') {
+    } else if (targetType === 'job') {
         userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
-    } else if (type === 'trip') {
+    } else if (targetType === 'trip') {
         userQuery = `[여행지 및 일정 분석 요청]
 사용자 이름: ${name}
 MBTI: ${mbti}
@@ -282,64 +304,51 @@ MBTI: ${mbti}
 
 [생성 작업 지침]
 1. 20대 여성의 취향과 감성에 맞춘 트렌디하고 감각적인 여행 코스와 장소를 제안하세요. (예: 인스타그래머블 핫플, 감성 숙소, 웨이팅 맛집, 힐링 스팟 등)
-2. 사용자의 사주(일간, 오행의 부족/과다)와 MBTI 성향을 깊이 있게 분석하여, '왜 이곳이 당신에게 완벽한 맞춤 여행지인지' 설득력 있게 설명하세요. (예: 부족한 수(水) 기운을 채워주는 오션뷰 숙소, P 성향을 배려한 여유로운 동선 등)
+2. 사용자의 사주(일간, 오행의 부족/과다)와 MBTI 성향을 깊이 있게 분석하여, '왜 이곳이 당신에게 완벽한 맞춤 여행지인지' 설득력 있게 설명하세요.
 3. 각 추천 장소마다 인생샷을 건질 수 있는 'photoSpot'과 기운을 보완해줄 수 있는 'food'를 반드시 포함하세요.
 4. 함께 가면 시너지가 나는 여행 메이트(companion)와 이번 여행에 챙기면 좋은 행운의 아이템(luckyItem)을 추천하세요.
 5. 일정(itinerary) 구성 시 너무 뻔한 관광지가 아닌 현지인 느낌의 장소를 포함시키고, MBTI 특성을 고려한 일정을 구성하세요.`;
-    } else if (type === 'kbo') {
+    } else if (targetType === 'kbo') {
         const isNoTeam = requirements === '없음 (아직 없음)';
-        
-        // 1. Get base results (best/worst team are calculated here regardless of input team)
-        let kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 0);
-        let kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', requirements || '없음', 1);
-        
-        let teamToAnalyze = requirements || '없음';
-        
-        if (isNoTeam) {
-            // Use best team for analysis instead of 'None'
-            teamToAnalyze = kboFixed.bestTeam;
-            // Re-run for the specific best team to get correct scores/dimensions for that team
-            kboFixed = getDeterministicKboResults(birthDate || '', mbti || '', teamToAnalyze, 0);
-            kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', teamToAnalyze, 1);
-        }
+        const currentTeam = isNoTeam ? '없음' : (requirements || 'KIA');
+        const kboDeterministic = getDeterministicKboResults(birthDate || '', mbti || '', currentTeam, 0);
 
-        // AI will now generate the analysis dynamically based on the guidelines in userQuery
-        
-        // Now letting AI generate the analysis text based on MBTI and Saju
-        userQuery = `[KBO 궁합 분석 요청]
-        구단: ${teamToAnalyze}
-        MBTI: ${mbti || '알수없음'}
-        사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
+        const currentTeamScore = kboDeterministic.score;
+        const winFairyScore = kboDeterministic.winFairyScore;
+        const bestTeam = kboDeterministic.bestTeam;
+        const worstTeam = kboDeterministic.worstTeam;
+
+        userQuery = `[KBO 야구단 궁합 및 직관 운세 분석 요청]
+        사용자 이름: ${name}
+        MBTI: ${mbti}
+        사주 일간: ${saju?.dayMaster?.korean || '알수없음'}
         오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
-        사용자 이름: ${name || '사용자'}
-        추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'}
+        현재 응원 구단: ${currentTeam} (추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'})
+        
+        [사전 계산된 데이터 (절대 준수)]
+        - 해당 구단과의 궁합 점수: ${currentTeamScore}점
+        - 오늘 직관 시 승리요정 지수: ${winFairyScore}점
+        - 나에게 가장 운명적인 최고 궁합 구단: ${bestTeam}
+        - 나와 상극인 주의해야 할 구단: ${worstTeam}
+        - 5대 지표: ${JSON.stringify(kboDeterministic.dimensions)}
 
-        [데이터 데이터 - 절대 변경 불가]
-        score: ${kboFixed.score}
-        winFairyScore: ${kboFixed.winFairyScore}
-        bestTeam: "${kboFixed.bestTeam}"
-        worstTeam: "${kboFixed.worstTeam}"
-        dimensions: ${JSON.stringify(kboFixed.dimensions)}
-        date: "${kboFixed.date}"
-        tomorrowScore: ${kboTomorrow.score}
-        tomorrowWinFairyScore: ${kboTomorrow.winFairyScore}
-
-        [생성 작업 지침]
-        1. supportedTeamAnalysis: 이용자의 MBTI 성향과 사주(일간 및 오행)가 해당 구단의 팀 컬러, 응원 문화, 혹은 현재 분위기와 어떻게 '운명적으로' 맞아떨어지는지 상세히 분석하세요. 
-           - 반드시 MBTI의 특정 알파벳(예: E의 열정, J의 계획성 등)과 사주 일간(예: 갑목의 굳건함 등)을 언급해야 합니다.
+        [생성 지침]
+        1. supportedTeamAnalysis: 현재 구단(${currentTeam})과의 궁합 점수(${currentTeamScore}점)에 대해:
            - 점수가 높다면 왜 천생연분인지, 낮다면 어떤 점을 주의해야 하는지 사주학적으로 풀어내세요.
            - 2-30대 여성이 좋아할 만한 감성적이고 세련된 문체를 유지하세요.
         2. dailyMessage: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내).
         3. recommendedSeat: 사주와 MBTI를 분석하여 사용자에게 가장 행운을 줄 수 있는 야구장 좌석 구역을 추천하세요. (예: "열정이 넘치는 응원석 1루 쪽", "차분히 분석하기 좋은 포수 뒤쪽 명당" 등)
         4. luckyFood: 사용자의 오늘 기운을 북돋아 줄 야구장 먹거리나 주변 음식을 추천하세요. (예: "화(火)의 기운을 보충할 매콤한 떡볶이", "MBTI P 성향에 딱 맞는 즉석 구이 오징어" 등)
         5. 주의: '추천 여부'가 '추천됨'인 경우에만 bestTeam과 worstTeam을 상세히 고려하세요. 기존 팬인 경우에는 bestTeam과 worstTeam은 결과에 포함만 시키되, 분석 내용(supportedTeamAnalysis)에서는 응원하는 구단 위주로 서술하세요.`;
-    } else if (type === 'fortune') {
+    } else if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow' || targetType === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
-        const dateTag = scope === 'tomorrow' ? '내일' : '오늘';
-        const targetDate = getDateString(scope === 'tomorrow' ? 1 : 0);
+        const dateTag = scope === 'tomorrow' || targetType === 'fortune_tomorrow' ? '내일' : '오늘';
+        const targetDate = getDateString(dateTag === '내일' ? 1 : 0);
         userQuery = `[대상 날짜: ${targetDate} (${dateTag})] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}. 반드시 '${dateTag}'의 운세만 생성하세요. 생성되는 운세의 date 필드는 반드시 '${targetDate}' 이어야 합니다.`;
     }
+
+    const finalUserQuery = `${sajuContextBlock}\n\n${userQuery}`;
 
     try {
         let lastError;
@@ -349,17 +358,16 @@ MBTI: ${mbti}
                 const result = await streamObject({
                     model,
                     schema: currentSchema,
-                    system: systemPrompt,
-                    prompt: userQuery,
-                    maxTokens: 16384,
-                    maxRetries: 0, // Disable SDK retries to allow our custom fallback loop to switch models faster
+                    system: STATIC_SPECIAL_SYSTEM_PROMPT,
+                    prompt: finalUserQuery,
+                    maxOutputTokens: 16384,
+                    maxRetries: 0,
                 });
-                return result.toTextStreamResponse({ headers: corsHeaders });
+                return result.toTextStreamResponse({ headers: reqCorsHeaders });
             } catch (error) {
                 lastError = error;
-                console.warn(`Attempt ${attempt + 1} failed for type ${type}:`, error);
+                console.warn(`Attempt ${attempt + 1} failed for type ${targetType}:`, error);
                 
-                // If not retryable or we've exhausted attempts, bread out
                 if (!isRetryableAIError(error)) {
                     console.error(`Non-retryable error on attempt ${attempt + 1}:`, error);
                     break;
@@ -368,10 +376,10 @@ MBTI: ${mbti}
         }
         throw lastError;
     } catch (error: any) {
-        console.error(`[Streaming Error - ${type}]:`, error);
+        console.error(`[Streaming Error - ${targetType}]:`, error);
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 
             status: 500, 
-            headers: corsHeaders 
+            headers: reqCorsHeaders 
         });
     }
 }

@@ -1,19 +1,52 @@
 import { createClient } from '@supabase/supabase-js';
 import { generateText } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { getAIProvider, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
+import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+import { setNodeCorsHeaders } from './_utils/cors';
 
 type VercelRequest = any;
 type VercelResponse = any;
 
+function safeParseJSON(text: string): any {
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+    }
+    
+    try {
+        return JSON.parse(cleaned);
+    } catch (firstErr) {
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            const braced = cleaned.substring(firstBrace, lastBrace + 1);
+            try {
+                return JSON.parse(braced);
+            } catch {
+                const fixedCommas = braced.replace(/,\s*([}\]])/g, '$1');
+                try {
+                    return JSON.parse(fixedCommas);
+                } catch {
+                    // fall through
+                }
+            }
+        }
+        throw new Error(`Deep report JSON parsing failed: ${firstErr instanceof Error ? firstErr.message : String(firstErr)}`);
+    }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    setNodeCorsHeaders(res, req);
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { orderId } = req.body;
+    const { orderId } = req.body || {};
     if (!orderId) {
         return res.status(400).json({ message: 'Missing orderId' });
     }
@@ -60,9 +93,7 @@ ${BASE_SYSTEM_PROMPT}
 
 [AI 사주 직접 계산 엄금 및 사실 수용 규칙]
 ★ 중요: 너는 생년월일시를 보고 사주 원국(연주, 월주, 일주, 시주)을 직접 계산하려 시도하지 마라!
-★ 주입된 [System Context: Deterministic Saju Data] 사주 데이터를 100% 사실로 간주하고 명리 해석 및 지침을 작성하라.
-
-${sajuContext}`;
+★ 주입된 [System Context: Deterministic Saju Data] 사주 데이터를 100% 사실로 간주하고 명리 해석 및 지침을 작성하라.`;
 
         const isCounseling = report_type === '사주 상담 리포트';
 
@@ -295,23 +326,43 @@ ${sajuContext}`;
             partnerDetailsText = `\n[상대방 정보 (궁합 및 고민 분석용)]\n이름: ${p.name}, 생년월일시: ${p.birth_info}, MBTI: ${p.mbti || '모름'}, 관계: ${p.relationship}`;
         }
 
-        const userQuery = `이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birth_info}, 유형: ${report_type}, 요청: ${special_requests || '없음'}${partnerDetailsText}\n${sajuContext}`;
+        const userQuery = `[분석 대상자 정보]
+이름: ${name}, MBTI: ${mbti}, 생년월일시: ${birth_info}, 유형: ${report_type}, 요청: ${special_requests || '없음'}${partnerDetailsText}
 
-        const { model } = getAIProvider(0);
-        const { text } = await generateText({ model, system: systemPrompt, prompt: userQuery, maxTokens: 32000 } as any);
+[System Context: Deterministic Saju Data]
+${sajuContext}`;
 
-        let cleanedText = text.trim();
-        if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+        let lastError;
+        let generatedText = '';
+        for (let attempt = 0; attempt < 4; attempt++) {
+            try {
+                const { model } = getAIProvider(attempt);
+                const { text } = await generateText({ 
+                    model, 
+                    system: systemPrompt, 
+                    prompt: userQuery, 
+                    maxOutputTokens: 16384 
+                });
+                generatedText = text;
+                break;
+            } catch (error) {
+                lastError = error;
+                if (!isRetryableAIError(error)) break;
+            }
         }
 
-        const parsedData = JSON.parse(cleanedText);
+        if (!generatedText) {
+            throw lastError || new Error('보고서 텍스트 생성 실패');
+        }
+
+        const parsedData = safeParseJSON(generatedText);
         const dataToSave = { ...parsedData, userSaju, reportType: report_type, mbti, clientName: name, birthInfo: birth_info };
 
         await supabase.from('deep_report_requests').update({ generated_data: dataToSave, generated_at: new Date().toISOString() }).eq('order_id', orderId);
 
         return res.status(200).json({ success: true, message: 'Generated' });
     } catch (error: any) {
+        console.error('generate-and-save-report error:', error);
         return res.status(500).json({ success: false, message: error.message });
     }
 }

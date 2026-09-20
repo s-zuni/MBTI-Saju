@@ -6,13 +6,6 @@
 # Production & Build Artifacts
 /build
 /dist
-*.ait
-*.ait.zip
-/apps-in-toss-examples-main
-/apps-in-toss-examples-main.zip
-
-# Granite & Toss Temp
-.granite
 
 # Environment Variables & Secrets
 .env

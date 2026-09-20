@@ -11,10 +11,10 @@ import { createOpenAI } from '@ai-sdk/openai';
 
 // Model Constants
 export const MODELS = {
-    GEMINI_PRIMARY: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
-    GEMINI_FALLBACK: 'gemini-3.1-flash-lite',
     GPT_PRIMARY: 'gpt-4o-mini',
     GPT_FALLBACK: 'gpt-4o-mini',
+    GEMINI_PRIMARY: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
+    GEMINI_FALLBACK: 'gemini-3.1-flash-lite',
 };
 
 /**
@@ -30,29 +30,29 @@ export function getAIProvider(attempt: number = 0) {
     const google = createGoogleGenerativeAI({ apiKey: GEMINI_KEY || '' });
     const openai = createOpenAI({ apiKey: OPENAI_KEY || '' });
 
-    // Fallback Sequence (Prioritize Gemini 3.1 Flash Lite / GPT-4o for rich generation)
+    // Fallback Sequence (Prioritize OpenAI GPT-4o-mini, fall back to Gemini 3.1 Flash Lite)
     switch (attempt) {
         case 0:
+            if (OPENAI_KEY) {
+                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o-mini Primary' };
+            }
             if (GEMINI_KEY) {
-                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini 3.1 Flash Lite Primary' };
+                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
             }
-            if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o Primary' };
-            }
-            return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
+            return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o-mini Primary' };
         case 1:
-            if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o Primary' };
+            if (GEMINI_KEY) {
+                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Fallback' };
             }
-            return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Fallback' };
+            return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o-mini Primary' };
         case 2:
-            return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini 3.1 Flash Lite Fallback' };
+            return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT-4o-mini Fallback' };
         case 3:
         default:
-            if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT-4o-mini Fallback' };
+            if (GEMINI_KEY) {
+                return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Final Fallback' };
             }
-            return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Final Fallback' };
+            return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT-4o-mini Final Fallback' };
     }
 }
 

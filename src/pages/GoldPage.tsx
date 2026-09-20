@@ -113,7 +113,7 @@ const renderWealthReport = (reportText: string) => {
 const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
     const { session: hookSession, loading: isAuthLoading } = useAuth();
     const session = propSession || hookSession;
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal } = useModalStore();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -162,6 +162,9 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
         schema: goldSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: () => {
+            refreshCredits();
         }
     });
 
@@ -215,7 +218,6 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
                 currentJob,
                 desiredJob
             });
-            await consumeCredits(serviceKey);
         } catch (e: any) {
             setError(e.message);
         }

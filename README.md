@@ -1,7 +1,7 @@
 # 🔮 MBTIJU (엠비티아이주)
 
 > **사주명리학(四柱命理學)과 MBTI 성격 유형을 융합한 AI 기반 차세대 심층 성격 & 운세 분석 서비스**  
-> 토스 앱인토스(Apps in Toss, AIT) 미니앱 및 독립 웹 플랫폼 지원.
+> 독립 웹 플랫폼(React SPA + Vercel Serverless).
 
 ---
 
@@ -12,9 +12,6 @@ MBTI-Saju/
 ├── api/                     # Vercel Serverless Functions (AI 분석, 결제, 리포트 생성 백엔드)
 │   ├── _utils/              # API 공통 유틸리티 (AI Provider, CORS, 프롬프트, 사주 만세력 로직)
 │   └── ...                  # 도메인별 엔드포인트 (*.ts)
-├── docs/                    # 프로젝트 레퍼런스 및 플랫폼 연동 문서
-│   ├── toss/                # Apps-in-Toss(AIT) 출시 및 인앱결제 가이드
-│   └── llms.md              # AI 프롬프트 및 LLM 가이드
 ├── public/                  # 정적 웹 에셋
 │   ├── assets/              # 아이콘, 로고, 디자인 에셋, 프리미엄 샘플
 │   └── fonts/               # 웹 폰트 (나눔명조, 나눔고딕 등)
@@ -33,15 +30,14 @@ MBTI-Saju/
 │   ├── hooks/               # 커스텀 React Hooks (인증, 크레딧, 결제, 장바구니 등)
 │   ├── pages/               # 라우트 페이지 컴포넌트
 │   │   └── admin/           # 관리자 기능 페이지
-│   ├── payment/             # 결제 핸들러 (AIT 인앱결제 및 웹 결제 추상화)
+│   ├── payment/             # 결제 핸들러 (웹 TossPayments 위젯)
 │   └── utils/               # 유틸리티 (사주 계산, 내보내기, AI 챗 서비스 등)
 ├── supabase/                # 데이터베이스 설정 및 마이그레이션
 │   └── migrations/          # SQL 마이그레이션 스크립트
 ├── agent.md                 # [AI 명세] 서비스 아키텍처, 데이터 모델, 개발 규칙 정의서
 ├── skills.md                # [AI 스킬] 만세력 연산, AI 오케스트레이션, 결제 스킬 명세서
-├── design.md                # [디자인] 디자인 시스템, 색상 토큰, UI 컴포넌트, AIT 가이드
-├── .gitignore               # 최적화된 Git 무시 규칙 (AIT 번들, 환경변수 등)
-├── granite.config.ts        # 앱인토스(AIT) Granite 프레임워크 설정
+├── design.md                # [디자인] 디자인 시스템, 색상 토큰, UI 컴포넌트 가이드
+├── .gitignore               # Git 무시 규칙 (환경변수 등)
 ├── craco.config.js          # CRA 빌드 오버라이드 설정 (Tailwind, PostCSS)
 ├── vercel.json              # Vercel 배포 및 API 라우팅 설정
 └── package.json             # 의존성 및 스크립트 설정
@@ -52,10 +48,10 @@ MBTI-Saju/
 ## 🛠️ 기술 스택 (Tech Stack)
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide React
-- **Platform**: Apps in Toss (AIT) Framework (`@apps-in-toss/web-framework`, Granite)
 - **Backend / Serverless**: Vercel Serverless Functions (`api/*.ts`)
 - **Database & Auth**: Supabase (PostgreSQL, Row Level Security, Auth)
-- **AI Engine**: Google Gemini API (`@ai-sdk/google`, `@google/generative-ai`), OpenAI (`@ai-sdk/openai`)
+- **AI Engine**: OpenAI (`@ai-sdk/openai`, 주 모델), Google Gemini API (`@ai-sdk/google`, `@google/generative-ai`, 폴백 모델)
+- **Payment**: TossPayments 웹 위젯
 - **Document & Export**: `@react-pdf/renderer`, `html2canvas`, `jspdf`, `docx`, `exceljs`
 - **Saju Astrology Engine**: `manseryeok`
 
@@ -78,9 +74,6 @@ OPENAI_API_KEY=your_openai_api_key
 |---|---|
 | `npm start` | 로컬 웹 개발 서버 실행 (`http://localhost:3000`) |
 | `npm run build` | 프로덕션 웹 빌드 (`build/` 디렉터리 산출) |
-| `npm run dev` | 앱인토스 Granite 로컬 개발 환경 실행 |
-| `npm run package` | 앱인토스 바이너리 아티팩트 빌드 (`mbtiju.ait` 생성) |
-| `npm run deploy` | 앱인토스 콘솔로 배포 |
 
 ---
 

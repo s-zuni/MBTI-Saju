@@ -70,13 +70,6 @@ export const sendMessage = async (
     userContext: any,
     onToken?: (token: string) => void
 ): Promise<string> => {
-    // 1. Save User Message locally
-    await supabase.from('chat_messages').insert({
-        session_id: sessionId,
-        role: 'user',
-        content: userMessage
-    });
-
     try {
         let pastContext = '';
         const { data: { user } } = await supabase.auth.getUser();
@@ -96,19 +89,24 @@ export const sendMessage = async (
             }
         }
 
-        // 2. Call Backend API
+        // 2. Call Backend API with Auth Token (서버가 sessionId 및 DB 기록 기준으로 과금 턴 자동 판정)
+        const { data: { session: activeSession } } = await supabase.auth.getSession();
+        const authToken = activeSession?.access_token;
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
             },
             body: JSON.stringify({
+                sessionId,
                 message: userMessage,
-                mbti: userContext.mbti,
-                birthDate: userContext.birthDate,
-                birthTime: userContext.birthTime,
-                name: userContext.name,
-                gender: userContext.gender,
+                mbti: userContext?.mbti,
+                birthDate: userContext?.birthDate,
+                birthTime: userContext?.birthTime,
+                name: userContext?.name,
+                gender: userContext?.gender,
                 pastContext: pastContext,
                 messages: history
             })
@@ -116,7 +114,7 @@ export const sendMessage = async (
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(`API Error: ${response.status} - ${errorData.details || 'Unknown error'}`);
+            throw new Error(`API Error: ${response.status} - ${errorData.error || errorData.details || 'Unknown error'}`);
         }
 
         // 3. Handle Streaming Response

@@ -14,7 +14,7 @@ import { calculateSaju } from '../utils/sajuUtils';
 const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
     const { session, loading: isAuthLoading } = useAuth();
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal, closeAllModals } = useModalStore();
 
     const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
@@ -38,7 +38,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
             'Authorization': `Bearer ${session?.access_token || ''}`,
         },
         onFinish: async () => {
-            await consumeCredits('FORTUNE_TOMORROW');
+            await refreshCredits();
         },
         onError: (error) => {
             console.error('[TodayFortunePage] Tomorrow fortune generation failed:', error);

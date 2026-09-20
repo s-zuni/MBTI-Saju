@@ -7,7 +7,6 @@
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.52",
     "@ai-sdk/react": "^3.0.140",
-    "@apps-in-toss/web-framework": "^2.4.7",
     "@craco/craco": "^7.1.0",
     "@google/generative-ai": "^0.24.1",
     "@react-pdf/font": "^4.0.8",
@@ -34,10 +33,7 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
-    "eject": "react-scripts eject",
-    "dev": "granite dev",
-    "package": "ait build",
-    "deploy": "ait deploy"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

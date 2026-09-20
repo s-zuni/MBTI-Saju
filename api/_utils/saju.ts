@@ -348,7 +348,7 @@ export function getPreciseSajuData(input: SajuInput): PreciseSajuData {
         };
     }
 
-    return {
+    const sajuResult: PreciseSajuData = {
         ganZhi: {
             year: `${yearStemKo}${yearBranchKo}`,
             month: `${monthStemKo}${monthBranchKo}`,
@@ -366,21 +366,25 @@ export function getPreciseSajuData(input: SajuInput): PreciseSajuData {
         elements,
         elementRatio,
         voidBranches: detail.voidBranches || [],
-        luckPillars: luckPillarsData,
         trueSolarTimeApplied: true,
         dayBoundaryRule: selectedDayBoundary
     };
+
+    if (luckPillarsData) {
+        sajuResult.luckPillars = luckPillarsData;
+    }
+
+    return sajuResult;
 }
 
 /**
  * 기존 API 호환용 래퍼 함수
  */
 export function calculateSaju(birthDate: string, birthTime: string | null, gender?: string): PreciseSajuData {
-    return getPreciseSajuData({
-        birthDate,
-        birthTime,
-        gender
-    });
+    const input: SajuInput = { birthDate };
+    if (birthTime !== undefined) input.birthTime = birthTime;
+    if (gender !== undefined) input.gender = gender;
+    return getPreciseSajuData(input);
 }
 
 /**

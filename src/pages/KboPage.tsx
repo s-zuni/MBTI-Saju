@@ -121,7 +121,7 @@ const KBO_TEAMS = [
 
 const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal } = useModalStore();
     const navigate = useNavigate();
 
@@ -143,7 +143,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         },
         onFinish: ({ object }) => {
             if (object) {
-                consumeCredits('KBO');
+                refreshCredits();
             }
         },
         onError: (err) => {

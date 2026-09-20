@@ -1,14 +1,29 @@
-import { createClient } from '@supabase/supabase-js';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
-import { corsHeaders, handleCors } from './_utils/cors';
+import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-
+import { authenticateUser } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
 };
+
+const STATIC_LOVE_SAJU_SYSTEM_PROMPT = `
+${BASE_SYSTEM_PROMPT}
+
+당신은 사주 합충과 MBTI 심리를 정밀 융합하여 인연의 기운과 실전 대처 전략을 도출하는 냉철한 연애 명리학 전문가입니다.
+
+[시간적 기준 정보]
+현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
+
+[핵심 원칙]
+1. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 및 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 객관적 팩트로 정밀 분석하세요.
+2. 도화살, 홍염살, 원진살 등 특수 신살이 있으면 과도한 겁주기 없이 건조하고 담담하게 풀이하세요.
+3. 연애운/인연의 기운은 '사주 진단(날씨)'으로 전달하고, 실질적 만남이나 관계 개선 조언은 'MBTI에 최적화된 행동 지침(행동, 장소, 대화법)'으로 제시하세요.
+4. 재회/짝사랑 사주: 헛된 위로나 공포 조장 없이, 냉정하게 기운의 흐름을 짚어주고 MBTI 기반 구체적 공략 및 대응 행동을 제시하세요.
+5. 마크다운 강조 기호(**) 절대 사용 금지. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
+6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (핵심 명리학 용어는 한자 병기)`;
 
 const loveSajuSchema = z.object({
     analysisType: z.string(),
@@ -44,32 +59,31 @@ export default async (req: Request) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
 
+    const responseHeaders = getCorsHeaders(req);
+
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
+            status: 405, 
+            headers: responseHeaders 
+        });
+    }
+
     try {
-        const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-        const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        const body = await req.json();
+        const url = new URL(req.url);
+        const type = url.searchParams.get('type') || body.type || 'couple';
 
-        // Authenticate user
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader) {
-            return new Response(JSON.stringify({ error: 'Authorization header is missing.' }), { 
-                status: 401, 
-                headers: corsHeaders 
-            });
-        }
-        const token = authHeader.split(' ')[1]!;
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        let serviceType = 'LOVE_COUPLE';
+        if (type === 'married') serviceType = 'LOVE_MARRIED';
+        else if (type === 'marriage') serviceType = 'LOVE_MARRIAGE';
+        else if (type === 'reunion') serviceType = 'LOVE_REUNION';
+        else if (type === 'crush') serviceType = 'LOVE_CRUSH';
 
-        if (authError || !user) {
-            return new Response(JSON.stringify({ error: 'User not authenticated.' }), { 
-                status: 401, 
-                headers: corsHeaders 
-            });
+        // 연애 사주 인증 및 5 크레딧 차감
+        const authResult = await authenticateUser(req, { serviceType, cost: 5 });
+        if (authResult.errorResponse) {
+            return authResult.errorResponse;
         }
-        if (req.method === 'POST') {
-            const body = await req.json();
-            const url = new URL(req.url);
-            const type = url.searchParams.get('type') || body.type || 'couple';
 
         const {
             birthDate, birthTime, mbti, name, gender,
@@ -80,7 +94,7 @@ export default async (req: Request) => {
         if (!birthDate) {
             return new Response(JSON.stringify({ error: '본인 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
-                headers: corsHeaders 
+                headers: responseHeaders 
             });
         }
 
@@ -93,28 +107,12 @@ export default async (req: Request) => {
         if (type !== 'crush' && !targetSaju && targetBirthDate) {
             return new Response(JSON.stringify({ error: '상대방 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
-                headers: corsHeaders 
+                headers: responseHeaders 
             });
         }
 
         const myRichSaju = buildRichSajuContext(mySaju);
         const targetRichSaju = targetSaju ? buildRichSajuContext(targetSaju) : '상대방 정보 없음';
-
-        const systemPrompt = `
-${BASE_SYSTEM_PROMPT}
-
-당신은 사주 합충과 MBTI 심리를 정밀 융합하여 인연의 기운과 실전 대처 전략을 도출하는 냉철한 연애 명리학 전문가입니다.
-
-[시간적 기준 정보]
-현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
-
-[핵심 원칙]
-1. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 및 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 객관적 팩트로 정밀 분석하세요.
-2. 도화살, 홍염살, 원진살 등 특수 신살이 있으면 과도한 겁주기 없이 건조하고 담담하게 풀이하세요.
-3. 연애운/인연의 기운은 '사주 진단(날씨)'으로 전달하고, 실질적 만남이나 관계 개선 조언은 'MBTI에 최적화된 행동 지침(행동, 장소, 대화법)'으로 제시하세요.
-4. 재회/짝사랑 사주: 헛된 위로나 공포 조장 없이, 냉정하게 기운의 흐름을 짚어주고 MBTI 기반 구체적 공략 및 대응 행동을 제시하세요.
-5. 마크다운 강조 기호(**) 절대 사용 금지. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
-6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (핵심 명리학 용어는 한자 병기)`;
 
             let userQuery = `[본인 정보]
 이름: ${name || '본인'}
@@ -175,11 +173,12 @@ ${targetRichSaju}
                         const result = await streamObject({
                             model,
                             schema: loveSajuSchema,
-                            system: systemPrompt,
+                            system: STATIC_LOVE_SAJU_SYSTEM_PROMPT,
                             prompt: userQuery,
+                            maxOutputTokens: 16384,
                             maxRetries: 0,
                         });
-                        return result.toTextStreamResponse({ headers: corsHeaders });
+                        return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {
                         lastError = error;
                         if (!isRetryableAIError(error)) break;
@@ -189,17 +188,11 @@ ${targetRichSaju}
             } catch (err) {
                 throw err;
             }
-        } else {
-            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { 
-                status: 405, 
-                headers: corsHeaders 
-            });
-        }
     } catch (error: any) {
         console.error('Love Saju API Error:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500, 
-            headers: corsHeaders 
+            headers: responseHeaders 
         });
     }
 };

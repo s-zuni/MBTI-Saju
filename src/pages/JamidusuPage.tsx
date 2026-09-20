@@ -27,7 +27,7 @@ const BIRTH_TIME_SLOTS = [
 
 const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
-    const { credits, useCredits: consumeCredits } = useCredits(session);
+    const { credits, refreshCredits } = useCredits(session);
     const { openModal } = useModalStore();
     const navigate = useNavigate();
     const resultCardRef = useRef<HTMLDivElement>(null);
@@ -51,6 +51,9 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         schema: jamidusuSchema,
         headers: {
             'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        onFinish: () => {
+            refreshCredits();
         }
     });
 
@@ -77,7 +80,6 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                 birthTime: targetBirthTime,
                 sajuData
             });
-            await consumeCredits('JAMIDUSU');
         } catch (e: any) {
             setError(e.message);
         }
