@@ -11,8 +11,8 @@ import { createOpenAI } from '@ai-sdk/openai';
 
 // Model Constants
 export const MODELS = {
-    GEMINI_PRIMARY: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
-    GEMINI_FALLBACK: 'gemini-3.1-flash-lite',
+    GEMINI_PRIMARY: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    GEMINI_FALLBACK: 'gemini-2.5-flash',
     GPT_PRIMARY: 'gpt-4o-mini',
     GPT_FALLBACK: 'gpt-4o-mini',
 };
@@ -24,35 +24,38 @@ export const MODELS = {
  */
 export function getAIProvider(attempt: number = 0) {
     // 1. Fetch Keys (Server-side ONLY)
-    const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
 
     const google = createGoogleGenerativeAI({ apiKey: GEMINI_KEY || '' });
     const openai = createOpenAI({ apiKey: OPENAI_KEY || '' });
 
-    // Fallback Sequence (Prioritize Gemini 3.1 Flash Lite / GPT-4o for rich generation)
+    // Fallback Sequence (Prioritize GPT-4o-mini Primary -> Gemini 2.5 Flash Fallback)
     switch (attempt) {
         case 0:
+            if (OPENAI_KEY) {
+                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o-mini Primary' };
+            }
             if (GEMINI_KEY) {
-                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini 3.1 Flash Lite Primary' };
+                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini 2.5 Flash Primary' };
             }
-            if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o Primary' };
-            }
-            return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini Primary' };
+            return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT Primary' };
         case 1:
+            if (GEMINI_KEY) {
+                return { model: google(MODELS.GEMINI_PRIMARY), name: 'Gemini 2.5 Flash Fallback' };
+            }
+            return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT Fallback' };
+        case 2:
             if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_PRIMARY), name: 'GPT-4o Primary' };
+                return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT-4o-mini Secondary' };
             }
             return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Fallback' };
-        case 2:
-            return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini 3.1 Flash Lite Fallback' };
         case 3:
         default:
-            if (OPENAI_KEY) {
-                return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT-4o-mini Fallback' };
+            if (GEMINI_KEY) {
+                return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Final Fallback' };
             }
-            return { model: google(MODELS.GEMINI_FALLBACK), name: 'Gemini Final Fallback' };
+            return { model: openai(MODELS.GPT_FALLBACK), name: 'GPT Final Fallback' };
     }
 }
 
@@ -60,40 +63,17 @@ export function getAIProvider(attempt: number = 0) {
  * Checks if OpenAI is properly configured in the environment.
  */
 export function isOpenAIConfigured(): boolean {
-    return !!process.env.OPENAI_API_KEY;
+    return !!(process.env.OPENAI_API_KEY || process.env.OPENAI_KEY);
 }
 
 /**
  * Helper to determine if an error should trigger a provider fallback.
+ * Allows falling back to alternative providers/models whenever an attempt fails.
  */
 export function isRetryableAIError(error: any): boolean {
     if (!error) return false;
-
-    // 1. Check SDK's own retryable flag
-    if (error.isRetryable === true) return true;
-
-    // 2. Extract underlying error if this is an AI_RetryError
-    const lastError = error.lastError || (error.errors ? error.errors[error.errors.length - 1] : null);
-    const targetError = lastError || error;
-
-    // 3. Check status codes
-    const statusCode = targetError.statusCode || targetError.status;
-    if (statusCode === 503 || statusCode === 429 || statusCode === 500 || statusCode === 504) {
-        return true;
-    }
-
-    // 4. Check error message strings
-    const msg = (targetError.message || String(targetError)).toLowerCase();
-    return (
-        msg.includes('503') || 
-        msg.includes('unavailable') || 
-        msg.includes('429') || 
-        msg.includes('requests') ||
-        msg.includes('overloaded') ||
-        msg.includes('high demand') ||
-        msg.includes('rate limit') ||
-        msg.includes('deadline exceeded')
-    );
+    // Always allow fallback loop to try the next available provider on any error
+    return true;
 }
 
 export * from './prompts';
