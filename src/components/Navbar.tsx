@@ -115,7 +115,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             운세 보기
           </button>
           <button onClick={handleChatClick} className={`relative text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            운명 심층 상담
+            1대1 심층 운명 상담
             {answeredCount > 0 && (
               <span className="absolute -top-1 -right-3 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
             )}
@@ -203,7 +203,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
             <div className="flex flex-col gap-2">
               <button onClick={() => { navigate('/myluck'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
-              <button onClick={() => { handleChatClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운명 심층 상담</button>
+              <button onClick={() => { handleChatClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">1대1 심층 운명 상담</button>
               <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
               <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 상점</button>
               <button onClick={() => { navigate('/reviews'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">이용후기</button>

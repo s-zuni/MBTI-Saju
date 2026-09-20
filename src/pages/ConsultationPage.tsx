@@ -174,7 +174,7 @@ const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSes
                     {view === 'list' ? (
                         <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
                             <Sparkles size={20} className="text-violet-600" />
-                            운명 심층 상담
+                            1대1 심층 운명 상담
                         </h1>
                     ) : (
                         <button 
