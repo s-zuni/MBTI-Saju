@@ -17,7 +17,7 @@ const TermsPage: React.FC = () => {
                     <section>
                         <h2 className="text-lg font-bold text-slate-800">제2조 (용어의 정의)</h2>
                         <ul className="list-disc pl-5">
-                            <li><strong>서비스</strong>: 회사가 제공하는 MBTI 및 사주 명리학 기반의 심층 데이터 분석 서비스('MBTIJU 소울 리포트' 등), 커뮤니티 기능 등을 의미합니다.</li>
+                            <li><strong>서비스</strong>: 회사가 제공하는 1,000만 건 이상의 데이터 분석 기반 1대1 심층 운명 상담(/chat), 4년 심층 사주 리포트 서비스('MBTIJU 소울 리포트' 등), 커뮤니티 및 부가 콘텐츠 기능 등을 의미합니다.</li>
                             <li><strong>회원</strong>: 회사의 서비스에 접속하여 본 약관에 따라 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 고객(카카오, 구글 연동 로그인 사용자)을 말합니다.</li>
                             <li><strong>크레딧(크레딧)</strong>: 서비스 내에서 유료 및 특정 콘텐츠를 이용하기 위해 사용되는 가상의 결제수단을 말합니다. (이하 "크레딧")</li>
                             <li><strong>유효기간</strong>: 충전된 크레딧의 유효기간 및 환불 가능 기간은 결제일로부터 1년입니다.</li>

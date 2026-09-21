@@ -6,6 +6,36 @@
 # Production & Build Artifacts
 /build
 /dist
+*.ait
+*.zip
+*.tar
+*.gz
+*.tgz
+*.rar
+*.7z
+*.iso
+*.dmg
+
+# Generated Documents & Export Files
+*.pdf
+*.docx
+*.xlsx
+*.csv
+
+# Image & Media Files (Ignore loose image files, preserve static UI assets)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.bmp
+*.tiff
+*.svg
+!public/
+!public/**
+!src/assets/
+!src/assets/**
 
 # Environment Variables & Secrets
 .env
@@ -24,17 +54,23 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
-# Vercel
+# Vercel & Deployments
 .vercel
 
 # IDE & Editors
 .vscode/settings.json
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
 .idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.tmp
+*.temp
+*.bak
 
 # OS Generated Files
 .DS_Store

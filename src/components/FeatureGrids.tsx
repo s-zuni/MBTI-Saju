@@ -285,7 +285,7 @@ const FeatureGrids: React.FC = () => {
                             </div>
                         </button>
 
-                        {/* ── 운명 심층 상담 CTA (클린 화이트) ── */}
+                        {/* ── 1대1 심층 운명 상담 CTA (클린 화이트) ── */}
                         <button
                             onClick={handleChatClick}
                             className="w-full bg-white rounded-2xl p-5 text-left group active:scale-[0.99] transition-transform border border-slate-100"
@@ -294,19 +294,19 @@ const FeatureGrids: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 {/* 아이콘 */}
                                 <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
-                                    <MessageSquare className="w-[18px] h-[18px] text-violet-500" strokeWidth={2} />
+                                    <MessageSquare className="w-[18px] h-[18px] text-violet-600" strokeWidth={2} />
                                 </div>
 
                                 {/* 텍스트 */}
                                 <div className="flex-1 min-w-0">
                                     <div className="mb-1">
-                                        <span className="text-[10px] text-violet-400 font-black uppercase tracking-widest">
-                                            AI 상담
+                                        <span className="text-[10px] text-violet-600 font-bold uppercase tracking-widest">
+                                            1:1 실시간 대화
                                         </span>
                                     </div>
-                                    <h3 className="text-[15px] font-bold text-slate-900">운명 심층 상담</h3>
-                                    <p className="text-[12px] text-slate-400 mt-0.5 font-medium">
-                                        AI 사주 전문가와 1:1 대화
+                                    <h3 className="text-[15px] font-bold text-slate-900">1대1 심층 운명 상담</h3>
+                                    <p className="text-[12px] text-slate-500 mt-0.5 font-medium">
+                                        1,000만 데이터 분석 + 전문가 수기 검증 기준
                                     </p>
                                 </div>
 
