@@ -8,6 +8,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
+import { ensureValidSession } from '../supabaseClient';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -51,21 +52,29 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
 
   // Streaming Hook
   const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading, error: analysisError } = useObject({
     api: '/api/analysis-main?part=full',
     schema: analysisSchema,
-    headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
-    onFinish: ({ object }) => {
+    headers: async () => {
+      const activeSession = await ensureValidSession();
+      return { 'Authorization': `Bearer ${activeSession?.access_token || initialSession?.access_token || ''}` };
+    },
+    onFinish: ({ object, error: validationError }) => {
       if (object) {
+        setGenerationError(null);
         if (refreshCredits) {
           refreshCredits();
         }
         if (onSuccess) {
           onSuccess();
         }
+      } else {
+        console.error('MbtiSaju Analysis validation failed:', validationError);
+        setGenerationError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
       }
     },
     onError: (err) => {
@@ -190,10 +199,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       return;
     }
     setIsRegenerating(true);
+    setGenerationError(null);
     try {
       const { data: { session: fetchedSession } } = await supabase.auth.getSession();
       const activeSession = fetchedSession || initialSession;
-      
+
       const metadata = activeSession?.user?.user_metadata;
       const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
       const payload = {
@@ -649,14 +659,14 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 </p>
               </div>
             </div>
-          ) : analysisError ? (
+          ) : (analysisError || generationError) ? (
             <div className="flex flex-col justify-center items-center py-12 px-6 text-center animate-fade-up">
               <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
                 <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
               <h3 className="text-xl font-black text-slate-900 mb-2">분석 중 오류가 발생했습니다</h3>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                {analysisError?.message || "일시적인 서버 부하로 분석이 중단되었습니다."}
+                {analysisError?.message || generationError || "일시적인 서버 부하로 분석이 중단되었습니다."}
                 <br />
                 <span className="text-slate-900 font-bold underline underline-offset-4 decoration-violet-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
               </p>

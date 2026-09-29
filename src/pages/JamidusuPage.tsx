@@ -6,12 +6,14 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { ensureValidSession } from '../supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
 import { useModalStore } from '../hooks/useModalStore';
 
 const BIRTH_TIME_SLOTS = [
     { value: 'unknown', label: '모름' },
+    { value: '23:00-01:00', label: '자시 (23:00~01:00)' },
     { value: '01:00-03:00', label: '축시 (01:00~03:00)' },
     { value: '03:00-05:00', label: '인시 (03:00~05:00)' },
     { value: '05:00-07:00', label: '묘시 (05:00~07:00)' },
@@ -49,11 +51,21 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
         },
-        onFinish: () => {
-            refreshCredits();
+        onFinish: ({ object, error: validationError }) => {
+            if (object) {
+                refreshCredits();
+            } else {
+                console.error('[JamidusuPage] Result validation failed:', validationError);
+                setError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+            }
+        },
+        onError: (err) => {
+            console.error('[JamidusuPage] Analysis failed:', err);
+            setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
 

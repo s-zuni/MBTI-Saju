@@ -6,6 +6,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { loveSajuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { ensureValidSession } from '../supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
 import { useModalStore } from '../hooks/useModalStore';
@@ -221,11 +222,21 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
     const { object: result, submit, isLoading } = useObject({
         api: `/api/love-saju?type=${activeTab}`,
         schema: loveSajuSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
         },
-        onFinish: () => {
-            refreshCredits();
+        onFinish: ({ object, error: validationError }) => {
+            if (object) {
+                refreshCredits();
+            } else {
+                console.error('[RelationshipPage] Result validation failed:', validationError);
+                setError('궁합 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+            }
+        },
+        onError: (err) => {
+            console.error('[RelationshipPage] Analysis failed:', err);
+            setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
 

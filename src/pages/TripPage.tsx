@@ -12,6 +12,7 @@ import { tripSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
+import { ensureValidSession } from '../supabaseClient';
 
 const DOMESTIC_REGIONS = [
     '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시', 
@@ -45,11 +46,21 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special?type=trip',
         schema: tripSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
         },
-        onFinish: () => {
-            refreshCredits();
+        onFinish: ({ object, error: validationError }) => {
+            if (object) {
+                refreshCredits();
+            } else {
+                console.error('[TripPage] Result validation failed:', validationError);
+                setError('여행지 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+            }
+        },
+        onError: (err) => {
+            console.error('[TripPage] Analysis failed:', err);
+            setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
 

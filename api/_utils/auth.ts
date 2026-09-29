@@ -85,6 +85,13 @@ export interface AuthOptions {
     serviceType?: ServiceType | string | undefined;
     cost?: number | undefined;
     allowAnonymous?: boolean | undefined;
+    /**
+     * JWT 검증으로 user가 확보된 뒤, 실제 청구할 serviceType/cost를 서버가 직접 계산하도록 위임한다.
+     * "첫 사용 무료" 같은 정책은 요청 body의 클라이언트 입력(boolean/문자열)을 신뢰하면 반복 호출로
+     * 우회당할 수 있으므로, DB 상태를 조회/원자적으로 갱신해 판정해야 하는 엔드포인트에서 사용한다.
+     * 반환값이 있으면 options.serviceType/options.cost보다 우선 적용된다.
+     */
+    resolveCost?: (ctx: { user: User; supabaseAdmin: SupabaseClient }) => Promise<{ serviceType?: ServiceType | string | undefined; cost: number }>;
 }
 
 export interface AuthResult {
@@ -143,18 +150,47 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
         };
     }
 
+    // 실제 청구 대상(serviceType/cost) 결정: resolveCost가 있으면 그 결과가 우선한다.
+    let effectiveServiceType = options.serviceType;
+    let effectiveCost = options.cost;
+
+    if (options.resolveCost) {
+        try {
+            const resolved = await options.resolveCost({ user, supabaseAdmin });
+            effectiveServiceType = resolved.serviceType;
+            effectiveCost = resolved.cost;
+        } catch (resolveError) {
+            console.error('[auth] resolveCost error:', resolveError);
+            return {
+                user,
+                supabaseAdmin,
+                errorResponse: new Response(
+                    JSON.stringify({
+                        success: false,
+                        error: '요청 처리 중 오류가 발생했습니다.',
+                        code: 'RESOLVE_COST_ERROR'
+                    }),
+                    {
+                        status: 500,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    }
+                )
+            };
+        }
+    }
+
     // 크레딧 차감 결정
     let costToDeduct = 0;
-    if (typeof options.cost === 'number') {
-        costToDeduct = options.cost;
-    } else if (options.serviceType && options.serviceType in SERVICE_COSTS) {
-        costToDeduct = SERVICE_COSTS[options.serviceType as ServiceType];
+    if (typeof effectiveCost === 'number') {
+        costToDeduct = effectiveCost;
+    } else if (effectiveServiceType && effectiveServiceType in SERVICE_COSTS) {
+        costToDeduct = SERVICE_COSTS[effectiveServiceType as ServiceType];
     }
 
     if (costToDeduct > 0) {
         const { data: deductResult, error: deductError } = await supabaseAdmin.rpc('deduct_credits', {
             p_user_id: user.id,
-            p_service_type: options.serviceType || 'AI_SERVICE',
+            p_service_type: effectiveServiceType || 'AI_SERVICE',
             p_cost: costToDeduct
         });
 

@@ -10,6 +10,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tarotSchema } from '../config/schemas';
+import { ensureValidSession } from '../supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
 import { useModalStore } from '../hooks/useModalStore';
@@ -62,11 +63,14 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
         api: '/api/tarot',
         schema: tarotSchema,
-        headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
-        onFinish: async ({ object }) => {
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
+        },
+        onFinish: async ({ object, error: validationError }) => {
             if (object) {
                 await refreshCredits();
-                
+
                 const { data: { session: fetchedSession } } = await supabase.auth.getSession();
                 const activeSession = fetchedSession || session;
                 if (activeSession) {
@@ -78,6 +82,9 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         result_data: object
                     });
                 }
+            } else {
+                console.error('[TarotPage] Result validation failed:', validationError);
+                alert('타로 해석 결과를 만드는 데 실패했습니다. 다시 시도해 주세요.');
             }
         },
         onError: (error) => {

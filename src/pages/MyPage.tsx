@@ -121,8 +121,11 @@ const MyPage: React.FC<MyPageProps> = ({
   const { object: coreObj, submit: submitCore } = useObject({
     api: '/api/analyze?part=core',
     schema: analysisSchema,
-    headers: { 'Authorization': `Bearer ${initialSession?.access_token || ''}` },
-    onFinish: ({ object }) => {
+    headers: async () => {
+      const activeSession = await ensureValidSession();
+      return { 'Authorization': `Bearer ${activeSession?.access_token || initialSession?.access_token || ''}` };
+    },
+    onFinish: ({ object, error: validationError }) => {
       if (object) {
         const activeBirthDate = profile?.birth_date;
         const activeBirthTime = profile?.birth_time;
@@ -144,6 +147,9 @@ const MyPage: React.FC<MyPageProps> = ({
         }).catch((err) => {
           console.error('Supabase metadata update error:', err);
         });
+      } else {
+        console.error('Core Analysis validation failed:', validationError);
+        setError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
       }
       setAnalysisLoading(false);
     },
@@ -287,6 +293,17 @@ const MyPage: React.FC<MyPageProps> = ({
       if (!activeSession) {
         throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
       }
+
+      // 사주 만세력 데이터를 즉시 계산하여 스트리밍 시작과 동시에 화면에 표출
+      const sajuData = calculateSaju(profile.birth_date, profile.birth_time ?? null);
+      setAnalysis((prev: any) => ({
+        ...(prev || {}),
+        saju: sajuData,
+        full_name: profile.name,
+        gender: profile.gender,
+        mbti: profile.mbti,
+        birth_date: profile.birth_date,
+      }));
 
       const requestPayload = {
         part: 'core',
