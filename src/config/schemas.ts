@@ -158,7 +158,10 @@ export const jamidusuSchema = z.object({
     career_palace: z.string().describe("나의 재능과 성공 (관록궁) 분석"),
     wealth_style: z.string().describe("재물운 (재백궁) 분석"),
     love_style: z.string().describe("연애 스타일 (부처궁) 분석"),
-    lucky_items: z.array(z.string()).describe("나를 돕는 길성 & 행운 요소 3가지"),
+    lucky_items: z.array(z.object({
+        name: z.string().describe("길성 또는 행운 요소 이름 (예: 문창성)"),
+        meaning: z.string().describe("쉬운 한 줄 풀이")
+    })).describe("나를 돕는 길성 & 행운 요소 3가지 (이름 + 풀이)"),
     summary: z.string().describe("전체 명반에 대한 총평 및 조언")
 });
 

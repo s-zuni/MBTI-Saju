@@ -27,6 +27,18 @@ const BIRTH_TIME_SLOTS = [
     { value: '21:00-23:00', label: '해시 (21:00~23:00)' },
 ];
 
+// 프로필에는 "14:30" 형태로 저장되므로 시진 구간("13:00-15:00")으로 변환한다.
+const toBirthTimeSlot = (time?: string | null): string => {
+    if (!time) return '';
+    if (BIRTH_TIME_SLOTS.some((slot) => slot.value === time)) return time;
+    const hour = Number(time.trim().split('-')[0]?.split(':')[0]);
+    if (Number.isNaN(hour) || hour < 0 || hour > 23) return '';
+    if (hour === 23 || hour === 0) return '23:00-01:00';
+    const start = hour % 2 === 1 ? hour : hour - 1;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(start)}:00-${pad((start + 2) % 24)}:00`;
+};
+
 const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { session, loading: isAuthLoading } = useAuth();
     const { credits, refreshCredits } = useCredits(session);
@@ -38,12 +50,17 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [targetBirthDate, setTargetBirthDate] = useState('');
     const [targetBirthTime, setTargetBirthTime] = useState('');
     const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
+    const [birthTimeAutoFilled, setBirthTimeAutoFilled] = useState(false);
 
     useEffect(() => {
         if (session?.user?.user_metadata) {
             const metadata = session.user.user_metadata;
             if (metadata.birth_date) setTargetBirthDate(metadata.birth_date);
-            if (metadata.birth_time) setTargetBirthTime(metadata.birth_time);
+            if (metadata.birth_time) {
+                const slot = toBirthTimeSlot(metadata.birth_time);
+                setTargetBirthTime(slot);
+                setBirthTimeAutoFilled(!!slot);
+            }
             if (metadata.gender === 'male' || metadata.gender === 'female') setTargetGender(metadata.gender);
         }
     }, [session]);
@@ -84,12 +101,12 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
         try {
             setError(null);
-            const sajuData = calculateSaju(targetBirthDate, targetBirthTime);
+            const sajuData = calculateSaju(targetBirthDate, targetBirthTime === 'unknown' ? '' : targetBirthTime);
             submit({
                 type: 'jamidusu',
                 gender: targetGender,
                 birthDate: targetBirthDate,
-                birthTime: targetBirthTime,
+                birthTime: targetBirthTime === 'unknown' ? '' : targetBirthTime,
                 sajuData
             });
         } catch (e: any) {
@@ -202,7 +219,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                     <label className="block text-sm font-medium text-slate-700">태어난 시간 (선택사항)</label>
                                     <select 
                                         value={targetBirthTime} 
-                                        onChange={(e) => setTargetBirthTime(e.target.value)} 
+                                        onChange={(e) => { setTargetBirthTime(e.target.value); setBirthTimeAutoFilled(false); }}
                                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                                     >
                                         <option value="">시간을 선택해주세요 (모르면 선택 안함)</option>
@@ -210,6 +227,9 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             <option key={slot.value} value={slot.value}>{slot.label}</option>
                                         ))}
                                     </select>
+                                    {birthTimeAutoFilled && (
+                                        <p className="text-xs text-indigo-500">내 프로필의 태어난 시간으로 자동 입력했어요.</p>
+                                    )}
                                 </div>
 
                                 <button 
@@ -299,10 +319,13 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                                 <Sparkles className="w-4 h-4 text-purple-500" /> 나를 돕는 길성 & 행운 요소
                                                             </h3>
                                                             <ul className="space-y-2">
-                                                                {result.lucky_items.map((point: any, idx: number) => (
+                                                                {result.lucky_items.map((item: any, idx: number) => (
                                                                     <li key={idx} className="text-slate-600 text-sm flex items-start gap-2">
                                                                         <span className="text-purple-500 font-bold mt-0.5">•</span>
-                                                                        <span className="break-keep">{point}</span>
+                                                                        <span className="break-keep">
+                                                                            <span className="font-bold text-slate-800">{item?.name}</span>
+                                                                            {item?.meaning && <span className="text-slate-500"> — {item.meaning}</span>}
+                                                                        </span>
                                                                     </li>
                                                                 ))}
                                                             </ul>
