@@ -228,7 +228,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     addSection(parsedContent?.relationship?.title || '03. 인연의 지형도와 감정의 흐름', parsedContent?.relationship?.details, 'BE185D');
 
     if (parsedContent?.threeYearRoadmap?.details) {
-      const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '04. 핵심 4개년 냉철한 심층 분석')];
+      const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '04. 핵심 3개년 냉철한 심층 분석')];
       parsedContent.threeYearRoadmap.details.forEach((yearData: any) => {
         roadmapChildren.push(new Paragraph({
           children: [new TextRun({ text: `${yearData.year}년: ${yearData.yearlyTheme}`, bold: true, size: 28, color: '4338CA', font: 'Malgun Gothic' })],

@@ -159,8 +159,8 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       const tossProductName = formData.reportType === 'saju_counsel'
         ? '사주 1:1 고민 상담 리포트'
         : formData.reportType === 'saju'
-          ? '4년 심층 결합 분석 리포트 (사주)'
-          : '4년 심층 결합 분석 리포트 (MBTI+사주)';
+          ? '3년 심층 결합 분석 리포트 (사주)'
+          : '3년 심층 결합 분석 리포트 (MBTI+사주)';
 
       const response = await requestPayment({
         name: tossProductName,
@@ -348,17 +348,17 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'mbti_saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
                      <p className="font-bold text-sm mb-1 flex justify-between items-center">
-                       <span>4년 사주 (MBTI 융합)</span>
+                       <span>3년 사주 (MBTI 융합)</span>
                        <span className="text-xs font-black text-violet-600">29,900원</span>
                      </p>
-                     <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">4년 월별 세부 로드맵 & 성향</p>
+                     <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">3년 월별 세부 로드맵 & 성향</p>
                   </button>
                   <button 
                     onClick={() => setFormData({...formData, reportType: 'saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
                      <p className="font-bold text-sm mb-1 flex justify-between items-center">
-                       <span>4년 사주 (사주 전용)</span>
+                       <span>3년 사주 (사주 전용)</span>
                        <span className="text-xs font-black text-violet-600">29,900원</span>
                      </p>
                      <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">전통 명리학 관점 집중 해독</p>
