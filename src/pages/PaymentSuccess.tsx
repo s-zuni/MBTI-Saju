@@ -2,6 +2,8 @@ import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, Home, Receipt } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { clearPendingCheckout } from '../utils/pendingCheckout';
+import { track } from '../utils/analytics';
 
 const DeepReportEventModal = lazy(() => import('../components/DeepReportEventModal'));
 const PaymentSuccess: React.FC = () => {
@@ -58,6 +60,10 @@ const PaymentSuccess: React.FC = () => {
                     const errorMessage = data.error || data.message || '결제 승인 중 오류가 발생했습니다.';
                     throw new Error(errorMessage);
                 }
+
+                // 결제 완료: 이어서 결제 배너용 임시 데이터 정리 + 퍼널 기록
+                if (orderId.startsWith('ord_')) clearPendingCheckout();
+                track('checkout_success', { amount: Number(amount), kind: orderId.split('_')[0] ?? 'unknown' });
 
                 // 3. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
                 await supabase.auth.refreshSession();

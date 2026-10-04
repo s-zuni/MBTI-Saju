@@ -38,6 +38,9 @@ import { useModalStore } from './hooks/useModalStore';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import AuthCallback from './components/auth/AuthCallback';
 // Lazy load modals for better initial performance
+import FreePreview from './components/FreePreview';
+import ResumeCheckoutBanner from './components/ResumeCheckoutBanner';
+import { track, trackOnce } from './utils/analytics';
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
 const DeepReportModal = lazy(() => import('./components/DeepReportModal'));
@@ -89,21 +92,18 @@ function App() {
   useEffect(() => {
     if (session?.user && !isAuthLoading) {
       const meta = session.user.user_metadata;
-      const needsProfile = !meta?.mbti || !meta?.birth_date || !meta?.gender;
+      // 가입 마찰을 줄이기 위해 필수는 생년월일·성별만. MBTI/출생시간은 이후 선택 입력.
+      const needsProfile = !meta?.birth_date || !meta?.gender;
 
       if (needsProfile) {
         // Prevent infinite loop by checking if the modal is already open in the correct mode
         if (modals?.analysis?.mode !== 'complete_profile' || !modals?.analysis?.isOpen) {
           openModal('analysis', 'complete_profile');
         }
-      } else {
-        const hasSeenOnboarding = localStorage.getItem(`hasSeenOnboarding_${session.user.id}`);
-        if (!hasSeenOnboarding && !modals?.onboarding?.isOpen) {
-          openModal('onboarding');
-        }
       }
+      // 온보딩 모달은 더 이상 자동으로 띄우지 않는다. 첫 결과 화면(MyLuckPage)의 웰컴 배너가 대체.
     }
-  }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen, modals?.onboarding?.isOpen]);
+  }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen]);
 
   // Handle login trigger from URL
   useEffect(() => {
@@ -176,6 +176,10 @@ function AppContent({
     }
   }, [location.state, session, navigate]);
 
+  useEffect(() => {
+    if (location.pathname === '/') trackOnce('landing_view');
+  }, [location.pathname]);
+
   // 라우트 변경 시 모든 모달 닫기 (타로 등 모달이 열린 채로 다른 화면 이동 방지)
   useEffect(() => {
     closeAllModals();
@@ -234,6 +238,7 @@ function AppContent({
                   <Route path="/" element={
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => navigate('/premium')} />
+                      {!session && <FreePreview onSignup={() => { track('signup_cta_click', { from: 'preview' }); openModal('analysis', 'signup'); }} />}
                       <FeatureGrids />
 
 
@@ -436,6 +441,7 @@ function AppContent({
                 userEmail={session?.user?.email}
                 currentCredits={credits}
                 requiredCredits={modals?.creditPurchase?.data?.requiredCredits}
+                resumePlanId={modals?.creditPurchase?.data?.resumePlanId}
                 onSuccess={async (planId, pricePaid, creditAmount, paymentId) => {
                   await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
                 }}
@@ -459,6 +465,10 @@ function AppContent({
                 onClose={() => setShowPremiumBanner(false)}
                 onCheckPlans={() => openModal('creditPurchase')}
                 currentCredits={credits}
+              />
+              <ResumeCheckoutBanner
+                enabled={!!session && !modals?.creditPurchase?.isOpen}
+                onResume={(p) => openModal('creditPurchase', undefined, { resumePlanId: p.planId })}
               />
               <PopupModal />
             </div>

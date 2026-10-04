@@ -14,14 +14,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
   return (
     <div className="bg-white border-b border-slate-100 pt-28 pb-14 md:pt-36 md:pb-20">
       <div className="max-w-4xl mx-auto px-5 text-center">
-        {/* Badge */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-100 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-violet-600"></span>
-            <span className="text-xs font-semibold text-slate-700">1,000만 건 이상 데이터 분석 · 전문가 수기 점검</span>
-          </div>
-        </div>
-
         {/* Main Title */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-tight text-slate-950">
           {user ? (
@@ -63,7 +55,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
             onClick={() => navigate('/chat')}
             className="w-full sm:w-auto px-8 py-3.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors flex items-center justify-center gap-2"
           >
-            1대1 심층 운명 상담하기 (/chat)
+            1대1 심층 운명 상담하기
             <ArrowRight className="w-4 h-4" />
           </button>
           
@@ -71,7 +63,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
             onClick={() => navigate('/premium')}
             className="w-full sm:w-auto px-8 py-3.5 bg-slate-950 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
           >
-            4년 심층 리포트 보기
+            3년 심층 리포트 보기
           </button>
         </div>
       </div>

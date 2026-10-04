@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Provider } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { loadPendingProfile, clearPendingProfile } from '../utils/pendingProfile';
+import { track } from '../utils/analytics';
 
 const MBTI_TYPES = [
   'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
@@ -95,24 +97,28 @@ const ProfileInputForm: React.FC<any> = ({
 }) => (
   <div>
     <p className="text-slate-500 font-medium mb-6">
-      {mode === 'edit' ? '정보를 수정해주세요.' : '맞춤형 MBTI & 사주 분석을 위해 정보를 입력해주세요.'}
+      {mode === 'edit' ? '정보를 수정해주세요.' : '성별과 생년월일만 입력하면 바로 시작할 수 있어요. 나머지는 나중에 입력해도 돼요.'}
     </p>
     <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
-      <div>
-        <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
-          이름 (실명)
-        </label>
-        <input
-          type="text"
-          name="name"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="input-field"
-          required
-        />
-      </div>
+      {/* 프로필 완성 단계에서 소셜 계정 이름이 이미 있으면 다시 묻지 않음 */}
+      {!(mode === 'complete_profile' && name) && (
+        <div>
+          <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+            이름 (실명)
+          </label>
+          <input
+            type="text"
+            name="name"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="input-field"
+            required
+          />
+        </div>
+      )}
 
+      {mode !== 'complete_profile' && (
       <div>
         <label htmlFor="nickname" className="block text-sm font-bold text-slate-700 mb-2">
           닉네임 (커뮤니티 표시용)
@@ -127,6 +133,7 @@ const ProfileInputForm: React.FC<any> = ({
           placeholder="미입력 시 이름으로 표시됩니다."
         />
       </div>
+      )}
 
       <div>
         <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -166,7 +173,7 @@ const ProfileInputForm: React.FC<any> = ({
 
       <div>
         <label htmlFor="mbti" className="block text-sm font-bold text-slate-700 mb-2">
-          MBTI 유형
+          MBTI 유형 {mode === 'complete_profile' && <span className="text-slate-400 font-medium">(선택)</span>}
         </label>
         <select
           id="mbti"
@@ -174,9 +181,9 @@ const ProfileInputForm: React.FC<any> = ({
           value={mbti}
           onChange={(e) => setMbti(e.target.value)}
           className="input-field appearance-none"
-          required
+          required={mode === 'edit'}
         >
-          <option value="">MBTI 선택</option>
+          <option value="">{mode === 'complete_profile' ? '나중에 입력할게요' : 'MBTI 선택'}</option>
           {MBTI_TYPES.map((type) => (
             <option key={type} value={type}>
               {type}
@@ -204,7 +211,7 @@ const ProfileInputForm: React.FC<any> = ({
       <div className="flex items-center space-x-4">
         <div className="flex-1">
           <label htmlFor="birthHour" className="block text-sm font-bold text-slate-700 mb-2">
-            출생 시간
+            출생 시간 {mode === 'complete_profile' && <span className="text-slate-400 font-medium">(선택)</span>}
           </label>
           <select
             id="birthHour"
@@ -312,13 +319,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           setUnknownBirthTime(true);
         }
       } else {
-        // complete_profile: Force manual entry
-        setGender('');
-        setMbti('');
-        setBirthDate('');
+        // complete_profile: 가입 전 맛보기에서 입력한 값이 있으면 미리 채움
+        const pending = loadPendingProfile();
+        setGender(pending?.gender || '');
+        setMbti(pending?.mbti || '');
+        setBirthDate(pending?.birthDate || '');
         setBirthHour('00');
         setBirthMinute('00');
-        setUnknownBirthTime(false);
+        setUnknownBirthTime(true); // 출생 시간은 선택 입력: 기본은 '모름'
       }
     } else {
       setName('');
@@ -341,6 +349,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
   useEffect(() => {
     if (isOpen) {
       resetFields();
+      if (initialMode === 'signup') track('signup_modal_open');
+      if (initialMode === 'complete_profile') track('profile_modal_open');
       setLoading(false); // Ensure loading is reset when modal opens
       setAuthError('');  // Clear previous errors
     }
@@ -376,7 +386,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
     // 유효성 검사
     if (!name) { setAuthError('이름을 입력해주세요.'); return; }
     if (!gender) { setAuthError('성별을 선택해주세요.'); return; }
-    if (!mbti) { setAuthError('MBTI를 선택해주세요.'); return; }
+    // MBTI는 수정(edit) 모드에서만 필수. 프로필 완성 단계에서는 선택 입력.
+    if (mode === 'edit' && !mbti) { setAuthError('MBTI를 선택해주세요.'); return; }
     if (!birthDate) { setAuthError('생년월일을 입력해주세요.'); return; }
 
     const year = birthDate?.split('-')[0] || '';
@@ -393,7 +404,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           full_name: name,
           nickname: nickname,
           gender: gender,
-          mbti: mbti,
+          mbti: mbti || null,
           birth_date: birthDate,
           birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
         }
@@ -409,7 +420,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
           .update({
             name: name,
             gender: gender,
-            mbti: mbti,
+            mbti: mbti || null,
             birth_date: birthDate,
             birth_time: unknownBirthTime ? null : `${birthHour}:${birthMinute}`,
             email: user.email
@@ -421,12 +432,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
         alert('정보가 수정되었습니다.');
       }
       
+      clearPendingProfile();
+      if (mode === 'complete_profile') track('profile_completed', { hasMbti: !!mbti });
       if (onUpdate) onUpdate();
       onClose();
 
-      // If completing profile for the first time, redirect to MyPage to guide them to "My Destiny Analysis"
+      // 프로필 완성 직후 바로 첫 결과(오늘의 운세)를 보여줌
       if (mode === 'complete_profile') {
-        navigate('/mypage');
+        navigate('/myluck?type=today');
       }
 
     } catch (error: any) {
