@@ -10,6 +10,7 @@ import { useModalStore } from '../hooks/useModalStore';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { singleDayFortuneSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
+import { ensureValidSession } from '../supabaseClient';
 
 const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
@@ -21,24 +22,33 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
     const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
+    const authHeaders = async () => {
+        const activeSession = await ensureValidSession();
+        return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
+    };
+
     // Streaming today's fortune
     const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
         api: '/api/fortune?scope=today',
         schema: singleDayFortuneSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`,
-        },
+        headers: authHeaders,
+        onError: (error) => {
+            console.error('[TodayFortunePage] Today fortune generation failed:', error);
+        }
     });
 
     // Streaming tomorrow's fortune
     const { object: tomorrowFortune, submit: fetchTomorrow, isLoading: isTomorrowLoading } = useObject({
         api: '/api/fortune?scope=tomorrow',
         schema: singleDayFortuneSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`,
-        },
-        onFinish: async () => {
-            await refreshCredits();
+        headers: authHeaders,
+        onFinish: async ({ object }) => {
+            if (object) {
+                await refreshCredits();
+            } else {
+                console.error('[TodayFortunePage] Tomorrow fortune result validation failed');
+                alert('내일 운세를 만들지 못했습니다. 크레딧은 차감되지 않았습니다. 다시 시도해 주세요.');
+            }
         },
         onError: (error) => {
             console.error('[TodayFortunePage] Tomorrow fortune generation failed:', error);

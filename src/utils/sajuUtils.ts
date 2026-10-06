@@ -308,3 +308,24 @@ export function calculateSaju(birthDate: string, birthTime: string | null, gende
         elementRatio
     };
 }
+
+/**
+ * 신청 폼의 birth_info("YYYY-MM-DD HH:MM" | "YYYY-MM-DD 사시 (09:30 ~ 11:30)" | "… 모름 / 입력안함")를 만세력 입력값으로 변환.
+ * 서버 api/_utils/saju.ts 의 parseBirthInfo 와 동일 규칙 (시진 라벨 → 대표 시각, 모름 → undefined).
+ */
+const SIJIN_TO_TIME: Record<string, string> = {
+    '자': '00:00', '축': '02:00', '인': '04:00', '묘': '06:00', '진': '08:00', '사': '10:00',
+    '오': '12:00', '미': '14:00', '신': '16:00', '유': '18:00', '술': '20:00', '해': '22:00',
+};
+
+export function parseBirthInfo(birthInfo: string): { birthDate: string; birthTime: string | undefined } {
+    const trimmed = (birthInfo || '').trim();
+    const spaceIdx = trimmed.search(/s/);
+    const birthDate = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
+    const rest = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx).trim();
+    const hhmm = rest.match(/^(d{1,2}):(d{2})/);
+    if (hhmm) return { birthDate, birthTime: `${hhmm[1]!.padStart(2, '0')}:${hhmm[2]}` };
+    const sijin = rest.match(/^([자축인묘진사오미신유술해])시/);
+    if (sijin) return { birthDate, birthTime: SIJIN_TO_TIME[sijin[1]!] };
+    return { birthDate, birthTime: undefined };
+}

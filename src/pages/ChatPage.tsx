@@ -61,7 +61,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ session: initialSession, defaultSer
                         const welcomeMsg = defaultService === 'tarot' 
                             ? "신비한 타로의 세계에 오신 것을 환영합니다! 당신의 궁금한 점이나 고민을 말씀해 주시면 카드를 통해 길을 찾아드릴게요."
                             : defaultService === 'saju'
-                            ? "공인된 명리학 데이터를 바탕으로 당신의 운명을 분석해 드립니다. 어떤 사주적 고민이 있으신가요?"
+                            ? "명리학 이론을 바탕으로 당신의 사주를 분석해 드립니다. 어떤 사주적 고민이 있으신가요?"
                             : "안녕하세요! 사주와 MBTI 데이터를 통해 당신의 삶을 깊이 있게 분석하고 심층적인 상담을 제공해 드릴게요. 어떤 고민이든 편하게 말씀해 주세요.";
                         
                         setMessages([{

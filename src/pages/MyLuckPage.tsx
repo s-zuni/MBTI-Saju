@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, Coins, Compass, Moon, Plane, Star, CircleDot, LucideIcon } from 'lucide-react';
+import { ChevronLeft, Coins, Compass, Moon, Plane, Star, CircleDot, X, LucideIcon } from 'lucide-react';
+import { trackOnce } from '../utils/analytics';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
 
@@ -47,7 +48,29 @@ const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
     }
   }, [searchParams]);
 
-  const handleTabChange = (tab: LuckType) => {
+  const welcomeKey = session?.user?.id ? `hasSeenOnboarding_${session.user.id}` : null;
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (!welcomeKey) return;
+    try {
+      setShowWelcome(!localStorage.getItem(welcomeKey));
+    } catch {
+      setShowWelcome(false);
+    }
+    trackOnce('first_result_view');
+  }, [welcomeKey]);
+
+  const dismissWelcome = () => {
+    try {
+      if (welcomeKey) localStorage.setItem(welcomeKey, 'true');
+    } catch {
+      // ignore
+    }
+    setShowWelcome(false);
+  };
+
+  const handleTabChange =(tab: LuckType) => {
     setActiveTab(tab);
     setSearchParams({ type: tab });
   };
@@ -69,6 +92,21 @@ const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
             보유: {credits}크레딧
           </div>
         </div>
+
+        {/* 가입 직후 1회 웰컴 배너 (온보딩 모달 대체) */}
+        {showWelcome && (
+          <div className="mb-4 p-4 bg-violet-50 border border-violet-100 rounded-2xl flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-violet-900">가입을 환영해요! 🎉</p>
+              <p className="text-xs text-violet-700 mt-0.5">
+                가입 축하 크레딧으로 아래 운세를 바로 볼 수 있어요. 크레딧이 부족해지면 필요한 만큼만 충전하면 돼요.
+              </p>
+            </div>
+            <button onClick={dismissWelcome} aria-label="닫기" className="p-1 text-violet-400 hover:text-violet-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Pill Tabs (토스 스타일) */}
         <div className="flex gap-1.5 p-1.5 bg-slate-100/90 rounded-2xl mb-6 overflow-x-auto no-scrollbar shadow-inner">

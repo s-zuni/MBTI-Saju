@@ -10,6 +10,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tarotSchema } from '../config/schemas';
+import { ensureValidSession } from '../supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useCredits } from '../hooks/useCredits';
 import { useModalStore } from '../hooks/useModalStore';
@@ -31,17 +32,44 @@ const TarotCardBack = ({ className = "" }: { className?: string }) => (
     </div>
 );
 
-const TarotCardPlaceholder = ({ name }: { name: string }) => (
-    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-white relative flex flex-col items-center justify-center p-2 rounded-xl border border-purple-100/60 shadow-md">
-        <div className="absolute inset-1 border border-purple-500/5 rounded-lg"></div>
-        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-1.5">
-            <Moon className="w-4 h-4 text-purple-500" />
+// 카드 앞면: 일러스트 + 한글 이름 캡션 (이미지 로드 실패 시 이름만 표시)
+const TarotCardFace = ({ card, className = "" }: { card: TarotCard; className?: string }) => {
+    const [failed, setFailed] = useState(false);
+    return (
+        <div className={`w-full h-full bg-gradient-to-br from-slate-50 to-white relative flex flex-col items-center justify-center rounded-xl border border-purple-100/60 shadow-md overflow-hidden ${className}`}>
+            {failed ? (
+                <div className="flex flex-col items-center justify-center p-2">
+                    <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-1.5">
+                        <Moon className="w-4 h-4 text-purple-500" />
+                    </div>
+                    <div className="text-[11px] text-slate-800 font-extrabold px-1 text-center leading-tight tracking-tight select-none">
+                        {card.name_ko}
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <img
+                        src={card.image}
+                        alt={`${card.name_ko} (${card.name})`}
+                        loading="lazy"
+                        draggable={false}
+                        onError={() => setFailed(true)}
+                        className="w-full h-full object-cover select-none"
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent pt-4 pb-1.5 text-center text-[11px] font-extrabold text-white tracking-tight select-none">
+                        {card.name_ko}
+                    </div>
+                </>
+            )}
         </div>
-        <div className="text-[11px] text-slate-800 font-extrabold px-1 text-center leading-tight tracking-tight select-none">
-            {name}
-        </div>
-    </div>
-);
+    );
+};
+
+// AI가 돌려준 카드 이름으로 실제 카드를 찾고, 못 찾으면 뽑은 순서(index)로 대체
+const resolveTarotCard = (cardName: string | undefined, idx: number, picked: TarotCard[]): TarotCard | undefined => {
+    const name = (cardName || '').trim().toLowerCase();
+    return picked.find(c => c.name_ko === cardName?.trim() || c.name.toLowerCase() === name) ?? picked[idx];
+};
 
 const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
@@ -62,11 +90,14 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
         api: '/api/tarot',
         schema: tarotSchema,
-        headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
-        onFinish: async ({ object }) => {
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
+        },
+        onFinish: async ({ object, error: validationError }) => {
             if (object) {
                 await refreshCredits();
-                
+
                 const { data: { session: fetchedSession } } = await supabase.auth.getSession();
                 const activeSession = fetchedSession || session;
                 if (activeSession) {
@@ -78,6 +109,9 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         result_data: object
                     });
                 }
+            } else {
+                console.error('[TarotPage] Result validation failed:', validationError);
+                alert('타로 해석 결과를 만드는 데 실패했습니다. 다시 시도해 주세요.');
             }
         },
         onError: (error) => {
@@ -297,7 +331,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             const card = selectedCards[idx];
                                             return (
                                                 <div key={idx} className={`w-28 h-40 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 relative overflow-hidden ${card ? 'bg-white border-purple-200 shadow-xl scale-105' : 'bg-slate-50 border-dashed border-slate-200'}`}>
-                                                    {card ? <TarotCardPlaceholder name={card.name} /> : <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>}
+                                                    {card ? <TarotCardFace card={card} /> : <span className="text-slate-200 font-black text-2xl">{idx + 1}</span>}
                                                 </div>
                                             );
                                         })}
@@ -373,7 +407,10 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                     <div key={idx} className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-white shadow-sm hover:shadow-xl transition-all h-full">
                                                         <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-6">Position {idx + 1}</div>
                                                         <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-purple-100/50">
-                                                            <TarotCardBack className="border-none" />
+                                                            {(() => {
+                                                                const face = resolveTarotCard(card.cardName, idx, selectedCards);
+                                                                return face ? <TarotCardFace card={face} className="border-none" /> : <TarotCardBack className="border-none" />;
+                                                            })()}
                                                         </div>
                                                         <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
                                                         <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation ?? '')}</p>
@@ -401,6 +438,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             ref={shareRef}
                                                             reading={reading as any}
                                                             question={question}
+                                                            cardImages={((reading as any).cardReadings || []).map((r: any, i: number) => resolveTarotCard(r?.cardName, i, selectedCards)?.image)}
                                                             userName={session?.user?.user_metadata?.full_name || '사용자'}
                                                         />
                                                     )}

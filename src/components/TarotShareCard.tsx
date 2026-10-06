@@ -12,9 +12,10 @@ interface TarotShareCardProps {
     };
     question: string;
     userName: string;
+    cardImages?: Array<string | undefined>;
 }
 
-const TarotShareCard = forwardRef<HTMLDivElement, TarotShareCardProps>(({ reading, question, userName }, ref) => {
+const TarotShareCard = forwardRef<HTMLDivElement, TarotShareCardProps>(({ reading, question, userName, cardImages = [] }, ref) => {
     const cardReadings = reading?.cardReadings || [];
     const advice = reading?.advice || '';
 
@@ -65,12 +66,19 @@ const TarotShareCard = forwardRef<HTMLDivElement, TarotShareCardProps>(({ readin
                             CARD 0{idx + 1}
                         </span>
                         
-                        {/* Elegant Card Back representation */}
-                        <div className="w-[140px] h-[210px] bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 rounded-xl flex items-center justify-center p-2 border border-purple-500/40 relative shadow-inner mb-6">
-                            <div className="absolute inset-1 border border-purple-500/10 rounded-lg"></div>
-                            <Moon className="w-8 h-8 text-purple-400/30 fill-purple-400/5" />
-                        </div>
-                        
+                        {cardImages[idx] ? (
+                            <img
+                                src={cardImages[idx]}
+                                alt={card.cardName}
+                                className="w-[140px] h-[210px] object-cover rounded-xl border border-purple-500/40 shadow-inner mb-6"
+                            />
+                        ) : (
+                            <div className="w-[140px] h-[210px] bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 rounded-xl flex items-center justify-center p-2 border border-purple-500/40 relative shadow-inner mb-6">
+                                <div className="absolute inset-1 border border-purple-500/10 rounded-lg"></div>
+                                <Moon className="w-8 h-8 text-purple-400/30 fill-purple-400/5" />
+                            </div>
+                        )}
+
                         <h3 className="text-[18px] font-black text-white truncate max-w-full">
                             {card.cardName}
                         </h3>

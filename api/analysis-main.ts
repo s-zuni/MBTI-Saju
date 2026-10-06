@@ -3,7 +3,7 @@ import { streamObject, generateObject } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import { authenticateUser, SERVICE_COSTS } from './_utils/auth';
 import { 
     analysisSchema as coreAnalysisSchema, 
     yearlyFortuneSchema as fortuneAnalysisSchema, 
@@ -75,7 +75,7 @@ export default async function handler(req: Request) {
     const url = new URL(req.url, 'http://localhost');
     const body = await req.json();
     const part = url.searchParams.get('part') || body?.part || 'core';
-    const { mbti, birthDate, birthTime, gender, name, sajuData, isRegenerate } = body;
+    const { mbti, birthDate, birthTime, gender, name, sajuData } = body;
     const currentSchema = schemas[part as string];
 
     if (!currentSchema) {
@@ -85,13 +85,37 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 인증 및 크레딧 차감 (메인 분석: 20C, 재분석: 10C)
-    // part가 'full' 또는 'core'일 때만 크레딧 차감 (fortune, strategy는 후속 단계)
-    const shouldDeduct = part === 'full' || part === 'core';
-    const serviceType = isRegenerate ? 'REGENERATE_MBTI_SAJU' : 'MBTI_SAJU';
+    // 인증 및 크레딧 차감
+    // "첫 분석 무료" 여부는 클라이언트가 보내는 플래그(isRegenerate 등)를 신뢰하지 않고,
+    // 서버가 profiles.mbti_saju_free_used를 원자적으로 조회/소진(claim_mbti_saju_free_slot RPC)해 판정한다.
+    // 그래야 요청 body를 조작해 반복 호출로 무제한 무료 생성을 받는 것을 막을 수 있다.
+    let claimedFreeSlotThisRequest = false;
+
     const authResult = await authenticateUser(req, {
-        serviceType: shouldDeduct ? serviceType : undefined,
-        cost: shouldDeduct ? undefined : 0
+        resolveCost: async ({ user, supabaseAdmin }) => {
+            if (part !== 'full' && part !== 'core') {
+                // fortune/strategy 단계는 이 엔드포인트에서 별도 과금하지 않음 (기존 동작 유지)
+                return { cost: 0 };
+            }
+
+            const { data: claimedFree, error: claimError } = await supabaseAdmin.rpc(
+                'claim_mbti_saju_free_slot',
+                { p_user_id: user.id }
+            );
+
+            if (claimError) {
+                console.error('[analysis-main] claim_mbti_saju_free_slot RPC error:', claimError);
+                // 무료 슬롯 판정에 실패하면 안전하게 유료(재분석) 경로로 처리한다.
+                return { serviceType: 'REGENERATE_MBTI_SAJU', cost: SERVICE_COSTS.REGENERATE_MBTI_SAJU };
+            }
+
+            if (claimedFree) {
+                claimedFreeSlotThisRequest = true;
+                return { serviceType: 'MBTI_SAJU', cost: 0 };
+            }
+
+            return { serviceType: 'REGENERATE_MBTI_SAJU', cost: SERVICE_COSTS.REGENERATE_MBTI_SAJU };
+        }
     });
 
     if (authResult.errorResponse) {
@@ -156,9 +180,21 @@ ${sajuContextBlock}`;
         }
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);
-        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 
-            status: 500, 
-            headers: reqCorsHeaders 
+
+        // AI 생성이 완전히 실패한 경우, 사용자가 손해보지 않도록 방금 소진한 무료 슬롯을 되돌려준다.
+        if (claimedFreeSlotThisRequest && authResult.user) {
+            const { error: releaseError } = await authResult.supabaseAdmin.rpc(
+                'release_mbti_saju_free_slot',
+                { p_user_id: authResult.user.id }
+            );
+            if (releaseError) {
+                console.error('[analysis-main] release_mbti_saju_free_slot failed:', releaseError);
+            }
+        }
+
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), {
+            status: 500,
+            headers: reqCorsHeaders
         });
     }
 }

@@ -19,6 +19,23 @@ function parseContentToParagraphs(text: string): Paragraph[] {
     if (trimmed.length === 0) {
       return new Paragraph({ spacing: { after: 120 } });
     }
+    const hl = trimmed.startsWith('💡')
+      ? { label: '핵심 요약', color: '713F12', fill: 'FEF9C3', prefix: '💡' }
+      : trimmed.startsWith('[중요]')
+        ? { label: '실천 팁', color: '9F1239', fill: 'FFE4E6', prefix: '[중요]' }
+        : trimmed.startsWith('[결론]')
+          ? { label: '결론', color: '3730A3', fill: 'E0E7FF', prefix: '[결론]' }
+          : null;
+    if (hl) {
+      return new Paragraph({
+        children: [
+          new TextRun({ text: `${hl.label}  `, bold: true, size: 20, color: hl.color, font: 'Malgun Gothic' }),
+          new TextRun({ text: trimmed.slice(hl.prefix.length).trim().replace(/\*\*/g, ''), size: 22, color: hl.color, font: 'Malgun Gothic' }),
+        ],
+        shading: { type: ShadingType.SOLID, color: hl.fill },
+        spacing: { before: 80, after: 120 },
+      });
+    }
     const bulletMatch = trimmed.match(/^([-•*+]|\d+\.)\s+(.*)$/);
     if (bulletMatch) {
       return new Paragraph({
@@ -55,6 +72,15 @@ function createSubTitle(subtitle: string, color: string = '1E293B'): Paragraph {
   });
 }
 
+const KO_TO_HANJA_GAN: Record<string, string> = Object.fromEntries(Object.entries(GAN_SINGLE_KOREAN).map(([h, k]) => [k, h]));
+const KO_TO_HANJA_ZHI: Record<string, string> = Object.fromEntries(Object.entries(ZHI_SINGLE_KOREAN).map(([h, k]) => [k, h]));
+const labelChar = (ch: string | undefined, toKo: Record<string, string>, toHanja: Record<string, string>) => {
+  if (!ch || ch === '?') return '-';
+  const ko = toKo[ch] || ch;
+  const hanja = toHanja[ko] || (toKo[ch] ? ch : '');
+  return hanja ? `${ko}(${hanja})` : ko;
+};
+
 function createSajuTable(saju: any): Table | null {
   if (!saju?.pillars) return null;
   const pillars = [saju.pillars.hour, saju.pillars.day, saju.pillars.month, saju.pillars.year];
@@ -72,7 +98,7 @@ function createSajuTable(saju: any): Table | null {
     children: pillars.map(p => new TableCell({
       children: [new Paragraph({
         children: [
-          new TextRun({ text: p?.gan ? `${GAN_SINGLE_KOREAN[p.gan] || p.gan}(${p.gan})` : '-', bold: true, size: 28, font: 'Malgun Gothic' }),
+          new TextRun({ text: labelChar(p?.gan, GAN_SINGLE_KOREAN, KO_TO_HANJA_GAN), bold: true, size: 28, font: 'Malgun Gothic' }),
         ],
         alignment: AlignmentType.CENTER,
       }), new Paragraph({
@@ -87,7 +113,7 @@ function createSajuTable(saju: any): Table | null {
     children: pillars.map(p => new TableCell({
       children: [new Paragraph({
         children: [
-          new TextRun({ text: p?.zhi ? `${ZHI_SINGLE_KOREAN[p.zhi] || p.zhi}(${p.zhi})` : '-', bold: true, size: 28, font: 'Malgun Gothic' }),
+          new TextRun({ text: labelChar(p?.zhi, ZHI_SINGLE_KOREAN, KO_TO_HANJA_ZHI), bold: true, size: 28, font: 'Malgun Gothic' }),
         ],
         alignment: AlignmentType.CENTER,
       }), new Paragraph({
@@ -101,9 +127,17 @@ function createSajuTable(saju: any): Table | null {
   return new Table({ rows: [headerRow, ganRow, zhiRow], width: { size: 100, type: WidthType.PERCENTAGE } });
 }
 
+const REPORT_LABEL = 'MBTIJU 3개년 심층 리포트';
+const formatMonths = (m?: number[]) => (m && m.length ? m.map(x => `${x}월`).join(', ') : '-');
+const SCORE_LABELS: [string, string][] = [['wealth', '재물'], ['career', '커리어'], ['love', '인연'], ['health', '건강']];
+const scoreText = (sc: any) => SCORE_LABELS.map(([k, l]) => `${l} ${'★'.repeat(sc?.[k] || 0)}${'☆'.repeat(5 - (sc?.[k] || 0))}`).join('   ');
+
 export async function generateDocx(parsedContent: any, sajuData: any, clientName: string) {
   const sections: any[] = [];
-  const isCounseling = parsedContent?.counselingAndAdvice !== undefined;
+  const years: any[] = parsedContent?.threeYearRoadmap?.details || [];
+  const range = years.length ? `${years[0].year}~${years[years.length - 1].year}` : '';
+  const pageProps = { page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } };
+  const run = (text: string, o: any = {}) => new TextRun({ text, font: 'Malgun Gothic', size: 22, ...o });
 
   // --- Cover Page ---
   sections.push({
@@ -111,153 +145,142 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     children: [
       new Paragraph({ spacing: { before: 4000 } }),
       new Paragraph({
-        children: [new TextRun({ text: isCounseling ? '1:1 사주 고민 상담 리포트' : 'VIP 프리미엄 전략 보고서', size: 24, color: '94A3B8', font: 'Malgun Gothic' })],
+        children: [run(range ? `${range} 3개년 프리미엄 사주 리포트` : '프리미엄 사주 리포트', { size: 24, color: '94A3B8' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 600 },
       }),
       new Paragraph({
-        children: [new TextRun({ text: parsedContent?.cover?.mainTitle || `${clientName} 님 심층 리포트`, bold: true, size: 52, font: 'Malgun Gothic', color: '0F172A' })],
+        children: [run(parsedContent?.cover?.mainTitle || `${clientName} 님 심층 리포트`, { bold: true, size: 52, color: '0F172A' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 400 },
       }),
       new Paragraph({
-        children: [new TextRun({ text: parsedContent?.cover?.subTitle || (isCounseling ? '명리학적 해법을 통한 1:1 맞춤 고민 카운셀링' : '명리학과 심리학의 융합을 통한 인생 설계'), size: 24, color: '64748B', font: 'Malgun Gothic' })],
+        children: [run(parsedContent?.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계', { size: 24, color: '64748B' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 800 },
       }),
       new Paragraph({
-        children: [new TextRun({ text: `${clientName} 님`, bold: true, size: 36, font: 'Malgun Gothic', color: '1E293B' })],
+        children: [run(`${clientName} 님`, { bold: true, size: 36, color: '1E293B' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 1200 },
       }),
       new Paragraph({
-        children: [new TextRun({ text: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }), size: 20, color: '94A3B8', font: 'Malgun Gothic' })],
+        children: [run(new Date(parsedContent?.generated_at || Date.now()).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }), { size: 20, color: '94A3B8' })],
         alignment: AlignmentType.CENTER,
       }),
     ],
   });
 
-  // --- Helper to add a full section ---
-  const addSection = (title: string, details: any[], borderColor: string = '6366F1') => {
+  const header = new Header({ children: [new Paragraph({ children: [run(REPORT_LABEL, { size: 16, color: '94A3B8' })], alignment: AlignmentType.RIGHT })] });
+  const footer = new Footer({
+    children: [new Paragraph({
+      children: [
+        run(`${REPORT_LABEL} | `, { size: 16, color: '94A3B8' }),
+        new TextRun({ children: [PageNumber.CURRENT], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
+        run(' / ', { size: 16, color: '94A3B8' }),
+        new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
+      ],
+      alignment: AlignmentType.CENTER,
+    })],
+  });
+
+  const pushSection = (children: any[]) => sections.push({ properties: pageProps, headers: { default: header }, footers: { default: footer }, children });
+
+  const addSection = (title: string, details: any[] | undefined, color: string = '1E293B') => {
     const children: any[] = [createSectionTitle(title)];
-    if (details) {
-      details.forEach((detail: any) => {
-        if (detail.subtitle) children.push(createSubTitle(detail.subtitle, borderColor === '6366F1' ? '1E293B' : borderColor));
-        children.push(...parseContentToParagraphs(detail.content));
-      });
-    }
-    sections.push({
-      properties: {
-        page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } },
-      },
-      headers: {
-        default: new Header({
-          children: [new Paragraph({ children: [new TextRun({ text: isCounseling ? '1:1 사주 고민 상담 리포트' : 'VIP 프리미엄 전략 보고서', size: 16, color: '94A3B8', font: 'Malgun Gothic' })], alignment: AlignmentType.RIGHT })],
-        }),
-      },
-      footers: {
-        default: new Footer({
-          children: [new Paragraph({
-            children: [
-              new TextRun({ text: (isCounseling ? '1:1 사주 고민 상담 리포트 | ' : 'VIP 프리미엄 전략 보고서 | '), size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
-              new TextRun({ children: [PageNumber.CURRENT], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
-              new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
-              new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: '94A3B8', font: 'Malgun Gothic' }),
-            ],
-            alignment: AlignmentType.CENTER,
-          })],
-        }),
-      },
-      children,
+    details?.forEach((detail: any) => {
+      if (detail.subtitle) children.push(createSubTitle(detail.subtitle, color));
+      children.push(...parseContentToParagraphs(detail.content));
     });
+    pushSection(children);
   };
 
-  // --- 00. Natal Chart Analysis (Common for both) ---
-  const natalChildren: any[] = [createSectionTitle(parsedContent?.natalChartAnalysis?.title || (isCounseling ? '01. 사주 및 만세력 분석' : '00. 사주원국(四柱原局) 심층 분석'))];
-  
-  const dm = sajuData?.userSaju?.dayMaster;
-  if (dm) {
-    natalChildren.push(new Paragraph({
-      children: [new TextRun({ text: `본신의 본질: ${dm.chinese} ${dm.korean} (日干)`, bold: true, size: 26, color: '854D0E', font: 'Malgun Gothic' })],
-      spacing: { before: 200, after: 100 },
-      shading: { type: ShadingType.SOLID, color: 'FEFCE8' },
-    }));
-    natalChildren.push(new Paragraph({
-      children: [new TextRun({ text: dm.description, size: 22, color: '92400E', font: 'Malgun Gothic' })],
-      spacing: { after: 200 },
-    }));
-  }
-  
-  const sajuTable = createSajuTable(sajuData?.userSaju);
-  if (sajuTable) natalChildren.push(sajuTable);
-  natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
-
-  const elRatio = sajuData?.userSaju?.elementRatio;
-  if (elRatio) {
-    const elemNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
-    natalChildren.push(createSubTitle('오행(五행) 에너지 분포'));
-    Object.entries(elemNames).forEach(([key, label]) => {
-      const val = elRatio[key] || 0;
-      natalChildren.push(new Paragraph({
-        children: [new TextRun({ text: `${label}: ${val}%`, size: 22, font: 'Malgun Gothic', bold: val > 30 })],
-        spacing: { after: 60 },
-        indent: { left: 400 },
-      }));
+  // --- 한눈에 보기 ---
+  const sm = parsedContent?.summary;
+  if (sm) {
+    const children: any[] = [createSectionTitle(`한눈에 보기 · ${range} 요약`)];
+    if (sm.keywords?.length) children.push(new Paragraph({ children: [run(sm.keywords.map((k: string) => `#${k}`).join('   '), { bold: true, color: '4338CA' })], spacing: { after: 160 } }));
+    if (sm.verdict) children.push(new Paragraph({ children: [run("마스터의 총평  ", { bold: true, size: 20, color: 'B45309' }), run(sm.verdict)], shading: { type: ShadingType.SOLID, color: 'F1F5F9' }, spacing: { after: 200 } }));
+    sm.yearOverview?.forEach((y: any) => {
+      const tag = y.year === sm.bestYear ? '  [가장 좋은 해]' : y.year === sm.cautionYear ? '  [신중하게 보낼 해]' : '';
+      children.push(createSubTitle(`${y.year}년 ${y.ganji || ''}  ${y.yearlyTheme}${tag}`));
+      if (y.oneLine) children.push(new Paragraph({ children: [run(y.oneLine)], spacing: { after: 60 } }));
+      children.push(new Paragraph({ children: [run(scoreText(y.scores), { size: 20 })], spacing: { after: 40 } }));
+      children.push(new Paragraph({ children: [run(`좋은 달: ${formatMonths(y.bestMonths)}    조심할 달: ${formatMonths(y.cautionMonths)}`, { size: 20, color: '475569' })], spacing: { after: 120 } }));
     });
-    natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
-  }
- 
-  parsedContent?.natalChartAnalysis?.details?.forEach((detail: any) => {
-    if (detail.subtitle) natalChildren.push(createSubTitle(detail.subtitle));
-    natalChildren.push(...parseContentToParagraphs(detail.content));
-  });
-
-  sections.push({
-    properties: { page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } },
-    children: natalChildren,
-  });
-
-  if (isCounseling) {
-    // --- Saju Counseling Report specific sections ---
-    addSection(parsedContent?.thisYearFortune?.title || '02. 올해 대운세 분석', parsedContent?.thisYearFortune?.details, '10B981');
-    addSection(parsedContent?.counselingAndAdvice?.title || '03. 고민 분석 및 조언', parsedContent?.counselingAndAdvice?.details, 'EF4444');
-  } else {
-    // --- 4-Year standard report specific sections ---
-    addSection(parsedContent?.coreIdentity?.title || '01. 선천적 기질 및 운명적 본질', parsedContent?.coreIdentity?.details);
-    addSection(parsedContent?.wealthAndCareer?.title || '02. 재물 그릇의 크기와 사회적 성취', parsedContent?.wealthAndCareer?.details, '0369A1');
-    addSection(parsedContent?.relationship?.title || '03. 인연의 지형도와 감정의 흐름', parsedContent?.relationship?.details, 'BE185D');
-
-    if (parsedContent?.threeYearRoadmap?.details) {
-      const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '04. 핵심 4개년 냉철한 심층 분석')];
-      parsedContent.threeYearRoadmap.details.forEach((yearData: any) => {
-        roadmapChildren.push(new Paragraph({
-          children: [new TextRun({ text: `${yearData.year}년: ${yearData.yearlyTheme}`, bold: true, size: 28, color: '4338CA', font: 'Malgun Gothic' })],
-          spacing: { before: 400, after: 200 },
-        }));
-        yearData.subtopics?.forEach((subtopic: any) => {
-          if (subtopic.subtitle) roadmapChildren.push(createSubTitle(subtopic.subtitle));
-          roadmapChildren.push(...parseContentToParagraphs(subtopic.content));
-        });
-      });
-      sections.push({
-        properties: { page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } },
-        children: roadmapChildren,
-      });
+    if (sm.topActions?.length) {
+      children.push(createSubTitle('지금 바로 시작할 3가지'));
+      sm.topActions.forEach((a: string) => children.push(new Paragraph({ children: [run(a)], bullet: { level: 0 }, spacing: { after: 60 } })));
     }
-
-    addSection(parsedContent?.specialRequestAnalysis?.title || '05. 내담자 특별 요청사항에 대한 명리적 해답', parsedContent?.specialRequestAnalysis?.details, '4F46E5');
-    addSection(parsedContent?.actionPlan?.title || '06. 운명을 바꾸는 마스터의 마스터플랜', parsedContent?.actionPlan?.details, '1E293B');
+    pushSection(children);
   }
+
+  // --- 01. 나의 고민에 대한 답 ---
+  if (parsedContent?.specialRequestAnalysis) addSection(parsedContent.specialRequestAnalysis.title, parsedContent.specialRequestAnalysis.details, '4F46E5');
+
+  // --- 02. 사주원국 ---
+  if (parsedContent?.natalChartAnalysis) {
+    const natalChildren: any[] = [createSectionTitle(parsedContent.natalChartAnalysis.title)];
+    const dm = sajuData?.userSaju?.dayMaster;
+    if (dm) {
+      natalChildren.push(new Paragraph({
+        children: [run(`본신의 본질: ${dm.chinese} ${dm.korean} (日干)`, { bold: true, size: 26, color: '854D0E' })],
+        spacing: { before: 200, after: 100 },
+        shading: { type: ShadingType.SOLID, color: 'FEFCE8' },
+      }));
+      natalChildren.push(new Paragraph({ children: [run(dm.description || '', { color: '92400E' })], spacing: { after: 200 } }));
+    }
+    const sajuTable = createSajuTable(sajuData?.userSaju);
+    if (sajuTable) natalChildren.push(sajuTable);
+    natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
+
+    const elRatio = sajuData?.userSaju?.elementRatio;
+    if (elRatio) {
+      const elemNames: Record<string, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
+      natalChildren.push(createSubTitle('오행(五行) 에너지 분포'));
+      Object.entries(elemNames).forEach(([key, label]) => {
+        const val = elRatio[key] || 0;
+        natalChildren.push(new Paragraph({ children: [run(`${label}: ${val}%`, { bold: val > 30 })], spacing: { after: 60 }, indent: { left: 400 } }));
+      });
+      natalChildren.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+    parsedContent.natalChartAnalysis.details?.forEach((detail: any) => {
+      if (detail.subtitle) natalChildren.push(createSubTitle(detail.subtitle, 'B45309'));
+      natalChildren.push(...parseContentToParagraphs(detail.content));
+    });
+    pushSection(natalChildren);
+  }
+
+  if (parsedContent?.coreIdentity) addSection(parsedContent.coreIdentity.title, parsedContent.coreIdentity.details);
+  if (parsedContent?.wealthAndCareer) addSection(parsedContent.wealthAndCareer.title, parsedContent.wealthAndCareer.details, '0369A1');
+  if (parsedContent?.relationship) addSection(parsedContent.relationship.title, parsedContent.relationship.details, 'BE185D');
+
+  // --- 06. 3개년 로드맵 ---
+  if (years.length) {
+    const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '06. 향후 3개년 심층 로드맵')];
+    years.forEach((yearData: any) => {
+      roadmapChildren.push(new Paragraph({
+        children: [run(`${yearData.year}년 ${yearData.ganji || ''}: ${yearData.yearlyTheme}`, { bold: true, size: 28, color: '4338CA' })],
+        spacing: { before: 400, after: 100 },
+      }));
+      if (yearData.oneLine) roadmapChildren.push(new Paragraph({ children: [run(yearData.oneLine, { color: '64748B' })], spacing: { after: 60 } }));
+      if (yearData.scores) {
+        roadmapChildren.push(new Paragraph({ children: [run(scoreText(yearData.scores), { size: 20 })], spacing: { after: 40 } }));
+        roadmapChildren.push(new Paragraph({ children: [run(`좋은 달: ${formatMonths(yearData.bestMonths)}    조심할 달: ${formatMonths(yearData.cautionMonths)}`, { size: 20, color: '475569' })], spacing: { after: 120 } }));
+      }
+      yearData.subtopics?.forEach((subtopic: any) => {
+        if (subtopic.subtitle) roadmapChildren.push(createSubTitle(`${yearData.year}년 · ${subtopic.subtitle}`));
+        roadmapChildren.push(...parseContentToParagraphs(subtopic.content));
+      });
+    });
+    pushSection(roadmapChildren);
+  }
+
+  if (parsedContent?.actionPlan) addSection(parsedContent.actionPlan.title, parsedContent.actionPlan.details);
 
   // Build and download
   const doc = new Document({
-    styles: {
-      default: {
-        document: {
-          run: { font: 'Malgun Gothic', size: 22 },
-        },
-      },
-    },
+    styles: { default: { document: { run: { font: 'Malgun Gothic', size: 22 } } } },
     sections,
   });
 

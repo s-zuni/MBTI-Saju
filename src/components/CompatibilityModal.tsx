@@ -8,6 +8,7 @@ import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
+import { ensureValidSession } from '../supabaseClient';
 
 interface PrefillData {
     targetName: string;
@@ -82,10 +83,11 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const { object: result, submit, isLoading, error: analysisError } = useObject({
         api: '/api/compatibility',
         schema: compatibilitySchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
         },
-        onFinish: ({ object }) => {
+        onFinish: ({ object, error: validationError }) => {
             if (object) {
                 if (refreshCredits) {
                     refreshCredits();
@@ -93,6 +95,9 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                 if (onSuccess) {
                     onSuccess();
                 }
+            } else {
+                console.error('[CompatibilityModal] Result validation failed:', validationError);
+                setLocalError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
             }
         }
     });

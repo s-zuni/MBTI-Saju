@@ -86,7 +86,7 @@ const ConsultationPurchaseModal: React.FC<ConsultationPurchaseModalProps> = ({
                         </div>
                         <h2 className="text-2xl font-black text-slate-900 mb-2">전문가 심층 상담권</h2>
                         <p className="text-slate-500 text-sm font-medium">
-                            공인된 전문가가 사주와 MBTI를 결합하여 맞춤형 운명 상담을 제공합니다.
+                            사주와 MBTI를 결합해 나에게 맞춘 1:1 운명 상담을 제공합니다.
                         </p>
                     </div>
 

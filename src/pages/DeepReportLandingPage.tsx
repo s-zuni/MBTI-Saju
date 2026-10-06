@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Zap, BarChart3, Clock } from 'lucide-react';
+import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE, DEEP_REPORT_DISCOUNT_RATE } from '../config/deepReportConfig';
 
 interface DeepReportLandingPageProps {
   onOpenDeepReport: (reportType?: string) => void;
@@ -36,18 +37,18 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             <div className="bg-white p-7 rounded-2xl border border-slate-200 flex flex-col justify-between hover:border-slate-400 transition-all">
               <div>
                 <div className="inline-block px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md mb-4">
-                  4년 심층 리포트
+                  3년 심층 리포트
                 </div>
-                <h3 className="text-xl font-bold text-slate-950 mb-2">4년 사주 심층 리포트</h3>
+                <h3 className="text-xl font-bold text-slate-950 mb-2">3년 사주 심층 리포트</h3>
                 <p className="text-slate-600 text-xs leading-relaxed mb-6">
-                  1,000만 건 데이터 기반 분석 + 전문가 수기 점검. 4개년 월별 운세 흐름 및 MBTI 심리학 결합 정밀 로드맵 (A4 20장 분량)
+                  1,000만 건 데이터 기반 분석 + 전문가 수기 점검. 내년부터 3개년 운세 흐름(월별 좋은 달·조심할 달 포함) 및 MBTI 심리학 결합 정밀 로드맵 (A4 25장 이상)
                 </p>
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center gap-2 text-slate-700 text-xs">
                     <span className="text-violet-600 font-bold">✓</span> 사주원국 & 오행 데이터 정밀 해독
                   </div>
                   <div className="flex items-center gap-2 text-slate-700 text-xs">
-                    <span className="text-violet-600 font-bold">✓</span> 향후 4년 세부 세운 및 월별 흐름
+                    <span className="text-violet-600 font-bold">✓</span> 내년부터 향후 3년(올해 제외) 세부 세운 및 흐름
                   </div>
                   <div className="flex items-center gap-2 text-slate-700 text-xs">
                     <span className="text-violet-600 font-bold">✓</span> MBTI 심리학 모델 융합 성향 분석
@@ -59,14 +60,15 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
               </div>
               <div>
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-slate-400 line-through text-xs">₩39,900</span>
-                  <span className="text-2xl font-black text-slate-950">₩29,900</span>
+                  <span className="text-slate-400 line-through text-xs">₩{DEEP_REPORT_ORIGINAL_PRICE.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-slate-950">₩{DEEP_REPORT_SALE_PRICE.toLocaleString()}</span>
+                  <span className="text-xs font-bold text-rose-500">{DEEP_REPORT_DISCOUNT_RATE}% 할인</span>
                 </div>
                 <button 
                   onClick={() => onOpenDeepReport('saju')}
                   className="w-full py-3.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors text-center flex items-center justify-center gap-2 text-sm"
                 >
-                  4년 심층 리포트 신청 <ArrowRight className="w-4 h-4" />
+                  3년 심층 리포트 신청 <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -258,8 +260,8 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
           <div className="space-y-4">
             {[
               {
-                q: "Q. 1대1 심층 운명 상담과 4년 심층 리포트의 차이는 무엇인가요?",
-                a: "1대1 심층 운명 상담(/chat)은 실시간 대화를 통해 고민에 대해 즉각적인 질의응답을 나누는 모델이며, 4년 심층 리포트는 A4 20장 분량의 종합 분석 PDF를 발송해 드리는 서비스입니다."
+                q: "Q. 1대1 심층 운명 상담과 3년 심층 리포트의 차이는 무엇인가요?",
+                a: "1대1 심층 운명 상담(/chat)은 실시간 대화를 통해 고민에 대해 즉각적인 질의응답을 나누는 모델이며, 3년 심층 리포트는 A4 25장 이상의 종합 분석 PDF를 발송해 드리는 서비스입니다."
               },
               {
                 q: "Q. 1,000만 건 데이터 분석과 전문가 수기 점검은 어떻게 진행되나요?",
@@ -292,13 +294,13 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
               onClick={() => onOpenDeepReport('saju')}
               className="w-full sm:w-auto px-8 py-4 bg-violet-600 text-white rounded-xl font-bold transition-colors hover:bg-violet-700 text-sm"
             >
-              4년 심층 리포트 신청 (₩29,900)
+              3년 심층 리포트 신청 (₩{DEEP_REPORT_SALE_PRICE.toLocaleString()})
             </button>
             <button 
               onClick={() => navigate('/chat')}
               className="w-full sm:w-auto px-8 py-4 bg-slate-950 text-white rounded-xl font-bold transition-colors hover:bg-slate-800 text-sm"
             >
-              1대1 심층 운명 상담 시작하기 (/chat)
+              1대1 심층 운명 상담 시작하기
             </button>
           </div>
         </div>

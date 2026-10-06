@@ -65,7 +65,10 @@ const schemas: Record<string, any> = {
         career_palace: z.string(),
         wealth_style: z.string(),
         love_style: z.string(),
-        lucky_items: z.array(z.string()),
+        lucky_items: z.array(z.object({
+            name: z.string().describe("길성 또는 행운 요소의 이름 (예: 문창성)"),
+            meaning: z.string().describe("초심자도 이해할 수 있는 쉬운 한 줄 풀이 (예: 학업·시험·글쓰기 운을 돕는 별)")
+        })),
         summary: z.string()
     }),
     trip: z.object({
@@ -144,6 +147,23 @@ function getDateString(offsetDays: number = 0): string {
     d.setHours(d.getHours() + 9); // KST
     d.setDate(d.getDate() + offsetDays);
     return d.toISOString().split('T')[0]!; // YYYY-MM-DD
+}
+
+// 같은 입력에는 같은 결과를 돌려주기 위한 캐시 키. 캐시 대상이 아니면 null.
+function buildCacheKey(targetType: string, body: any): string | null {
+    const clean = (v: unknown) => String(v ?? '').trim().slice(0, 40);
+    if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow') {
+        // 대상 날짜 기준 키: 어제 결제한 '내일의 운세'가 오늘의 운세와 같은 결과가 되도록 한다.
+        const targetDate = getDateString(targetType === 'fortune_tomorrow' ? 1 : 0);
+        return `fortune:${targetDate}:${clean(body?.birthDate)}:${clean(body?.mbti)}`;
+    }
+    if (targetType === 'jamidusu') {
+        const date = clean(body?.targetBirthDate ?? body?.birthDate);
+        const time = clean(body?.targetBirthTime ?? body?.birthTime) || '-';
+        const gender = clean(body?.targetGender ?? body?.gender);
+        return `jamidusu:${gender}:${date}:${time}`;
+    }
+    return null;
 }
 
 function getDeterministicKboResults(birthDate: string, mbti: string, currentTeam: string, dateOffset: number = 0) {
@@ -237,14 +257,39 @@ export default async function handler(req: Request) {
         serviceType = 'KBO';
     }
 
+    // 이미 생성된 결과가 있으면 재생성/재과금 없이 그대로 돌려준다.
+    const cacheKey = buildCacheKey(targetType, body);
+    let cachedResult: unknown = null;
+
     const authResult = await authenticateUser(req, {
         serviceType,
         cost,
-        allowAnonymous
+        allowAnonymous,
+        ...(cacheKey ? {
+            resolveCost: async ({ user, supabaseAdmin }) => {
+                const { data } = await supabaseAdmin
+                    .from('ai_result_cache')
+                    .select('result')
+                    .eq('user_id', user.id)
+                    .eq('cache_key', cacheKey)
+                    .maybeSingle();
+                if (data?.result) {
+                    cachedResult = data.result;
+                    return { serviceType, cost: 0 };
+                }
+                return { serviceType, cost };
+            }
+        } : {})
     });
 
     if (authResult.errorResponse) {
         return authResult.errorResponse;
+    }
+
+    if (cachedResult) {
+        return new Response(JSON.stringify(cachedResult), {
+            headers: { ...reqCorsHeaders, 'Content-Type': 'text/plain; charset=utf-8' }
+        });
     }
 
     const { 
@@ -272,13 +317,17 @@ export default async function handler(req: Request) {
     if (targetType === 'healing') {
         userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${region || '전국'}`;
     } else if (targetType === 'jamidusu') {
+        // 프런트는 birthDate/birthTime/gender로 보내므로 target* 값이 없으면 이를 사용한다.
+        const jmBirthDate = targetBirthDate ?? birthDate;
+        const jmBirthTime = targetBirthTime ?? birthTime;
+        const jmGender = targetGender ?? body.gender;
         let finalTargetSaju = targetSajuData;
-        if (!finalTargetSaju && targetBirthDate) {
-            finalTargetSaju = getPreciseSajuData({ birthDate: targetBirthDate, birthTime: targetBirthTime, gender: targetGender });
+        if (!finalTargetSaju && jmBirthDate) {
+            finalTargetSaju = getPreciseSajuData({ birthDate: jmBirthDate, birthTime: jmBirthTime, gender: jmGender });
         }
         userQuery = `[정통 자미두수 12궁 명반 분석 요청]
-성별: ${targetGender === 'male' ? '남성' : '여성'}
-생년월일시: ${targetBirthDate} ${targetBirthTime || '시간모름'}
+성별: ${jmGender === 'male' ? '남성' : '여성'}
+생년월일시: ${jmBirthDate} ${jmBirthTime || '시간모름'}
 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}
 
 [생성 작업 지침]
@@ -287,7 +336,7 @@ export default async function handler(req: Request) {
 3. 'career_palace'는 관록궁 관점에서 직업적 성향과 가장 빛날 수 있는 분야를 추천하세요.
 4. 'wealth_style'은 재백궁 관점에서 돈을 쓰는 성향과 재물운을 재미있게 분석하세요.
 5. 'love_style'은 부처궁 관점에서 나의 연애 스타일과 시너지가 나는 인연을 설명하세요.
-6. 'lucky_items'는 자미두수에서 나를 돕는 길성(예: 문창, 천괴, 좌보, 우필 등)이나 행운의 요소 3가지를 명확하게 제시하세요.
+6. 'lucky_items'는 자미두수에서 나를 돕는 길성(예: 문창, 천괴, 좌보, 우필 등)이나 행운의 요소를 정확히 3개 제시하세요. 각 항목은 반드시 name(별/요소 이름)과 meaning(자미두수를 모르는 사람도 바로 이해할 수 있는 쉬운 한 줄 풀이)을 모두 채우세요. 이름만 적고 풀이를 빠뜨리는 일이 없어야 합니다.
 7. 절대로 결과에 영어를 포함하지 마세요. 모두 한국어로 작성하고 어려운 한자는 쉽게 풀어쓰되, 자미두수의 전문 용어(명궁, 주성, 관록궁 등)는 살려서 신비로움을 더해주세요.`;
 
     } else if (targetType === 'job') {
@@ -362,6 +411,20 @@ MBTI: ${mbti}
                     prompt: finalUserQuery,
                     maxOutputTokens: 16384,
                     maxRetries: 0,
+                    onFinish: async ({ object }) => {
+                        // 검증을 통과한 완성 결과만 저장 (같은 날/같은 입력이면 재사용)
+                        if (!object || !cacheKey || !authResult.user) return;
+                        try {
+                            await authResult.supabaseAdmin
+                                .from('ai_result_cache')
+                                .upsert(
+                                    { user_id: authResult.user.id, cache_key: cacheKey, result: object },
+                                    { onConflict: 'user_id,cache_key', ignoreDuplicates: true }
+                                );
+                        } catch (cacheError) {
+                            console.warn('[ai_result_cache] save failed:', cacheError);
+                        }
+                    },
                 });
                 return result.toTextStreamResponse({ headers: reqCorsHeaders });
             } catch (error) {

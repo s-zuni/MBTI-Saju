@@ -7,6 +7,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
+import { ensureValidSession } from '../supabaseClient';
 import { getTeamInfo } from '../config/teamConfig';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from '../components/KboShareCard';
@@ -132,18 +133,23 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [hasStarted, setHasStarted] = useState(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+    const [genError, setGenError] = useState<string | null>(null);
 
     const userName = session?.user?.user_metadata?.full_name || '사용자';
 
     const { object: result, submit, isLoading, error: aiError } = useObject({
         api: '/api/analysis-special',
         schema: kboSchema,
-        headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`
+        headers: async () => {
+            const activeSession = await ensureValidSession();
+            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
         },
         onFinish: ({ object }) => {
             if (object) {
                 refreshCredits();
+            } else {
+                console.error('[KboPage] Result validation failed');
+                setGenError('분석 결과를 생성하지 못했습니다. 다시 시도해주세요.');
             }
         },
         onError: (err) => {
@@ -187,7 +193,8 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
             setHasStarted(true);
             setError(null);
-            
+            setGenError(null);
+
             const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
             submit({
                 type: 'kbo',
@@ -306,11 +313,11 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         </div>
 
                         <div ref={reportRef} className="animate-fade-in">
-                            {aiError && !result ? (
+                            {(aiError || genError) && !result ? (
                                 <div className="py-20 text-center bg-white rounded-[48px] px-8">
                                     <X className="w-16 h-16 text-red-500 mx-auto mb-6" />
                                     <h3 className="text-2xl font-black text-slate-900 mb-4">분석이 중단되었습니다</h3>
-                                    <p className="text-slate-500 mb-12 font-medium">네트워크 상태를 확인하고 다시 시도해주세요.</p>
+                                    <p className="text-slate-500 mb-12 font-medium">{genError || '네트워크 상태를 확인하고 다시 시도해주세요.'}</p>
                                     <button
                                         onClick={() => setHasStarted(false)}
                                         className="px-12 py-5 bg-[#000666] text-white font-black rounded-2xl active:scale-95 transition-all"
