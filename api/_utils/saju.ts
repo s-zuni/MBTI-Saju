@@ -32,7 +32,7 @@ import {
  */
 
 // 천간 한글/한자/오행/음양 매핑
-const STEM_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-' }> = {
+export const STEM_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-' }> = {
     '갑': { korean: '갑목', hanja: '甲', element: 'wood', elementKo: '목', polarity: '+' },
     '을': { korean: '을목', hanja: '乙', element: 'wood', elementKo: '목', polarity: '-' },
     '병': { korean: '병화', hanja: '丙', element: 'fire', elementKo: '화', polarity: '+' },
@@ -56,7 +56,7 @@ const STEM_INFO: Record<string, { korean: string; hanja: string; element: 'wood'
 };
 
 // 지지 한글/한자/오행/음양/동물 매핑
-const BRANCH_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-'; animal: string }> = {
+export const BRANCH_INFO: Record<string, { korean: string; hanja: string; element: 'wood' | 'fire' | 'earth' | 'metal' | 'water'; elementKo: string; polarity: '+' | '-'; animal: string }> = {
     '자': { korean: '자수', hanja: '子', element: 'water', elementKo: '수', polarity: '+', animal: '쥐' },
     '축': { korean: '축토', hanja: '丑', element: 'earth', elementKo: '토', polarity: '-', animal: '소' },
     '인': { korean: '인목', hanja: '寅', element: 'wood', elementKo: '목', polarity: '+', animal: '호랑이' },
@@ -84,7 +84,7 @@ const BRANCH_INFO: Record<string, { korean: string; hanja: string; element: 'woo
 };
 
 // 지장간 매핑
-const HIDDEN_STEMS: Record<string, string[]> = {
+export const HIDDEN_STEMS: Record<string, string[]> = {
     '자': ['계'], '子': ['계'],
     '축': ['계', '신', '기'], '丑': ['계', '신', '기'],
     '인': ['무', '병', '갑'], '寅': ['무', '병', '갑'],
@@ -101,7 +101,7 @@ const HIDDEN_STEMS: Record<string, string[]> = {
 
 // 12운성 (Twelve Stages) 계산표
 const STAGES_ORDER = ['장생(長生)', '목욕(沐浴)', '관대(冠帶)', '건록(建祿)', '제왕(帝旺)', '쇠(衰)', '병(病)', '사(死)', '묘(墓)', '절(絶)', '태(胎)', '양(養)'];
-const ZHI_ORDER = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+export const ZHI_ORDER = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
 
 // 일간별 장생 시작 지지 인덱스
 const DAY_MASTER_CHANGSHENG: Record<string, { startZhi: string; forward: boolean }> = {
@@ -117,7 +117,7 @@ const DAY_MASTER_CHANGSHENG: Record<string, { startZhi: string; forward: boolean
     '계': { startZhi: '묘', forward: false },
 };
 
-function getTwelveStage(dayStemKo: string, zhiKo: string): string {
+export function getTwelveStage(dayStemKo: string, zhiKo: string): string {
     const config = DAY_MASTER_CHANGSHENG[dayStemKo];
     if (!config || zhiKo === '?') return '-';
     
@@ -143,7 +143,7 @@ const TRIPLE_COMBO_START: Record<string, string> = {
     '사': '사', '유': '사', '축': '사',
 };
 
-function getTwelveSpirits(baseZhiKo: string, targetZhiKo: string): string {
+export function getTwelveSpirits(baseZhiKo: string, targetZhiKo: string): string {
     const startZhi = TRIPLE_COMBO_START[baseZhiKo];
     if (!startZhi || targetZhiKo === '?') return '-';
 
@@ -457,4 +457,28 @@ ${hourDesc}
 ★ 공망(空亡): ${voidStr}
 ★ 대운(大運) 정보: ${daewunStr}
 `;
+}
+
+/**
+ * 신청 폼의 birth_info 문자열("YYYY-MM-DD HH:MM" 또는 "YYYY-MM-DD 자시 (23:30 ~ 01:30)" 또는 "… 모름 / 입력안함")을
+ * 만세력 입력값으로 변환한다. 시진 라벨은 해당 시진의 대표 시각으로 환산하고, 모름이면 birthTime 을 비운다.
+ */
+const SIJIN_TO_TIME: Record<string, string> = {
+    '자': '00:00', '축': '02:00', '인': '04:00', '묘': '06:00', '진': '08:00', '사': '10:00',
+    '오': '12:00', '미': '14:00', '신': '16:00', '유': '18:00', '술': '20:00', '해': '22:00',
+};
+
+export function parseBirthInfo(birthInfo: string): { birthDate: string; birthTime: string | undefined } {
+    const trimmed = (birthInfo || '').trim();
+    const spaceIdx = trimmed.search(/\s/);
+    const birthDate = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
+    const rest = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx).trim();
+
+    const hhmm = rest.match(/^(\d{1,2}):(\d{2})/);
+    if (hhmm) return { birthDate, birthTime: `${hhmm[1]!.padStart(2, '0')}:${hhmm[2]}` };
+
+    const sijin = rest.match(/^([자축인묘진사오미신유술해])시/);
+    if (sijin) return { birthDate, birthTime: SIJIN_TO_TIME[sijin[1]!] };
+
+    return { birthDate, birthTime: undefined }; // 시간 모름 → 3주(년·월·일)만 사용
 }

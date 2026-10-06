@@ -9,6 +9,7 @@ import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { ensureValidSession } from '../supabaseClient';
+import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../config/deepReportConfig';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -237,7 +238,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <Zap className="w-10 h-10 text-violet-600 animate-pulse" />
           </div>
           <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">전문가의 심층 리포트가 필요합니다</h3>
-          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석을 넘어, 10년차 전문가가 당신의 MBTI와 사주를 직접 대조하여 분석한 5페이지 분량의 심층 리포트를 받아보세요.</p>
+          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석을 넘어, 10년차 전문가가 당신의 MBTI와 사주를 직접 대조하여 분석한 A4 25장 이상의 3년 심층 리포트를 받아보세요.</p>
           <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100 shadow-inner">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-bold text-slate-600">서비스 유형</span>
@@ -246,8 +247,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="flex justify-between items-center">
               <span className="text-sm font-bold text-slate-600">결제 금액</span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 line-through text-xs">29,900원</span>
-                <span className="text-lg font-black text-rose-600">9,900원</span>
+                <span className="text-slate-400 line-through text-xs">{DEEP_REPORT_ORIGINAL_PRICE.toLocaleString()}원</span>
+                <span className="text-lg font-black text-rose-600">{DEEP_REPORT_SALE_PRICE.toLocaleString()}원</span>
               </div>
             </div>
           </div>

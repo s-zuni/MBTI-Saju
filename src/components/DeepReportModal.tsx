@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Info, Clock } from 'lucide-react';
 import { requestPayment } from '../payment';
+import {
+  DEEP_REPORT_ORIGINAL_PRICE,
+  DEEP_REPORT_SALE_PRICE,
+  DEEP_REPORT_DISCOUNT_RATE,
+  DEEP_REPORT_TYPE_LABEL,
+  formatWon,
+  type DeepReportType,
+} from '../config/deepReportConfig';
 
 interface DeepReportModalProps {
   isOpen: boolean;
@@ -19,7 +27,8 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
     birthTime: '',
     birthTimeLabel: '',
     mbti: '',
-    reportType: initialReportType || 'saju_counsel', // 'saju_counsel', 'mbti_saju', or 'saju'
+    gender: '',
+    reportType: (initialReportType === 'saju' ? 'saju' : 'mbti_saju') as DeepReportType,
     specialRequest: '',
     reservationDate: '',
     partnerInfo: {
@@ -33,7 +42,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       relationshipCustom: '',
     }
   });
-  const amount = formData.reportType === 'saju_counsel' ? 9900 : 29900;
+  const amount = DEEP_REPORT_SALE_PRICE;
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
 
   // 다음 4일 계산 (오늘 포함)
@@ -74,7 +83,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
   useEffect(() => {
     if (isOpen && initialReportType) {
-      setFormData(prev => ({ ...prev, reportType: initialReportType }));
+      setFormData(prev => ({ ...prev, reportType: initialReportType === 'saju' ? 'saju' : 'mbti_saju' }));
     }
   }, [isOpen, initialReportType]);
 
@@ -109,23 +118,16 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       setLoading(false);
       return alert('예약 일자를 선택해주세요.');
     }
-    if (formData.reportType === 'saju_counsel' && !formData.specialRequest.trim()) {
+    if (!formData.gender) {
       setLoading(false);
-      return alert('상담받으실 구체적인 고민이나 질문 내용을 입력해 주세요.');
+      return alert('성별을 선택해주세요. (대운의 순행/역행 계산에 필요합니다.)');
     }
 
     try {
       // 1. 심층 리포트 요청 데이터 생성
       const orderId = `DEEPREPORT_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      let dbReportType = '';
-      if (formData.reportType === 'saju_counsel') {
-        dbReportType = '사주 상담 리포트';
-      } else if (formData.reportType === 'mbti_saju') {
-        dbReportType = 'MBTI 사주 심층 리포트';
-      } else {
-        dbReportType = '사주 전용 심층 리포트';
-      }
+      const dbReportType = DEEP_REPORT_TYPE_LABEL[formData.reportType];
 
       const { error: insertError } = await supabase.from('deep_report_requests').insert({
         order_id: orderId,
@@ -134,6 +136,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
         kakao_id: formData.kakaoId,
         birth_info: `${formData.birthDate} ${formData.birthTimeLabel || formData.birthTime}`,
         mbti: formData.mbti,
+        gender: formData.gender,
         report_type: dbReportType,
         special_requests: formData.specialRequest,
         amount: amount,
@@ -156,11 +159,9 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
       // Guest인 경우 session.user.id 대신 고유 식별자 생성하여 사용
       const customerKey = session?.user?.id || `GUEST_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
       
-      const tossProductName = formData.reportType === 'saju_counsel'
-        ? '사주 1:1 고민 상담 리포트'
-        : formData.reportType === 'saju'
-          ? '3년 심층 결합 분석 리포트 (사주)'
-          : '3년 심층 결합 분석 리포트 (MBTI+사주)';
+      const tossProductName = formData.reportType === 'saju'
+        ? '3년 심층 결합 분석 리포트 (사주)'
+        : '3년 심층 결합 분석 리포트 (MBTI+사주)';
 
       const response = await requestPayment({
         name: tossProductName,
@@ -200,7 +201,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">{formData.reportType === 'saju_counsel' ? 'A4 5장 내외' : 'A4 20장 내외'}</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 25장 이상</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -208,10 +209,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           
           <div className="flex justify-center mb-8">
             <span className="px-4 py-2 bg-rose-500 text-white text-xs font-black rounded-full shadow-lg shadow-rose-500/20 animate-pulse tracking-widest uppercase">
-              {formData.reportType === 'saju_counsel' 
-                ? '출시 기념 50% 특별 할인가 적용 중! (19,900원 → 9,900원)'
-                : '출시 기념 25% 특별 할인가 적용 중! (39,900원 → 29,900원)'
-              }
+              {`출시 기념 ${DEEP_REPORT_DISCOUNT_RATE}% 특별 할인가 적용 중! (${formatWon(DEEP_REPORT_ORIGINAL_PRICE)} → ${formatWon(DEEP_REPORT_SALE_PRICE)})`}
             </span>
           </div>
 
@@ -318,6 +316,20 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                  </div>
                </div>
                <div className="space-y-2">
+                 <label className="text-sm font-black text-slate-800">성별 <span className="text-rose-500">*</span></label>
+                 <div className="grid grid-cols-2 gap-2">
+                   {[{ v: 'female', l: '여성' }, { v: 'male', l: '남성' }].map(o => (
+                     <button
+                       key={o.v}
+                       type="button"
+                       onClick={() => setFormData({...formData, gender: o.v})}
+                       className={`py-3 rounded-xl border-2 text-sm font-bold transition-all ${formData.gender === o.v ? 'border-violet-600 bg-violet-50/50 text-violet-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                     >{o.l}</button>
+                   ))}
+                 </div>
+                 <p className="text-[11px] text-slate-400 font-medium">대운(10년 단위 운)의 흐름 방향을 정확히 계산하는 데 사용됩니다.</p>
+               </div>
+               <div className="space-y-2">
                  <label className="text-sm font-black text-slate-800">본인의 MBTI <span className="text-slate-400 font-normal">(선택)</span></label>
                  <input 
                    type="text" 
@@ -332,26 +344,19 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
             <div className="space-y-3 pt-4 border-t border-slate-100">
                <label className="text-sm font-black text-slate-800">리포트 상품 선택 <span className="text-rose-500">*</span></label>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button 
-                    onClick={() => setFormData({...formData, reportType: 'saju_counsel'})}
-                    className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'saju_counsel' ? 'border-rose-600 bg-rose-50/50 text-rose-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
-                  >
-                     <p className="font-bold text-sm mb-1 flex justify-between items-center">
-                       <span>사주 고민 상담 리포트</span>
-                       <span className="text-xs font-black text-rose-600">9,900원</span>
-                     </p>
-                     <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">1:1 맞춤 고민 감명 및 처방</p>
-                  </button>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button 
                     onClick={() => setFormData({...formData, reportType: 'mbti_saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'mbti_saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
                      <p className="font-bold text-sm mb-1 flex justify-between items-center">
                        <span>3년 사주 (MBTI 융합)</span>
-                       <span className="text-xs font-black text-violet-600">29,900원</span>
+                       <span className="flex items-center gap-1.5">
+                         <span className="text-[10px] line-through text-slate-400 font-medium">{formatWon(DEEP_REPORT_ORIGINAL_PRICE)}</span>
+                         <span className="text-xs font-black text-violet-600">{formatWon(DEEP_REPORT_SALE_PRICE)}</span>
+                       </span>
                      </p>
-                     <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">3년 월별 세부 로드맵 & 성향</p>
+                     <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">내년부터 3년 세부 로드맵 & 성향</p>
                   </button>
                   <button 
                     onClick={() => setFormData({...formData, reportType: 'saju'})}
@@ -359,7 +364,10 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                   >
                      <p className="font-bold text-sm mb-1 flex justify-between items-center">
                        <span>3년 사주 (사주 전용)</span>
-                       <span className="text-xs font-black text-violet-600">29,900원</span>
+                       <span className="flex items-center gap-1.5">
+                         <span className="text-[10px] line-through text-slate-400 font-medium">{formatWon(DEEP_REPORT_ORIGINAL_PRICE)}</span>
+                         <span className="text-xs font-black text-violet-600">{formatWon(DEEP_REPORT_SALE_PRICE)}</span>
+                       </span>
                      </p>
                      <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">전통 명리학 관점 집중 해독</p>
                   </button>
@@ -482,19 +490,13 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
              <div className="space-y-2 pt-4 border-t border-slate-100">
                 <label className="text-sm font-black text-slate-800">
-                  {formData.reportType === 'saju_counsel' 
-                    ? '분석받고 싶은 고민/질문 내용 (필수) *' 
-                    : '특별 요청사항 (선택)'
-                  }
+                  특별 요청사항 (선택)
                 </label>
                 <textarea 
                   value={formData.specialRequest}
                   onChange={e => setFormData({...formData, specialRequest: e.target.value})}
                   className="w-full bg-white border border-slate-200 p-4 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none text-sm h-32 resize-none leading-relaxed font-medium"
-                  placeholder={formData.reportType === 'saju_counsel'
-                    ? '구체적인 고민이나 알고 싶으신 질문을 자세하게 작성해 주세요. (예: 올해 이직을 준비하고 있는데 언제 하는 것이 가장 좋을까요? 어떤 직무가 잘 맞을까요?)'
-                    : '상대방과의 궁합, 요즘 고민거리, 직업 흐름, 연애 흐름 등 분석에서 특별히 집중적으로 다루어졌으면 하는 부분을 자세히 적어주세요.'
-                  }
+                  placeholder="요즘 가장 큰 고민(이직·연애·재물 등)이나 분석에서 집중적으로 다뤄졌으면 하는 부분을 자세히 적어주세요. 작성하신 내용은 리포트 맨 앞 '나의 고민에 대한 마스터의 답'에서 우선 다룹니다."
                 />
              </div>
           </div>

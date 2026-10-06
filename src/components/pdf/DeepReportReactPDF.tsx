@@ -13,11 +13,11 @@ Font.registerHyphenationCallback(word => [word]);
 
 const styles = StyleSheet.create({
   page: {
-    padding: '20mm',
+    padding: '16mm 17mm 20mm 17mm',
     backgroundColor: '#ffffff',
     fontFamily: 'NotoSansKR',
-    fontSize: 13,
-    lineHeight: 1.6,
+    fontSize: 11,
+    lineHeight: 1.62,
     color: '#1E293B',
   },
   coverPage: {
@@ -54,48 +54,49 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'NotoSansKR',
-    fontSize: 20,
+    fontSize: 18,
     color: '#0F172A',
     borderBottom: '1.5pt solid #E2E8F0',
-    paddingBottom: 12,
-    marginBottom: 30,
+    paddingBottom: 10,
+    marginBottom: 18,
     backgroundColor: '#F8FAFC',
     paddingHorizontal: 22,
     paddingVertical: 9,
   },
   subTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#0F172A',
-    marginTop: 25,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 7,
     borderLeft: '4.5pt solid #6366F1',
     paddingLeft: 15,
     fontFamily: 'NotoSansKR',
   },
   paragraph: {
-    marginBottom: 15,
-    textAlign: 'justify',
+    marginBottom: 8,
+    textAlign: 'left',
     fontFamily: 'NotoSansKR',
     color: '#334155',
-    fontSize: 13,
+    fontSize: 11,
   },
   bulletPoint: {
     flexDirection: 'row',
     marginBottom: 9,
-    paddingLeft: 15,
+    paddingLeft: 4,
   },
   bullet: {
     width: 15,
-    fontSize: 13,
+    fontSize: 11,
     color: '#6366F1',
     fontFamily: 'NotoSansKR',
   },
   bulletText: {
     flex: 1,
     fontFamily: 'NotoSansKR',
-    fontSize: 13,
-    lineHeight: 1.5,
+    fontSize: 11,
+    lineHeight: 1.62,
+    color: '#334155',
   },
   box: {
     marginTop: 22,
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   },
   sajuTable: {
     flexDirection: 'row',
-    marginBottom: 22,
+    marginBottom: 10,
     border: '0.75pt solid #E2E8F0',
   },
   sajuCol: {
@@ -219,57 +220,49 @@ interface ReportDetail {
   content?: string;
 }
 
+type YearScores = { wealth: number; career: number; love: number; health: number };
+
 interface SajuReportContent {
   cover?: {
     mainTitle?: string;
     subTitle?: string;
   };
-  natalChartAnalysis?: {
-    title: string;
-    details: ReportDetail[];
+  summary?: {
+    keywords?: string[];
+    verdict?: string;
+    topActions?: string[];
+    yearOverview?: {
+      year: number;
+      ganji?: string;
+      yearlyTheme: string;
+      oneLine?: string;
+      scores: YearScores;
+      bestMonths?: number[];
+      cautionMonths?: number[];
+    }[];
+    bestYear?: number | null;
+    cautionYear?: number | null;
   };
-  coreIdentity?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  wealthAndCareer?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  relationship?: {
-    title: string;
-    details: ReportDetail[];
-  };
+  natalChartAnalysis?: { title: string; details: ReportDetail[] };
+  coreIdentity?: { title: string; details: ReportDetail[] };
+  wealthAndCareer?: { title: string; details: ReportDetail[] };
+  relationship?: { title: string; details: ReportDetail[] };
   threeYearRoadmap?: {
     title: string;
     details: {
       year: number;
+      ganji?: string;
       yearlyTheme: string;
+      oneLine?: string;
+      scores?: YearScores;
+      bestMonths?: number[];
+      cautionMonths?: number[];
       subtopics: ReportDetail[];
     }[];
   };
-  specialRequestAnalysis?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  actionPlan?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  thisYearFortune?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  counselingAndAdvice?: {
-    title: string;
-    details: ReportDetail[];
-  };
-  ratings?: {
-    wealth: number;
-    career: number;
-    relationship: number;
-    health: number;
-  };
+  specialRequestAnalysis?: { title: string; details: ReportDetail[] };
+  actionPlan?: { title: string; details: ReportDetail[] };
+  generated_at?: string;
 }
 
 interface Props {
@@ -302,41 +295,30 @@ const renderText = (text: string | undefined) => {
     const trimmed = line.trim();
     
     if (trimmed.length === 0) {
-      return <View key={idx} style={{ height: 10 }} />;
+      return <View key={idx} style={{ height: 4 }} />;
     }
     
-    // Check if it's a takeaway highlight prefix (💡, [중요], [결론])
-    const isHighlight = trimmed.startsWith('💡') || trimmed.startsWith('[중요]') || trimmed.startsWith('[결론]');
-    if (isHighlight) {
-      let bgColor = '#EFF6FF';
-      let borderColor = '#3B82F6';
-      let textColor = '#1E3A8A';
-      
-      if (trimmed.startsWith('💡')) {
-        bgColor = '#FEF9C3';
-        borderColor = '#F59E0B';
-        textColor = '#713F12';
-      } else if (trimmed.startsWith('[중요]')) {
-        bgColor = '#FFE4E6';
-        borderColor = '#EF4444';
-        textColor = '#9F1239';
-      } else if (trimmed.startsWith('[결론]')) {
-        bgColor = '#E0E7FF';
-        borderColor = '#6366F1';
-        textColor = '#3730A3';
-      }
-      
+    // 핵심요약(💡) / 중요 / 결론 하이라이트. NotoSansKR 에는 이모지 글리프가 없으므로 라벨 칩으로 대체한다.
+    const hl = trimmed.startsWith('💡')
+      ? { label: '핵심 요약', bg: '#FEF9C3', border: '#F59E0B', fg: '#713F12', prefix: '💡' }
+      : trimmed.startsWith('[중요]')
+        ? { label: '실천 팁', bg: '#FFE4E6', border: '#EF4444', fg: '#9F1239', prefix: '[중요]' }
+        : trimmed.startsWith('[결론]')
+          ? { label: '결론', bg: '#E0E7FF', border: '#6366F1', fg: '#3730A3', prefix: '[결론]' }
+          : null;
+    if (hl) {
       return (
-        <View key={idx} style={{
-          marginTop: 10,
-          marginBottom: 10,
-          padding: 12,
-          backgroundColor: bgColor,
+        <View key={idx} wrap={false} style={{
+          marginTop: 4,
+          marginBottom: 8,
+          padding: 8,
+          backgroundColor: hl.bg,
           borderRadius: 8,
-          borderLeft: `4pt solid ${borderColor}`,
+          borderLeft: `4pt solid ${hl.border}`,
         }}>
-          <Text style={{ fontFamily: 'NotoSansKR', fontSize: 12, color: textColor, lineHeight: 1.5 }}>
-            {parseBoldText(trimmed)}
+          <Text style={{ fontFamily: 'NotoSansKR', fontSize: 9, color: hl.border, fontWeight: 'bold', marginBottom: 3 }}>{hl.label}</Text>
+          <Text style={{ fontFamily: 'NotoSansKR', fontSize: 11, color: hl.fg, lineHeight: 1.6 }}>
+            {parseBoldText(trimmed.slice(hl.prefix.length).trim())}
           </Text>
         </View>
       );
@@ -353,7 +335,7 @@ const renderText = (text: string | undefined) => {
       const displayBullet = /\d+\./.test(bulletType) ? bulletType : '•';
 
       return (
-        <View key={idx} style={[styles.bulletPoint, { marginLeft: indentation, marginBottom: 8 }]}>
+        <View key={idx} wrap={false} style={[styles.bulletPoint, { marginLeft: indentation, marginBottom: 5 }]}>
           <Text style={[styles.bullet, { width: /\d+\./.test(bulletType) ? 25 : 15 }]}>{displayBullet}</Text>
           <Text style={styles.bulletText}>{parseBoldText(content)}</Text>
         </View>
@@ -375,14 +357,14 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
     { label: '수(水)', value: elements.water, color: '#3B82F6' },
   ];
 
-  const chartHeight = 120;
+  const chartHeight = 90;
   const chartWidth = 350;
   const barWidth = 45;
   const gap = 20;
 
   return (
-    <View style={{ marginTop: 25, marginBottom: 30, alignItems: 'center' }}>
-      <Text style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 15, color: '#475569' }}>
+    <View wrap={false} style={{ marginTop: 10, marginBottom: 14, alignItems: 'center' }}>
+      <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8, color: '#475569' }}>
         오행(五行) 에너지 분포도 (Percent)
       </Text>
       <Svg height={chartHeight + 40} width={chartWidth} viewBox={`0 0 ${chartWidth} ${chartHeight + 40}`}>
@@ -439,7 +421,7 @@ const FiveElementsChart: React.FC<{ elements: SajuData["userSaju"]["elementRatio
 const DayMasterBox: React.FC<{ dayMaster: SajuData["userSaju"]["dayMaster"] }> = ({ dayMaster }) => {
   if (!dayMaster) return null;
   return (
-    <View style={[styles.box, { borderLeft: '5pt solid #FBBF24', backgroundColor: '#FEFCE8', marginBottom: 20 }]}>
+    <View style={[styles.box, { borderLeft: '5pt solid #FBBF24', backgroundColor: '#FEFCE8', marginTop: 4, marginBottom: 12, padding: 12 }]}>
       <Text style={[styles.boxTitle, { color: '#854D0E', fontSize: 16 }]}>본신의 본질: {dayMaster.chinese} {dayMaster.korean} (日干)</Text>
       <Text style={[styles.paragraph, { marginBottom: 0, color: '#92400E', fontWeight: 'bold' }]}>{dayMaster.description}</Text>
     </View>
@@ -456,6 +438,16 @@ const ZHI_SINGLE_KOREAN: Record<string, string> = {
   '戌': '술', '亥': '해'
 };
 
+const KO_TO_HANJA_GAN: Record<string, string> = Object.fromEntries(Object.entries(GAN_SINGLE_KOREAN).map(([h, k]) => [k, h]));
+const KO_TO_HANJA_ZHI: Record<string, string> = Object.fromEntries(Object.entries(ZHI_SINGLE_KOREAN).map(([h, k]) => [k, h]));
+// 한자·한글 어느 쪽으로 저장돼 있어도 "갑(甲)" 형태로 표기
+const labelChar = (ch: string | undefined, toKo: Record<string, string>, toHanja: Record<string, string>) => {
+  if (!ch || ch === '?') return '-';
+  const ko = toKo[ch] || ch;
+  const hanja = toHanja[ko] || (toKo[ch] ? ch : '');
+  return hanja ? `${ko}(${hanja})` : ko;
+};
+
 const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
   if (!saju?.pillars) return null;
   const pillars = [saju.pillars.hour, saju.pillars.day, saju.pillars.month, saju.pillars.year];
@@ -468,12 +460,12 @@ const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
           <View style={styles.sajuHeader}><Text>{headers[i]}</Text></View>
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>천간(天干)</Text>
-            <Text style={styles.sajuValue}>{p?.gan ? `${GAN_SINGLE_KOREAN[p.gan] || p.gan}(${p.gan})` : "-"}</Text>
+            <Text style={styles.sajuValue}>{labelChar(p?.gan, GAN_SINGLE_KOREAN, KO_TO_HANJA_GAN)}</Text>
             <Text style={{ fontSize: 10, color: '#6366F1', marginTop: 2, fontWeight: 'bold' }}>{p?.ganShiShen || "-"}</Text>
           </View>
           <View style={styles.sajuCell}>
             <Text style={styles.sajuLabel}>지지(地支)</Text>
-            <Text style={styles.sajuValue}>{p?.zhi ? `${ZHI_SINGLE_KOREAN[p.zhi] || p.zhi}(${p.zhi})` : "-"}</Text>
+            <Text style={styles.sajuValue}>{labelChar(p?.zhi, ZHI_SINGLE_KOREAN, KO_TO_HANJA_ZHI)}</Text>
             <Text style={{ fontSize: 10, color: '#4338CA', marginTop: 2, fontWeight: 'bold' }}>{p?.zhiShiShen || "-"}</Text>
           </View>
           <View style={[styles.sajuCell, { borderBottom: 0, backgroundColor: '#F8FAFC' }]}>
@@ -487,197 +479,93 @@ const SajuTable: React.FC<{ saju: SajuData["userSaju"] }> = ({ saju }) => {
   );
 };
 
-const RatingStars: React.FC<{ rating: number; color: string }> = ({ rating, color }) => {
-  const stars = Array.from({ length: 5 }).map((_, idx) => {
-    const filled = idx < rating;
-    return (
-      <Svg key={idx} width="14" height="14" viewBox="0 0 24 24" style={{ marginRight: 3 }}>
-        <Path 
-          d="M12 .587l3.668 7.431 8.2 1.19-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.208l8.2-1.19z" 
-          fill={filled ? color : '#E2E8F0'} 
-        />
-      </Svg>
-    );
-  });
-  return <View style={{ flexDirection: 'row', alignItems: 'center' }}>{stars}</View>;
-};
+const SCORE_FIELDS = [
+  { key: 'wealth', label: '재물', color: '#F59E0B' },
+  { key: 'career', label: '커리어', color: '#6366F1' },
+  { key: 'love', label: '인연', color: '#EC4899' },
+  { key: 'health', label: '건강', color: '#10B981' },
+] as const;
 
-const FortuneRatingInfographic: React.FC<{ ratings?: { wealth: number; career: number; relationship: number; health: number } | undefined }> = ({ ratings }) => {
-  const defaultRatings = ratings || { wealth: 4, career: 4, relationship: 3, health: 4 };
+const formatMonths = (m?: number[]) => (m && m.length ? m.map(x => `${x}월`).join(', ') : '-');
 
-  const ratingList = [
-    { label: '재물운 (Wealth)', value: defaultRatings.wealth, color: '#F59E0B', desc: '자산 관리 및 투자 성공 흐름' },
-    { label: '직업운 (Career)', value: defaultRatings.career, color: '#6366F1', desc: '승진, 사업, 업무 성취 및 이직' },
-    { label: '인연운 (Relationship)', value: defaultRatings.relationship, color: '#EC4899', desc: '대인관계, 연인, 소통 조화도' },
-    { label: '건강운 (Health)', value: defaultRatings.health, color: '#10B981', desc: '신체/정신적 오행 에너지 균형' },
-  ];
+const ScoreCell: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
+  <View style={{ flex: 1 }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
+      <Text style={{ fontSize: 9.5, color: '#475569' }}>{label}</Text>
+      <Text style={{ fontSize: 9.5, color, fontWeight: 'bold' }}>{value}/5</Text>
+    </View>
+    <View style={{ height: 6, backgroundColor: '#E2E8F0', borderRadius: 3 }}>
+      <View style={{ width: `${Math.max(0, Math.min(5, value)) * 20}%`, height: 6, backgroundColor: color, borderRadius: 3 }} />
+    </View>
+  </View>
+);
 
+const ScoreGrid: React.FC<{ scores?: YearScores | undefined }> = ({ scores }) => {
+  if (!scores) return null;
   return (
-    <View style={{ marginTop: 15, marginBottom: 20, padding: 15, backgroundColor: '#F8FAFC', borderRadius: 12, border: '0.75pt solid #E2E8F0' }}>
-      <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 12, textAlign: 'center', fontFamily: 'NotoSansKR' }}>
-        올해 분야별 핵심 길흉 지표 (Fortune Index)
-      </Text>
-      
-      <View style={{ borderBottom: '0.75pt solid #E2E8F0', paddingBottom: 6, marginBottom: 8, flexDirection: 'row', fontWeight: 'bold', fontSize: 10, color: '#64748B' }}>
-        <Text style={{ flex: 1.5, fontFamily: 'NotoSansKR' }}>운세 영역</Text>
-        <Text style={{ flex: 1.5, textAlign: 'center', fontFamily: 'NotoSansKR' }}>만족도 (별점)</Text>
-        <Text style={{ flex: 1, textAlign: 'center', fontFamily: 'NotoSansKR' }}>수치</Text>
-        <Text style={{ flex: 2, fontFamily: 'NotoSansKR' }}>지표 상세 설명</Text>
-      </View>
-
-      {ratingList.map((item, idx) => (
-        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottom: idx === ratingList.length - 1 ? 0 : '0.5pt solid #F1F5F9' }}>
-          <View style={{ flex: 1.5 }}>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#334155', fontFamily: 'NotoSansKR' }}>{item.label}</Text>
-          </View>
-          <View style={{ flex: 1.5, alignItems: 'center' }}>
-            <RatingStars rating={item.value} color={item.color} />
-          </View>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: item.color }}>{item.value * 20}%</Text>
-          </View>
-          <View style={{ flex: 2 }}>
-            <Text style={{ fontSize: 9, color: '#64748B', fontFamily: 'NotoSansKR' }}>{item.desc}</Text>
-          </View>
-        </View>
-      ))}
+    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 6 }}>
+      {SCORE_FIELDS.map(f => <ScoreCell key={f.key} label={f.label} value={scores[f.key]} color={f.color} />)}
     </View>
   );
 };
 
+// 푸터는 자식 View 없이 단일 fixed Text 로 둔다. (View 를 자식으로 둔 fixed 푸터는 긴 본문 흐름에서 react-pdf 레이아웃 오류를 일으킨다)
+const Footer: React.FC<{ label: string }> = ({ label }) => (
+  <Text
+    fixed
+    style={{ position: 'absolute', bottom: '9mm', left: '17mm', right: '17mm', borderTop: '0.75pt solid #E2E8F0', paddingTop: 7, fontSize: 9, color: '#94A3B8', textAlign: 'right' }}
+    render={({ pageNumber, totalPages }) => `MBTIJU 3개년 심층 리포트  |  ${label}  |  ${pageNumber} / ${totalPages}`}
+  />
+);
+
+interface SectionProps {
+  title: string;
+  accent?: string;
+  first?: boolean;
+  details?: ReportDetail[] | undefined;
+  intro?: React.ReactNode;
+  children?: React.ReactNode;
+}
+
+// 섹션은 페이지를 강제로 나누지 않고 이어서 흐른다(섹션 끝의 빈 페이지 방지). 제목은 뒤따르는 내용과 떨어지지 않도록 보호한다.
+const Section: React.FC<SectionProps> = ({ title, accent = '#6366F1', first, details, intro, children }) => (
+  <>
+    <Text style={[styles.sectionTitle, first ? {} : { marginTop: 20 }]} minPresenceAhead={160}>{title}</Text>
+    {intro}
+    {details?.map((detail, idx) => (
+      <View key={idx} style={{ marginBottom: 8 }}>
+        {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: accent }]} minPresenceAhead={90}>{detail.subtitle}</Text>}
+        {renderText(detail.content)}
+      </View>
+    ))}
+    {children}
+  </>
+);
+
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
-  const isCounselingReport = parsedContent.counselingAndAdvice !== undefined;
+  const c = parsedContent;
+  const years = c.threeYearRoadmap?.details || [];
+  const range = years.length ? `${years[0]!.year}~${years[years.length - 1]!.year}` : '';
+  const dateText = new Date(c.generated_at || Date.now()).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  if (isCounselingReport) {
-    return (
-      <Document>
-        {/* Cover Page */}
-        <Page size="A4" style={styles.coverPage}>
-          <View style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1 }}>
-            <Svg width="300" height="300" viewBox="0 0 100 100">
-              <Circle cx="100" cy="0" r="80" fill="#FBBF24" />
-              <Circle cx="100" cy="0" r="60" fill="none" stroke="#ffffff" strokeWidth="1" />
-            </Svg>
-          </View>
+  const toc = [
+    c.summary && { no: '', title: '한눈에 보기', desc: `${range} 3개년 요약과 연도별 비교` },
+    c.specialRequestAnalysis && { no: '01', title: '나의 고민에 대한 마스터의 답', desc: '남겨주신 고민을 사주로 풀어드립니다' },
+    c.natalChartAnalysis && { no: '02', title: '사주원국 심층 분석', desc: '타고난 사주의 뼈대와 오행 균형' },
+    c.coreIdentity && { no: '03', title: '선천적 기질과 내면의 지도', desc: '강점·무의식·숨은 리스크' },
+    c.wealthAndCareer && { no: '04', title: '재물 그릇과 커리어', desc: '맞는 일, 돈이 모이는 방식' },
+    c.relationship && { no: '05', title: '인연과 감정의 지도', desc: '귀인·연애 패턴·악연' },
+    years.length > 0 && { no: '06', title: `향후 3개년 심층 로드맵 (${range})`, desc: '연도별 재물·커리어·인연·건강과 월별 흐름' },
+    c.actionPlan && { no: '07', title: '운을 내 편으로 만드는 마스터플랜', desc: '오늘부터 시작할 실천 체크리스트' },
+  ].filter(Boolean) as { no: string; title: string; desc: string }[];
 
-          <Text style={styles.coverSubtitle}>1:1 사주 고민 상담 리포트</Text>
-          
-          <View style={{ marginVertical: 40, alignItems: 'center' }}>
-            <Svg width="80" height="80" viewBox="0 0 100 100">
-              <Path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="#FBBF24" strokeWidth="2" />
-              <Path d="M50 15 L85 30 L85 70 L50 85 L15 70 L15 30 Z" fill="#FBBF24" opacity="0.2" />
-              <Text x="50" y="55" textAnchor="middle" style={{ fontSize: 10, fill: '#FBBF24', fontFamily: 'NotoSansKR' }}>命</Text>
-            </Svg>
-          </View>
+  let firstSectionDone = false;
+  const isFirst = () => { const r = !firstSectionDone; firstSectionDone = true; return r; };
 
-          <Text style={styles.coverTitle}>{parsedContent.cover?.mainTitle || `${clientName} 님 고민 상담 리포트`}</Text>
-          
-          <View style={{ height: 2, width: 120, backgroundColor: '#FBBF24', marginVertical: 35 }} />
-          
-          <Text style={styles.clientName}>{clientName} 님</Text>
-          
-          <Text style={{ marginTop: 50, fontSize: 16, color: '#94A3B8', textAlign: 'center', width: '70%', lineHeight: 1.5 }}>
-            {parsedContent.cover?.subTitle || "명리학적 해법을 통한 1:1 맞춤 고민 카운셀링"}
-          </Text>
-          
-          <View style={{ marginTop: 120, alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, color: '#475569', letterSpacing: 2 }}>ANTIGRAVITY MASTER COUNSELING</Text>
-            <Text style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>
-              {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </Text>
-          </View>
-        </Page>
-
-        {/* Page 1: 사주 및 만세력 분석 */}
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{parsedContent.natalChartAnalysis?.title || "01. 사주 및 만세력 분석"}</Text>
-          
-          <View style={{ marginBottom: 20 }}>
-            <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24' }]}>사주 원국 테이블 (四柱 元局)</Text>
-            <DayMasterBox dayMaster={sajuData?.userSaju?.dayMaster} />
-            <SajuTable saju={sajuData?.userSaju} />
-            <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
-          </View>
-
-          {parsedContent.natalChartAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
-            <View key={idx} style={{ marginBottom: 20 }}>
-              {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
-              {renderText(detail.content)}
-            </View>
-          ))}
-          
-          <View style={styles.footer} fixed>
-            <Text>1:1 사주 고민 상담 리포트 | 사주 및 만세력 분석</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
-        </Page>
-
-        {/* Page 2: 올해 대운세 분석 */}
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{parsedContent.thisYearFortune?.title || "02. 올해 대운세 분석"}</Text>
-          
-          <FortuneRatingInfographic ratings={parsedContent.ratings} />
-
-          {parsedContent.thisYearFortune?.details?.map((detail: ReportDetail, idx: number) => (
-            <View key={idx} style={{ marginBottom: 20 }}>
-              {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#10B981' }]}>{detail.subtitle}</Text>}
-              {renderText(detail.content)}
-            </View>
-          ))}
-          
-          <View style={styles.footer} fixed>
-            <Text>1:1 사주 고민 상담 리포트 | 올해 대운세 분석</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
-        </Page>
-
-        {/* Page 3: 고민 분석 및 조언 */}
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{parsedContent.counselingAndAdvice?.title || "03. 고민 분석 및 조언"}</Text>
-          
-          {parsedContent.counselingAndAdvice?.details?.[0] && (
-            <View style={{ marginBottom: 20 }}>
-              {parsedContent.counselingAndAdvice.details[0].subtitle && (
-                <Text style={[styles.subTitle, { borderLeftColor: '#EF4444' }]}>
-                  {parsedContent.counselingAndAdvice.details[0].subtitle}
-                </Text>
-              )}
-              {renderText(parsedContent.counselingAndAdvice.details[0].content)}
-            </View>
-          )}
-          
-          <View style={styles.footer} fixed>
-            <Text>1:1 사주 고민 상담 리포트 | 고민 분석 및 조언</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
-        </Page>
-
-        {/* Page 4: 극복 솔루션 및 개운 처방 */}
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>04. 극복 솔루션 및 개운 처방</Text>
-          
-          {parsedContent.counselingAndAdvice?.details?.slice(1).map((detail: ReportDetail, idx: number) => (
-            <View key={idx} style={{ marginBottom: 20 }}>
-              {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#8B5CF6' }]}>{detail.subtitle}</Text>}
-              {renderText(detail.content)}
-            </View>
-          ))}
-          
-          <View style={styles.footer} fixed>
-            <Text>1:1 사주 고민 상담 리포트 | 극복 솔루션 및 개운 처방</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
-        </Page>
-      </Document>
-    );
-  }
-
-  // Standard 4-Year deep report
   return (
     <Document>
-      {/* 00. Cover Page */}
+      {/* 표지 */}
       <Page size="A4" style={styles.coverPage}>
-        {/* Decorative background element */}
         <View style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1 }}>
           <Svg width="300" height="300" viewBox="0 0 100 100">
             <Circle cx="100" cy="0" r="80" fill="#FBBF24" />
@@ -685,8 +573,8 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           </Svg>
         </View>
 
-        <Text style={styles.coverSubtitle}>VIP 프리미엄 전략 보고서</Text>
-        
+        <Text style={styles.coverSubtitle}>{range ? `${range} 3개년 프리미엄 사주 리포트` : '프리미엄 사주 리포트'}</Text>
+
         <View style={{ marginVertical: 40, alignItems: 'center' }}>
           <Svg width="80" height="80" viewBox="0 0 100 100">
             <Path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="#FBBF24" strokeWidth="2" />
@@ -695,171 +583,195 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           </Svg>
         </View>
 
-        <Text style={styles.coverTitle}>{parsedContent.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
-        
+        <Text style={styles.coverTitle}>{c.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
         <View style={{ height: 2, width: 120, backgroundColor: '#FBBF24', marginVertical: 35 }} />
-        
         <Text style={styles.clientName}>{clientName} 님</Text>
-        
         <Text style={{ marginTop: 50, fontSize: 16, color: '#94A3B8', textAlign: 'center', width: '70%', lineHeight: 1.5 }}>
-          {parsedContent.cover?.subTitle || "명리학과 심리학의 융합을 통한 인생 설계"}
+          {c.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계'}
         </Text>
-        
+
         <View style={{ marginTop: 120, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, color: '#475569', letterSpacing: 2 }}>ANTIGRAVITY MASTER ANALYSIS</Text>
-          <Text style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>
-            {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </Text>
+          <Text style={{ fontSize: 13, color: '#475569', letterSpacing: 2 }}>MBTIJU · 3-YEAR DEEP REPORT</Text>
+          <Text style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>{dateText}</Text>
         </View>
       </Page>
 
-      {/* 00. Natal Chart Analysis */}
+      {/* 목차 + 읽는 법 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.natalChartAnalysis?.title || "00. 사주원국(四柱原局) 심층 분석"}</Text>
-        
-        <View style={{ marginBottom: 20 }}>
-          <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24' }]}>사주 원국 테이블 (四柱 元局)</Text>
-          <DayMasterBox dayMaster={sajuData?.userSaju?.dayMaster} />
-          <SajuTable saju={sajuData?.userSaju} />
-          <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
-        </View>
-
-        {parsedContent.natalChartAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
+        <Text style={styles.sectionTitle}>목차</Text>
+        {toc.map((t, i) => (
+          <View key={i} style={{ flexDirection: 'row', paddingVertical: 8, borderBottom: '0.5pt solid #E2E8F0' }}>
+            <Text style={{ width: 34, fontSize: 14, color: '#6366F1', fontWeight: 'bold' }}>{t.no || '★'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#0F172A' }}>{t.title}</Text>
+              <Text style={{ fontSize: 10.5, color: '#64748B', marginTop: 2 }}>{t.desc}</Text>
+            </View>
           </View>
         ))}
-        
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 사주원국 분석</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+
+        <View style={[styles.box, { marginTop: 20, padding: 14 }]}>
+          <Text style={[styles.boxTitle, { fontSize: 14 }]}>이 리포트를 읽는 법</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 바쁘시다면 「한눈에 보기」와 「마스터플랜」 두 곳만 먼저 읽어도 핵심을 파악할 수 있습니다.</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 각 항목은 노란 상자의 '핵심 요약'으로 시작해 불릿으로 근거를 설명하고, 붉은 상자의 '실천 팁'으로 마무리됩니다.</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 시기는 입춘(양력 2월 초)을 한 해의 시작으로 보는 절기 기준이며, 월별 표기는 양력 기준 '약 ○월경'입니다.</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 0 }]}>• 본 리포트는 올해를 제외하고 내년부터의 3개년({range})을 다룹니다.</Text>
         </View>
+        <Footer label="목차" />
       </Page>
 
-      {/* 01. Core Identity */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.coreIdentity?.title || "01. 선천적 기질 및 운명적 본질"}</Text>
+      {/* 한눈에 보기 */}
+      {c.summary && (
+        <Page size="A4" style={[styles.page, { paddingBottom: '17mm' }]} wrap>
+          <Text style={styles.sectionTitle}>한눈에 보기 · {range} 요약</Text>
 
-        {parsedContent.coreIdentity?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
+          {c.summary.keywords && c.summary.keywords.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
+              {c.summary.keywords.map((k, i) => (
+                <Text key={i} style={{ fontSize: 11, color: '#4338CA', backgroundColor: '#EEF2FF', paddingVertical: 4, paddingHorizontal: 11, borderRadius: 12, fontWeight: 'bold' }}>#{k}</Text>
+              ))}
+            </View>
+          )}
+
+          {c.summary.verdict && (
+            <View style={{ padding: 12, backgroundColor: '#0F172A', borderRadius: 10, marginBottom: 4 }}>
+              <Text style={{ fontSize: 9, color: '#FBBF24', letterSpacing: 2, marginBottom: 4, fontWeight: 'bold' }}>MASTER'S VERDICT</Text>
+              <Text style={{ fontSize: 11.5, color: '#F8FAFC', lineHeight: 1.65 }}>{c.summary.verdict}</Text>
+            </View>
+          )}
+
+          {c.summary.yearOverview && c.summary.yearOverview.length > 0 && (
+            <View>
+              <Text style={styles.subTitle}>3개년 운세 비교</Text>
+              {c.summary.yearOverview.map(y => {
+                const isBest = y.year === c.summary?.bestYear;
+                const isCaution = y.year === c.summary?.cautionYear;
+                return (
+                  <View key={y.year} wrap={false} style={{ marginBottom: 5, padding: 8, borderRadius: 10, border: `0.75pt solid ${isBest ? '#10B981' : isCaution ? '#F59E0B' : '#E2E8F0'}`, backgroundColor: '#FFFFFF' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A' }}>{y.year}</Text>
+                      <Text style={{ fontSize: 11, color: '#64748B', marginLeft: 6 }}>{y.ganji}년</Text>
+                      {isBest && <Text style={{ fontSize: 9, color: '#047857', backgroundColor: '#D1FAE5', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 8, marginLeft: 8, fontWeight: 'bold' }}>가장 좋은 해</Text>}
+                      {isCaution && <Text style={{ fontSize: 9, color: '#B45309', backgroundColor: '#FEF3C7', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 8, marginLeft: 8, fontWeight: 'bold' }}>신중하게 보낼 해</Text>}
+                    </View>
+                    <Text style={{ fontSize: 11.5, fontWeight: 'bold', color: '#4338CA', marginBottom: 4 }}>{y.yearlyTheme}</Text>
+                    <ScoreGrid scores={y.scores} />
+                    <View style={{ flexDirection: 'row' }}>
+                      <Text style={{ flex: 1, fontSize: 10, color: '#047857' }}>좋은 달  {formatMonths(y.bestMonths)}</Text>
+                      <Text style={{ flex: 1, fontSize: 10, color: '#B45309' }}>조심할 달  {formatMonths(y.cautionMonths)}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+              <Text style={{ fontSize: 8.5, color: '#94A3B8' }}>※ 점수는 1~5점, 세 해를 서로 비교한 상대 평가이며 월은 양력 기준 약 ○월경입니다.</Text>
+            </View>
+          )}
+
+          {c.summary.topActions && c.summary.topActions.length > 0 && (
+            <View style={[styles.premiumBox, { marginTop: 8, padding: 10 }]} wrap={false}>
+              <Text style={[styles.boxTitle, { fontSize: 12.5, color: '#1E293B', marginBottom: 4 }]}>지금 바로 시작할 3가지</Text>
+              {c.summary.topActions.map((a, i) => (
+                <View key={i} style={{ flexDirection: 'row', marginBottom: 3 }}>
+                  <Text style={{ width: 18, fontSize: 11.5, color: '#6366F1', fontWeight: 'bold' }}>{i + 1}</Text>
+                  <Text style={{ flex: 1, fontSize: 11, color: '#334155' }}>{a}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <Footer label="한눈에 보기" />
+        </Page>
+      )}
+
+      {/* 본문: 섹션이 이어서 흐른다 */}
+      <Page size="A4" style={styles.page} wrap>
+        {c.specialRequestAnalysis && (
+          <Section first={isFirst()} title={c.specialRequestAnalysis.title} accent="#4F46E5" details={c.specialRequestAnalysis.details} />
+        )}
+
+        {c.natalChartAnalysis && (
+          <Section
+            first={isFirst()}
+            title={c.natalChartAnalysis.title}
+            accent="#FBBF24"
+            details={c.natalChartAnalysis.details}
+            intro={(
+              <View style={{ marginBottom: 10 }}>
+                <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24', marginTop: 0 }]} minPresenceAhead={300}>사주 원국 테이블 (四柱 元局)</Text>
+                <DayMasterBox dayMaster={sajuData?.userSaju?.dayMaster} />
+                <SajuTable saju={sajuData?.userSaju} />
+                <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
+              </View>
+            )}
+          />
+        )}
+
+        <Footer label="사주 심층 분석" />
+      </Page>
+
+      <Page size="A4" style={styles.page} wrap>
+        {c.coreIdentity && <Section first title={c.coreIdentity.title} details={c.coreIdentity.details} />}
+        {c.wealthAndCareer && <Section first={isFirst()} title={c.wealthAndCareer.title} accent="#0369A1" details={c.wealthAndCareer.details} />}
+        {c.relationship && <Section first={isFirst()} title={c.relationship.title} accent="#BE185D" details={c.relationship.details} />}
+
+        <Footer label="사주 심층 분석" />
+      </Page>
+
+      {/* 06. 3개년 로드맵: 연도마다 새 페이지 + 요약 배너 (연속 흐름에 이어 붙이면 react-pdf 레이아웃 오류가 나서 연도별 Page 로 분리) */}
+      {years.map((y, index) => (
+        <Page key={y.year || index} size="A4" style={styles.page} wrap>
+          {index === 0 && <Text style={styles.sectionTitle}>{c.threeYearRoadmap?.title || '06. 향후 3개년 심층 로드맵'}</Text>}
+
+          <View wrap={false} style={{ padding: 14, backgroundColor: '#0F172A', borderRadius: 12, marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 4 }}>
+              <Text style={{ fontSize: 28, color: '#FBBF24', fontWeight: 'bold' }}>{y.year}</Text>
+              {y.ganji ? <Text style={{ fontSize: 13, color: '#CBD5E1', marginLeft: 8, marginBottom: 4 }}>{y.ganji}년</Text> : null}
+            </View>
+            <Text style={{ fontSize: 14, color: '#F8FAFC', fontWeight: 'bold', marginBottom: 3 }}>{y.yearlyTheme}</Text>
+            {y.oneLine ? <Text style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 8 }}>{y.oneLine}</Text> : null}
+            {y.scores && (
+              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 8, padding: 9 }}>
+                <ScoreGrid scores={y.scores} />
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ flex: 1, fontSize: 10, color: '#047857' }}>좋은 달  {formatMonths(y.bestMonths)}</Text>
+                  <Text style={{ flex: 1, fontSize: 10, color: '#B45309' }}>조심할 달  {formatMonths(y.cautionMonths)}</Text>
+                </View>
+              </View>
+            )}
           </View>
-        ))}
-        
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 핵심 기질 분석</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
 
-      {/* 02. Wealth & Career */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.wealthAndCareer?.title || "02. 재물 그릇의 크기와 사회적 성취"}</Text>
-        
-        {parsedContent.wealthAndCareer?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#0369A1' }]}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
-          </View>
-        ))}
-        
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 재물 및 직업운</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
-
-      {/* 03. Relationship */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.relationship?.title || "03. 인연의 지형도와 감정의 흐름"}</Text>
-        
-        {parsedContent.relationship?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#BE185D' }]}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
-          </View>
-        ))}
-        
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 대인관계 및 인연</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
-
-      {/* 04. Future Roadmap */}
-      {parsedContent.threeYearRoadmap?.details?.map((yearData: any, index: number) => (
-        <Page key={yearData.year || index} size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>{index === 0 ? (parsedContent.threeYearRoadmap?.title || "04. 미래 운명적 로드맵") : `${yearData.year}년 심층 분석`}</Text>
-          
-          <Text style={[styles.subTitle, { color: '#4338CA' }]}>{yearData.year}년: {yearData.yearlyTheme}</Text>
-          
-          {yearData.subtopics?.map((subtopic: ReportDetail, idx: number) => (
-            <View key={idx} style={{ marginBottom: 18 }}>
+          {y.subtopics?.map((subtopic, idx) => (
+            <View key={idx} style={{ marginBottom: 8 }}>
               {subtopic.subtitle && (
-                <Text style={{ fontWeight: 'bold', fontSize: 13.5, color: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D', marginBottom: 6 }}>
-                  [{subtopic.subtitle}]
+                <Text minPresenceAhead={90} style={[styles.subTitle, { marginTop: 8, borderLeftColor: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D' }]}>
+                  {y.year}년 · {subtopic.subtitle}
                 </Text>
               )}
               {renderText(subtopic.content)}
             </View>
           ))}
-
-          <View style={styles.footer} fixed>
-            <Text>VIP 프리미엄 전략 보고서 | 미래 운세 분석</Text>
-            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
+          <Footer label={`${y.year}년 로드맵`} />
         </Page>
       ))}
 
-      {/* 05. Special Request Analysis */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.specialRequestAnalysis?.title || "05. 내담자 특별 요청사항에 대한 명리적 해답"}</Text>
-        
-        {parsedContent.specialRequestAnalysis?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={[styles.subTitle, { borderLeftColor: '#4F46E5' }]}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
-          </View>
-        ))}
-        
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 특별 요청사항 분석</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
-
-      {/* 06. Action Plan */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{parsedContent.actionPlan?.title || "06. 운명을 바꾸는 마스터의 마스터플랜"}</Text>
-        
-        {parsedContent.actionPlan?.details?.map((detail: ReportDetail, idx: number) => (
-          <View key={idx} style={{ marginBottom: 20 }}>
-            {detail.subtitle && <Text style={styles.subTitle}>{detail.subtitle}</Text>}
-            {renderText(detail.content)}
-          </View>
-        ))}
-
-        <View style={styles.premiumBox}>
-          <Text style={[styles.boxTitle, { color: '#1E293B' }]}>마스터의 최종 제언</Text>
-          <Text style={styles.paragraph}>
-            본 보고서는 당신의 선천적 기질과 후천적 운의 흐름을 정밀하게 분석한 결과입니다. 
-            위에서 제시한 현실적인 조언들을 생활 속에 적용하여, 타고난 운명을 넘어 당신이 원하는 최고의 성취를 이루시길 진심으로 기원합니다.
-          </Text>
-        </View>
-
-        <View style={{ marginTop: 'auto', padding: 22, borderTopWidth: 1.5, borderTopColor: '#E2E8F0', alignItems: 'center' }}>
-          <Text style={{ fontSize: 13.5, color: '#94A3B8', textAlign: 'center' }}>
-            본 리포트는 개인의 생년월일시와 MBTI 데이터를 기반으로 한 상담용 자료이며, 최종적인 삶의 결정은 본인의 의지에 달려 있습니다.
-          </Text>
-        </View>
-
-        <View style={styles.footer} fixed>
-          <Text>VIP 프리미엄 전략 보고서 | 최종 마스터플랜</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
+      {/* 07. 마스터플랜 */}
+      {c.actionPlan && (
+        <Page size="A4" style={styles.page} wrap>
+          <Section first title={c.actionPlan.title} details={c.actionPlan.details}>
+            <View style={styles.premiumBox} wrap={false}>
+              <Text style={[styles.boxTitle, { color: '#1E293B' }]}>마스터의 최종 제언</Text>
+              <Text style={styles.paragraph}>
+                본 보고서는 당신의 선천적 기질과 후천적 운의 흐름을 정밀하게 분석한 결과입니다.
+                위에서 제시한 현실적인 조언들을 생활 속에 적용하여, 타고난 운명을 넘어 당신이 원하는 최고의 성취를 이루시길 진심으로 기원합니다.
+              </Text>
+            </View>
+            <View wrap={false} style={{ marginTop: 18, padding: 12, borderTop: '1.5pt solid #E2E8F0', alignItems: 'center' }}>
+              <Text style={{ fontSize: 9.5, color: '#94A3B8', textAlign: 'center', lineHeight: 1.6 }}>
+                본 리포트는 생년월일시와 MBTI 데이터를 기반으로 한 참고용 상담 자료이며, 재물·건강·법률 등에 관한 최종적인 결정은 본인의 판단과 책임 하에 이루어져야 합니다.
+              </Text>
+            </View>
+          </Section>
+          <Footer label="마스터플랜" />
+        </Page>
+      )}
     </Document>
   );
 };

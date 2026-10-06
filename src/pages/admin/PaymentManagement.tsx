@@ -10,6 +10,7 @@ import {
     RotateCcw
 } from 'lucide-react';
 import { formatSafariDate } from '../../utils/textUtils';
+import { DEEP_REPORT_SALE_PRICE } from '../../config/deepReportConfig';
 
 interface Payment {
     id: string;
@@ -106,7 +107,7 @@ const PaymentManagement: React.FC = () => {
                     id: p.id,
                     type: 'deep_report',
                     user_id: p.user_id,
-                    price_paid: p.amount || 9900,
+                    price_paid: p.amount || DEEP_REPORT_SALE_PRICE,
                     purchased_credits: null,
                     product_name: p.report_type || '심층 리포트',
                     status: p.status,

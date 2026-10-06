@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { setNodeCorsHeaders } from './_utils/cors';
 import { extractBearerToken } from './_utils/auth';
+import { DEEP_REPORT_SALE_PRICE } from '../src/config/deepReportConfig';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -113,12 +114,12 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
 
         // 2. 상품별 카탈로그 및 금액 위변조 검증 (Security Hardening)
         if (productId === 'deep_report') {
-            // 심층 리포트 정가 검증 (최소 29,000원 이상이어야 함)
-            if (approvedAmount < 29000) {
+            // 심층 리포트 판매가 검증: 서버 상수와 정확히 일치해야 한다 (클라이언트가 보낸 금액/DB 행의 amount 는 신뢰하지 않음)
+            if (approvedAmount !== DEEP_REPORT_SALE_PRICE) {
                 console.error(`[Security] Suspicious deep_report amount: ${approvedAmount} for orderId: ${orderId}`);
                 return res.status(400).json({
                     success: false,
-                    message: '결제 승인 금액이 심층 리포트 정가와 일치하지 않습니다.'
+                    message: `결제 승인 금액이 심층 리포트 판매가와 일치하지 않습니다. (기대: ${DEEP_REPORT_SALE_PRICE.toLocaleString()}원)`
                 });
             }
 

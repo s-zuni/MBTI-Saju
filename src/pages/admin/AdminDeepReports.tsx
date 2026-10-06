@@ -4,7 +4,7 @@ import { Loader2, Search, Sparkles, ChevronDown, ChevronUp, Copy, X, Download, M
 import { generateReactPDF } from '../../utils/pdfGenerator';
 import { DeepReportReactPDF } from '../../components/pdf/DeepReportReactPDF';
 import { generateDocx } from '../../utils/docxGenerator';
-import { calculateSaju } from '../../utils/sajuUtils';
+import { calculateSaju, parseBirthInfo } from '../../utils/sajuUtils';
 
 interface DeepReportRequest {
   id: string;
@@ -14,6 +14,7 @@ interface DeepReportRequest {
   kakao_id: string | null;
   birth_info: string;
   mbti: string;
+  gender?: string | null;
   report_type: string;
   special_requests: string | null;
   amount: number;
@@ -197,10 +198,8 @@ const AdminDeepReports: React.FC = () => {
 
     let initialSaju = null;
     try {
-      const parts = req.birth_info.split(' ');
-      const bDate = parts[0] || '';
-      const bTime = parts[1] || '12:00';
-      initialSaju = calculateSaju(bDate, bTime);
+      const { birthDate: bDate, birthTime: bTime } = parseBirthInfo(req.birth_info);
+      initialSaju = calculateSaju(bDate, bTime ?? null, req.gender || undefined);
     } catch (e) {
       console.error('Initial saju calculation failed:', e);
     }
@@ -235,6 +234,7 @@ const AdminDeepReports: React.FC = () => {
           mbti: req.mbti,
           birthInfo: req.birth_info,
           report_type: req.report_type,
+          gender: req.gender || undefined,
           specialRequest: req.special_requests,
           partnerInfo: req.partner_info
         })
@@ -318,7 +318,7 @@ const AdminDeepReports: React.FC = () => {
           // Merge with initial metadata
           const enrichedData = {
             ...finalData,
-            userSaju: initialSaju,
+            userSaju: finalData.userSaju || initialSaju,
             reportType: req.report_type,
             mbti: req.mbti,
             clientName: getDisplayName(req),
@@ -449,7 +449,7 @@ const AdminDeepReports: React.FC = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex flex-col gap-1">
-                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${req.report_type === '사주 상담 리포트' ? 'bg-rose-100 text-rose-700' : req.report_type.includes('MBTI') ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-700'}`}>
+                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${req.report_type.includes('MBTI') ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-700'}`}>
                               {req.report_type}
                            </span>
                            <span className="text-[10px] font-bold text-slate-400 pl-1">📅 {req.reservation_date}</span>
@@ -499,10 +499,8 @@ const AdminDeepReports: React.FC = () => {
                                  let data = req.generated_data;
                                  if (!data.userSaju && req.birth_info) {
                                    try {
-                                     const parts = req.birth_info.split(' ');
-                                     const bDate = parts[0] || '';
-                                     const bTime = parts[1] || '12:00';
-                                     data.userSaju = calculateSaju(bDate, bTime);
+                                     const { birthDate: bDate, birthTime: bTime } = parseBirthInfo(req.birth_info);
+                                     data.userSaju = calculateSaju(bDate, bTime ?? null, req.gender || undefined);
                                    } catch (e) { console.error(e); }
                                  }
 
@@ -579,10 +577,10 @@ const AdminDeepReports: React.FC = () => {
 
                                   <div className="md:col-span-2">
                                      <h5 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
-                                       {req.report_type === '사주 상담 리포트' ? '고객 고민 내용 (사주 상담 리포트)' : '고객 특별 요청사항'}
+                                       고객 특별 요청사항
                                      </h5>
                                      <div className="bg-slate-900 text-slate-100 p-8 rounded-3xl font-medium leading-relaxed text-sm shadow-xl whitespace-pre-line">
-                                        {req.special_requests || (req.report_type === '사주 상담 리포트' ? '작성된 고민 내용이 없습니다.' : '별도의 요청사항이 없습니다.')}
+                                        {req.special_requests || '별도의 요청사항이 없습니다.'}
                                      </div>
                                   </div>
 
