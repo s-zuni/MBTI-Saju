@@ -15,6 +15,7 @@ import {
 import { formatSafariDate } from '../utils/textUtils';
 import ConsultationPurchaseModal from '../components/ConsultationPurchaseModal';
 import { useNavigate } from 'react-router-dom';
+import { useModalStore } from '../hooks/useModalStore';
 
 interface ConsultationQuestion {
     id: string;
@@ -31,6 +32,7 @@ interface ConsultationPageProps {
 
 const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSession }) => {
     const navigate = useNavigate();
+    const { openModal } = useModalStore();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'new' | 'detail'>('list');
@@ -156,7 +158,7 @@ const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSes
                     <h2 className="text-xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
                     <p className="text-slate-500 text-sm mb-6 font-medium">전문가 심층 상담을 이용하시려면 먼저 로그인해 주세요.</p>
                     <button 
-                        onClick={() => navigate('/?login=true')}
+                        onClick={() => openModal('analysis', 'login')}
                         className="w-full py-4 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black transition-colors"
                     >
                         로그인하러 가기

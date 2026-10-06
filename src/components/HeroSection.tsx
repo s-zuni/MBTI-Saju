@@ -52,18 +52,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
           <button
-            onClick={() => navigate('/chat')}
+            onClick={() => navigate('/premium')}
             className="w-full sm:w-auto px-8 py-3.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors flex items-center justify-center gap-2"
           >
-            1대1 심층 운명 상담하기
+            3년 심층 사주 리포트 받아보기
             <ArrowRight className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={() => navigate('/premium')}
-            className="w-full sm:w-auto px-8 py-3.5 bg-slate-950 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-          >
-            3년 심층 리포트 보기
           </button>
         </div>
       </div>

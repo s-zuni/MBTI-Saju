@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Zap, BarChart3, Clock } from 'lucide-react';
 import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE, DEEP_REPORT_DISCOUNT_RATE } from '../config/deepReportConfig';
 
@@ -8,7 +7,6 @@ interface DeepReportLandingPageProps {
 }
 
 const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDeepReport }) => {
-  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,8 +30,8 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             신비주의 사주에서 벗어나, 1,000만 건 이상의 데이터 기반 통계 분석과 전문가의 엄격한 수기 점검을 통해 당신의 인생 로드맵을 정밀 제시합니다.
           </p>
 
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 text-left px-2">
-            {/* Card 1: 4-Year Saju Deep Report */}
+          <div className="max-w-xl mx-auto grid grid-cols-1 gap-6 text-left px-2">
+            {/* 3년 사주 심층 리포트 (메인 상품) */}
             <div className="bg-white p-7 rounded-2xl border border-slate-200 flex flex-col justify-between hover:border-slate-400 transition-all">
               <div>
                 <div className="inline-block px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md mb-4">
@@ -68,45 +66,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                   onClick={() => onOpenDeepReport('saju')}
                   className="w-full py-3.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors text-center flex items-center justify-center gap-2 text-sm"
                 >
-                  3년 심층 리포트 신청 <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Card 2: 1:1 Fate Consultation (/chat) */}
-            <div className="bg-white p-7 rounded-2xl border border-slate-200 flex flex-col justify-between hover:border-slate-400 transition-all">
-              <div>
-                <div className="inline-block px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-bold rounded-md mb-4">
-                  1:1 실시간 대화
-                </div>
-                <h3 className="text-xl font-bold text-slate-950 mb-2">1대1 심층 운명 상담</h3>
-                <p className="text-slate-600 text-xs leading-relaxed mb-6">
-                  당신의 고민과 사주 데이터에 대해 실시간 1대1 대화로 정밀 분석 답변을 제공합니다.
-                </p>
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-center gap-2 text-slate-700 text-xs">
-                    <span className="text-violet-600 font-bold">✓</span> 사주 데이터 및 만세력 정밀 분석
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700 text-xs">
-                    <span className="text-violet-600 font-bold">✓</span> 실시간 1:1 심층 질문 답변
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700 text-xs">
-                    <span className="text-violet-600 font-bold">✓</span> 개인별 맞춤 문제 해결 가이드
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700 text-xs">
-                    <span className="text-violet-600 font-bold">✓</span> 전문가 수기 검증 기준 체계 적용
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div className="mb-4">
-                  <span className="text-xs font-semibold text-slate-500">실시간 1:1 심층 대화 상담</span>
-                </div>
-                <button 
-                  onClick={() => navigate('/chat')}
-                  className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-center flex items-center justify-center gap-2 text-sm"
-                >
-                  1대1 심층 운명 상담 시작하기 <ArrowRight className="w-4 h-4" />
+                  3년 심층 사주 리포트 신청하기 <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -260,8 +220,8 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
           <div className="space-y-4">
             {[
               {
-                q: "Q. 1대1 심층 운명 상담과 3년 심층 리포트의 차이는 무엇인가요?",
-                a: "1대1 심층 운명 상담(/chat)은 실시간 대화를 통해 고민에 대해 즉각적인 질의응답을 나누는 모델이며, 3년 심층 리포트는 A4 25장 이상의 종합 분석 PDF를 발송해 드리는 서비스입니다."
+                q: "Q. 3년 심층 사주 리포트에는 어떤 내용이 담기나요?",
+                a: "사주원국과 오행 분석, 내년부터 향후 3개년의 세운 흐름(월별 좋은 달·조심할 달 포함), MBTI 결합 성향 분석과 맞춤 솔루션을 A4 25장 이상의 PDF로 제공합니다."
               },
               {
                 q: "Q. 1,000만 건 데이터 분석과 전문가 수기 점검은 어떻게 진행되나요?",
@@ -289,18 +249,12 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
             당신의 새로운 운명을 설계해 보세요.
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex justify-center items-center">
             <button 
               onClick={() => onOpenDeepReport('saju')}
               className="w-full sm:w-auto px-8 py-4 bg-violet-600 text-white rounded-xl font-bold transition-colors hover:bg-violet-700 text-sm"
             >
-              3년 심층 리포트 신청 (₩{DEEP_REPORT_SALE_PRICE.toLocaleString()})
-            </button>
-            <button 
-              onClick={() => navigate('/chat')}
-              className="w-full sm:w-auto px-8 py-4 bg-slate-950 text-white rounded-xl font-bold transition-colors hover:bg-slate-800 text-sm"
-            >
-              1대1 심층 운명 상담 시작하기
+              3년 심층 사주 리포트 신청 (₩{DEEP_REPORT_SALE_PRICE.toLocaleString()})
             </button>
           </div>
         </div>

@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    TrendingUp, Heart, FileText, MessageSquare,
+    TrendingUp, Heart, FileText,
     ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
-import { useCredits } from '../hooks/useCredits';
-import { SERVICE_COSTS } from '../config/creditConfig';
 
 type ActiveTab = 'saju' | 'fortune';
 
@@ -19,7 +17,6 @@ const FeatureGrids: React.FC = () => {
     const location      = useLocation();
     const { session }   = useAuth();
     const { openModal } = useModalStore();
-    const { credits }   = useCredits(session);
 
     /* 아코디언 데이터 — navigate 클로저 활용 */
     const sajuAccordionItems = useMemo(() => [
@@ -119,13 +116,6 @@ const FeatureGrids: React.FC = () => {
         setActiveTab(tab);
         setOpenAccordion(null);
         navigate(`/?tab=${tab}`, { replace: true });
-    };
-
-    const handleChatClick = () => {
-        if (!session) { openModal('analysis', 'login'); return; }
-        credits >= SERVICE_COSTS.AI_CHAT_5
-            ? navigate('/chat')
-            : openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.AI_CHAT_5 });
     };
 
     /* ── 공용 카드 그림자 ── */
@@ -271,47 +261,15 @@ const FeatureGrids: React.FC = () => {
                                         </span>
                                     </div>
                                     <h3 className="text-[15px] font-black text-white leading-snug">
-                                        나의 대운세 리포트 받으러 가기
+                                        3년 심층 사주 리포트 받으러 가기
                                     </h3>
                                     <p className="text-[12px] text-indigo-300/80 mt-1 font-medium">
-                                        A4 5~20장 분량 · 전문가 직접 분석
+                                        향후 3개년 흐름 · A4 25장+ 정밀 분석
                                     </p>
                                 </div>
 
                                 <ChevronRight
                                     className="w-4 h-4 text-indigo-300/70 group-hover:translate-x-0.5 transition-transform flex-shrink-0"
-                                    strokeWidth={2.5}
-                                />
-                            </div>
-                        </button>
-
-                        {/* ── 1대1 심층 운명 상담 CTA (클린 화이트) ── */}
-                        <button
-                            onClick={handleChatClick}
-                            className="w-full bg-white rounded-2xl p-5 text-left group active:scale-[0.99] transition-transform border border-slate-100"
-                            style={cardShadow}
-                        >
-                            <div className="flex items-center gap-4">
-                                {/* 아이콘 */}
-                                <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
-                                    <MessageSquare className="w-[18px] h-[18px] text-violet-600" strokeWidth={2} />
-                                </div>
-
-                                {/* 텍스트 */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="mb-1">
-                                        <span className="text-[10px] text-violet-600 font-bold uppercase tracking-widest">
-                                            1:1 실시간 대화
-                                        </span>
-                                    </div>
-                                    <h3 className="text-[15px] font-bold text-slate-900">1대1 심층 운명 상담</h3>
-                                    <p className="text-[12px] text-slate-500 mt-0.5 font-medium">
-                                        1,000만 데이터 분석 + 전문가 수기 검증 기준
-                                    </p>
-                                </div>
-
-                                <ChevronRight
-                                    className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all flex-shrink-0"
                                     strokeWidth={2.5}
                                 />
                             </div>

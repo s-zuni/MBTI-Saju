@@ -12,6 +12,7 @@ import {
     User,
     CheckCircle2
 } from 'lucide-react';
+import { useModalStore } from '../hooks/useModalStore';
 import { formatSafariDate } from '../utils/textUtils';
 
 interface PurchaseRecord {
@@ -44,6 +45,7 @@ interface SupportPageProps {
 }
 
 const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) => {
+    const { openModal } = useModalStore();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'menu' | 'form' | 'list' | 'detail'>('menu');
@@ -205,7 +207,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                     <h2 className="text-xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
                     <p className="text-slate-500 text-sm mb-6 font-medium">문의 내역을 확인하고 상담하려면 먼저 로그인해 주세요.</p>
                     <button 
-                        onClick={() => window.location.href = '/login'}
+                        onClick={() => openModal('analysis', 'login')}
                         className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black"
                     >
                         로그인하러 가기
