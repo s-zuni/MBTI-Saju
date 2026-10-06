@@ -354,7 +354,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, mode: in
       setLoading(false); // Ensure loading is reset when modal opens
       setAuthError('');  // Clear previous errors
     }
-  }, [isOpen, resetFields]);
+  }, [isOpen, resetFields, initialMode]);
 
   const handleSocialLogin = async (provider: 'google' | 'kakao') => {
     setLoading(true);
