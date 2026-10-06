@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { formatSafariDate } from '../utils/textUtils';
 import ConsultationPurchaseModal from '../components/ConsultationPurchaseModal';
-import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../hooks/useModalStore';
 
 interface ConsultationQuestion {
@@ -31,7 +30,6 @@ interface ConsultationPageProps {
 }
 
 const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSession }) => {
-    const navigate = useNavigate();
     const { openModal } = useModalStore();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
