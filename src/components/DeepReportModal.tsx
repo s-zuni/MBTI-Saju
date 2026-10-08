@@ -152,7 +152,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
 
       if (insertError) {
         console.error('Insert error:', insertError);
-        throw new Error('리포트 신청 초기화에 실패했습니다. (DB 테이블이 생성되었는지 확인해주세요.)');
+        throw new Error(`리포트 신청 초기화에 실패했습니다: ${insertError.message || 'DB 연결 오류'}`);
       }
 
       // 2. Toss 페이먼츠 호출
