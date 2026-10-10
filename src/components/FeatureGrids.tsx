@@ -264,7 +264,7 @@ const FeatureGrids: React.FC = () => {
                                         3년 심층 사주 리포트 받으러 가기
                                     </h3>
                                     <p className="text-[12px] text-indigo-300/80 mt-1 font-medium">
-                                        향후 3개년 흐름 · A4 25장+ 정밀 분석
+                                        올해 남은 기간 + 향후 3개년 흐름 · A4 20장 내외 정밀 분석
                                     </p>
                                 </div>
 

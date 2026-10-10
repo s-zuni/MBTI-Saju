@@ -1,11 +1,22 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, Rect, G, Circle, Line } from '@react-pdf/renderer';
 import NotoSansKR from '../../assets/fonts/NotoSansKR.ttf';
+import NanumGothicRegular from '../../assets/fonts/NanumGothic-Regular.ttf';
+import NanumGothicBold from '../../assets/fonts/NanumGothic-Bold.ttf';
 
 // Font Registration - Noto Sans KR supports full CJK (Hanja) characters
 Font.register({
   family: 'NotoSansKR',
   src: NotoSansKR,
+});
+
+// 표지 전용: 굵기(400/700)를 실제로 구분할 수 있는 한글 폰트. 본문은 한자 병기를 위해 NotoSansKR 을 그대로 쓴다.
+Font.register({
+  family: 'NanumGothic',
+  fonts: [
+    { src: NanumGothicRegular, fontWeight: 400 },
+    { src: NanumGothicBold, fontWeight: 700 },
+  ],
 });
 
 // Prevent CJK hyphenation issues
@@ -164,8 +175,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   premiumBox: {
-    marginTop: 25,
-    padding: 20,
+    marginTop: 14,
+    padding: 14,
     backgroundColor: '#F8FAFC',
     borderRadius: 8,
     borderLeft: '4pt solid #1E293B',
@@ -222,7 +233,31 @@ interface ReportDetail {
 
 type YearScores = { wealth: number; career: number; love: number; health: number };
 
+interface StoryArc {
+  thread?: string;
+  motif?: string;
+  pastHook?: string;
+  chapters?: { year: number; role?: string; title?: string; oneLine?: string }[];
+}
+
+interface CalendarYear {
+  year: number;
+  /** 올해 남은 기간처럼 일부 달만 있는 행 */
+  partial?: boolean;
+  months: { label: string; nextYear?: boolean; score: number; start?: string }[];
+}
+
+interface PartnerOverlapRow {
+  year: number;
+  mine: number;
+  partner: number;
+  label: string;
+}
+
+// schemaVersion 3 에서 추가된 필드(storyArc, pastCheck, strength, calendar, partnerOverlap 등)는 모두 선택값이다.
+// 이전 버전(2) 리포트도 같은 컴포넌트로 그대로 렌더링된다.
 interface SajuReportContent {
+  schemaVersion?: number;
   cover?: {
     mainTitle?: string;
     subTitle?: string;
@@ -230,12 +265,14 @@ interface SajuReportContent {
   summary?: {
     keywords?: string[];
     verdict?: string;
+    concernAnswer?: string;
     topActions?: string[];
     yearOverview?: {
       year: number;
       ganji?: string;
       yearlyTheme: string;
       oneLine?: string;
+      role?: string;
       scores: YearScores;
       bestMonths?: number[];
       cautionMonths?: number[];
@@ -243,7 +280,10 @@ interface SajuReportContent {
     bestYear?: number | null;
     cautionYear?: number | null;
   };
+  storyArc?: StoryArc | null;
+  strength?: { label: string; supportRatio: number; yongshin: string[]; gisin: string[] };
   natalChartAnalysis?: { title: string; details: ReportDetail[] };
+  pastCheck?: { title: string; details: ReportDetail[] };
   coreIdentity?: { title: string; details: ReportDetail[] };
   wealthAndCareer?: { title: string; details: ReportDetail[] };
   relationship?: { title: string; details: ReportDetail[] };
@@ -254,12 +294,27 @@ interface SajuReportContent {
       ganji?: string;
       yearlyTheme: string;
       oneLine?: string;
+      role?: string;
       scores?: YearScores;
       bestMonths?: number[];
       cautionMonths?: number[];
       subtopics: ReportDetail[];
     }[];
   };
+  currentYear?: {
+    year: number;
+    ganji?: string;
+    yearlyTheme: string;
+    oneLine?: string;
+    role?: string;
+    scores?: YearScores;
+    bestMonths?: number[];
+    cautionMonths?: number[];
+    subtopics: ReportDetail[];
+  };
+  calendar?: CalendarYear[];
+  partnerOverlap?: PartnerOverlapRow[];
+  partnerName?: string;
   specialRequestAnalysis?: { title: string; details: ReportDetail[] };
   actionPlan?: { title: string; details: ReportDetail[] };
   generated_at?: string;
@@ -289,11 +344,13 @@ const parseBoldText = (text: string) => {
 const renderText = (text: string | undefined) => {
   if (!text) return null;
   
-  const lines = text.split("\n");
-  
+  const lines = text.trim().split("\n");
+
   return lines.map((line, idx) => {
     const trimmed = line.trim();
-    
+    // 마지막 줄의 아래 여백이 페이지 하단을 넘겨 푸터만 있는 빈 페이지가 생기는 것을 막는다
+    const isLast = idx === lines.length - 1;
+
     if (trimmed.length === 0) {
       return <View key={idx} style={{ height: 4 }} />;
     }
@@ -310,7 +367,7 @@ const renderText = (text: string | undefined) => {
       return (
         <View key={idx} wrap={false} style={{
           marginTop: 4,
-          marginBottom: 8,
+          marginBottom: isLast ? 0 : 8,
           padding: 8,
           backgroundColor: hl.bg,
           borderRadius: 8,
@@ -335,14 +392,14 @@ const renderText = (text: string | undefined) => {
       const displayBullet = /\d+\./.test(bulletType) ? bulletType : '•';
 
       return (
-        <View key={idx} wrap={false} style={[styles.bulletPoint, { marginLeft: indentation, marginBottom: 5 }]}>
+        <View key={idx} wrap={false} style={[styles.bulletPoint, { marginLeft: indentation, marginBottom: isLast ? 0 : 5 }]}>
           <Text style={[styles.bullet, { width: /\d+\./.test(bulletType) ? 25 : 15 }]}>{displayBullet}</Text>
           <Text style={styles.bulletText}>{parseBoldText(content)}</Text>
         </View>
       );
     }
     
-    return <Text key={idx} style={styles.paragraph}>{parseBoldText(trimmed)}</Text>;
+    return <Text key={idx} style={isLast ? [styles.paragraph, { marginBottom: 0 }] : styles.paragraph}>{parseBoldText(trimmed)}</Text>;
   });
 };
 
@@ -503,8 +560,92 @@ const ScoreCell: React.FC<{ label: string; value: number; color: string }> = ({ 
 const ScoreGrid: React.FC<{ scores?: YearScores | undefined }> = ({ scores }) => {
   if (!scores) return null;
   return (
-    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 6 }}>
+    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 4 }}>
       {SCORE_FIELDS.map(f => <ScoreCell key={f.key} label={f.label} value={scores[f.key]} color={f.color} />)}
+    </View>
+  );
+};
+
+const StrengthLine: React.FC<{ strength?: SajuReportContent['strength'] }> = ({ strength }) => {
+  if (!strength) return null;
+  const join = (a: string[]) => (a.length ? a.join(' · ') : '뚜렷하지 않음');
+  return (
+    <View wrap={false} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+      <Text style={{ fontSize: 10, color: '#3730A3', backgroundColor: '#E0E7FF', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 10, fontWeight: 'bold' }}>일간 강약 {strength.label} ({strength.supportRatio}%)</Text>
+      <Text style={{ fontSize: 10, color: '#047857', backgroundColor: '#D1FAE5', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 10, fontWeight: 'bold' }}>힘이 되는 오행 {join(strength.yongshin)}</Text>
+      <Text style={{ fontSize: 10, color: '#B45309', backgroundColor: '#FEF3C7', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 10, fontWeight: 'bold' }}>부담이 되는 오행 {join(strength.gisin)}</Text>
+    </View>
+  );
+};
+
+const ArcCard: React.FC<{ arc?: StoryArc | null | undefined }> = ({ arc }) => {
+  if (!arc || !arc.thread) return null;
+  return (
+    <View wrap={false} style={{ padding: 14, backgroundColor: '#0F172A', borderRadius: 12, marginBottom: 12 }}>
+      <Text style={{ fontSize: 9, color: '#FBBF24', letterSpacing: 2, marginBottom: 5, fontWeight: 'bold' }}>THE STORY OF YOUR 3 YEARS</Text>
+      <Text style={{ fontSize: 13, color: '#F8FAFC', fontWeight: 'bold', lineHeight: 1.5, marginBottom: 3 }}>{arc.thread}</Text>
+      {arc.motif ? <Text style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 9 }}>{arc.motif}</Text> : null}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {(arc.chapters || []).map(c => (
+          <View key={c.year} style={{ flex: 1, padding: 8, backgroundColor: '#1E293B', borderRadius: 8 }}>
+            <Text style={{ fontSize: 15, lineHeight: 1.25, color: '#FBBF24', fontWeight: 'bold' }}>{c.year}</Text>
+            {c.role ? <Text style={{ fontSize: 9, color: '#A5B4FC', fontWeight: 'bold', marginTop: 1 }}>{c.role}</Text> : null}
+            <Text style={{ fontSize: 10.5, color: '#F8FAFC', fontWeight: 'bold', marginTop: 3, lineHeight: 1.4 }}>{c.title}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const HEAT_COLORS: Record<number, string> = { 1: '#FCA5A5', 2: '#FED7AA', 3: '#E2E8F0', 4: '#BBF7D0', 5: '#4ADE80' };
+
+const MonthHeatmap: React.FC<{ calendar?: CalendarYear[] | undefined }> = ({ calendar }) => {
+  if (!calendar || !calendar.length) return null;
+  return (
+    <View wrap={false} style={{ marginBottom: 12 }}>
+      <Text style={[styles.subTitle, { marginTop: 0 }]}>36개월 운의 지도</Text>
+      {calendar.map(y => (
+        <View key={y.year} style={{ marginBottom: 6 }}>
+          <Text style={{ fontSize: 10.5, fontWeight: 'bold', color: '#0F172A', marginBottom: 2 }}>{y.year}년{y.partial ? ' (올해 남은 기간)' : ''}</Text>
+          <View style={{ flexDirection: 'row', gap: 2 }}>
+            {y.months.map((m, i) => (
+              <View key={i} style={{ flex: 1, alignItems: 'center', paddingVertical: 4, backgroundColor: HEAT_COLORS[m.score] || '#E2E8F0', borderRadius: 4 }}>
+                <Text style={{ fontSize: 8, color: '#334155' }}>{m.label}{m.nextYear ? '*' : ''}</Text>
+                <Text style={{ fontSize: 10.5, fontWeight: 'bold', color: '#0F172A' }}>{m.score}</Text>
+              </View>
+            ))}
+            {Array.from({ length: Math.max(0, 12 - y.months.length) }).map((_, i) => <View key={`pad${i}`} style={{ flex: 1 }} />)}
+          </View>
+        </View>
+      ))}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <View key={n} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: HEAT_COLORS[n] || '#E2E8F0' }} />
+            <Text style={{ fontSize: 8, color: '#64748B' }}>{n === 1 ? '조심' : n === 3 ? '보통' : n === 5 ? '좋음' : ''}</Text>
+          </View>
+        ))}
+        <Text style={{ fontSize: 8, color: '#94A3B8', marginLeft: 4 }}>※ 절기월 기준(월 시작은 절입일), * 는 이듬해 1월</Text>
+      </View>
+    </View>
+  );
+};
+
+const OVERLAP_COLOR: Record<string, string> = { '함께 좋은 해': '#047857', '함께 조심할 해': '#B45309', '엇갈리는 해': '#4338CA' };
+
+const PartnerOverlap: React.FC<{ rows?: PartnerOverlapRow[] | undefined; name?: string | undefined }> = ({ rows, name }) => {
+  if (!rows || !rows.length) return null;
+  return (
+    <View wrap={false} style={{ marginBottom: 12 }}>
+      <Text style={[styles.subTitle, { marginTop: 0 }]}>{name ? `${name} 님과 나의 3년 겹침` : '두 사람의 3년 겹침'}</Text>
+      {rows.map(r => (
+        <View key={r.year} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottom: '0.5pt solid #E2E8F0' }}>
+          <Text style={{ width: 44, fontSize: 11, fontWeight: 'bold', color: '#0F172A' }}>{r.year}</Text>
+          <Text style={{ flex: 1, fontSize: 10, color: '#475569' }}>나 {r.mine}/20 · 상대 {r.partner}/20</Text>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: OVERLAP_COLOR[r.label] || '#334155' }}>{r.label}</Text>
+        </View>
+      ))}
     </View>
   );
 };
@@ -542,6 +683,55 @@ const Section: React.FC<SectionProps> = ({ title, accent = '#6366F1', first, det
   </>
 );
 
+interface YearPageProps {
+  y: NonNullable<SajuReportContent['threeYearRoadmap']>['details'][number];
+  /** 개요 페이지가 없는 이전 버전(schemaVersion 2) 리포트의 첫 해 페이지에 섹션 제목을 둔다 */
+  heading?: string | undefined;
+  /** 소제목 앞에 붙는 라벨 (예: '2027년') */
+  tag: string;
+  footer: string;
+  /** 올해 남은 기간 표시 */
+  partialNote?: string | undefined;
+}
+
+const YearPage: React.FC<YearPageProps> = ({ y, heading, tag, footer, partialNote }) => (
+  <Page size="A4" style={styles.page} wrap>
+    {heading ? <Text style={styles.sectionTitle}>{heading}</Text> : null}
+
+    <View wrap={false} style={{ padding: 14, backgroundColor: '#0F172A', borderRadius: 12, marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8, minHeight: 36 }}>
+        <Text style={{ fontSize: 28, lineHeight: 1.15, color: '#FBBF24', fontWeight: 'bold' }}>{y.year}</Text>
+        {y.ganji ? <Text style={{ fontSize: 13, color: '#CBD5E1', marginLeft: 8, marginBottom: 4 }}>{y.ganji}년</Text> : null}
+        {y.role ? <Text style={{ fontSize: 10, color: '#0F172A', backgroundColor: '#FBBF24', paddingVertical: 2, paddingHorizontal: 8, borderRadius: 8, marginLeft: 10, marginBottom: 6, fontWeight: 'bold' }}>{y.role}</Text> : null}
+      </View>
+      {partialNote ? <Text style={{ fontSize: 10, color: '#A5B4FC', marginBottom: 3, fontWeight: 'bold' }}>{partialNote}</Text> : null}
+      <Text style={{ fontSize: 14, color: '#F8FAFC', fontWeight: 'bold', marginBottom: 3 }}>{y.yearlyTheme}</Text>
+      {y.oneLine ? <Text style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 8 }}>{y.oneLine}</Text> : null}
+      {y.scores && (
+        <View style={{ backgroundColor: '#F8FAFC', borderRadius: 8, padding: 9 }}>
+          <ScoreGrid scores={y.scores} />
+          <View style={{ flexDirection: 'row' }}>
+            <Text style={{ flex: 1, fontSize: 10, color: '#047857' }}>좋은 달  {formatMonths(y.bestMonths)}</Text>
+            <Text style={{ flex: 1, fontSize: 10, color: '#B45309' }}>조심할 달  {formatMonths(y.cautionMonths)}</Text>
+          </View>
+        </View>
+      )}
+    </View>
+
+    {y.subtopics?.map((subtopic, idx) => (
+      <View key={idx} style={{ marginBottom: idx === (y.subtopics?.length ?? 0) - 1 ? 0 : 8 }}>
+        {subtopic.subtitle && (
+          <Text minPresenceAhead={90} style={[styles.subTitle, { marginTop: 8, borderLeftColor: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D' }]}>
+            {tag} · {subtopic.subtitle}
+          </Text>
+        )}
+        {renderText(subtopic.content)}
+      </View>
+    ))}
+    <Footer label={footer} />
+  </Page>
+);
+
 export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, clientName }) => {
   const c = parsedContent;
   const years = c.threeYearRoadmap?.details || [];
@@ -550,57 +740,76 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
 
   const toc = [
     c.summary && { no: '', title: '한눈에 보기', desc: `${range} 3개년 요약과 연도별 비교` },
-    c.specialRequestAnalysis && { no: '01', title: '나의 고민에 대한 마스터의 답', desc: '남겨주신 고민을 사주로 풀어드립니다' },
-    c.natalChartAnalysis && { no: '02', title: '사주원국 심층 분석', desc: '타고난 사주의 뼈대와 오행 균형' },
-    c.coreIdentity && { no: '03', title: '선천적 기질과 내면의 지도', desc: '강점·무의식·숨은 리스크' },
-    c.wealthAndCareer && { no: '04', title: '재물 그릇과 커리어', desc: '맞는 일, 돈이 모이는 방식' },
-    c.relationship && { no: '05', title: '인연과 감정의 지도', desc: '귀인·연애 패턴·악연' },
-    years.length > 0 && { no: '06', title: `향후 3개년 심층 로드맵 (${range})`, desc: '연도별 재물·커리어·인연·건강과 월별 흐름' },
-    c.actionPlan && { no: '07', title: '운을 내 편으로 만드는 마스터플랜', desc: '오늘부터 시작할 실천 체크리스트' },
+    c.natalChartAnalysis && { no: '01', title: '프롤로그 — 나라는 사람의 뼈대', desc: '타고난 사주의 구조, 일간 강약과 오행 균형' },
+    c.pastCheck && { no: '02', title: '지나온 길 — 이미 일어난 이야기', desc: '지난 3년을 사주로 되짚어 봅니다' },
+    c.specialRequestAnalysis && { no: '03', title: '지금의 고민, 마스터의 답', desc: '남겨주신 고민을 사주로 풀어드립니다' },
+    c.coreIdentity && { no: '04', title: '내면의 지도', desc: '강점·무의식·숨은 리스크' },
+    c.wealthAndCareer && { no: '05', title: '일과 돈의 그릇', desc: '맞는 일, 돈이 모이는 방식' },
+    c.relationship && { no: '06', title: '인연의 지도', desc: '귀인·연애 패턴·악연' },
+    c.currentYear && { no: '07', title: '올해 남은 기간 — 서막', desc: `${c.currentYear.year}년 남은 달별 흐름과 새해 준비` },
+    years.length > 0 && { no: '08', title: `앞으로 3년의 이야기 (${range})`, desc: '36개월 운의 지도와 연도별 이야기' },
+    c.actionPlan && { no: '09', title: '에필로그 — 마스터플랜', desc: '오늘부터 시작할 실천 체크리스트' },
   ].filter(Boolean) as { no: string; title: string; desc: string }[];
+
+  const hasOverview = !!(c.storyArc?.thread || c.calendar?.length || c.partnerOverlap?.length);
 
   let firstSectionDone = false;
   const isFirst = () => { const r = !firstSectionDone; firstSectionDone = true; return r; };
 
   return (
     <Document>
-      {/* 표지 */}
-      <Page size="A4" style={styles.coverPage}>
-        <View style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1 }}>
-          <Svg width="300" height="300" viewBox="0 0 100 100">
-            <Circle cx="100" cy="0" r="80" fill="#FBBF24" />
-            <Circle cx="100" cy="0" r="60" fill="none" stroke="#ffffff" strokeWidth="1" />
-          </Svg>
+      {/* 표지: 흰 바탕 + 검정 글씨 + 브랜드 포인트(바이올렛, 로고의 핑크 점)만 사용 */}
+      <Page size="A4" style={{ backgroundColor: '#FFFFFF', fontFamily: 'NanumGothic', color: '#0F172A', padding: '48pt 52pt 40pt 52pt' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, borderBottom: '0.75pt solid #E2E8F0' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Svg width="26" height="26" viewBox="0 0 100 100">
+              <Path d="M22 66 V24 L50 49 L78 24 V56 C78 68 66 76 53 76" stroke="#0F172A" strokeWidth={13} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <Circle cx="50" cy="27" r="7.5" fill="#FFB7B2" />
+            </Svg>
+            <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13, letterSpacing: 2.5, marginLeft: 9 }}>MBTIJU</Text>
+          </View>
+          <Text style={{ fontFamily: 'NanumGothic', fontSize: 8.5, letterSpacing: 2, color: '#64748B' }}>3-YEAR DEEP REPORT</Text>
         </View>
 
-        <Text style={styles.coverSubtitle}>{range ? `${range} 3개년 프리미엄 사주 리포트` : '프리미엄 사주 리포트'}</Text>
-
-        <View style={{ marginVertical: 40, alignItems: 'center' }}>
-          <Svg width="80" height="80" viewBox="0 0 100 100">
-            <Path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="#FBBF24" strokeWidth="2" />
-            <Path d="M50 15 L85 30 L85 70 L50 85 L15 70 L15 30 Z" fill="#FBBF24" opacity="0.2" />
-            <Text x="50" y="55" textAnchor="middle" style={{ fontSize: 10, fill: '#FBBF24', fontFamily: 'NotoSansKR' }}>命</Text>
-          </Svg>
+        <View style={{ flexGrow: 1, justifyContent: 'center', paddingRight: 28 }}>
+          <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 10, letterSpacing: 2.5, color: '#7C3AED' }}>
+            {c.currentYear ? '올해 남은 기간 + ' : ''}{range ? `${range} 3개년` : '3개년'} 프리미엄 사주 리포트
+          </Text>
+          <View style={{ width: 34, height: 3, backgroundColor: '#7C3AED', marginTop: 12, marginBottom: 28 }} />
+          <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 40, lineHeight: 1.28, letterSpacing: -1, color: '#0F172A' }}>
+            {c.cover?.mainTitle || `${clientName} 님의 3년 리포트`}
+          </Text>
+          <Text style={{ fontFamily: 'NanumGothic', fontSize: 14, lineHeight: 1.7, color: '#475569', marginTop: 22, width: '88%' }}>
+            {c.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계'}
+          </Text>
         </View>
 
-        <Text style={styles.coverTitle}>{c.cover?.mainTitle || `${clientName} 님 심층 리포트`}</Text>
-        <View style={{ height: 2, width: 120, backgroundColor: '#FBBF24', marginVertical: 35 }} />
-        <Text style={styles.clientName}>{clientName} 님</Text>
-        <Text style={{ marginTop: 50, fontSize: 16, color: '#94A3B8', textAlign: 'center', width: '70%', lineHeight: 1.5 }}>
-          {c.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계'}
-        </Text>
-
-        <View style={{ marginTop: 120, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, color: '#475569', letterSpacing: 2 }}>MBTIJU · 3-YEAR DEEP REPORT</Text>
-          <Text style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>{dateText}</Text>
+        <View style={{ borderTop: '1.5pt solid #0F172A', paddingTop: 16 }}>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ flex: 0.9, paddingRight: 10 }}>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PREPARED FOR</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{clientName} 님</Text>
+            </View>
+            <View style={{ flex: 1.7, paddingRight: 10 }}>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PERIOD</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{c.currentYear ? `${c.currentYear.year} 남은 기간 + ` : ''}{range.replace('~', '–')}</Text>
+            </View>
+            <View style={{ flex: 1.2 }}>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>ISSUED</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{dateText}</Text>
+            </View>
+          </View>
+          <Text style={{ fontFamily: 'NanumGothic', fontSize: 7.5, lineHeight: 1.6, color: '#94A3B8', marginTop: 22 }}>
+            본 리포트는 생년월일시와 MBTI 데이터를 기반으로 한 참고용 자료이며, 재물·건강·법률 등에 관한 최종 결정은 본인의 판단과 책임 하에 이루어져야 합니다.
+          </Text>
         </View>
       </Page>
 
-      {/* 목차 + 읽는 법 */}
-      <Page size="A4" style={styles.page}>
+      {/* 목차 + 읽는 법: 고정 길이라 wrap={false} — 하단 여백만 넘쳐도 빈 페이지가 생기는 것을 막는다 */}
+      <Page size="A4" style={styles.page} wrap={false}>
         <Text style={styles.sectionTitle}>목차</Text>
         {toc.map((t, i) => (
-          <View key={i} style={{ flexDirection: 'row', paddingVertical: 8, borderBottom: '0.5pt solid #E2E8F0' }}>
+          <View key={i} style={{ flexDirection: 'row', paddingVertical: 5, borderBottom: '0.5pt solid #E2E8F0' }}>
             <Text style={{ width: 34, fontSize: 14, color: '#6366F1', fontWeight: 'bold' }}>{t.no || '★'}</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#0F172A' }}>{t.title}</Text>
@@ -609,12 +818,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           </View>
         ))}
 
-        <View style={[styles.box, { marginTop: 20, padding: 14 }]}>
-          <Text style={[styles.boxTitle, { fontSize: 14 }]}>이 리포트를 읽는 법</Text>
-          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 바쁘시다면 「한눈에 보기」와 「마스터플랜」 두 곳만 먼저 읽어도 핵심을 파악할 수 있습니다.</Text>
+        <View style={[styles.box, { marginTop: 14, padding: 12 }]}>
+          <Text style={[styles.boxTitle, { fontSize: 13, marginBottom: 6 }]}>이 리포트를 읽는 법</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 이 리포트는 '나의 뼈대 → 지나온 길 → 지금의 고민 → 앞으로 3년'으로 이어지는 한 편의 이야기입니다. 바쁘시다면 「한눈에 보기」와 「마스터플랜」만 먼저 읽어도 핵심을 파악할 수 있습니다.</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 점수·합충·월운은 만세력 계산값에 근거해 정해지며, 같은 생년월일시라면 언제 다시 보아도 같습니다.</Text>
           <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 각 항목은 노란 상자의 '핵심 요약'으로 시작해 불릿으로 근거를 설명하고, 붉은 상자의 '실천 팁'으로 마무리됩니다.</Text>
           <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 5 }]}>• 시기는 입춘(양력 2월 초)을 한 해의 시작으로 보는 절기 기준이며, 월별 표기는 양력 기준 '약 ○월경'입니다.</Text>
-          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 0 }]}>• 본 리포트는 올해를 제외하고 내년부터의 3개년({range})을 다룹니다.</Text>
+          <Text style={[styles.paragraph, { fontSize: 10.5, marginBottom: 0 }]}>• {c.currentYear ? `올해(${c.currentYear.year}년) 남은 기간과 ` : ''}내년부터의 3개년({range})을 다룹니다.</Text>
         </View>
         <Footer label="목차" />
       </Page>
@@ -625,7 +835,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <Text style={styles.sectionTitle}>한눈에 보기 · {range} 요약</Text>
 
           {c.summary.keywords && c.summary.keywords.length > 0 && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
               {c.summary.keywords.map((k, i) => (
                 <Text key={i} style={{ fontSize: 11, color: '#4338CA', backgroundColor: '#EEF2FF', paddingVertical: 4, paddingHorizontal: 11, borderRadius: 12, fontWeight: 'bold' }}>#{k}</Text>
               ))}
@@ -633,9 +843,16 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           )}
 
           {c.summary.verdict && (
-            <View style={{ padding: 12, backgroundColor: '#0F172A', borderRadius: 10, marginBottom: 4 }}>
+            <View style={{ padding: 10, backgroundColor: '#0F172A', borderRadius: 10, marginBottom: 2 }}>
               <Text style={{ fontSize: 9, color: '#FBBF24', letterSpacing: 2, marginBottom: 4, fontWeight: 'bold' }}>MASTER'S VERDICT</Text>
               <Text style={{ fontSize: 11.5, color: '#F8FAFC', lineHeight: 1.65 }}>{c.summary.verdict}</Text>
+            </View>
+          )}
+
+          {c.summary.concernAnswer && (
+            <View wrap={false} style={{ padding: 8, backgroundColor: '#EEF2FF', borderRadius: 10, borderLeft: '4pt solid #6366F1', marginTop: 6 }}>
+              <Text style={{ fontSize: 9, color: '#4338CA', fontWeight: 'bold', marginBottom: 3 }}>고민에 대한 한 줄 답</Text>
+              <Text style={{ fontSize: 11.5, color: '#1E1B4B', fontWeight: 'bold', lineHeight: 1.55 }}>{c.summary.concernAnswer}</Text>
             </View>
           )}
 
@@ -646,12 +863,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
                 const isBest = y.year === c.summary?.bestYear;
                 const isCaution = y.year === c.summary?.cautionYear;
                 return (
-                  <View key={y.year} wrap={false} style={{ marginBottom: 5, padding: 8, borderRadius: 10, border: `0.75pt solid ${isBest ? '#10B981' : isCaution ? '#F59E0B' : '#E2E8F0'}`, backgroundColor: '#FFFFFF' }}>
+                  <View key={y.year} wrap={false} style={{ marginBottom: 3, padding: 5, borderRadius: 10, border: `0.75pt solid ${isBest ? '#10B981' : isCaution ? '#F59E0B' : '#E2E8F0'}`, backgroundColor: '#FFFFFF' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
                       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A' }}>{y.year}</Text>
                       <Text style={{ fontSize: 11, color: '#64748B', marginLeft: 6 }}>{y.ganji}년</Text>
                       {isBest && <Text style={{ fontSize: 9, color: '#047857', backgroundColor: '#D1FAE5', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 8, marginLeft: 8, fontWeight: 'bold' }}>가장 좋은 해</Text>}
                       {isCaution && <Text style={{ fontSize: 9, color: '#B45309', backgroundColor: '#FEF3C7', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 8, marginLeft: 8, fontWeight: 'bold' }}>신중하게 보낼 해</Text>}
+                      {y.role ? <Text style={{ fontSize: 9, color: '#4338CA', backgroundColor: '#E0E7FF', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 8, marginLeft: 8, fontWeight: 'bold' }}>{y.role}</Text> : null}
                     </View>
                     <Text style={{ fontSize: 11.5, fontWeight: 'bold', color: '#4338CA', marginBottom: 4 }}>{y.yearlyTheme}</Text>
                     <ScoreGrid scores={y.scores} />
@@ -662,16 +880,16 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
                   </View>
                 );
               })}
-              <Text style={{ fontSize: 8.5, color: '#94A3B8' }}>※ 점수는 1~5점, 세 해를 서로 비교한 상대 평가이며 월은 양력 기준 약 ○월경입니다.</Text>
+              <Text style={{ fontSize: 8.5, color: '#94A3B8' }}>※ 점수(1~5)는 일간 강약·용신, 십성, 합충, 12운성, 대운을 코드가 계산한 값입니다. 월은 절기월 기준 양력 약 ○월경입니다.</Text>
             </View>
           )}
 
           {c.summary.topActions && c.summary.topActions.length > 0 && (
-            <View style={[styles.premiumBox, { marginTop: 8, padding: 10 }]} wrap={false}>
+            <View style={[styles.premiumBox, { marginTop: 6, padding: 8 }]} wrap={false}>
               <Text style={[styles.boxTitle, { fontSize: 12.5, color: '#1E293B', marginBottom: 4 }]}>지금 바로 시작할 3가지</Text>
               {c.summary.topActions.map((a, i) => (
-                <View key={i} style={{ flexDirection: 'row', marginBottom: 3 }}>
-                  <Text style={{ width: 18, fontSize: 11.5, color: '#6366F1', fontWeight: 'bold' }}>{i + 1}</Text>
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <View style={{ width: 11, height: 11, border: '1pt solid #6366F1', borderRadius: 2, marginRight: 8 }} />
                   <Text style={{ flex: 1, fontSize: 11, color: '#334155' }}>{a}</Text>
                 </View>
               ))}
@@ -683,10 +901,6 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
 
       {/* 본문: 섹션이 이어서 흐른다 */}
       <Page size="A4" style={styles.page} wrap>
-        {c.specialRequestAnalysis && (
-          <Section first={isFirst()} title={c.specialRequestAnalysis.title} accent="#4F46E5" details={c.specialRequestAnalysis.details} />
-        )}
-
         {c.natalChartAnalysis && (
           <Section
             first={isFirst()}
@@ -697,6 +911,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
               <View style={{ marginBottom: 10 }}>
                 <Text style={[styles.subTitle, { borderLeftColor: '#FBBF24', marginTop: 0 }]} minPresenceAhead={300}>사주 원국 테이블 (四柱 元局)</Text>
                 <DayMasterBox dayMaster={sajuData?.userSaju?.dayMaster} />
+                <StrengthLine strength={c.strength} />
                 <SajuTable saju={sajuData?.userSaju} />
                 <FiveElementsChart elements={sajuData?.userSaju?.elementRatio} />
               </View>
@@ -704,7 +919,13 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           />
         )}
 
-        <Footer label="사주 심층 분석" />
+        {c.pastCheck && <Section first={isFirst()} title={c.pastCheck.title} accent="#0F766E" details={c.pastCheck.details} />}
+
+        {c.specialRequestAnalysis && (
+          <Section first={isFirst()} title={c.specialRequestAnalysis.title} accent="#4F46E5" details={c.specialRequestAnalysis.details} />
+        )}
+
+        <Footer label="나의 이야기" />
       </Page>
 
       <Page size="A4" style={styles.page} wrap>
@@ -712,44 +933,40 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         {c.wealthAndCareer && <Section first={isFirst()} title={c.wealthAndCareer.title} accent="#0369A1" details={c.wealthAndCareer.details} />}
         {c.relationship && <Section first={isFirst()} title={c.relationship.title} accent="#BE185D" details={c.relationship.details} />}
 
-        <Footer label="사주 심층 분석" />
+        <Footer label="나의 이야기" />
       </Page>
 
       {/* 06. 3개년 로드맵: 연도마다 새 페이지 + 요약 배너 (연속 흐름에 이어 붙이면 react-pdf 레이아웃 오류가 나서 연도별 Page 로 분리) */}
-      {years.map((y, index) => (
-        <Page key={y.year || index} size="A4" style={styles.page} wrap>
-          {index === 0 && <Text style={styles.sectionTitle}>{c.threeYearRoadmap?.title || '06. 향후 3개년 심층 로드맵'}</Text>}
+      {/* 07. 올해 남은 기간 — 지나온 길과 앞으로 3년을 잇는 서막 */}
+      {c.currentYear && (
+        <YearPage
+          y={c.currentYear}
+          heading="07. 올해 남은 기간 — 서막"
+          tag={`${c.currentYear.year}년 남은 기간`}
+          footer="올해 남은 기간"
+          partialNote={`${c.currentYear.year}년 남은 기간`}
+        />
+      )}
 
-          <View wrap={false} style={{ padding: 14, backgroundColor: '#0F172A', borderRadius: 12, marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 4 }}>
-              <Text style={{ fontSize: 28, color: '#FBBF24', fontWeight: 'bold' }}>{y.year}</Text>
-              {y.ganji ? <Text style={{ fontSize: 13, color: '#CBD5E1', marginLeft: 8, marginBottom: 4 }}>{y.ganji}년</Text> : null}
-            </View>
-            <Text style={{ fontSize: 14, color: '#F8FAFC', fontWeight: 'bold', marginBottom: 3 }}>{y.yearlyTheme}</Text>
-            {y.oneLine ? <Text style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 8 }}>{y.oneLine}</Text> : null}
-            {y.scores && (
-              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 8, padding: 9 }}>
-                <ScoreGrid scores={y.scores} />
-                <View style={{ flexDirection: 'row' }}>
-                  <Text style={{ flex: 1, fontSize: 10, color: '#047857' }}>좋은 달  {formatMonths(y.bestMonths)}</Text>
-                  <Text style={{ flex: 1, fontSize: 10, color: '#B45309' }}>조심할 달  {formatMonths(y.cautionMonths)}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {y.subtopics?.map((subtopic, idx) => (
-            <View key={idx} style={{ marginBottom: 8 }}>
-              {subtopic.subtitle && (
-                <Text minPresenceAhead={90} style={[styles.subTitle, { marginTop: 8, borderLeftColor: idx === 0 ? '#1E293B' : idx === 1 ? '#4338CA' : idx === 2 ? '#BE185D' : '#15803D' }]}>
-                  {y.year}년 · {subtopic.subtitle}
-                </Text>
-              )}
-              {renderText(subtopic.content)}
-            </View>
-          ))}
-          <Footer label={`${y.year}년 로드맵`} />
+      {/* 08. 앞으로 3년의 이야기 — 개요(스토리 아크 + 36개월 지도)는 한 페이지, 이후 연도마다 새 페이지 */}
+      {years.length > 0 && hasOverview && (
+        <Page size="A4" style={styles.page} wrap>
+          <Text style={styles.sectionTitle}>{c.threeYearRoadmap?.title || '08. 앞으로 3년의 이야기'}</Text>
+          <ArcCard arc={c.storyArc} />
+          <MonthHeatmap calendar={c.calendar} />
+          <PartnerOverlap rows={c.partnerOverlap} name={c.partnerName} />
+          <Footer label="앞으로 3년" />
         </Page>
+      )}
+
+      {years.map((y, index) => (
+        <YearPage
+          key={y.year || index}
+          y={y}
+          heading={index === 0 && !hasOverview && !c.currentYear ? (c.threeYearRoadmap?.title || '08. 앞으로 3년의 이야기') : undefined}
+          tag={`${y.year}년`}
+          footer={`${y.year}년 이야기`}
+        />
       ))}
 
       {/* 07. 마스터플랜 */}
@@ -763,7 +980,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
                 위에서 제시한 현실적인 조언들을 생활 속에 적용하여, 타고난 운명을 넘어 당신이 원하는 최고의 성취를 이루시길 진심으로 기원합니다.
               </Text>
             </View>
-            <View wrap={false} style={{ marginTop: 18, padding: 12, borderTop: '1.5pt solid #E2E8F0', alignItems: 'center' }}>
+            <View wrap={false} style={{ marginTop: 10, padding: 8, borderTop: '1.5pt solid #E2E8F0', alignItems: 'center' }}>
               <Text style={{ fontSize: 9.5, color: '#94A3B8', textAlign: 'center', lineHeight: 1.6 }}>
                 본 리포트는 생년월일시와 MBTI 데이터를 기반으로 한 참고용 상담 자료이며, 재물·건강·법률 등에 관한 최종적인 결정은 본인의 판단과 책임 하에 이루어져야 합니다.
               </Text>

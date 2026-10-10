@@ -238,7 +238,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <Zap className="w-10 h-10 text-violet-600 animate-pulse" />
           </div>
           <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">전문가의 심층 리포트가 필요합니다</h3>
-          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석을 넘어, 10년차 전문가가 당신의 MBTI와 사주를 직접 대조하여 분석한 A4 25장 이상의 3년 심층 리포트를 받아보세요.</p>
+          <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">기본 성향 분석을 넘어, 10년차 전문가가 당신의 MBTI와 사주를 직접 대조하여 분석한 A4 20장 내외의 3년 심층 리포트를 받아보세요.</p>
           <div className="bg-slate-50 rounded-2xl p-6 mb-8 w-full max-w-sm border border-slate-100 shadow-inner">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-bold text-slate-600">서비스 유형</span>

@@ -201,6 +201,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     const children: any[] = [createSectionTitle(`한눈에 보기 · ${range} 요약`)];
     if (sm.keywords?.length) children.push(new Paragraph({ children: [run(sm.keywords.map((k: string) => `#${k}`).join('   '), { bold: true, color: '4338CA' })], spacing: { after: 160 } }));
     if (sm.verdict) children.push(new Paragraph({ children: [run("마스터의 총평  ", { bold: true, size: 20, color: 'B45309' }), run(sm.verdict)], shading: { type: ShadingType.SOLID, color: 'F1F5F9' }, spacing: { after: 200 } }));
+    if (sm.concernAnswer) children.push(new Paragraph({ children: [run('고민에 대한 한 줄 답  ', { bold: true, size: 20, color: '4338CA' }), run(sm.concernAnswer)], shading: { type: ShadingType.SOLID, color: 'EEF2FF' }, spacing: { after: 200 } }));
     sm.yearOverview?.forEach((y: any) => {
       const tag = y.year === sm.bestYear ? '  [가장 좋은 해]' : y.year === sm.cautionYear ? '  [신중하게 보낼 해]' : '';
       children.push(createSubTitle(`${y.year}년 ${y.ganji || ''}  ${y.yearlyTheme}${tag}`));
@@ -215,10 +216,7 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
     pushSection(children);
   }
 
-  // --- 01. 나의 고민에 대한 답 ---
-  if (parsedContent?.specialRequestAnalysis) addSection(parsedContent.specialRequestAnalysis.title, parsedContent.specialRequestAnalysis.details, '4F46E5');
-
-  // --- 02. 사주원국 ---
+  // --- 01. 프롤로그: 사주원국 ---
   if (parsedContent?.natalChartAnalysis) {
     const natalChildren: any[] = [createSectionTitle(parsedContent.natalChartAnalysis.title)];
     const dm = sajuData?.userSaju?.dayMaster;
@@ -248,19 +246,71 @@ export async function generateDocx(parsedContent: any, sajuData: any, clientName
       if (detail.subtitle) natalChildren.push(createSubTitle(detail.subtitle, 'B45309'));
       natalChildren.push(...parseContentToParagraphs(detail.content));
     });
+    const st = parsedContent?.strength;
+    if (st) {
+      natalChildren.push(new Paragraph({
+        children: [run(`일간 강약 ${st.label}(${st.supportRatio}%)   힘이 되는 오행: ${(st.yongshin || []).join('·') || '-'}   부담이 되는 오행: ${(st.gisin || []).join('·') || '-'}`, { size: 20, color: '4338CA', bold: true })],
+        spacing: { after: 160 },
+      }));
+    }
     pushSection(natalChildren);
   }
+
+  // --- 02. 지나온 길 / 03. 지금의 고민 ---
+  if (parsedContent?.pastCheck) addSection(parsedContent.pastCheck.title, parsedContent.pastCheck.details, '0F766E');
+  if (parsedContent?.specialRequestAnalysis) addSection(parsedContent.specialRequestAnalysis.title, parsedContent.specialRequestAnalysis.details, '4F46E5');
 
   if (parsedContent?.coreIdentity) addSection(parsedContent.coreIdentity.title, parsedContent.coreIdentity.details);
   if (parsedContent?.wealthAndCareer) addSection(parsedContent.wealthAndCareer.title, parsedContent.wealthAndCareer.details, '0369A1');
   if (parsedContent?.relationship) addSection(parsedContent.relationship.title, parsedContent.relationship.details, 'BE185D');
 
-  // --- 06. 3개년 로드맵 ---
+  // --- 07. 올해 남은 기간 ---
+  const cur = parsedContent?.currentYear;
+  if (cur) {
+    const curChildren: any[] = [createSectionTitle('07. 올해 남은 기간 — 서막')];
+    curChildren.push(new Paragraph({
+      children: [run(`${cur.year}년 ${cur.ganji || ''}${cur.role ? ` 〈${cur.role}〉` : ''}: ${cur.yearlyTheme}`, { bold: true, size: 28, color: '4338CA' })],
+      spacing: { before: 200, after: 100 },
+    }));
+    if (cur.oneLine) curChildren.push(new Paragraph({ children: [run(cur.oneLine, { color: '64748B' })], spacing: { after: 60 } }));
+    if (cur.scores) {
+      curChildren.push(new Paragraph({ children: [run(scoreText(cur.scores), { size: 20 })], spacing: { after: 40 } }));
+      curChildren.push(new Paragraph({ children: [run(`좋은 달: ${formatMonths(cur.bestMonths)}    조심할 달: ${formatMonths(cur.cautionMonths)}`, { size: 20, color: '475569' })], spacing: { after: 120 } }));
+    }
+    cur.subtopics?.forEach((subtopic: any) => {
+      if (subtopic.subtitle) curChildren.push(createSubTitle(`${cur.year}년 남은 기간 · ${subtopic.subtitle}`));
+      curChildren.push(...parseContentToParagraphs(subtopic.content));
+    });
+    pushSection(curChildren);
+  }
+
+  // --- 08. 3개년 로드맵 ---
   if (years.length) {
-    const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '06. 향후 3개년 심층 로드맵')];
+    const roadmapChildren: any[] = [createSectionTitle(parsedContent.threeYearRoadmap.title || '08. 앞으로 3년의 이야기')];
+    const arc = parsedContent?.storyArc;
+    if (arc?.thread) {
+      roadmapChildren.push(new Paragraph({ children: [run(arc.thread, { bold: true, size: 26, color: '0F172A' })], shading: { type: ShadingType.SOLID, color: 'F1F5F9' }, spacing: { before: 120, after: 60 } }));
+      if (arc.motif) roadmapChildren.push(new Paragraph({ children: [run(arc.motif, { color: '64748B' })], spacing: { after: 120 } }));
+    }
+    const calendar: any[] = parsedContent?.calendar || [];
+    if (calendar.length) {
+      roadmapChildren.push(createSubTitle('36개월 운의 지도 (점수 1~5, 절기월 기준)'));
+      calendar.forEach((cy: any) => {
+        roadmapChildren.push(new Paragraph({
+          children: [run(`${cy.year}년${cy.partial ? '(올해 남은 기간)' : ''}  `, { bold: true, size: 20 }), run((cy.months || []).map((m: any) => `${m.label}${m.nextYear ? '*' : ''} ${m.score}`).join('  '), { size: 20, color: '475569' })],
+          spacing: { after: 60 },
+        }));
+      });
+      roadmapChildren.push(new Paragraph({ children: [run('* 는 이듬해 1월', { size: 16, color: '94A3B8' })], spacing: { after: 120 } }));
+    }
+    const overlap: any[] = parsedContent?.partnerOverlap || [];
+    if (overlap.length) {
+      roadmapChildren.push(createSubTitle(parsedContent?.partnerName ? `${parsedContent.partnerName} 님과 나의 3년 겹침` : '두 사람의 3년 겹침'));
+      overlap.forEach((o: any) => roadmapChildren.push(new Paragraph({ children: [run(`${o.year}년  나 ${o.mine}/20 · 상대 ${o.partner}/20  →  ${o.label}`, { size: 20 })], spacing: { after: 60 } })));
+    }
     years.forEach((yearData: any) => {
       roadmapChildren.push(new Paragraph({
-        children: [run(`${yearData.year}년 ${yearData.ganji || ''}: ${yearData.yearlyTheme}`, { bold: true, size: 28, color: '4338CA' })],
+        children: [run(`${yearData.year}년 ${yearData.ganji || ''}${yearData.role ? ` 〈${yearData.role}〉` : ''}: ${yearData.yearlyTheme}`, { bold: true, size: 28, color: '4338CA' })],
         spacing: { before: 400, after: 100 },
       }));
       if (yearData.oneLine) roadmapChildren.push(new Paragraph({ children: [run(yearData.oneLine, { color: '64748B' })], spacing: { after: 60 } }));

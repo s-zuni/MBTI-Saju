@@ -18,8 +18,21 @@ interface DeepReportModalProps {
   initialReportType?: string;
 }
 
+interface PreviewRow {
+  year: number;
+  ganji: string;
+  partial: boolean;
+  scores: { wealth: number; career: number; love: number; health: number };
+  total: number;
+}
+
+const SCORE_LABELS: [keyof PreviewRow['scores'], string][] = [['wealth', '재물'], ['career', '커리어'], ['love', '인연'], ['health', '건강']];
+
 const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, session, initialReportType }) => {
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewRow[] | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     kakaoId: '',
@@ -99,6 +112,32 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  // 무료 미리보기: 올해 남은 기간 + 앞으로 3개년 점수표 (AI 호출 없는 서버 계산값)
+  const handlePreview = async () => {
+    setPreviewError('');
+    if (!formData.birthDate) return setPreviewError('생년월일을 먼저 입력해주세요.');
+    if (!formData.gender) return setPreviewError('성별을 먼저 선택해주세요.');
+    setPreviewLoading(true);
+    try {
+      const res = await fetch('/api/report-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthInfo: `${formData.birthDate} ${formData.birthTimeLabel || formData.birthTime}`.trim(),
+          gender: formData.gender,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || '미리보기를 불러오지 못했습니다.');
+      setPreview(data.rows as PreviewRow[]);
+    } catch (e: any) {
+      setPreview(null);
+      setPreviewError(e.message || '미리보기를 불러오지 못했습니다.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const handlePayment = async () => {
     // Guest checkout is allowed. If session is missing, we proceed as guest.
@@ -201,7 +240,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 25장 이상</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -340,6 +379,50 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                    maxLength={4}
                  />
                </div>
+            </div>
+
+            <div className="bg-violet-50/60 p-5 rounded-2xl border border-violet-100 space-y-3">
+               <div className="flex items-center justify-between gap-3">
+                 <div>
+                   <h3 className="text-sm font-black text-slate-900">무료 미리보기 · 올해 남은 기간 + 3개년 점수표</h3>
+                   <p className="text-[11px] text-slate-500 font-medium mt-1">생년월일과 성별을 입력하면 분야별 점수를 바로 확인할 수 있어요. 총평과 월별 상세 분석은 리포트에서 제공됩니다.</p>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={handlePreview}
+                   disabled={previewLoading}
+                   className="shrink-0 px-4 py-2.5 bg-violet-600 text-white text-xs font-black rounded-xl hover:bg-violet-700 disabled:opacity-60 transition-colors"
+                 >{previewLoading ? '계산 중...' : '점수표 보기'}</button>
+               </div>
+               {previewError && <p className="text-xs font-bold text-rose-500">{previewError}</p>}
+               {preview && (
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-center text-xs bg-white rounded-xl overflow-hidden">
+                     <thead>
+                       <tr className="bg-slate-900 text-white">
+                         <th className="py-2 px-2 font-bold text-left">연도</th>
+                         {SCORE_LABELS.map(([k, l]) => <th key={k} className="py-2 px-2 font-bold">{l}</th>)}
+                         <th className="py-2 px-2 font-bold">합계</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {preview.map(r => (
+                         <tr key={r.year} className="border-t border-slate-100">
+                           <td className="py-2 px-2 text-left font-black text-slate-800">
+                             {r.year}<span className="text-slate-400 font-medium ml-1">{r.ganji.split('(')[0]}</span>
+                             {r.partial && <span className="ml-1.5 text-[10px] font-black text-violet-600 bg-violet-100 px-1.5 py-0.5 rounded-full">남은 기간</span>}
+                           </td>
+                           {SCORE_LABELS.map(([k]) => (
+                             <td key={k} className="py-2 px-2 font-bold text-slate-700">{'●'.repeat(r.scores[k])}<span className="text-slate-200">{'●'.repeat(5 - r.scores[k])}</span></td>
+                           ))}
+                           <td className="py-2 px-2 font-black text-violet-700">{r.total}/20</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                   <p className="text-[10px] text-slate-400 mt-2 font-medium">※ 만세력 계산값에 따른 점수입니다. 유료 리포트에서 총평, 36개월 월별 지도, 점수의 근거와 대응 방법을 확인하실 수 있어요.</p>
+                 </div>
+               )}
             </div>
 
             <div className="space-y-3 pt-4 border-t border-slate-100">
