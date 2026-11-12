@@ -49,10 +49,10 @@ export default async function handler(req: Request) {
 
     try {
         const body = await req.json();
-        const { question_id } = body;
+        const { question_id, kakao_consultation_id } = body;
 
-        if (!question_id) {
-            return new Response(JSON.stringify({ error: 'question_id가 필요합니다.' }), {
+        if (!question_id && !kakao_consultation_id) {
+            return new Response(JSON.stringify({ error: 'question_id 또는 kakao_consultation_id가 필요합니다.' }), {
                 status: 400,
                 headers: reqCorsHeaders,
             });
@@ -60,43 +60,80 @@ export default async function handler(req: Request) {
 
         const supabaseAdmin = authResult.supabaseAdmin;
 
-        // 1. 질문 + 사용자 프로필(사주/MBTI) 조회
-        const { data: question, error: questionError } = await supabaseAdmin
-            .from('consultation_questions')
-            .select(`
-                id,
-                question_text,
-                user_id,
-                profiles:user_id (
-                    name,
-                    mbti,
-                    birth_date,
-                    birth_time,
-                    gender
-                )
-            `)
-            .eq('id', question_id)
-            .single();
+        // 1. 질문 + 내담자 정보(사주/MBTI) 조회
+        //    - 웹 상담: consultation_questions + profiles
+        //    - 카톡 상담: kakao_consultations (비회원, 관리자가 수동 접수)
+        let question: { question_text: string };
+        let profile_data: {
+            name?: string | null;
+            mbti?: string | null;
+            birth_date?: string | null;
+            birth_time?: string | null;
+            gender?: string | null;
+            is_lunar?: boolean | null;
+        } | null;
 
-        if (questionError || !question) {
-            return new Response(JSON.stringify({ error: '해당 질문을 찾을 수 없습니다.' }), {
-                status: 404,
-                headers: reqCorsHeaders,
-            });
+        if (kakao_consultation_id) {
+            const { data: row, error: rowError } = await supabaseAdmin
+                .from('kakao_consultations')
+                .select('id, question_text, customer_name, mbti, birth_date, birth_time, is_lunar, gender')
+                .eq('id', kakao_consultation_id)
+                .single();
+
+            if (rowError || !row) {
+                return new Response(JSON.stringify({ error: '해당 카톡 접수 건을 찾을 수 없습니다.' }), {
+                    status: 404,
+                    headers: reqCorsHeaders,
+                });
+            }
+            question = { question_text: row.question_text };
+            profile_data = {
+                name: row.customer_name,
+                mbti: row.mbti,
+                birth_date: row.birth_date,
+                birth_time: row.birth_time,
+                gender: row.gender,
+                is_lunar: row.is_lunar,
+            };
+        } else {
+            const { data: webQuestion, error: questionError } = await supabaseAdmin
+                .from('consultation_questions')
+                .select(`
+                    id,
+                    question_text,
+                    user_id,
+                    profiles:user_id (
+                        name,
+                        mbti,
+                        birth_date,
+                        birth_time,
+                        gender
+                    )
+                `)
+                .eq('id', question_id)
+                .single();
+
+            if (questionError || !webQuestion) {
+                return new Response(JSON.stringify({ error: '해당 질문을 찾을 수 없습니다.' }), {
+                    status: 404,
+                    headers: reqCorsHeaders,
+                });
+            }
+            question = { question_text: webQuestion.question_text };
+            profile_data = (Array.isArray(webQuestion.profiles)
+                ? webQuestion.profiles[0]
+                : webQuestion.profiles) ?? null;
         }
 
         // 2. 사주 데이터 계산 (saju.ts 유틸리티 사용)
-        const profile_data = Array.isArray(question.profiles)
-            ? question.profiles[0]
-            : question.profiles;
-
         let sajuContext = '사주 정보 없음 (생년월일 미등록)';
         if (profile_data?.birth_date) {
             try {
                 const saju = getPreciseSajuData({
                     birthDate: profile_data.birth_date,
                     birthTime: profile_data.birth_time || '12:00',
-                    gender: profile_data.gender,
+                    gender: profile_data.gender ?? undefined,
+                    isLunar: !!profile_data.is_lunar,
                 });
                 sajuContext = buildRichSajuContext(saju);
             } catch (e) {
@@ -160,9 +197,9 @@ ${question.question_text}
 
         // 5. 초안을 DB에 저장 (ai_draft_answer 컬럼)
         const { error: updateError } = await supabaseAdmin
-            .from('consultation_questions')
+            .from(kakao_consultation_id ? 'kakao_consultations' : 'consultation_questions')
             .update({ ai_draft_answer: draftText })
-            .eq('id', question_id);
+            .eq('id', kakao_consultation_id || question_id);
 
         if (updateError) {
             console.error('[generate-consultation-draft] DB update error:', updateError);
@@ -173,7 +210,8 @@ ${question.question_text}
             JSON.stringify({
                 success: true,
                 draft: draftText,
-                question_id,
+                question_id: question_id || null,
+                kakao_consultation_id: kakao_consultation_id || null,
             }),
             {
                 status: 200,

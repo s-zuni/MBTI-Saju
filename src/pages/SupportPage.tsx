@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useModalStore } from '../hooks/useModalStore';
 import { formatSafariDate } from '../utils/textUtils';
+import KakaoConsultCard from '../components/KakaoConsultCard';
 
 interface PurchaseRecord {
     id: string;
@@ -252,7 +253,9 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
                             <p className="text-slate-500 font-medium">문의 항목을 선택하시면 빠른 상담이 가능합니다.</p>
                         </div>
 
-                        <button 
+                        <KakaoConsultCard from="support" variant="compact" />
+
+                        <button
                             onClick={() => { setCategory('general'); setView('form'); }}
                             className="w-full p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:border-slate-900 hover:shadow-md transition-all group"
                         >

@@ -13,7 +13,8 @@ export type FunnelEvent =
     | 'credit_modal_open'
     | 'checkout_start'
     | 'checkout_success'
-    | 'checkout_resume_click';
+    | 'checkout_resume_click'
+    | 'kakao_consult_click';
 
 const ANON_KEY = 'mbtiju_anon_id';
 

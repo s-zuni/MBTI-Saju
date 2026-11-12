@@ -12,6 +12,7 @@ import {
     User
 } from 'lucide-react';
 import { formatSafariDate } from '../../utils/textUtils';
+import AdminKakaoConsultations from './AdminKakaoConsultations';
 
 interface ConsultationQuestion {
     id: string;
@@ -35,7 +36,7 @@ interface ConsultationQuestion {
 const AdminConsultations: React.FC = () => {
     const [questions, setQuestions] = useState<ConsultationQuestion[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'pending' | 'answered'>('pending');
+    const [activeTab, setActiveTab] = useState<'pending' | 'answered' | 'kakao'>('pending');
     const [selectedQuestion, setSelectedQuestion] = useState<ConsultationQuestion | null>(null);
     
     const [answerText, setAnswerText] = useState('');
@@ -284,9 +285,18 @@ const AdminConsultations: React.FC = () => {
                     >
                         답변 완료
                     </button>
+                    <button
+                        onClick={() => { setActiveTab('kakao'); setSelectedQuestion(null); }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            activeTab === 'kakao' ? 'bg-[#FEE500] text-[#191919] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        카톡 접수
+                    </button>
                 </div>
             </div>
 
+            {activeTab === 'kakao' ? <AdminKakaoConsultations /> : (
             <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -356,6 +366,7 @@ const AdminConsultations: React.FC = () => {
                     </table>
                 </div>
             </div>
+            )}
         </div>
     );
 };

@@ -15,6 +15,7 @@ import {
 import { formatSafariDate } from '../utils/textUtils';
 import ConsultationPurchaseModal from '../components/ConsultationPurchaseModal';
 import { useModalStore } from '../hooks/useModalStore';
+import KakaoConsultCard from '../components/KakaoConsultCard';
 
 interface ConsultationQuestion {
     id: string;
@@ -161,6 +162,8 @@ const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSes
                     >
                         로그인하러 가기
                     </button>
+                    <p className="text-xs text-slate-400 font-bold my-4">또는 로그인 없이</p>
+                    <KakaoConsultCard from="consultation_guest" variant="compact" />
                 </div>
             </div>
         );
@@ -229,6 +232,8 @@ const ConsultationPage: React.FC<ConsultationPageProps> = ({ session: initialSes
                             </div>
                             <ChevronRight className="text-slate-500" size={20} />
                         </button>
+
+                        <KakaoConsultCard from="consultation" variant="compact" className="mb-8" />
 
                         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">나의 질문 내역</h3>
 

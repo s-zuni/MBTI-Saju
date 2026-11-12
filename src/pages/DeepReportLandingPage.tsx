@@ -6,6 +6,7 @@ import {
   DEEP_REPORT_DISCOUNT_RATE,
   formatWon,
 } from '../config/deepReportConfig';
+import KakaoConsultCard from '../components/KakaoConsultCard';
 
 interface DeepReportLandingPageProps {
   onOpenDeepReport: (reportType?: string) => void;
@@ -278,6 +279,10 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
                 <p className="mt-3 text-sm text-slate-600 leading-relaxed">{f.a}</p>
               </details>
             ))}
+          </div>
+          <div className="mt-12">
+            <p className="text-sm font-bold text-slate-900 mb-3">리포트보다 가볍게, 고민 하나만 먼저 물어보고 싶다면</p>
+            <KakaoConsultCard from="premium" variant="compact" />
           </div>
           <p className="mt-8 text-xs text-slate-400 leading-relaxed">
             본 리포트는 생년월일시와 MBTI 데이터를 기반으로 한 참고용 자료이며, 재물·건강·법률 등에 관한 최종 결정은 본인의 판단과 책임 하에 이루어져야 합니다.

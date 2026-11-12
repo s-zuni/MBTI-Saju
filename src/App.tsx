@@ -40,6 +40,7 @@ import AuthCallback from './components/auth/AuthCallback';
 // Lazy load modals for better initial performance
 import FreePreview from './components/FreePreview';
 import ResumeCheckoutBanner from './components/ResumeCheckoutBanner';
+import KakaoConsultCard from './components/KakaoConsultCard';
 import { track, trackOnce } from './utils/analytics';
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
@@ -243,7 +244,13 @@ function AppContent({
 
 
                       <ReviewsSection />
-                      
+
+                      <section className="py-12 px-6">
+                        <div className="max-w-xl mx-auto">
+                          <KakaoConsultCard from="home" />
+                        </div>
+                      </section>
+
                       {/* Featured Analysis Section */}
                       <section className="py-16 bg-[#faf8fe] relative">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
