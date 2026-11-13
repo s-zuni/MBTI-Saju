@@ -15,7 +15,7 @@ export interface AllowedFacts {
 }
 
 const GANJI_RE = /([甲乙丙丁戊己庚辛壬癸])([子丑寅卯辰巳午未申酉戌亥])/g;
-const YEAR_RE = /((?:19|20)\d{2})\s*년/g;
+const YEAR_RE = /((?:19|20)\d{2})\s*[년年]/g;
 const STEMS = '甲乙丙丁戊己庚辛壬癸';
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
 

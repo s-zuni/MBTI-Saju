@@ -56,6 +56,7 @@ const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModa
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
 const CompatibilitySharePage = lazy(() => import('./pages/CompatibilitySharePage'));
+const ZhDeepReportLandingPage = lazy(() => import('./pages/ZhDeepReportLandingPage'));
 
 // Consolidated fortune page
 const MyLuckPage = lazy(() => import('./pages/MyLuckPage'));
@@ -89,9 +90,15 @@ function App() {
   // Unified loading state for Safari (Session + Credits initial fetch)
   const isAppInitializing = isAuthLoading || (isCreditsLoading && !!session);
 
-  // Check if profile needs completion
+  // Check if profile needs completion (Korean service only)
   useEffect(() => {
-    if (session?.user && !isAuthLoading) {
+    const isChineseRoute = typeof window !== 'undefined' && (
+      window.location.hostname.startsWith('zh.') ||
+      window.location.hostname.startsWith('tw.') ||
+      window.location.hostname.startsWith('global.') ||
+      window.location.pathname.startsWith('/zh')
+    );
+    if (session?.user && !isAuthLoading && !isChineseRoute) {
       const meta = session.user.user_metadata;
       // 가입 마찰을 줄이기 위해 필수는 생년월일·성별만. MBTI/출생시간은 이후 선택 입력.
       const needsProfile = !meta?.birth_date || !meta?.gender;
@@ -192,6 +199,32 @@ function AppContent({
     }
     closeModal('onboarding');
   };
+
+  const isZhSubdomain = typeof window !== 'undefined' && (
+    window.location.hostname.startsWith('zh.') ||
+    window.location.hostname.startsWith('tw.') ||
+    window.location.hostname.startsWith('global.')
+  );
+  const isZhPath = location.pathname.startsWith('/zh');
+  const isChinese = isZhSubdomain || isZhPath;
+
+  if (isChinese) {
+    return (
+      <div className="selection:bg-violet-100 selection:text-violet-900 overflow-x-hidden min-h-screen">
+        <Routes>
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
+          <Route path="/zh/payment/success" element={<PaymentSuccess />} />
+          <Route path="/zh/payment/fail" element={<PaymentFail />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/zh" element={<ZhDeepReportLandingPage />} />
+          <Route path="/zh/premium" element={<ZhDeepReportLandingPage />} />
+          <Route path="*" element={<ZhDeepReportLandingPage />} />
+        </Routes>
+      </div>
+    );
+  }
 
   return (
     <Suspense fallback={

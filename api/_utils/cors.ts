@@ -14,8 +14,8 @@ export function getAllowedOrigin(originHeader: string | null | undefined): strin
     if (ALLOWED_ORIGINS.includes(originHeader)) {
         return originHeader;
     }
-    // Vercel Preview Deployments 허용 (*.vercel.app)
-    if (originHeader.endsWith('.vercel.app')) {
+    // mbtiju.com 서브도메인 (zh.mbtiju.com, tw.mbtiju.com 등) 및 Vercel Preview Deployments 허용
+    if (originHeader.endsWith('.mbtiju.com') || originHeader.endsWith('.vercel.app')) {
         return originHeader;
     }
     return 'https://www.mbtiju.com';

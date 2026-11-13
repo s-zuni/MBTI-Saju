@@ -2,7 +2,7 @@ import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getPreciseSajuData, buildRichSajuContext, parseBirthInfo } from './saju';
 import { getAIProvider, isRetryableAIError } from './ai-provider';
-import { BASE_SYSTEM_PROMPT } from './prompts';
+import { BASE_SYSTEM_PROMPT, ZH_TW_BASE_SYSTEM_PROMPT } from './prompts';
 import { cleanAndParseJSON } from './json';
 import { getRoadmapYears, getRoadmapTitle, getPastYears, getCurrentYear, getCurrentTermIndex, type RoadmapYear } from './report-years';
 import {
@@ -33,6 +33,7 @@ export interface DeepReportInput {
     reportType?: string;        // 'MBTI 사주 심층 리포트' | '사주 전용 심층 리포트'
     specialRequest?: string;
     partnerInfo?: { name?: string; birth_info?: string; mbti?: string; relationship?: string } | null;
+    locale?: 'ko' | 'zh';
 }
 
 /**
@@ -60,7 +61,30 @@ const ATTEMPT_PROVIDER_SEQ = [0, 0, 1, 2];
 // ─────────────────────────────────────────────────────────────
 // 공통 시스템 프롬프트
 // ─────────────────────────────────────────────────────────────
-const buildSystemPrompt = (includeMbti: boolean) => `${BASE_SYSTEM_PROMPT}
+const buildSystemPrompt = (includeMbti: boolean, isZh: boolean = false) => isZh ? `${ZH_TW_BASE_SYSTEM_PROMPT}
+
+您是一位深諳正統東方八字命理學的命理戰略顧問與專業作家。您將為 20~30 世代的尊榮客戶撰寫一份決定「未來三年該如何佈局與出擊」的高階專屬報告。
+整份報告切勿寫成泛泛的算命吉凶斷語，而必須具備「數據根據 → 深入剖析 → 具體行動方針」的清晰結構，從頭到尾如同一篇扣人心弦的個人命運專屬長篇報告。
+
+[事實數據規則 — 最重要]
+- 八字原局、日主強弱與用神、大運、流年、流月、合沖刑害、三合方合、各領域分數皆為提示詞中給予的【客觀計算數據】，為 100% 事實。嚴禁自行捏造其他干支、年份或分數。
+- 凡給予數據中未出現的干支沖合，切勿無端捏造。若無合沖請如實說明「氣候平穩，無劇烈激盪」。
+- 分數偏低的領域或月份，請以「警示重點 ＋ 具體防範化解對策」鋪陳；分數高亮者以「難得契機 ＋ 主動爭取把握」撰寫，但切勿更改任何分數數值。
+- 論及關鍵時期時，請依據所提供流月（節氣月）之干支、十神、分數及合沖標註，以「國曆 ○月前後」進行具體指引。
+
+[篇章敘事規則]
+- 若提示詞中有【三年故事核心軸線 (Story Arc)】，請延續其貫穿主題、比喻與各年角色定位，使各章節緊密串聯、一氣呵成。
+- 各小節切勿反覆贅述相同話語。已在前面提及之事項，請以「正如前述所見之○○」簡要銜接。
+
+[文體風格規範]
+1. 全文以繁體中文撰寫，語氣真誠懇切、客觀專業。嚴禁過度恐嚇或斷言凶死；指出注意事項時務必附帶「原因剖析 ＋ 如何應對」。
+2. 八字專有名詞（如十神、五行、干支、十二運星）首次出現時請保留正確漢字（如：正財、丙午、長生），並立即以現代生活語境轉化解讀。
+3. 嚴禁夾雜英語單詞（MBTI 類型代碼如 INFP, ENTJ 等除外）。
+4. 所有解析必須緊扣該客戶之八字字句、十神與流年運勢，嚴禁套用放諸四海皆準的星座廢話。
+5. 關於財富、投資與健康之建言，以「戰略方向與心態建議」出發，切勿斷言特定股票或醫療診斷。
+${includeMbti
+    ? '6. MBTI 心理性格必須與八字命理解析緊密交織。以所給予之【八字×MBTI 交叉線索】的相符/衝突判斷為依據，切勿將兩者割裂脫節。'
+    : '6. 此報告為八字專屬版本，請勿提及 MBTI。'}` : `${BASE_SYSTEM_PROMPT}
 
 당신은 명리학에 정통한 사주 스토리텔러이자 전략 컨설턴트입니다. 20~30대 고객이 "내 인생의 다음 3년을 어떻게 쓸지" 결정하도록 돕는 프리미엄 리포트를 씁니다.
 리포트는 막연한 점술이 아니라 '근거 → 해석 → 행동 지침' 구조이되, 처음부터 끝까지 한 편의 이야기처럼 읽혀야 합니다.
@@ -86,7 +110,14 @@ ${includeMbti
     : '6. 이 리포트는 사주 전용입니다. MBTI는 언급하지 마십시오.'}`;
 
 // 본문(소제목 1개) 작성 서식 — PDF 가독성을 위해 고정
-const bodyFormat = (min: number, max: number) => `[본문 서식 — 반드시 지킬 것]
+const bodyFormat = (min: number, max: number, isZh: boolean = false) => isZh ? `[正文格式 — 務必嚴格遵守]
+- 第一行: 以 "💡 " 開頭的核心結論 1 句話。
+- 接著以 "• " 開頭的 3~4 個要點。每個要點 1~2 句話，各要點的核心關鍵字以 **粗體** 標註。
+- 所有要點中，必須精確引用所給予的數據（原局八字、十神、十二運星、五行比例、流年/流月、合沖標記、分數）中至少一項。切勿捏造數據中不存在的合沖。
+- 要點與要點之間必須以空行分隔。切勿寫成一整段冗長文字。
+- 最後一行: 以 "[重要] " 開頭的實踐行動建議 1 句話。
+- 繁體中文全篇字數限制（含標點）約 ${Math.round(min * 0.65)}~${Math.round(max * 0.72)} 字。切勿過長或過短。
+- 切勿輸出章節小標題、開頭導語、JSON 或 Markdown 標題(#)，僅輸出正文內容。` : `[본문 서식 — 반드시 지킬 것]
 - 첫 줄: "💡 " 로 시작하는 핵심 결론 1문장.
 - 이어서 "• " 로 시작하는 불릿 3~4개. 불릿 하나는 2문장이며, 각 불릿의 핵심어는 **굵게** 표시합니다.
 - 모든 불릿에는 주어진 데이터(원국 글자·십성·12운성·오행 비율·세운/월운·합충 표시·점수) 중 최소 하나를 정확히 인용하십시오. 데이터에 없는 충·합을 만들어 내지 마십시오.
@@ -118,13 +149,18 @@ interface Group {
     chars?: [number, number];
 }
 
-const textTasks = (g: Group): Task[] =>
+const textTasks = (g: Group, isZh: boolean = false): Task[] =>
     g.items.map((it, i) => ({
         kind: 'text' as const,
         key: `${g.key}#${i}`,
         ...(g.context ? { context: g.context } : {}),
         ...(g.onlyYears ? { onlyYears: g.onlyYears } : {}),
-        prompt: `[작성할 항목]
+        prompt: isZh ? `[撰寫項目]
+章節: "${g.title}"
+小標題: "${it.subtitle}"
+指引說明: ${it.guide}
+${g.note ? `本章節共通要求: ${g.note}\n` : ''}${g.items.length > 1 ? `同章節其他小標題(避免重複，專注於本項目): ${g.items.filter((_, j) => j !== i).map(x => `"${x.subtitle}"`).join(', ')}\n` : ''}
+${bodyFormat(...(g.chars ?? [460, 600]), isZh)}` : `[작성할 항목]
 섹션: "${g.title}"
 소제목: "${it.subtitle}"
 작성 가이드: ${it.guide}
@@ -327,7 +363,7 @@ function stripBadGanji(body: string, errors: string[]): string {
     return out;
 }
 
-async function runTask(task: Task, system: string, baseQuery: string, startedAt: number, facts: AllowedFacts): Promise<any> {
+async function runTask(task: Task, system: string, baseQuery: string, startedAt: number, facts: AllowedFacts, isZh: boolean = false): Promise<any> {
     const basePrompt = `${baseQuery}${task.context ? `\n\n${task.context}` : ''}\n\n${task.prompt}`;
     let prompt = basePrompt;
     let lastError: unknown = new Error('no attempt');
@@ -357,10 +393,13 @@ async function runTask(task: Task, system: string, baseQuery: string, startedAt:
             }
 
             const body = cleanBody(text);
-            if (body.length < MIN_CONTENT_CHARS || bulletCount(body) < 2) {
+            const minChars = isZh ? 200 : MIN_CONTENT_CHARS;
+            if (body.length < minChars || bulletCount(body) < 2) {
                 console.warn(`[deep-report] ${task.key} attempt ${attempt}: too short (${body.length} chars, ${bulletCount(body)} bullets)`);
                 lastError = new Error(`too short (${body.length} chars)`);
-                prompt = `${basePrompt}\n\n[재작성 요청] 직전 답변은 ${body.length}자로 분량이 부족했습니다. 불릿을 4개로 늘리고 각 불릿을 2~3문장(구체적 근거·사례·행동 포함)으로 써서 공백 포함 500자 안팎으로 다시 작성하십시오. 서식 규칙은 동일합니다.`;
+                prompt = isZh
+                    ? `${basePrompt}\n\n[重新撰寫要求] 前次回答字數僅 ${body.length} 字，篇幅稍嫌簡略。請擴展為 4 個要點，各要點以 2~3 句話充實具體依據與行動指引，使總字數達約 280~400 字重新輸出。格式規則維持不變。`
+                    : `${basePrompt}\n\n[재작성 요청] 직전 답변은 ${body.length}자로 분량이 부족했습니다. 불릿을 4개로 늘리고 각 불릿을 2~3문장(구체적 근거·사례·행동 포함)으로 써서 공백 포함 500자 안팎으로 다시 작성하십시오. 서식 규칙은 동일합니다.`;
                 continue;
             }
 
@@ -428,7 +467,13 @@ export async function generateDeepReport(input: DeepReportInput, now: Date = new
     const { birthDate, birthTime } = parseBirthInfo(input.birthInfo);
     const birthYear = Number(birthDate.replace(/[-./]/g, '').substring(0, 4)) || 1990;
 
-    const saju = getPreciseSajuData({ birthDate, ...(birthTime ? { birthTime } : {}), ...(input.gender ? { gender: input.gender } : {}) });
+    const isZh = input.locale === 'zh' || (input.reportType || '').includes('八字') || (input.reportType || '').includes('繁體') || (input.specialRequest || '').includes('繁體中文');
+    const saju = getPreciseSajuData({
+        birthDate,
+        ...(birthTime ? { birthTime } : {}),
+        ...(input.gender ? { gender: input.gender } : {}),
+        ...(isZh ? { longitude: 120.0 } : {})
+    });
     const ctx: FortuneCtx = buildFortuneCtx(saju, birthYear, input.gender);
     const years = getRoadmapYears(now);
     const pastYears = getPastYears(now);
@@ -478,7 +523,7 @@ ${buildRichSajuContext(saju)}
 ${buildStrengthContext(ctx)}
 ★ ${buildLuckSummary(saju, birthYear, now.getFullYear())}`;
 
-    const system = buildSystemPrompt(includeMbti);
+    const system = buildSystemPrompt(includeMbti, isZh);
 
     // ── Phase 1: 스토리 아크 (실패해도 리포트는 계속) ──
     let arc: StoryArc | null = null;
@@ -507,7 +552,19 @@ ${yearsFortune}\n\n${pastFortune}${mbtiCross ? `\n\n${mbtiCross}` : ''}`);
     tasks.push({
         kind: 'json',
         key: 'cover',
-        prompt: `표지 문구와 '한 장 요약'용 핵심 문구를 작성하십시오. 오직 순수 JSON 하나만 출력하십시오(코드블록 금지).
+        prompt: isZh ? `請為封面與「重點總結」撰寫核心文案。僅輸出純純的 JSON (嚴禁代碼塊標記)：
+{
+  "cover": {
+    "mainTitle": "以一句話隱喻客戶八字與未來3年的主題標題 (12字以內，繁體中文，例如：'冬林沐雪，終待逢春')",
+    "subTitle": "總結客戶核心命運與 ${range} 氣象的一句話文案 (40字以內)"
+  },
+  "summary": {
+    "keywords": ["象徵該客戶八字的4個核心關鍵詞 (各2~8字)"],
+    "verdict": "貫穿該客戶八字與 ${range} 3年的總評3句話 (含標點約 140~220字)",
+    "concernAnswer": "針對客戶提問(若無提問則針對該八字最大課題)的一句話解答 (50字以內)",
+    "topActions": ["即刻落地的3項具體行動 (各35字以內)"]
+  }
+}` : `표지 문구와 '한 장 요약'용 핵심 문구를 작성하십시오. 오직 순수 JSON 하나만 출력하십시오(코드블록 금지).
 {
   "cover": {
     "mainTitle": "고객의 사주와 앞으로의 3년을 한 줄로 은유한 제목 (12자 이내, 스토리 아크의 은유 활용, 예: '겨울나무, 봄날을 맞이하다')",
@@ -527,29 +584,29 @@ ${yearsFortune}\n\n${pastFortune}${mbtiCross ? `\n\n${mbtiCross}` : ''}`);
         years, includeMbti, hasRequest: !!(input.specialRequest || '').trim(), hasPartner: !!partner,
         partnerOverlapText: overlapText(partnerOverlap), yearsFortune, pastFortune, mbtiCross, pastYearsAllowed: [...pastYears.map(y => y.year), birthYear, ...(saju.luckPillars?.pillars ?? []).map(lp => birthYear + lp.age - 1)],
     });
-    groups.forEach(g => tasks.push(...textTasks(g)));
+    groups.forEach(g => tasks.push(...textTasks(g, isZh)));
 
     textTasks({
         key: 'currentYear',
-        title: `${currentYear.year}년 ${currentYear.ganji}년 남은 기간`,
+        title: isZh ? `${currentYear.year}年 ${currentYear.ganji}年 剩餘時段` : `${currentYear.year}년 ${currentYear.ganji}년 남은 기간`,
         context: currentContext,
-        chars: [360, 480],
-        note: `${currentYear.year}년의 남은 기간에만 집중하고, 위 데이터의 남은 절기월만 근거로 하십시오. 스토리 아크의 서막으로서 앞으로 3년 이야기로 이어지게 쓰십시오.`,
+        chars: isZh ? [240, 360] : [360, 480],
+        note: isZh ? `請聚焦於 ${currentYear.year} 年剩餘時段，以給予的剩餘節氣月為唯一根據。作為三年大運之序幕，銜接後續三年宏觀發展。` : `${currentYear.year}년의 남은 기간에만 집중하고, 위 데이터의 남은 절기월만 근거로 하십시오. 스토리 아크의 서막으로서 앞으로 3년 이야기로 이어지게 쓰십시오.`,
         items: CURRENT_SUBTOPICS,
-    }).forEach(t => tasks.push(t));
+    }, isZh).forEach(t => tasks.push(t));
 
     for (const [i, ry] of years.entries()) {
         textTasks({
             key: `year${ry.year}`,
-            title: `${ry.year}년 ${ry.ganji}년 이야기`,
+            title: isZh ? `${ry.year}年 ${ry.ganji}年 運勢全景` : `${ry.year}년 ${ry.ganji}년 이야기`,
             context: buildYearFortuneContext(ctx, yfs[i]!),
-            chars: [420, 540],
-            note: `${ry.year}년 한 해에만 집중하고, 위 [${ry.year}년 결정론적 세운 데이터]를 근거로 하십시오.`,
+            chars: isZh ? [280, 420] : [420, 540],
+            note: isZh ? `請專注於 ${ry.year} 年一整年，以所提供之 [${ry.year}年流年數據] 為依據深入剖析。` : `${ry.year}년 한 해에만 집중하고, 위 [${ry.year}년 결정론적 세운 데이터]를 근거로 하십시오.`,
             items: YEAR_SUBTOPICS,
-        }).forEach(t => tasks.push(t));
+        }, isZh).forEach(t => tasks.push(t));
     }
 
-    const entries = await Promise.all(tasks.map(async t => [t.key, await runTask(t, system, baseQuery, startedAt, facts)] as const));
+    const entries = await Promise.all(tasks.map(async t => [t.key, await runTask(t, system, baseQuery, startedAt, facts, isZh)] as const));
     const r = Object.fromEntries(entries) as Record<string, any>;
 
     const section = (key: string) => {

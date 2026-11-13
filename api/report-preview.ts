@@ -19,8 +19,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { birthInfo, gender } = req.body || {};
-        const preview = buildScorePreview({ birthInfo, gender });
+        const { birthInfo, gender, longitude } = req.body || {};
+        const preview = buildScorePreview({ birthInfo, gender, longitude });
         return res.status(200).json({ success: true, ...preview });
     } catch (e: any) {
         if (e instanceof PreviewInputError) {

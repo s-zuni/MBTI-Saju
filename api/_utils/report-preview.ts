@@ -25,10 +25,12 @@ export class PreviewInputError extends Error {}
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export function buildScorePreview(input: { birthInfo?: unknown; gender?: unknown }, now: Date = new Date()): ScorePreview {
+export function buildScorePreview(input: { birthInfo?: unknown; gender?: unknown; longitude?: unknown }, now: Date = new Date()): ScorePreview {
     const birthInfo = typeof input.birthInfo === 'string' ? input.birthInfo.trim().slice(0, 80) : '';
     const gender = typeof input.gender === 'string' ? input.gender : '';
     if (gender !== 'female' && gender !== 'male') throw new PreviewInputError('성별을 선택해 주세요.');
+
+    const longitude = typeof input.longitude === 'number' && !isNaN(input.longitude) ? input.longitude : undefined;
 
     const { birthDate, birthTime } = parseBirthInfo(birthInfo);
     const m = DATE_RE.exec(birthDate);
@@ -39,7 +41,7 @@ export function buildScorePreview(input: { birthInfo?: unknown; gender?: unknown
         throw new PreviewInputError('생년월일을 다시 확인해 주세요.');
     }
 
-    const saju = getPreciseSajuData({ birthDate, ...(birthTime ? { birthTime } : {}), gender });
+    const saju = getPreciseSajuData({ birthDate, ...(birthTime ? { birthTime } : {}), gender, ...(longitude ? { longitude } : {}) });
     const ctx = buildFortuneCtx(saju, y, gender);
 
     const cur = getCurrentYear(now);
