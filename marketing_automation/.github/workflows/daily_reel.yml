@@ -15,6 +15,10 @@ on:
         description: 'YouTube Shorts KST 예약 공개 시각 (기본 18:30, none 입력 시 즉시 공개)'
         required: false
         default: '18:30'
+      visual_theme:
+        description: '비주얼 컨셉 (auto: 8:2 자동 비율, human: 사람 공감, animal: 고정 동물 캐릭터)'
+        required: false
+        default: 'auto'
 
 jobs:
   generate_and_publish:
@@ -45,6 +49,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install Playwright Chromium for Google Flow (when FLOW_STORAGE_STATE_B64 is set)
+        env:
+          HAS_FLOW_STATE: ${{ secrets.FLOW_STORAGE_STATE_B64 != '' }}
+        run: |
+          if [ "$HAS_FLOW_STATE" = "true" ]; then
+            pip install playwright
+            playwright install chromium
+          else
+            echo "FLOW_STORAGE_STATE_B64 미설정 -> 무료 스톡(Pexels/Pixabay) + FLUX 폴백 모드로 실행"
+          fi
+
       - name: Run Automated Pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -62,9 +77,15 @@ jobs:
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
           GDRIVE_BGM_FOLDER_ID: ${{ secrets.GDRIVE_BGM_FOLDER_ID }}
-          IMAGE_ENGINE: gemini
-          GEMINI_IMAGE_MODEL: gemini-2.5-flash-image
-          USE_GOOGLE_FLOW: 'false'
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          FLOW_STORAGE_STATE_B64: ${{ secrets.FLOW_STORAGE_STATE_B64 }}
+          USE_GOOGLE_FLOW: ${{ secrets.FLOW_STORAGE_STATE_B64 != '' && 'true' || 'false' }}
+          FLOW_HEADLESS: 'true'
+          FLOW_MODEL: 'Gemini Omni'
+          IMAGE_ENGINE: flux
+          REUSE_FLOW_FOR_CTA: 'true'
+          VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'auto' }}
           # 훅(제목/훅/씬1 음성)에서 출생연도·띠, MBTI 4글자 호명 금지 (ig-audit: 정체성 호명 훅은 조회가 낮았음)
           HOOK_BAN_BIRTHYEAR: 'true'
           HOOK_BAN_MBTI: 'true'

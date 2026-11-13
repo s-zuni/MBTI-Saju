@@ -210,19 +210,42 @@ SYSTEM_PROMPT = """
 
 from pipeline.text_utils import make_title_inclusive, sanitize_title
 from pipeline.topic_planner import _fit_title
+from pipeline.visual_theme import (
+    build_llm_visual_instruction,
+    enforce_scene_visual_consistency,
+    resolve_visual_theme,
+)
 
 
-def generate_script(topic: str, model_name: Optional[str] = None) -> ReelsScript:
+def generate_script(
+    topic: str,
+    model_name: Optional[str] = None,
+    visual_theme: Optional[str] = None,
+) -> ReelsScript:
     """
     주제(topic)를 받아 Gemini를 통해 구조화된 ReelsScript 객체를 반환합니다.
     """
-    prompt = f"다음 주제에 대해 인스타그램 릴스 대본을 기획해주세요:\n\n주제: {topic}"
+    resolved_theme = (
+        visual_theme.strip().lower()
+        if visual_theme and visual_theme.strip().lower() in ("human", "animal")
+        else resolve_visual_theme(visual_theme, consume_queue=False)
+    )
+    visual_rule = build_llm_visual_instruction(resolved_theme)
+    prompt = (
+        f"다음 주제에 대해 인스타그램 릴스 대본을 기획해주세요:\n\n"
+        f"주제: {topic}\n"
+        f"비주얼 컨셉({resolved_theme.upper()}): {visual_rule}"
+    )
 
     script = generate_json(SYSTEM_PROMPT, prompt, ReelsScript, temperature=0.7, model_name=model_name)
 
     def _enforce_cta(sc: ReelsScript) -> ReelsScript:
+        from pipeline.flow_automation import is_flow_enabled
+        from pipeline.visual_gen import _video_hook_count
+
+        video_limit = _video_hook_count(is_flow_enabled())
         for idx, s in enumerate(sc.scenes):
-            s.media_type = "video" if idx < 2 else "image"
+            s.media_type = "video" if idx < video_limit else "image"
         is_fortune = any(w in (topic + " " + sc.title) for w in ["사주", "운명", "운세", "타로", "신점", "자미두수", "궁합", "도화살", "대운"])
         if is_fortune:
             try:
@@ -244,20 +267,24 @@ def generate_script(topic: str, model_name: Optional[str] = None) -> ReelsScript
             else:
                 sc.instagram_caption = f"{sc.instagram_caption.strip()}\n\n{caption_cta}"
         sc.title = _fit_title(make_title_inclusive(sc.title), limit=22)
+        enforce_scene_visual_consistency(sc.scenes, resolved_theme)
         return sc
 
     return _enforce_cta(script)
 
-    return _enforce_cta(script)
 
-
-def create_sample_script(topic: str) -> ReelsScript:
+def create_sample_script(topic: str, visual_theme: Optional[str] = None) -> ReelsScript:
     """
     API 키가 없거나 테스트/오프라인 환경일 때 파이프라인 전체 동작을 검증하기 위한 샘플 대본입니다.
     """
+    resolved_theme = (
+        visual_theme.strip().lower()
+        if visual_theme and visual_theme.strip().lower() in ("human", "animal")
+        else resolve_visual_theme(visual_theme, consume_queue=False)
+    )
     fixed_cta = "댓글에 사주라고 남기거나 프로필 링크에서 삼십 초 만에 내 일간을 무료로 확인해보세요!"
     caption_cta = "💬 댓글에 [사주] 남기거나\n👉 프로필 링크에서 가입 없이 30초 무료 체험으로 내 일간부터 확인하세요!"
-    return ReelsScript(
+    sample = ReelsScript(
         title=f"{topic}"[:16],
         hook="여기서 세 개 이상 맞으면 사주에 도화살이 낀 사람입니다.",
         scenes=[
@@ -303,6 +330,8 @@ def create_sample_script(topic: str) -> ReelsScript:
 
 #사주 #MBTI #도화살 #운세 #연애심리 #병오년운세 #사주풀이 #릴스"""
     )
+    enforce_scene_visual_consistency(sample.scenes, resolved_theme)
+    return sample
 
 
 if __name__ == "__main__":

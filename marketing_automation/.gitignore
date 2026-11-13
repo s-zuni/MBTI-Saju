@@ -55,6 +55,8 @@ Desktop.ini
 
 # Chrome profile & temporary scratch
 assets/chrome_flow_profile/
+assets/flow_storage_state.json
+assets/flow_storage_state.b64.txt
 assets/videos/*
 !assets/videos/.gitkeep
 assets/test_flux/

@@ -43,6 +43,7 @@ from pipeline.text_utils import sanitize_narration, sanitize_title
 from pipeline.tts_engine import generate_speech, FullAudioResult, LAST_TTS_INFO
 from pipeline.cta import has_share_line, infer_cta_kind, detect_cta_kind, adapt_caption_for_youtube
 from pipeline.visual_gen import generate_scene_images
+from pipeline.visual_theme import resolve_visual_theme, enforce_scene_visual_consistency
 from pipeline.composer import compose_reels_video
 from pipeline.gdrive_uploader import upload_reels_assets_to_drive
 from pipeline.insta_publisher import publish_reel_to_instagram, publish_carousel_to_instagram
@@ -67,12 +68,16 @@ def run_pipeline(
     output_path: str = "assets/output/final_reel.mp4",
     youtube_schedule_kst: Optional[str] = "18:30",
     publish_gate=None,
+    visual_theme: Optional[str] = None,
 ) -> dict:
     """인스타그램 릴스 및 유튜브 숏츠 생성/배포 파이프라인 전체를 원스톱으로 실행합니다."""
     start_total_time = time.time()
+    chosen_theme = resolve_visual_theme(visual_theme, consume_queue=True)
+    theme_desc = "ANIMAL (20% 고정 캐릭터 동물 짤)" if chosen_theme == "animal" else "HUMAN (80% 실제 사람 일상 공감)"
     print("\n" + "=" * 65)
     print("🚀 MBTI × 사주 인스타그램 릴스 & 유튜브 숏츠 자동 생성 파이프라인 시작")
     print(f"📌 시리즈: {series} | {topic or mbti or element}")
+    print(f"🎨 비주얼 컨셉: {theme_desc}")
     print("=" * 65)
 
     if not check_ffmpeg():
@@ -84,28 +89,30 @@ def run_pipeline(
     try:
         if mock_script:
             print("  ℹ️  --mock-script 모드")
-            script: ReelsScript = create_sample_script(topic or f"{series} {mbti}")
+            script: ReelsScript = create_sample_script(topic or f"{series} {mbti}", visual_theme=chosen_theme)
         elif series != "GENERAL":
-            ctx = {}
+            ctx = {"visual_theme": chosen_theme}
             if series == "MBTI":
-                ctx = {"mbti": mbti}
+                ctx["mbti"] = mbti
                 if topic:
                     ctx["topic"] = topic
             elif series in ("DAILY", "ELEMENT"):
-                ctx = {"element": element}
+                ctx["element"] = element
                 if topic:
                     ctx["topic"] = topic
             elif series in ("LOVE", "CAREER", "SAJU", "SHINJEOM", "JAMIDOSU", "TAROT"):
-                ctx = {"topic": topic or f"{series} 운세"}
+                ctx["topic"] = topic or f"{series} 운세"
             if trend_hint:
                 ctx["trend_hint"] = trend_hint
             script: ReelsScript = generate_mbti_saju_script(series=series, context=ctx)
         else:
-            script: ReelsScript = generate_script(topic)
+            script: ReelsScript = generate_script(topic, visual_theme=chosen_theme)
         print(f"  ✅ 대본 생성 완료 ({time.time() - t0:.1f}초) | {script.title}")
     except Exception as e:
         print(f"  ⚠️ 대본 생성 실패 ({e}). 폴백 대본 사용.")
-        script = create_sample_script(topic or f"{series} {mbti}")
+        script = create_sample_script(topic or f"{series} {mbti}", visual_theme=chosen_theme)
+
+    enforce_scene_visual_consistency(script.scenes, chosen_theme)
 
     # 한자가 섞여 있으면 TTS가 한글+한자를 중복 발음(예: "토(土)"->"토토")하므로
     # 나레이션에서 한자를 제거합니다. (제목/캡션은 시각 요소이므로 그대로 유지)
@@ -122,6 +129,7 @@ def run_pipeline(
         "scenes": n_scenes, "scene_bucket": "<=6" if n_scenes <= 6 else ("7-8" if n_scenes <= 8 else "9+"),
         "avg_chars_per_scene": avg_chars, "share_cta": has_share_line(script.scenes),
         "cta_kind": detect_cta_kind(script.scenes, default=infer_cta_kind(series, topic or script.title)),
+        "visual_theme": chosen_theme,
     }
     variant.update(classify_hook(script.hook or script.title))  # 훅 공식/용어 유무/길이 기록(ig-audit 비교용)
 
@@ -134,14 +142,22 @@ def run_pipeline(
                    tts_voice=LAST_TTS_INFO.get("voice", ""), duration_s=round(audio_result.total_duration, 1))
 
     # 3. 비주얼 생성
-    print("\n[3/7] 🎨 하이브리드 비주얼(영상+이미지) 생성 및 상단 제목 릴스 프레임 합성 중...")
+    print("\n[3/7] 🎨 Flow 우선 비주얼 생성(Gemini 미디어 API 최소화) 및 상단 제목 릴스 프레임 합성 중...")
     if mock_images:
         print("  ⚠️ [--mock-images 활성화] 실제 AI 사진 생성을 건너뛰고 단색 플레이스홀더를 사용합니다.")
     else:
-        engine = os.getenv("IMAGE_ENGINE", "gemini").upper()
-        print(f"  ✨ 실제 맞춤 비주얼 생성 모드로 실행합니다. (엔진: {engine})")
+        flow_on = _env_flag("USE_GOOGLE_FLOW")
+        allow_gemini_media = _env_flag("ALLOW_GEMINI_MEDIA_API")
+        fallback_engine = os.getenv("IMAGE_ENGINE", "flux").upper()
+        print(
+            f"  ✨ 비주얼 정책: Flow={'ON (전 본문 씬 우선)' if flow_on else 'OFF'} | "
+            f"Gemini 이미지/Veo API={'허용' if allow_gemini_media else '차단(0원 모드)'} | "
+            f"폴백={fallback_engine}"
+        )
     t0 = time.time()
-    visual_result = generate_scene_images(script.scenes, force_mock=mock_images, title=script.title)
+    visual_result = generate_scene_images(
+        script.scenes, force_mock=mock_images, title=script.title, visual_theme=chosen_theme
+    )
     image_paths = visual_result.image_paths
     variant["video_scenes"] = len(visual_result.video_paths)
     print(f"  ✅ 비주얼 준비 완료 ({time.time() - t0:.1f}초)")
@@ -294,6 +310,7 @@ def run_pipeline(
         "video_scene_count": len(visual_result.video_paths),
         "total_scene_count": len(image_paths),
         "publish_blocked": block_publish,
+        "visual_theme": chosen_theme,
     }
 
 
@@ -420,6 +437,8 @@ def main():
                         help="출력 영상 파일 경로")
     parser.add_argument("--format", type=str, default="reel", choices=["reel", "carousel"],
                         help="콘텐츠 포맷 (reel: 릴스/숏츠, carousel: 인스타 캐러셀)")
+    parser.add_argument("--visual-theme", type=str, default="auto", choices=["auto", "human", "animal"],
+                        help="비주얼 컨셉 (auto: 8:2 자동 비율, human: 실제 사람 공감, animal: 고정 동물 캐릭터)")
 
     args = parser.parse_args()
 
@@ -461,7 +480,8 @@ def main():
         publish_insta=not args.no_insta,
         publish_youtube=not args.no_youtube,
         output_path=args.output,
-        youtube_schedule_kst=args.youtube_schedule_kst
+        youtube_schedule_kst=args.youtube_schedule_kst,
+        visual_theme=args.visual_theme,
     )
 
 

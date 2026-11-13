@@ -48,15 +48,19 @@ class ImageGenResult:
         return len(self.placeholder_scene_ids)
 
 
-def extract_first_frame_from_video(video_path: Path, output_jpg_path: Path) -> bool:
-    """비디오 에셋에서 첫 번째 프레임(9:16 1080x1920 풀스크린)을 추출하여 베이스 이미지로 저장합니다."""
+def extract_first_frame_from_video(
+    video_path: Path,
+    output_jpg_path: Path,
+    seek_sec: str = "0.15",
+) -> bool:
+    """비디오 에셋에서 지정 시점 프레임(9:16 1080x1920 풀스크린)을 추출하여 베이스 이미지로 저장합니다."""
     try:
         from utils.ffmpeg_check import get_ffmpeg_path
         ffmpeg_bin = get_ffmpeg_path() or "ffmpeg"
         output_jpg_path.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             ffmpeg_bin, "-y",
-            "-ss", "0.15",
+            "-ss", str(seek_sec),
             "-i", str(video_path),
             "-frames:v", "1",
             "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
@@ -262,17 +266,21 @@ REALISM_SUFFIX = (
 )
 
 
-def generate_with_gemini_nanobanana(prompt: str, output_path: Path, retries: int = 2) -> bool:
+def generate_with_gemini_nanobanana(
+    prompt: str,
+    output_path: Path,
+    retries: int = 2,
+    visual_theme: Optional[str] = None,
+) -> bool:
     """Gemini 2.5 Flash Image ("나노바나나") 모델로 9:16 세로형 풀스크린 초고화질 이미지를 생성합니다."""
     api_key = os.getenv("GEMINI_API_KEY", "")
     if not api_key or api_key.startswith("your_"):
         return False
 
+    from pipeline.visual_theme import format_image_prompt
+
     model_name = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
-    clean_prompt = prompt.replace("\n", " ").strip()
-    enhanced_prompt = (
-        f"{clean_prompt}. {REALISM_SUFFIX}"
-    )
+    enhanced_prompt = format_image_prompt(prompt, visual_theme)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     for attempt in range(1, retries + 1):
@@ -317,13 +325,19 @@ def generate_with_gemini_nanobanana(prompt: str, output_path: Path, retries: int
     return False
 
 
-def generate_with_pollinations_flux(prompt: str, output_path: Path, retries: int = 3) -> bool:
+def generate_with_pollinations_flux(
+    prompt: str,
+    output_path: Path,
+    retries: int = 3,
+    visual_theme: Optional[str] = None,
+) -> bool:
     """
     Pollinations FLUX.1 엔진을 사용하여 고화질 9:16 세로형(1080x1920) 이미지를 생성합니다.
     """
+    from pipeline.visual_theme import format_image_prompt
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    clean_prompt = prompt.replace("\n", " ").strip()
-    enhanced_prompt = f"{clean_prompt}. {REALISM_SUFFIX}"
+    enhanced_prompt = format_image_prompt(prompt, visual_theme)
     encoded = requests.utils.quote(enhanced_prompt)
     url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1920&nologo=true&model=flux"
 
@@ -351,13 +365,13 @@ def generate_with_vertex_imagen(
     location: str = "us-central1",
     model_name: str = "gemini-2.5-flash-image",
     retries: int = 2,
+    visual_theme: Optional[str] = None,
 ) -> bool:
     """Vertex AI API를 이용해 고화질 9:16 세로 이미지를 생성합니다."""
+    from pipeline.visual_theme import format_image_prompt
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    clean_prompt = prompt.replace("\n", " ").strip()
-    enhanced_prompt = (
-        f"{clean_prompt}. {REALISM_SUFFIX}"
-    )
+    enhanced_prompt = format_image_prompt(prompt, visual_theme)
 
     for attempt in range(1, retries + 1):
         try:
@@ -439,13 +453,56 @@ def create_aesthetic_placeholder(scene_id: int, narration: str, output_path: Pat
     base.save(output_path, "JPEG", quality=95)
 
 
-def _should_use_video_for_scene(scene_id: int, sc: object) -> bool:
+def _allow_gemini_media_api() -> bool:
     """
-    해당 씬에 비디오 클립(Google Flow / Pexels 무료 스톡 / Veo)을 시도할지 결정합니다.
-    - VIDEO_HOOK_SCENES 환경변수(기본 2): 초반 1~2씬(첫 3~5초 훅)은 비디오 소스를 우선 탐색.
-    - 또는 씬 객체의 media_type == "video" 인 경우.
+    Gemini 이미지(gemini-2.5-flash-image) / Vertex Imagen 유료·한도 API 호출 허용 여부.
+    Flow 우선·Gemini API 최소화 정책에 따라 기본값은 False이며,
+    반드시 ALLOW_GEMINI_MEDIA_API=true 가 명시된 경우에만 호출합니다.
     """
-    hook_count = int(os.getenv("VIDEO_HOOK_SCENES", "2"))
+    return os.getenv("ALLOW_GEMINI_MEDIA_API", "").strip().lower() in ("1", "true", "yes")
+
+
+def _reuse_flow_for_cta() -> bool:
+    """마지막 CTA 씬에 별도 영상/이미지를 새로 생성하지 않고 앞선 Flow 에셋을 재활용할지 여부 (기본 True)."""
+    raw = os.getenv("REUSE_FLOW_FOR_CTA", "true").strip().lower()
+    return raw not in ("0", "false", "no")
+
+
+def _is_cta_scene(idx: int, total_scenes: int, narration: str) -> bool:
+    if total_scenes < 2 or idx != total_scenes - 1:
+        return False
+    narr = narration or ""
+    return any(k in narr for k in ("프로필 링크", "댓글에", "카톡", "무료로 확인"))
+
+
+def _video_hook_count(flow_enabled: bool) -> int:
+    raw = os.getenv("VIDEO_HOOK_SCENES", "").strip()
+    if raw:
+        try:
+            return max(int(raw), 0)
+        except ValueError:
+            pass
+    # Flow 활성화 시 CTA를 제외한 전 씬에 Flow 영상 사용을 극대화 (미활성화 시 기존 2씬)
+    return 99 if flow_enabled else 2
+
+
+def _should_use_video_for_scene(
+    scene_id: int,
+    sc: object,
+    idx: int = 0,
+    total_scenes: int = 0,
+    flow_enabled: bool = False,
+) -> bool:
+    """
+    해당 씬에 비디오 클립(Google Flow / Pexels 무료 스톡)을 시도할지 결정합니다.
+    - CTA 마지막 씬은 REUSE_FLOW_FOR_CTA=true(기본)이면 별도 생성 없이 기존 Flow 클립을 재활용합니다.
+    - USE_GOOGLE_FLOW=true 이면 VIDEO_HOOK_SCENES 미지정 시 전 씬(99)에 Flow 비디오 생성을 시도합니다.
+    """
+    narration = getattr(sc, "narration", sc.get("narration") if isinstance(sc, dict) else "")
+    if _reuse_flow_for_cta() and _is_cta_scene(idx, total_scenes, str(narration)):
+        return False
+
+    hook_count = _video_hook_count(flow_enabled)
     media_type = getattr(sc, "media_type", sc.get("media_type") if isinstance(sc, dict) else "")
     if str(media_type).lower() == "video":
         return True
@@ -456,11 +513,13 @@ def generate_scene_images(
     scenes: list,
     output_dir: Optional[str | Path] = None,
     force_mock: bool = False,
-    title: str = "릴스 주제"
+    title: str = "릴스 주제",
+    visual_theme: Optional[str] = None,
 ) -> "ImageGenResult":
     """
-    씬 리스트의 visual_prompt를 바탕으로 하이브리드 비주얼(초반 핵심 훅 영상 + 16:9 고화질 이미지)을 생성한 후
-    상단 제목+중앙 16:9 릴스 프레임(1080x1920)으로 합성합니다.
+    씬 리스트의 visual_prompt를 바탕으로 Flow 우선 하이브리드 비주얼(영상 + 무료 폴백)을 생성한 후
+    9:16 풀스크린 릴스 프레임(1080x1920)으로 합성합니다.
+    (Gemini 이미지/영상 API는 ALLOW_GEMINI_MEDIA_API=true 가 아니면 호출하지 않습니다.)
     """
     if output_dir is None:
         output_dir = Path("assets/images")
@@ -478,25 +537,57 @@ def generate_scene_images(
             except Exception:
                 pass
 
+    from pipeline.flow_automation import (
+        acquire_scene_videos_batch,
+        generate_with_google_flow_browser,
+        is_flow_enabled,
+    )
+    from pipeline.visual_theme import enforce_scene_visual_consistency
+
+    flow_enabled = is_flow_enabled()
+    allow_gemini_media = _allow_gemini_media_api()
+
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
     location = os.getenv("GCP_LOCATION", "us-central1")
     model_name = os.getenv("VERTEX_IMAGE_MODEL") or os.getenv("IMAGEN_MODEL") or "gemini-2.5-flash-image"
     sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-    can_use_vertex = (not force_mock) and bool(project_id) and bool(sa_path and os.path.isfile(sa_path))
+    can_use_vertex = allow_gemini_media and (not force_mock) and bool(project_id) and bool(sa_path and os.path.isfile(sa_path))
 
     gemini_api_key = os.getenv("GEMINI_API_KEY", "")
-    can_use_nanobanana = bool(gemini_api_key and not gemini_api_key.startswith("your_"))
+    can_use_nanobanana = allow_gemini_media and bool(gemini_api_key and not gemini_api_key.startswith("your_"))
 
-    # Gemini API Key가 있으면 고품질 무워터마크 맞춤 사진을 위해 Gemini 나노바나나를 기본 엔진으로 사용
-    default_engine = "gemini" if can_use_nanobanana else "flux"
+    # Gemini API 최소화: 기본 이미지 엔진은 무료 FLUX(또는 Flow 우선)로 설정
+    default_engine = "gemini" if allow_gemini_media and can_use_nanobanana else "flux"
     engine_preference = os.getenv("IMAGE_ENGINE", default_engine).lower().strip()
+    if engine_preference in ("gemini", "nanobanana") and not allow_gemini_media:
+        engine_preference = "flux"
+
     result = ImageGenResult()
-    print(f"[VISUAL] 총 {len(scenes)}개 씬 하이브리드 비주얼(영상+이미지) 생성 및 프레임 합성 시작 (기본 엔진: {engine_preference})...")
 
-    from pipeline.flow_automation import acquire_scene_video, generate_with_google_flow_browser
+    if visual_theme == "animal":
+        enforce_scene_visual_consistency(scenes, "animal")
 
-    for sc in scenes:
-        scene_id = getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else 1)
+    theme_label = (visual_theme or "auto").upper()
+    policy_note = "Gemini Media API 차단(Flow+무료소스만 사용)" if not allow_gemini_media else "Gemini Media API 허용"
+    print(
+        f"[VISUAL] 총 {len(scenes)}개 씬 비주얼 생성 시작 "
+        f"(컨셉={theme_label}, Flow={'ON' if flow_enabled else 'OFF'}, 정책={policy_note}, 폴백엔진={engine_preference})..."
+    )
+
+    total_scenes = len(scenes)
+    batch_videos: Dict[int, Path] = {}
+    if not force_mock:
+        video_tasks = []
+        for idx, sc in enumerate(scenes):
+            scene_id = getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1)
+            prompt = getattr(sc, "visual_prompt", sc.get("visual_prompt") if isinstance(sc, dict) else "")
+            if _should_use_video_for_scene(scene_id, sc, idx=idx, total_scenes=total_scenes, flow_enabled=flow_enabled):
+                video_tasks.append((scene_id, prompt))
+        if video_tasks:
+            batch_videos = acquire_scene_videos_batch(video_tasks, video_dir, visual_theme=visual_theme)
+
+    for idx, sc in enumerate(scenes):
+        scene_id = getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1)
         narration = getattr(sc, "narration", sc.get("narration") if isinstance(sc, dict) else "")
         prompt = getattr(sc, "visual_prompt", sc.get("visual_prompt") if isinstance(sc, dict) else "")
 
@@ -504,45 +595,64 @@ def generate_scene_images(
         generated = False
 
         if not force_mock:
-            # 0. 하이브리드 영상 씬(초반 훅 씬 등): Google Flow 브라우저 자동화 또는 Pexels 무료 HD 영상 우선 확보
-            if _should_use_video_for_scene(scene_id, sc):
-                vid_path = acquire_scene_video(scene_id, prompt, video_dir)
-                if vid_path and vid_path.is_file():
-                    result.video_paths[scene_id] = str(vid_path.resolve())
-                    # 영상 첫 프레임을 추출하여 베이스 프레임 이미지로 활용 (API 호출 비용 절약!)
-                    if extract_first_frame_from_video(vid_path, img_path):
+            # 0. 배치 확보된 Flow / 무료 스톡 비디오 클립 연결
+            vid_path = batch_videos.get(scene_id)
+            if vid_path and vid_path.is_file():
+                result.video_paths[scene_id] = str(vid_path.resolve())
+                if extract_first_frame_from_video(vid_path, img_path):
+                    generated = True
+                    print(f"  🎬 씬 {scene_id} 하이브리드 비디오 클립 연결 완료 -> {vid_path.name}")
+
+            # 0-a. 마지막 CTA 씬은 추가 API/Flow 크레딧 없이 앞선 Flow 비디오 클립을 재활용
+            if (
+                not generated
+                and _reuse_flow_for_cta()
+                and _is_cta_scene(idx, total_scenes, str(narration))
+                and result.video_paths
+            ):
+                donor_id = sorted(result.video_paths.keys())[-1]
+                donor_vid = Path(result.video_paths[donor_id])
+                if donor_vid.is_file():
+                    result.video_paths[scene_id] = str(donor_vid.resolve())
+                    if extract_first_frame_from_video(donor_vid, img_path, seek_sec="1.50") or extract_first_frame_from_video(donor_vid, img_path):
                         generated = True
-                        print(f"  🎬 씬 {scene_id} 하이브리드 비디오 클립 연결 완료 -> {vid_path.name}")
+                        print(f"  ♻️ 씬 {scene_id} (CTA) 앞선 Flow 비디오 재활용 완료 -> {donor_vid.name} (API 호출 0회)")
 
-            # 0-b. Google Flow 이미지 모드 지원 (USE_GOOGLE_FLOW=true 인데 비디오가 아닌 이미지 씬인 경우)
-            if not generated and os.getenv("USE_GOOGLE_FLOW_IMAGES", "").strip().lower() in ("1", "true", "yes"):
-                generated = generate_with_google_flow_browser(prompt, img_path, asset_type="image")
+            # 0-b. Google Flow 이미지 모드 (USE_GOOGLE_FLOW=true & USE_GOOGLE_FLOW_IMAGES=true)
+            if not generated and flow_enabled and os.getenv("USE_GOOGLE_FLOW_IMAGES", "").strip().lower() in ("1", "true", "yes"):
+                generated = generate_with_google_flow_browser(prompt, img_path, asset_type="image", visual_theme=visual_theme)
 
-            # 1. Gemini 나노바나나 우선 모드 (초고화질 실사 맞춤 사진, 무워터마크)
-            if not generated and engine_preference in ("gemini", "nanobanana"):
+            # 1. 무료 FLUX 우선 또는 허용된 경우에만 Gemini Media API 폴백
+            if not generated and engine_preference in ("gemini", "nanobanana") and allow_gemini_media:
                 if can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path)
+                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
                 if not generated:
-                    generated = generate_with_pollinations_flux(prompt, img_path)
+                    generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
                 if not generated and can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name)
+                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
 
-            # 2. FLUX 우선 모드 (비용 0원, 실패 시 Gemini 폴백)
             elif not generated and engine_preference == "flux":
-                generated = generate_with_pollinations_flux(prompt, img_path)
+                generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
                 if not generated and can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path)
+                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
                 if not generated and can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name)
+                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
 
-            # 3. 기타 또는 Vertex Imagen 우선 모드
             elif not generated:
                 if can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name)
+                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
                 if not generated and can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path)
+                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
                 if not generated:
-                    generated = generate_with_pollinations_flux(prompt, img_path)
+                    generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
+
+            # 2. 무료 소스도 일시 실패했고 Gemini API가 차단된 상태면, 이미 확보한 Flow 영상 프레임을 재활용
+            if not generated and result.video_paths:
+                donor_ids = sorted(result.video_paths.keys())
+                donor_vid = Path(result.video_paths[donor_ids[idx % len(donor_ids)]])
+                if donor_vid.is_file() and extract_first_frame_from_video(donor_vid, img_path, seek_sec=f"{1.0 + (idx % 3) * 0.8:.2f}"):
+                    generated = True
+                    print(f"  ♻️ 씬 {scene_id} 기존 Flow 영상 프레임 재활용 (Gemini API 0회)")
 
         if not generated:
             print(f"  [VISUAL] 씬 {scene_id} 9:16 플레이스홀더 생성")

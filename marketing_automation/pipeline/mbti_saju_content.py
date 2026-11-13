@@ -15,6 +15,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from pipeline.script_gen import ReelsScript, Scene, generate_json
 from pipeline.text_utils import sanitize_title
+from pipeline.visual_theme import (
+    build_llm_visual_instruction,
+    enforce_scene_visual_consistency,
+    resolve_visual_theme,
+)
 
 MBTI_TYPES = ["INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP","ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"]
 MBTI_KEYWORDS = {
@@ -133,10 +138,19 @@ def _enforce_plain_hook(script: ReelsScript, topic: str = "") -> ReelsScript:
     return script
 
 
-def _enforce_shortform_cta(script: ReelsScript, series: str = "", topic: str = "") -> ReelsScript:
-    """숏폼(릴스, 숏츠)의 초반 씬 media_type 지정 및 마지막 씬 내레이션·캡션에 고전환 3중 CTA를 적용합니다."""
+def _enforce_shortform_cta(
+    script: ReelsScript,
+    series: str = "",
+    topic: str = "",
+    visual_theme: str = "human",
+) -> ReelsScript:
+    """숏폼(릴스, 숏츠)의 씬별 media_type 지정(Flow 활성화 시 전 본문 씬 video) 및 마지막 씬 CTA를 적용합니다."""
+    from pipeline.flow_automation import is_flow_enabled
+    from pipeline.visual_gen import _video_hook_count
+
+    video_limit = _video_hook_count(is_flow_enabled())
     for idx, sc in enumerate(script.scenes):
-        sc.media_type = "video" if idx < 2 else "image"
+        sc.media_type = "video" if idx < video_limit else "image"
 
     # 영상마다 자연스럽게 순환하는 고전환 CTA 멘트 적용
     try:
@@ -151,6 +165,9 @@ def _enforce_shortform_cta(script: ReelsScript, series: str = "", topic: str = "
             script.scenes[-1].narration = chosen_short_cta
             if script.scenes[-1].duration_estimate < 3:
                 script.scenes[-1].duration_estimate = 4
+
+    # CTA 씬 추가 이후 전체 씬의 비주얼 테마(특히 animal 모드의 고정 캐릭터 일관성) 강제 보정
+    enforce_scene_visual_consistency(script.scenes, visual_theme)
 
     # 기존 일반 멘트가 있다면 고전환 멘트로 교체
     script.instagram_caption = script.instagram_caption.replace(FIXED_CAPTION_CTA, "").strip()
@@ -184,26 +201,29 @@ def _enforce_shortform_cta(script: ReelsScript, series: str = "", topic: str = "
 
 def generate_mbti_saju_script(series: str, context: Optional[dict] = None, model_name: Optional[str] = None) -> ReelsScript:
     if context is None: context = {}
+    raw_theme = str(context.get("visual_theme", "")).strip().lower()
+    visual_theme = raw_theme if raw_theme in ("human", "animal") else resolve_visual_theme(raw_theme or None, consume_queue=False)
+    visual_rule = build_llm_visual_instruction(visual_theme)
     system_prompt = build_series_prompt(series, context)
     user_prompt = f"""인스타그램 100만 바이럴 릴스 대본 JSON을 작성하세요.
-시리즈: {series} | 컨텍스트: {json.dumps(context, ensure_ascii=False)}
+시리즈: {series} | 비주얼 컨셉: {visual_theme.upper()} | 컨텍스트: {json.dumps(context, ensure_ascii=False)}
 JSON 스키마:
 - title: 릴스 화면 상단 제목 (14~20자 완성된 훅 제목. INFP 등 특정 MBTI 4글자나 을목 등 특정 사주 일간 직접 지칭 절대 금지! 누구나 호기심을 갖도록 '사람 특징', 'MBTI', '사주' 등 포괄적 대중 언어 사용. 결핍·궁금증 자극, 말 끊김 금지, 한자 절대 금지)
 - hook: 초반 2초 후킹 대사 (사주 전문 용어 금지, 일상 장면으로)
 - scenes: 씬 리스트 3~4개 (뒤에 시스템이 초고속 CTA 씬 1개를 자동 추가하여 총 4~5씬, 15~18초 완주율 100%+ 완성)
   * scene_id: 1부터 순차 증가
   * narration: 한국어 구어체, 한 씬 = 한 문장(공백 포함 20~35자, 한자 절대 금지, 1.5~2.5초 분량)
-  * visual_prompt: 영문, Vertical 9:16 세로 풀스크린 구도. 감성적이고 시네마틱한 조명(어두운 밤, 은은한 조명, 미스틱한 보케, 네온, 도시 야경 등)과 자연스러운 한국 2030의 일상 장면. 씬 1~2는 영상(video) 클립용으로 미세한 움직임(looking at smartphone, turning head, deep breathing)을 묘사. no text, no watermark, no CGI, no cartoon.
+  * visual_prompt: {visual_rule}
   * duration_estimate: 2~3초
   * media_type: 씬 1~2는 "video", 씬 3 이후는 "image"
   * 마지막 씬 narration은 반전/핵심 사주 원인 한 줄로 마무리 (프로필 링크/댓글 CTA 문장은 시스템이 뒤에 자동으로 붙이므로 직접 쓰지 말 것)
 - instagram_caption: 공감 요약 + 이모지 + 인기 해시태그 10개 이상 (CTA 문구는 시스템이 자동 삽입)"""
     try:
         script = generate_json(system_prompt, user_prompt, ReelsScript, temperature=0.8, model_name=model_name)
-        return _enforce_shortform_cta(script, series, str(context.get("topic", "")))
+        return _enforce_shortform_cta(script, series, str(context.get("topic", "")), visual_theme=visual_theme)
     except Exception as e:
         print(f"[WARNING] LLM 대본 생성 실패 ({e}). 폴백 대본 사용.")
-        return _enforce_shortform_cta(_fallback(series, context), series, str(context.get("topic", "")))
+        return _enforce_shortform_cta(_fallback(series, context), series, str(context.get("topic", "")), visual_theme=visual_theme)
 
 
 def _fallback(series: str, context: dict) -> ReelsScript:

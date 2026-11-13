@@ -20,7 +20,7 @@ import time
 import json
 import requests
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple, Set
 from dotenv import load_dotenv
 
 if sys.platform == "win32":
@@ -51,10 +51,21 @@ _STOPWORDS = {
 }
 
 
-def extract_video_search_query(visual_prompt: str, fallback: str = "dark aesthetic night moon candle moody") -> str:
+from pipeline.visual_theme import detect_theme_from_prompt, format_flow_prompt
+
+
+def extract_video_search_query(
+    visual_prompt: str,
+    fallback: str = "dark aesthetic night moon candle moody",
+    visual_theme: Optional[str] = None,
+) -> str:
     """
     긴 AI 이미지 프롬프트에서 Pexels/Pixabay 검색에 적합한 핵심 키워드 3~4개를 추출합니다.
+    동물 모드('animal')일 때는 일관된 캐릭터 톤 유지를 위해 고정 동물 검색어를 반환합니다.
     """
+    if detect_theme_from_prompt(visual_prompt, visual_theme) == "animal":
+        return "cute british shorthair cat kitten"
+
     words = re.findall(r"[a-zA-Z]+", (visual_prompt or "").lower())
     filtered = [w for w in words if len(w) > 2 and w not in _STOPWORDS]
     if not filtered:
@@ -206,62 +217,282 @@ def _launch_persistent_browser(p, profile_dir: Path, headless: bool = False):
     )
 
 
-def generate_with_google_flow_browser(
-    prompt: str,
-    output_path: Path,
-    asset_type: str = "video",
-    timeout_sec: int = 150,
-) -> bool:
-    """
-    Playwright를 통해 구글 제미나이 Flow (https://flow.google.com / https://labs.google/fx/ko/tools/flow)에 접속하여
-    주제/장면에 맞는 고화질 Veo 영상 또는 Imagen 이미지 소스를 자동 생성 후 다운로드합니다.
-    """
-    use_flow = os.getenv("USE_GOOGLE_FLOW", "").strip().lower() in ("1", "true", "yes")
-    if not use_flow:
+def is_flow_enabled() -> bool:
+    """Google Flow 브라우저 자동화 활성화 여부를 반환합니다."""
+    return os.getenv("USE_GOOGLE_FLOW", "").strip().lower() in ("1", "true", "yes")
+
+
+def _collect_media_srcs(page, tag: str = "video") -> Set[str]:
+    """현재 페이지 DOM에 로드된 <video>/<img> 요소의 src 집합을 수집합니다."""
+    srcs: Set[str] = set()
+    try:
+        for el in page.locator(tag).all():
+            try:
+                src = el.get_attribute("src") or ""
+                if src:
+                    srcs.add(src)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return srcs
+
+
+def _focus_newest_media_card(page, before_srcs: Set[str], tag: str = "video") -> bool:
+    """새로 생성된 미디어 카드(또는 기본 캔버스 상단 카드)를 클릭해 컨트롤 바를 엽니다."""
+    try:
+        elements = page.locator(tag).all()
+        for el in reversed(elements):
+            try:
+                src = el.get_attribute("src") or ""
+                if (src and src not in before_srcs) or (not before_srcs and el.is_visible()):
+                    el.scroll_into_view_if_needed()
+                    el.click(timeout=2000)
+                    page.wait_for_timeout(1200)
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    try:
+        page.mouse.click(320, 220)
+        page.wait_for_timeout(1500)
+    except Exception:
+        pass
+    return False
+
+
+def _trigger_flow_download(page, output_path: Path, asset_type: str) -> bool:
+    """Flow 컨트롤 바의 다운로드 버튼을 눌러 파일 저장을 완료합니다."""
+    dl_btn = page.locator(
+        "button[aria-label='미디어 다운로드'], button[aria-label*='다운로드'], button:has-text('download')"
+    ).first
+    if dl_btn.count() <= 0 or not dl_btn.is_visible():
         return False
 
     try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("    [FLOW][INFO] playwright 패키지가 설치되지 않아 브라우저 자동화를 건너뜁니다. (pip install playwright)")
-        return False
+        if asset_type == "image":
+            # 이미지 다운로드 버튼 클릭 시 바로 다운로드가 시작되는 경우와 메뉴가 열리는 경우 모두 대응
+            try:
+                with page.expect_download(timeout=8_000) as direct_dl:
+                    dl_btn.click()
+                dl = direct_dl.value
+                dl.save_as(str(output_path))
+                if output_path.is_file() and output_path.stat().st_size > 10_000:
+                    return True
+            except Exception:
+                page.wait_for_timeout(800)
 
-    cdp_url = os.getenv("FLOW_CDP_URL", "").strip()
-    profile_dir = Path(os.getenv("FLOW_USER_DATA_DIR", str(DEFAULT_PROFILE_DIR)))
-    headless = os.getenv("FLOW_HEADLESS", "true").strip().lower() in ("1", "true", "yes")
+            for opt_sel in ("text='원본'", "text='Original'", "text='PNG'", "text='JPG'", "text='2K'", "text='1K'"):
+                opt = page.locator(opt_sel).first
+                if opt.count() > 0 and opt.is_visible():
+                    with page.expect_download(timeout=60_000) as dl_info:
+                        opt.click()
+                    dl = dl_info.value
+                    dl.save_as(str(output_path))
+                    if output_path.is_file() and output_path.stat().st_size > 10_000:
+                        return True
+            return False
 
-    clean_prompt = (
-        f"Vertical 9:16 portrait smartphone video: {prompt.strip()}. "
-        f"Candid realistic Korean everyday scene, natural lighting, "
-        f"9:16 vertical full-screen mobile framing, centered subject, subtle natural motion, no text, no watermark."
-    )
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+        dl_btn.click()
+        page.wait_for_timeout(1000)
+        for opt_sel in ("text='720p'", "text='1080p'", "text='Original'"):
+            opt = page.locator(opt_sel).first
+            if opt.count() > 0 and opt.is_visible():
+                print(f"    [GOOGLE-FLOW] 📥 {opt_sel.split('=')[1].strip(chr(39))} MP4 다운로드 트리거...")
+                with page.expect_download(timeout=60_000) as dl_info:
+                    opt.click()
+                dl = dl_info.value
+                dl.save_as(str(output_path))
+                if output_path.is_file() and output_path.stat().st_size > 30_000:
+                    return True
+    except Exception as ex_dl:
+        print(f"    [GOOGLE-FLOW] 다운로드 대기 중 ({ex_dl})...")
+    return False
 
-    print(f"    [GOOGLE-FLOW] 🌐 제미나이 Flow 접속 및 {asset_type.upper()} 에셋 자동 생성 시작...")
-    try:
-        with sync_playwright() as p:
+
+class FlowBrowserSession:
+    """
+    단일 Playwright 크롬 세션을 유지하며 여러 씬의 Flow 에셋을 연속 생성·다운로드합니다.
+    (매 씬마다 브라우저를 껐다 켜는 오버헤드 제거 및 Flow 배치 생성 속도 극대화)
+    """
+
+    def __init__(self):
+        self._pw_cm = None
+        self._pw = None
+        self._browser = None
+        self._context = None
+        self._page = None
+        self._ready = False
+
+    @staticmethod
+    def _resolve_storage_state_path() -> Optional[Path]:
+        state_b64 = os.getenv("FLOW_STORAGE_STATE_B64", "").strip()
+        if state_b64:
+            import base64
+            import tempfile
+            try:
+                raw = base64.b64decode(state_b64)
+                tmp = Path(tempfile.gettempdir()) / "flow_storage_state.json"
+                tmp.write_bytes(raw)
+                return tmp
+            except Exception as e:
+                print(f"    [GOOGLE-FLOW][WARN] FLOW_STORAGE_STATE_B64 디코딩 실패: {e}")
+
+        state_path = os.getenv("FLOW_STORAGE_STATE_PATH", "").strip()
+        if state_path and Path(state_path).is_file():
+            return Path(state_path)
+        return None
+
+    def __enter__(self):
+        if not is_flow_enabled():
+            return self
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            print("    [FLOW][INFO] playwright 패키지가 설치되지 않아 브라우저 자동화를 건너뜁니다. (pip install playwright)")
+            return self
+
+        cdp_url = os.getenv("FLOW_CDP_URL", "").strip()
+        profile_dir = Path(os.getenv("FLOW_USER_DATA_DIR", str(DEFAULT_PROFILE_DIR)))
+        headless = os.getenv("FLOW_HEADLESS", "true").strip().lower() in ("1", "true", "yes")
+        storage_state = self._resolve_storage_state_path()
+
+        try:
+            self._pw_cm = sync_playwright()
+            self._pw = self._pw_cm.__enter__()
             if cdp_url:
-                browser = p.chromium.connect_over_cdp(cdp_url)
-                context = browser.contexts[0] if browser.contexts else browser.new_context(accept_downloads=True)
-                page = context.new_page()
+                browser = self._pw.chromium.connect_over_cdp(cdp_url)
+                self._context = browser.contexts[0] if browser.contexts else browser.new_context(accept_downloads=True)
+                self._page = self._context.new_page()
+            elif storage_state is not None:
+                # GitHub Actions / 무인 클라우드 환경용: Base64 쿠키 상태에서 헤드리스 브라우저 복원
+                self._browser = self._pw.chromium.launch(
+                    headless=headless,
+                    args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+                )
+                self._context = self._browser.new_context(
+                    storage_state=str(storage_state),
+                    accept_downloads=True,
+                    viewport={"width": 1440, "height": 900},
+                )
+                self._page = self._context.new_page()
             else:
-                context = _launch_persistent_browser(p, profile_dir, headless=headless)
-                page = context.pages[0] if context.pages else context.new_page()
+                self._context = _launch_persistent_browser(self._pw, profile_dir, headless=headless)
+                self._page = self._context.pages[0] if self._context.pages else self._context.new_page()
 
-            page.goto(FLOW_URL, wait_until="domcontentloaded", timeout=35_000)
-            page.wait_for_timeout(3000)
+            self._prepare_project_page()
+        except Exception as e:
+            print(f"    [GOOGLE-FLOW][WARN] Flow 브라우저 세션 초기화 실패: {e}")
+            self._ready = False
+        return self
 
-            # 1. 쿠키/이용약관 동의 팝업 처리
-            agree_btn = page.locator("button:has-text('동의함'), button:has-text('I agree')")
-            if agree_btn.count() > 0 and agree_btn.first.is_visible():
-                try:
-                    agree_btn.first.click()
-                    page.wait_for_timeout(500)
-                except Exception:
-                    pass
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if self._context is not None:
+                self._context.close()
+        except Exception:
+            pass
+        try:
+            if self._browser is not None:
+                self._browser.close()
+        except Exception:
+            pass
+        try:
+            if self._pw_cm is not None:
+                self._pw_cm.__exit__(exc_type, exc_val, exc_tb)
+        except Exception:
+            pass
+        self._context = None
+        self._browser = None
+        self._page = None
+        self._pw = None
+        self._pw_cm = None
+        self._ready = False
 
-            # 2. 프로젝트 진입 (이미 프로젝트가 아니면 기존 프로젝트 클릭 또는 새 프로젝트 생성)
-            if "project" not in page.url:
+    def _select_flow_model(self) -> None:
+        """
+        Flow 스튜디오 내 모델 선택기(Model Picker)에서 Gemini Omni 계열 모델을 우선 선택합니다.
+        환경변수 FLOW_MODEL (기본: 'Gemini Omni')로 지정 가능하며, UI 구조 변경 시에도 안전하게 무시 후 진행합니다.
+        """
+        page = self._page
+        if page is None:
+            return
+        target_model = os.getenv("FLOW_MODEL", "Gemini Omni").strip()
+        if not target_model or target_model.lower() in ("default", "none", "auto"):
+            return
+
+        candidates = [target_model]
+        if "omni" in target_model.lower() and target_model.lower() != "omni":
+            candidates.extend(["Gemini Omni", "Omni Flash", "Omni"])
+
+        try:
+            # 이미 대상 모델명이 화면 상단/하단 모델 버튼에 표시되어 있으면 패스
+            for name in candidates:
+                already = page.locator(f"button:has-text('{name}'), [role='combobox']:has-text('{name}')").first
+                if already.count() > 0 and already.is_visible():
+                    print(f"    [GOOGLE-FLOW] ✨ Flow 모델 확인됨: {name}")
+                    return
+
+            # 모델 선택 드롭다운 버튼 탐색
+            trigger_selectors = [
+                "button[aria-label*='모델']",
+                "button[aria-label*='Model']",
+                "[role='combobox']",
+                "button:has-text('Veo')",
+                "button:has-text('Omni')",
+                "button:has-text('모델')",
+            ]
+            opened = False
+            for sel in trigger_selectors:
+                btn = page.locator(sel).last
+                if btn.count() > 0 and btn.is_visible():
+                    try:
+                        btn.click(timeout=2000)
+                        page.wait_for_timeout(700)
+                        opened = True
+                        break
+                    except Exception:
+                        continue
+
+            if not opened:
+                return
+
+            for name in candidates:
+                opt = page.locator(
+                    f"[role='option']:has-text('{name}'), [role='menuitem']:has-text('{name}'), "
+                    f"li:has-text('{name}'), button:has-text('{name}')"
+                ).first
+                if opt.count() > 0 and opt.is_visible():
+                    opt.click(timeout=2000)
+                    page.wait_for_timeout(800)
+                    print(f"    [GOOGLE-FLOW] ✨ Gemini Omni 모델 선택 완료: {name}")
+                    return
+
+            # 원하는 옵션이 열리지 않았으면 ESC로 드롭다운 닫기
+            page.keyboard.press("Escape")
+        except Exception as e:
+            print(f"    [GOOGLE-FLOW][INFO] 모델 선택기 스킵(기본 모델 사용): {e}")
+
+    def _prepare_project_page(self) -> None:
+        page = self._page
+        if page is None:
+            return
+        page.goto(FLOW_URL, wait_until="domcontentloaded", timeout=35_000)
+        page.wait_for_timeout(3000)
+
+        agree_btn = page.locator("button:has-text('동의함'), button:has-text('I agree')")
+        if agree_btn.count() > 0 and agree_btn.first.is_visible():
+            try:
+                agree_btn.first.click()
+                page.wait_for_timeout(500)
+            except Exception:
+                pass
+
+        if "project" not in page.url:
+            prefer_new = os.getenv("FLOW_NEW_PROJECT_PER_REEL", "").strip().lower() in ("1", "true", "yes")
+            if not prefer_new:
                 proj_card = page.locator("a[href*='/project/'], div[data-project-id]").first
                 if proj_card.count() > 0 and proj_card.is_visible():
                     try:
@@ -270,16 +501,36 @@ def generate_with_google_flow_browser(
                     except Exception:
                         pass
 
-                if "project" not in page.url:
-                    new_proj_btn = page.locator("button:has-text('새 프로젝트'), button:has-text('New project')").first
-                    if new_proj_btn.count() > 0 and new_proj_btn.is_visible():
-                        try:
-                            new_proj_btn.click()
-                            page.wait_for_timeout(4000)
-                        except Exception:
-                            pass
+            if "project" not in page.url:
+                new_proj_btn = page.locator("button:has-text('새 프로젝트'), button:has-text('New project')").first
+                if new_proj_btn.count() > 0 and new_proj_btn.is_visible():
+                    try:
+                        new_proj_btn.click()
+                        page.wait_for_timeout(4000)
+                    except Exception:
+                        pass
 
-            # 3. 스튜디오 프롬프트 입력창 탐색
+        self._select_flow_model()
+        self._ready = True
+
+    def generate_asset(
+        self,
+        prompt: str,
+        output_path: Path,
+        asset_type: str = "video",
+        timeout_sec: int = 150,
+        visual_theme: Optional[str] = None,
+    ) -> bool:
+        if not self._ready or self._page is None:
+            return False
+
+        page = self._page
+        clean_prompt = format_flow_prompt(prompt, visual_theme, asset_type=asset_type)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        media_tag = "img" if asset_type == "image" else "video"
+
+        print(f"    [GOOGLE-FLOW] 🌐 제미나이 Flow {asset_type.upper()} 에셋 생성 요청 -> {output_path.name}")
+        try:
             prompt_selectors = [
                 "[contenteditable='true']",
                 "textarea[placeholder*='프롬프트']",
@@ -296,14 +547,14 @@ def generate_with_google_flow_browser(
 
             if input_box is None:
                 print("    [GOOGLE-FLOW][WARN] 프롬프트 입력창을 찾지 못했습니다. 로그인 상태를 확인하세요.")
-                context.close()
                 return False
+
+            before_srcs = _collect_media_srcs(page, tag=media_tag)
 
             input_box.click()
             input_box.fill(clean_prompt)
             page.wait_for_timeout(800)
 
-            # 4. 생성 요청 제출 (우하단 화살표 버튼 또는 Enter)
             submit_btn = page.locator("button[aria-label*='생성'], button:has(svg), button:has-text('생성')").last
             if submit_btn.count() > 0 and submit_btn.is_visible():
                 try:
@@ -313,7 +564,6 @@ def generate_with_google_flow_browser(
             else:
                 input_box.press("Enter")
 
-            # 5. 크레딧 차감 확인 팝업 (예: "15 크레딧을 사용하여 1개 동영상 생성을 시작하시겠습니까?")
             page.wait_for_timeout(3000)
             approve_btn = None
             for approve_text in ["항상 승인", "승인", "Always approve", "Approve"]:
@@ -333,59 +583,55 @@ def generate_with_google_flow_browser(
                 except Exception as ex_app:
                     print(f"    [GOOGLE-FLOW] 승인 버튼 클릭 스킵(이미 승인됨): {ex_app}")
 
-            print(f"    [GOOGLE-FLOW] ⏳ Veo 영상 생성 렌더링 대기 중 (최대 {timeout_sec}초)...")
+            initial_wait_ms = 12_000 if asset_type == "image" else 35_000
+            print(f"    [GOOGLE-FLOW] ⏳ Flow {asset_type.upper()} 렌더링 대기 중 (최대 {timeout_sec}초)...")
             start_wait = time.time()
-            # 비디오 생성 완료 대기 (보통 45초~80초 소요)
-            page.wait_for_timeout(35000)
+            page.wait_for_timeout(initial_wait_ms)
 
-            downloaded = False
             while time.time() - start_wait < timeout_sec:
-                # 캔버스 중앙 비디오 카드 선택
-                try:
-                    page.mouse.click(320, 220)
-                    page.wait_for_timeout(1500)
-                except Exception:
-                    pass
-
-                # 하단 컨트롤 바의 미디어 다운로드 버튼 탐색
-                dl_btn = page.locator("button[aria-label='미디어 다운로드'], button[aria-label*='다운로드'], button:has-text('download')").first
-                if dl_btn.count() > 0 and dl_btn.is_visible():
-                    try:
-                        dl_btn.click()
-                        page.wait_for_timeout(1000)
-
-                        # 해상도 메뉴에서 720p 옵션 탐색
-                        opt_720 = page.locator("text='720p'").first
-                        if opt_720.count() > 0 and opt_720.is_visible():
-                            print("    [GOOGLE-FLOW] 📥 720p MP4 다운로드 트리거...")
-                            with page.expect_download(timeout=60_000) as dl_info:
-                                opt_720.click()
-                            dl = dl_info.value
-                            dl.save_as(str(output_path))
-                            if output_path.is_file() and output_path.stat().st_size > 30_000:
-                                downloaded = True
-                                break
-                    except Exception as ex_dl:
-                        print(f"    [GOOGLE-FLOW] 다운로드 대기 중 ({ex_dl})...")
-
+                _focus_newest_media_card(page, before_srcs, tag=media_tag)
+                if _trigger_flow_download(page, output_path, asset_type=asset_type):
+                    print(f"    [GOOGLE-FLOW] ✅ 에셋 다운로드 완료 -> {output_path.name} ({output_path.stat().st_size // 1024} KB)")
+                    return True
                 page.wait_for_timeout(6000)
-
-            context.close()
-            if downloaded:
-                print(f"    [GOOGLE-FLOW] ✅ Veo 영상 다운로드 완료 -> {output_path.name} ({output_path.stat().st_size // 1024} KB)")
-                return True
-    except Exception as e:
-        print(f"    [GOOGLE-FLOW][WARN] 브라우저 자동화 예외 발생: {e}")
-
-    return False
+        except Exception as e:
+            print(f"    [GOOGLE-FLOW][WARN] 브라우저 자동화 예외 발생: {e}")
+        return False
 
 
-def generate_with_veo_api(prompt: str, output_path: Path) -> bool:
+def generate_with_google_flow_browser(
+    prompt: str,
+    output_path: Path,
+    asset_type: str = "video",
+    timeout_sec: int = 150,
+    visual_theme: Optional[str] = None,
+) -> bool:
     """
-    Google GenAI SDK를 통해 공식 Veo 모델(veo-2.0-generate-001)로 16:9 비디오를 생성합니다.
-    (비용 보호를 위해 USE_VEO_API=true 가 명시된 경우에만 호출합니다.)
+    Playwright를 통해 구글 제미나이 Flow (https://flow.google.com / https://labs.google/fx/ko/tools/flow)에 접속하여
+    주제/장면에 맞는 고화질 Veo 영상 또는 Imagen 이미지 소스를 자동 생성 후 다운로드합니다.
+    """
+    if not is_flow_enabled():
+        return False
+
+    with FlowBrowserSession() as session:
+        return session.generate_asset(
+            prompt=prompt,
+            output_path=output_path,
+            asset_type=asset_type,
+            timeout_sec=timeout_sec,
+            visual_theme=visual_theme,
+        )
+
+
+def generate_with_veo_api(prompt: str, output_path: Path, visual_theme: Optional[str] = None) -> bool:
+    """
+    Google GenAI SDK를 통해 공식 Veo 모델(veo-2.0-generate-001)로 9:16 비디오를 생성합니다.
+    (API 과금 최소화 정책에 따라 USE_VEO_API=true AND ALLOW_GEMINI_MEDIA_API=true 가 모두 명시된 경우에만 호출합니다.)
     """
     if os.getenv("USE_VEO_API", "").strip().lower() not in ("1", "true", "yes"):
+        return False
+    if os.getenv("ALLOW_GEMINI_MEDIA_API", "").strip().lower() not in ("1", "true", "yes"):
+        print("    [VEO-API] 🔒 Gemini 미디어 API 최소화 정책으로 Veo 유료 API 호출을 차단했습니다.")
         return False
 
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -401,7 +647,7 @@ def generate_with_veo_api(prompt: str, output_path: Path) -> bool:
         client = genai.Client(api_key=api_key)
         operation = client.models.generate_videos(
             model=model_name,
-            prompt=f"{prompt}. Authentic Korean everyday scene, natural daylight, 9:16 vertical portrait, no text.",
+            prompt=format_flow_prompt(prompt, visual_theme),
             config=types.GenerateVideosConfig(
                 aspect_ratio="9:16",
                 number_of_videos=1,
@@ -428,6 +674,7 @@ def acquire_scene_video(
     scene_id: int,
     prompt: str,
     output_dir: Path,
+    visual_theme: Optional[str] = None,
 ) -> Optional[Path]:
     """
     하이브리드 영상 소스 수집기 (비용 최소화 우선순위):
@@ -447,7 +694,7 @@ def acquire_scene_video(
             return video_path
         print(f"    [VIDEO-SOURCE] ⚠️ {video_path.name}는 이번 씬 프롬프트로 만든 영상이 아니어서 재사용하지 않습니다.")
 
-    found = _fetch_scene_video(prompt, video_path)
+    found = _fetch_scene_video(prompt, video_path, visual_theme=visual_theme)
     if found:
         _write_source_tag(found, prompt)
     return found
@@ -478,8 +725,53 @@ def _source_matches(video_path: Path, prompt: str) -> bool:
         return False
 
 
-def _fetch_scene_video(prompt: str, video_path: Path) -> Optional[Path]:
-    if generate_with_google_flow_browser(prompt, video_path, asset_type="video"):
+def acquire_scene_videos_batch(
+    scene_tasks: List[Tuple[int, str]],
+    output_dir: Path,
+    visual_theme: Optional[str] = None,
+) -> Dict[int, Path]:
+    """
+    여러 씬의 비디오 소스를 일괄 확보합니다.
+    - USE_GOOGLE_FLOW=true 인 경우 단일 FlowBrowserSession 으로 브라우저를 1회만 열어 모든 대상 씬을 순차 생성합니다.
+    - Flow에서 누락된 씬은 Pexels -> Pixabay 무료 스톡 영상으로 폴백합니다. (Gemini Veo 유료 API는 기본 차단)
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    results: Dict[int, Path] = {}
+    pending_for_flow: List[Tuple[int, str, Path]] = []
+    reuse_existing = os.getenv("FLOW_REUSE_EXISTING", "").strip().lower() in ("1", "true", "yes")
+
+    for scene_id, prompt in scene_tasks:
+        video_path = output_dir / f"scene_{scene_id:02d}_raw.mp4"
+        if reuse_existing and video_path.is_file():
+            if video_path.stat().st_size > 30_000 and _source_matches(video_path, prompt):
+                print(f"    [VIDEO-SOURCE] ♻️ 같은 프롬프트로 만든 영상 소스 재사용 -> {video_path.name}")
+                results[scene_id] = video_path
+                continue
+        pending_for_flow.append((scene_id, prompt, video_path))
+
+    if pending_for_flow and is_flow_enabled():
+        with FlowBrowserSession() as session:
+            for scene_id, prompt, video_path in pending_for_flow:
+                if session.generate_asset(prompt, video_path, asset_type="video", visual_theme=visual_theme):
+                    _write_source_tag(video_path, prompt)
+                    results[scene_id] = video_path
+
+    # Flow에서 확보하지 못한 씬만 무료 스톡 폴백(Pexels/Pixabay) 진행
+    for scene_id, prompt, video_path in pending_for_flow:
+        if scene_id in results:
+            continue
+        if fetch_pexels_video(prompt, video_path) or fetch_pixabay_video(prompt, video_path):
+            _write_source_tag(video_path, prompt)
+            results[scene_id] = video_path
+        elif generate_with_veo_api(prompt, video_path, visual_theme=visual_theme):
+            _write_source_tag(video_path, prompt)
+            results[scene_id] = video_path
+
+    return results
+
+
+def _fetch_scene_video(prompt: str, video_path: Path, visual_theme: Optional[str] = None) -> Optional[Path]:
+    if generate_with_google_flow_browser(prompt, video_path, asset_type="video", visual_theme=visual_theme):
         return video_path
 
     if fetch_pexels_video(prompt, video_path):
@@ -488,7 +780,7 @@ def _fetch_scene_video(prompt: str, video_path: Path) -> Optional[Path]:
     if fetch_pixabay_video(prompt, video_path):
         return video_path
 
-    if generate_with_veo_api(prompt, video_path):
+    if generate_with_veo_api(prompt, video_path, visual_theme=visual_theme):
         return video_path
 
     return None
@@ -517,11 +809,40 @@ def launch_flow_login_session():
     print("[GOOGLE-FLOW] ✅ 로그인 프로필 저장이 완료되었습니다!")
 
 
+def export_flow_storage_state() -> Path:
+    """
+    로컬 크롬 프로필(assets/chrome_flow_profile)의 로그인 세션을
+    GitHub Actions Secret(FLOW_STORAGE_STATE_B64)용 JSON/Base64로 내보냅니다.
+    """
+    import base64
+    from playwright.sync_api import sync_playwright
+
+    profile_dir = Path(os.getenv("FLOW_USER_DATA_DIR", str(DEFAULT_PROFILE_DIR)))
+    out_json = PROJECT_ROOT / "assets" / "flow_storage_state.json"
+    out_b64 = PROJECT_ROOT / "assets" / "flow_storage_state.b64.txt"
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+
+    with sync_playwright() as p:
+        context = _launch_persistent_browser(p, profile_dir, headless=True)
+        page = context.pages[0] if context.pages else context.new_page()
+        page.goto(FLOW_URL, wait_until="domcontentloaded", timeout=35_000)
+        page.wait_for_timeout(2000)
+        context.storage_state(path=str(out_json))
+        context.close()
+
+    b64_str = base64.b64encode(out_json.read_bytes()).decode("ascii")
+    out_b64.write_text(b64_str, encoding="utf-8")
+    print(f"[GOOGLE-FLOW] ✅ 세션 상태 저장 완료: {out_json}")
+    print(f"[GOOGLE-FLOW] 🔐 GitHub Secrets(FLOW_STORAGE_STATE_B64)용 Base64 저장 완료: {out_b64}")
+    return out_b64
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Google Gemini Flow & Free Video Source Automation CLI")
     parser.add_argument("--login", action="store_true", help="구글 제미나이 Flow 로그인 세션 저장용 브라우저 실행")
+    parser.add_argument("--export-state", action="store_true", help="GitHub Actions용 FLOW_STORAGE_STATE_B64 파일 추출")
     parser.add_argument("--prompt", type=str, default="", help="테스트할 씬 비주얼 프롬프트")
     parser.add_argument("--scene-id", type=int, default=1, help="씬 번호 (기본: 1)")
     parser.add_argument("--out-dir", type=str, default="assets/videos", help="저장 폴더")
@@ -529,6 +850,8 @@ if __name__ == "__main__":
 
     if args.login:
         launch_flow_login_session()
+    elif args.export_state:
+        export_flow_storage_state()
     elif args.prompt:
         res = acquire_scene_video(args.scene_id, args.prompt, Path(args.out_dir))
         if res:
