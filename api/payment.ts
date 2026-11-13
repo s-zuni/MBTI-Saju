@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { setNodeCorsHeaders } from './_utils/cors';
 import { extractBearerToken } from './_utils/auth';
 import { DEEP_REPORT_SALE_PRICE } from '../src/config/deepReportConfig';
+import { REFUND_PERIOD_DAYS } from '../src/config/creditConfig';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -58,6 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST for cancellation.' });
         }
         return cancelPayment(req, res);
+    } else if (action === 'request_refund') {
+        if (req.method !== 'POST') {
+            return res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST for refund request.' });
+        }
+        return requestRefund(req, res);
     } else if (action === 'info') {
         return getPaymentInfo(req, res);
     } else {
@@ -75,6 +81,16 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
     } catch (envError: any) {
         console.error('[confirmPayment] Configuration Error:', envError.message);
         return res.status(500).json({ success: false, message: envError.message });
+    }
+
+    const token = extractBearerToken(req);
+    let authedUser: { id: string } | null = null;
+    if (token) {
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+        if (authError || !user) {
+            return res.status(401).json({ success: false, message: '유효하지 않은 인증 토큰입니다.' });
+        }
+        authedUser = user;
     }
 
     const { paymentKey, orderId, amount, userId: bodyUserId } = req.body || {};
@@ -106,8 +122,45 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         }
 
         const approvedAmount = Number(tossData.totalAmount || amount);
-        const userId = bodyUserId || tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const productId = tossData.metadata?.productId || 'credit_custom';
+        const metadataUserId = tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
+        const isNamedUser = (val?: string | null) => Boolean(val && val !== 'ANONYMOUS' && !val.startsWith('GUEST_'));
+
+        let userId: string | undefined;
+        if (productId === 'deep_report') {
+            if (authedUser) {
+                if ((isNamedUser(metadataUserId) && metadataUserId !== authedUser.id) ||
+                    (isNamedUser(bodyUserId) && bodyUserId !== authedUser.id)) {
+                    return res.status(403).json({ success: false, message: '결제 사용자 정보가 로그인 계정과 일치하지 않습니다.' });
+                }
+                userId = authedUser.id;
+            } else {
+                const { data: reportRow } = await supabaseAdmin
+                    .from('deep_report_requests')
+                    .select('user_id')
+                    .eq('order_id', orderId)
+                    .maybeSingle();
+
+                if (reportRow?.user_id) {
+                    if ((isNamedUser(metadataUserId) && metadataUserId !== reportRow.user_id) ||
+                        (isNamedUser(bodyUserId) && bodyUserId !== reportRow.user_id)) {
+                        return res.status(403).json({ success: false, message: '결제 사용자 정보가 주문 소유자와 일치하지 않습니다.' });
+                    }
+                    userId = reportRow.user_id;
+                } else {
+                    userId = metadataUserId || bodyUserId;
+                }
+            }
+        } else {
+            if (!authedUser) {
+                return res.status(401).json({ success: false, message: '로그인이 필요한 결제입니다.' });
+            }
+            if ((isNamedUser(metadataUserId) && metadataUserId !== authedUser.id) ||
+                (isNamedUser(bodyUserId) && bodyUserId !== authedUser.id)) {
+                return res.status(403).json({ success: false, message: '결제 사용자 정보가 로그인 계정과 일치하지 않습니다.' });
+            }
+            userId = authedUser.id;
+        }
 
         // deep_report는 비회원(GUEST_*)도 허용. 그 외 상품은 유효한 사용자 필요.
         const isGuestUser = !userId || userId === 'ANONYMOUS' || userId.startsWith('GUEST_');
@@ -602,5 +655,85 @@ async function getPaymentInfo(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('[getPaymentInfo] Error:', error);
         return res.status(500).json({ success: false, message: '결제 정보 조회 중 내부 오류가 발생했습니다.' });
+    }
+}
+
+async function requestRefund(req: VercelRequest, res: VercelResponse) {
+    let supabaseAdmin: SupabaseClient;
+
+    try {
+        supabaseAdmin = getSupabaseAdmin();
+    } catch (envError: any) {
+        console.error('[requestRefund] Configuration Error:', envError.message);
+        return res.status(500).json({ success: false, message: envError.message });
+    }
+
+    const token = extractBearerToken(req);
+    if (!token) {
+        return res.status(401).json({ success: false, error: '로그인이 필요합니다.' });
+    }
+
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+        return res.status(401).json({ success: false, error: '인증 토큰이 유효하지 않습니다.' });
+    }
+
+    const { purchaseId } = req.body || {};
+    if (!purchaseId || typeof purchaseId !== 'string') {
+        return res.status(400).json({ success: false, error: '구매 건 ID가 누락되었습니다.' });
+    }
+
+    try {
+        const { data: purchase, error: fetchError } = await supabaseAdmin
+            .from('credit_purchases')
+            .select('*')
+            .eq('id', purchaseId)
+            .single();
+
+        if (fetchError || !purchase) {
+            return res.status(404).json({ success: false, error: '구매건을 찾을 수 없습니다.' });
+        }
+
+        if (purchase.user_id !== user.id) {
+            return res.status(403).json({ success: false, error: '본인의 구매건만 환불 요청할 수 있습니다.' });
+        }
+
+        if (purchase.status !== 'active') {
+            return res.status(400).json({ success: false, error: '이미 처리된 구매건입니다.' });
+        }
+
+        if (purchase.remaining_credits !== purchase.purchased_credits) {
+            return res.status(400).json({ success: false, error: '이미 사용된 크레딧이 있어 환불이 불가능합니다.' });
+        }
+
+        const purchasedAtMs = new Date(purchase.purchased_at).getTime();
+        const daysSincePurchase = Math.floor((Date.now() - purchasedAtMs) / (1000 * 60 * 60 * 24));
+        if (Number.isNaN(purchasedAtMs) || daysSincePurchase > REFUND_PERIOD_DAYS) {
+            return res.status(400).json({ success: false, error: `구매 후 ${REFUND_PERIOD_DAYS}일이 지나 환불이 불가능합니다.` });
+        }
+
+        // 조건부 원자 업데이트 (동시 차감/중복 요청 경합 방지)
+        const { data: updated, error: updateError } = await supabaseAdmin
+            .from('credit_purchases')
+            .update({
+                status: 'pending_refund',
+                refund_requested_at: new Date().toISOString(),
+            })
+            .eq('id', purchaseId)
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .eq('remaining_credits', purchase.purchased_credits)
+            .select('id')
+            .maybeSingle();
+
+        if (updateError) throw updateError;
+        if (!updated) {
+            return res.status(409).json({ success: false, error: '환불 조건을 다시 확인해주세요.' });
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (error: any) {
+        console.error('[requestRefund] Error:', error);
+        return res.status(500).json({ success: false, error: '환불 요청 중 오류가 발생했습니다.' });
     }
 }

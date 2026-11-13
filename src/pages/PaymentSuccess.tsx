@@ -25,8 +25,9 @@ const PaymentSuccess: React.FC = () => {
             const userIdFromUrl = searchParams.get('userId');
             const userIdFromStorage = localStorage.getItem('pending_payment_user_id');
             const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
             
-            const finalUserId = userIdFromUrl || userIdFromStorage || currentUser?.id;
+            const finalUserId = currentUser?.id || userIdFromUrl || userIdFromStorage;
 
             if (!paymentKey || !orderId || !amount) {
                 setError('결제 정보가 누락되었습니다.');
@@ -36,9 +37,14 @@ const PaymentSuccess: React.FC = () => {
 
             try {
                 // 2. 서버리스 함수 호출하여 결제 승인 및 DB 반영
+                const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                if (currentSession?.access_token) {
+                    headers['Authorization'] = `Bearer ${currentSession.access_token}`;
+                }
+
                 const response = await fetch('/api/confirm-payment', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({
                         paymentKey,
                         orderId,
@@ -148,7 +154,26 @@ const PaymentSuccess: React.FC = () => {
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-black text-slate-900 mb-2">결제 완료!</h2>
-                {orderId?.startsWith('DEEPREPORT') ? (
+                {orderId?.startsWith('DEEPREPORT_ZH') ? (
+                    <div className="space-y-3 mb-6">
+                        <p className="text-slate-900 font-black text-lg">3年深度命理分析報告 預約成功！</p>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                            感謝您的訂購！命理大師與系統正在為您排盤分析，<br/>
+                            <span className="text-violet-600 font-bold">將於約定交付日期前，以 A4 20頁完整 PDF</span><br/>
+                            發送至您填寫的接收信箱。<br/>
+                            <span className="text-xs text-slate-400 mt-2 block">客服信箱：support@mbtiju.com</span>
+                        </p>
+                        {isGenerating && (
+                            <div className="mt-4 flex items-center justify-center gap-2 bg-violet-50 py-3 px-4 rounded-xl text-violet-600 text-xs font-bold animate-pulse">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                正在啟動後台真太陽時八字排盤計算中...
+                            </div>
+                        )}
+                        <button onClick={() => navigate('/zh')} className="mt-4 w-full bg-slate-950 text-white py-3.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all">
+                            返回繁中版首頁
+                        </button>
+                    </div>
+                ) : orderId?.startsWith('DEEPREPORT') ? (
                     <div className="space-y-3 mb-6">
                         <p className="text-slate-900 font-black text-lg">심층 리포트 신청 완료!</p>
                         <p className="text-slate-500 font-medium text-sm leading-relaxed">

@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase, ensureValidSession } from '../supabaseClient';
 import { Session } from '@supabase/supabase-js';
-import { SERVICE_COSTS, ServiceType, REFUND_PERIOD_DAYS } from '../config/creditConfig';
+import { SERVICE_COSTS, ServiceType } from '../config/creditConfig';
 import { onTokenRefreshed } from './useAuth';
-import { formatSafariDate } from '../utils/textUtils';
 
 
 export interface CreditPurchase {
@@ -310,52 +309,32 @@ export const useCredits = (session: Session | null): UseCreditsReturn => {
         }
     }, [session, credits, getCost, refreshCredits]);
 
-    // 환불 요청
+    // 환불 요청 (서버 API 경유: RLS로 직접 UPDATE 차단됨)
     const requestRefund = useCallback(async (
         purchaseId: string
     ): Promise<{ success: boolean; error?: string }> => {
         if (!session?.user?.id) return { success: false, error: '로그인이 필요합니다.' };
 
         try {
-            // 1. 구매건 조회
-            const { data: purchase, error: fetchError } = await supabase
-                .from('credit_purchases')
-                .select('*')
-                .eq('id', purchaseId)
-                .eq('user_id', session.user.id)
-                .single();
-
-            if (fetchError || !purchase) {
-                return { success: false, error: '구매건을 찾을 수 없습니다.' };
+            const validSession = await ensureValidSession();
+            const accessToken = validSession?.access_token || session.access_token;
+            if (!accessToken) {
+                return { success: false, error: '인증 세션이 만료되었습니다. 다시 로그인해주세요.' };
             }
 
-            // 2. 환불 조건 검증
-            if (purchase.status !== 'active') {
-                return { success: false, error: '이미 처리된 구매건입니다.' };
+            const response = await fetch('/api/payment?action=request_refund', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ purchaseId }),
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data?.success) {
+                return { success: false, error: data?.error || data?.message || '환불 요청 중 오류가 발생했습니다.' };
             }
-
-            if (purchase.remaining_credits !== purchase.purchased_credits) {
-                return { success: false, error: '이미 사용된 크레딧이 있어 환불이 불가능합니다.' };
-            }
-
-            const purchasedAt = new Date(formatSafariDate(purchase.purchased_at));
-            const now = new Date();
-            const daysSincePurchase = Math.floor((now.getTime() - purchasedAt.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (daysSincePurchase > REFUND_PERIOD_DAYS) {
-                return { success: false, error: `구매 후 ${REFUND_PERIOD_DAYS}일이 지나 환불이 불가능합니다.` };
-            }
-
-            // 3. 상태 변경
-            const { error: updateError } = await supabase
-                .from('credit_purchases')
-                .update({
-                    status: 'pending_refund',
-                    refund_requested_at: new Date().toISOString(),
-                })
-                .eq('id', purchaseId);
-
-            if (updateError) throw updateError;
 
             await refreshCredits();
             return { success: true };

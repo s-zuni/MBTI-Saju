@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { corsHeaders } from './cors';
+import { getCorsHeaders } from './cors';
 
 export const SERVICE_COSTS = {
     FORTUNE_TODAY: 0,
@@ -105,6 +105,7 @@ export interface AuthResult {
  * AI 엔드포인트 공통 인증 및 크레딧 차감 미들웨어 (Edge / Node 공용)
  */
 export async function authenticateUser(req: Request | any, options: AuthOptions = {}): Promise<AuthResult> {
+    const corsHeaders = getCorsHeaders(req);
     const supabaseAdmin = getSupabaseAdmin();
     const token = extractBearerToken(req);
 
