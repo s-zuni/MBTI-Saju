@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit*)",
+      "Bash(npm audit*)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(git ls-files*)",
+      "Bash(date*)",
+      "Bash(curl*https://www.mbtiju.com*)",
+      "Bash(python .agents/skills/morning-shift/scripts/marketing_snapshot.py)",
+      "Bash(python .claude/skills/morning-shift/scripts/marketing_snapshot.py)",
+      "Bash(python .agents/skills/ig-reel/hookscore.py*)",
+      "Bash(python .claude/skills/ig-reel/hookscore.py*)",
+      "mcp__supabase__query_logs",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__get_edge_function",
+      "mcp__supabase__list_migrations",
+      "Write(reports/daily/**)",
+      "Edit(reports/daily/**)"
+    ]
+  }
+}
