@@ -110,7 +110,8 @@ export default async (req: Request) => {
         if (isChargeTurn) {
             const deductResult = await authenticateUser(req, {
                 serviceType: 'AI_CHAT_5',
-                cost: 20
+                cost: 20,
+                skipRateLimit: true
             });
 
             if (deductResult.errorResponse) {

@@ -1,32 +1,12 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { setNodeCorsHeaders } from './_utils/cors';
-import { extractBearerToken } from './_utils/auth';
+import { extractBearerToken, getSupabaseAdmin } from './_utils/auth';
+import { enforceNodeRateLimit } from './_utils/rate-limit';
 import { DEEP_REPORT_SALE_PRICE } from '../src/config/deepReportConfig';
 import { REFUND_PERIOD_DAYS } from '../src/config/creditConfig';
 
 type VercelRequest = any;
 type VercelResponse = any;
-
-function getSupabaseAdmin(): SupabaseClient {
-    const supabaseUrl = process.env.SUPABASE_URL || 
-                        process.env.VITE_SUPABASE_URL || 
-                        process.env.REACT_APP_SUPABASE_URL || 
-                        process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                              process.env.SUPABASE_SERVICE_KEY || 
-                              process.env.SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-        throw new Error('Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)');
-    }
-
-    return createClient(supabaseUrl, supabaseServiceKey, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        }
-    });
-}
 
 function getTossAuthHeader(): string {
     const secretKey = process.env.TOSS_SECRET_KEY;
@@ -46,6 +26,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST' && req.method !== 'GET') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
+
+    let supabaseAdmin: SupabaseClient | null = null;
+    try {
+        supabaseAdmin = getSupabaseAdmin();
+    } catch {
+        // 개별 핸들러에서 환경변수 누락을 처리함
+    }
+    const allowed = await enforceNodeRateLimit(supabaseAdmin, req, res, {
+        scope: 'payment',
+        limit: 20,
+        windowSeconds: 60,
+    });
+    if (!allowed) return;
 
     const { action } = req.query;
 

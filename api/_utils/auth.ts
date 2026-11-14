@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { getCorsHeaders } from './cors';
+import { checkRateLimit, createRateLimitEdgeResponse, getClientIp } from './rate-limit';
 
 export const SERVICE_COSTS = {
     FORTUNE_TODAY: 0,
@@ -92,6 +93,12 @@ export interface AuthOptions {
      * 반환값이 있으면 options.serviceType/options.cost보다 우선 적용된다.
      */
     resolveCost?: (ctx: { user: User; supabaseAdmin: SupabaseClient }) => Promise<{ serviceType?: ServiceType | string | undefined; cost: number }>;
+    /** Rate limit 검사 생략 (같은 요청에서 authenticateUser를 2회 호출할 때 중복 차감 방지) */
+    skipRateLimit?: boolean | undefined;
+    /** 분당(또는 rateLimitWindowSeconds당) 허용 요청 수 (기본 20) */
+    rateLimitMax?: number | undefined;
+    /** Rate limit 윈도우 길이(초, 기본 60) */
+    rateLimitWindowSeconds?: number | undefined;
 }
 
 export interface AuthResult {
@@ -111,6 +118,20 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
 
     if (!token) {
         if (options.allowAnonymous && (options.cost === 0 || !options.cost)) {
+            if (!options.skipRateLimit) {
+                const rl = await checkRateLimit(supabaseAdmin, {
+                    key: `ai:ip:${getClientIp(req)}`,
+                    limit: options.rateLimitMax ?? 20,
+                    windowSeconds: options.rateLimitWindowSeconds ?? 60,
+                });
+                if (!rl.allowed) {
+                    return {
+                        user: null,
+                        supabaseAdmin,
+                        errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+                    };
+                }
+            }
             return { user: null, supabaseAdmin, errorResponse: null };
         }
         return {
@@ -149,6 +170,22 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
                 }
             )
         };
+    }
+
+    // 사용자 단위 AI/API Rate Limit (크레딧 차감 및 무료 슬롯 소비 전에 검사)
+    if (!options.skipRateLimit) {
+        const rl = await checkRateLimit(supabaseAdmin, {
+            key: `ai:user:${user.id}`,
+            limit: options.rateLimitMax ?? 20,
+            windowSeconds: options.rateLimitWindowSeconds ?? 60,
+        });
+        if (!rl.allowed) {
+            return {
+                user,
+                supabaseAdmin,
+                errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+            };
+        }
     }
 
     // 실제 청구 대상(serviceType/cost) 결정: resolveCost가 있으면 그 결과가 우선한다.

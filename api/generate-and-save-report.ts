@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import { generateDeepReport } from './_utils/report-generator';
 import { setNodeCorsHeaders } from './_utils/cors';
+import { getSupabaseAdmin } from './_utils/auth';
+import { enforceNodeRateLimit } from './_utils/rate-limit';
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -21,12 +22,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: 'Missing orderId' });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    if (!supabaseUrl || !supabaseServiceKey) {
+    let supabase;
+    try {
+        supabase = getSupabaseAdmin();
+    } catch {
         return res.status(500).json({ success: false, message: '서버 설정이 올바르지 않습니다.' });
     }
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const allowed = await enforceNodeRateLimit(supabase, req, res, {
+        scope: 'gen-report',
+        limit: 10,
+        windowSeconds: 60,
+    });
+    if (!allowed) return;
 
     let claimedStatus: string | null = null;
     try {
