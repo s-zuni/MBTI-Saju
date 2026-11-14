@@ -67,10 +67,20 @@ def _check_token_validity(account_id: str, access_token: str) -> Optional[str]:
         message = err.get("message", res.text)
         code = err.get("code")
 
-        if code in (190, 102) or "expired" in message.lower() or "session has expired" in message.lower():
+        lowered = message.lower()
+        if "cannot parse access token" in lowered or "malformed access token" in lowered:
+            # 만료가 아니라 토큰 문자열 자체가 깨진 경우 (잘린 값, 따옴표/공백/줄바꿈, 'KEY=' 접두사, 다른 값 붙여넣기)
             return (
-                f"Instagram 액세스 토큰이 만료되었습니다: {message}\n"
-                "  ▶ 해결 방법: Graph API Explorer에서 토큰을 재발급받아 .env 및 Railway의 INSTAGRAM_ACCESS_TOKEN에 등록하세요."
+                f"Instagram 액세스 토큰 형식이 잘못되었습니다(만료 아님): {message} "
+                f"[현재 값 길이 {len(access_token)}자]\n"
+                "  ▶ 해결 방법: GitHub Secrets의 INSTAGRAM_ACCESS_TOKEN에 토큰 문자열만(따옴표·공백·'KEY=' 없이, "
+                "보통 EAA로 시작하는 150자 이상) 다시 붙여넣으세요."
+            )
+        if code in (190, 102) or "expired" in lowered:
+            return (
+                f"Instagram 액세스 토큰이 만료/무효화되었습니다: {message}\n"
+                "  ▶ 해결 방법: Graph API Explorer에서 단기 토큰 발급 → python pipeline/insta_token_refresh.py <단기토큰> 으로 "
+                "페이지 토큰을 받아 .env 및 GitHub Secrets의 INSTAGRAM_ACCESS_TOKEN에 등록하세요."
             )
         return f"Instagram 토큰/계정 점검 실패: {message}"
     except Exception as e:
@@ -148,6 +158,9 @@ def _publish_container(account_id: str, container_id: str, access_token: str, la
 def _prepare_account(account_id: Optional[str], access_token: Optional[str]):
     account_id = account_id or os.getenv("INSTAGRAM_ACCOUNT_ID")
     access_token = access_token or os.getenv("INSTAGRAM_ACCESS_TOKEN")
+    # 시크릿 붙여넣기 실수(앞뒤 공백·줄바꿈·따옴표)로 "Cannot parse access token"이 나는 것을 방지
+    account_id = (account_id or "").strip().strip("\"'").strip()
+    access_token = (access_token or "").strip().strip("\"'").strip()
     if not account_id or not access_token:
         raise ValueError("INSTAGRAM_ACCOUNT_ID 및 INSTAGRAM_ACCESS_TOKEN이 필요합니다.")
 
