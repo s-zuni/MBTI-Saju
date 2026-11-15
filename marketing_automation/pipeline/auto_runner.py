@@ -209,14 +209,20 @@ def main():
 
         if insta_link:
             msg_lines.append(f"📸 <b>Instagram 릴스:</b> <a href=\"{insta_link}\">게시물 보기</a>")
+        elif insta.get("skipped"):
+            msg_lines.append(f"ℹ️ <b>Instagram 건너뜀:</b> {html.escape(str(insta.get('reason', '게시 게이트 또는 조건 차단')))}")
         elif publish and insta.get("error"):
             msg_lines.append(f"⚠️ <b>Instagram 실패:</b> {html.escape(str(insta.get('error'))[:100])}")
+        elif not publish:
+            msg_lines.append("ℹ️ <b>Instagram:</b> --no-publish 옵션으로 게시 건너뜀")
 
         if yt_link:
             if youtube.get("scheduled"):
                 msg_lines.append(f"▶️ <b>YouTube 숏츠:</b> <a href=\"{yt_link}\">영상 보기</a> (⏰ {youtube.get('scheduled_time_kst')} 자동 공개 예약)")
             else:
                 msg_lines.append(f"▶️ <b>YouTube 숏츠:</b> <a href=\"{yt_link}\">영상 보기</a>")
+        elif youtube.get("skipped"):
+            msg_lines.append(f"ℹ️ <b>YouTube 건너뜀:</b> {html.escape(str(youtube.get('reason', '게시 게이트 또는 조건 차단')))}")
         elif publish and youtube.get("error"):
             msg_lines.append(f"⚠️ <b>YouTube 실패:</b> {html.escape(str(youtube.get('error'))[:100])}")
 

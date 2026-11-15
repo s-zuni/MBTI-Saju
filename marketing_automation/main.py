@@ -202,10 +202,19 @@ def run_pipeline(
     # AI 이미지 생성이 실패해 단색 플레이스홀더가 섞인 영상은 자동 게시하지 않습니다.
     # (강제로 게시하려면 ALLOW_PLACEHOLDER_PUBLISH=true)
     block_publish = visual_result.placeholder_count > 0 and not _env_flag("ALLOW_PLACEHOLDER_PUBLISH")
-    if block_publish and (publish_insta or publish_youtube):
-        print(f"\n⛔ 플레이스홀더 씬 {visual_result.placeholder_count}개 감지 -> Instagram/YouTube 자동 게시를 건너뜁니다.")
-        publish_insta = False
-        publish_youtube = False
+    gate_blocked = False
+    insta_result = {}
+    youtube_result = {}
+
+    if block_publish:
+        reason = f"단색 플레이스홀더 씬 {visual_result.placeholder_count}개 감지"
+        print(f"\n⛔ {reason} -> Instagram/YouTube 자동 게시를 건너뜁니다.")
+        if publish_insta:
+            insta_result = {"skipped": True, "reason": reason}
+            publish_insta = False
+        if publish_youtube:
+            youtube_result = {"skipped": True, "reason": reason}
+            publish_youtube = False
 
     # 5. Google Drive 업로드 (보관용)
     drive_result = {}
@@ -224,12 +233,17 @@ def run_pipeline(
     # 게시 직전 게이트: 목표 시각(예: 18:30 KST)까지 대기하거나, 허용 구간을 벗어났으면 게시를 건너뜀
     if publish_gate and (publish_insta or publish_youtube):
         if not publish_gate():
-            print("\n⛔ 게시 게이트가 게시를 차단했습니다 (허용 시간대 밖). 영상만 생성하고 종료합니다.")
-            publish_insta = False
-            publish_youtube = False
+            gate_blocked = True
+            reason = "게시 게이트 차단 (허용 시간대 밖)"
+            print(f"\n⛔ {reason}. 영상만 생성하고 종료합니다.")
+            if publish_insta:
+                insta_result = {"skipped": True, "reason": reason}
+                publish_insta = False
+            if publish_youtube:
+                youtube_result = {"skipped": True, "reason": reason}
+                publish_youtube = False
 
     # 6. Instagram 릴스 자동 게시
-    insta_result = {}
     if publish_insta:
         print("\n[6/7] 📸 Instagram 릴스 게시 시도...")
         t0 = time.time()
