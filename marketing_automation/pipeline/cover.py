@@ -9,12 +9,13 @@ Core Philosophy:
 - Single Focus: 오직 하나의 거대 2톤 헤드라인에 0.1초 만에 시선이 꽂히는 극상의 가독성.
 - Setup (White) + Punchline (Electric Gold) 2-Tone Visual Contrast.
 """
+import os
 import re
 import sys
 from pathlib import Path
 from typing import Optional
 
-from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageEnhance
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageEnhance, ImageStat
 
 from pipeline.text_utils import sanitize_title, wrap_natural_title
 from pipeline.visual_gen import infer_curiosity_badge
@@ -118,7 +119,7 @@ def build_reel_cover(
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 1. 딥 시네마틱 배경 준비 (어둡고 차분하게 눌러 텍스트 가독성 100% 확보)
+    # 1. 밝고 선명한 인물 중심 배경 준비 (인물 얼굴이 어둡게 죽지 않도록 밝기 유지/보정)
     base_img = None
     if raw_image:
         raw_p = Path(raw_image)
@@ -128,8 +129,11 @@ def build_reel_cover(
                 base_img = ImageOps.fit(
                     loaded, (W, H), method=Image.Resampling.LANCZOS, centering=(0.5, 0.35)
                 )
-                base_img = ImageEnhance.Brightness(base_img).enhance(0.38)
-                base_img = ImageEnhance.Contrast(base_img).enhance(1.25)
+                mean_luma = ImageStat.Stat(base_img.convert("L")).mean[0]
+                brightness_boost = 1.18 if mean_luma < 105 else 1.04
+                base_img = ImageEnhance.Brightness(base_img).enhance(brightness_boost)
+                base_img = ImageEnhance.Contrast(base_img).enhance(1.06)
+                base_img = ImageEnhance.Color(base_img).enhance(1.08)
             except Exception as e:
                 print(f"[COVER][WARN] 원본 이미지 로드 실패({e}), 그래디언트 생성으로 대체")
                 base_img = None
@@ -146,54 +150,53 @@ def build_reel_cover(
             b = int(BG_TOP[2] + (BG_BOTTOM[2] - BG_TOP[2]) * t)
             d_bg.line([(0, y_pos), (W, y_pos)], fill=(r, g, b))
 
-    # 2. 풀스크린 시네마틱 비네팅 오버레이 (화면 중앙 집중)
+    # 2. 상단 텍스트 영역에만 부드러운 그라데이션 적용 (중앙 인물 얼굴은 가리지 않음)
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d_ov = ImageDraw.Draw(overlay)
 
-    # 3:4 그리드 영역(Y=240..1680) 텍스트 배경을 짙고 부드럽게 감싸는 다크 그라데이션
-    for y in range(H):
-        t_center = abs(y - 940) / 940.0
-        alpha = int(170 + 75 * (1.0 - min(t_center, 1.0)))
+    top_grad_end = 560
+    for y in range(top_grad_end):
+        t = 1.0 - (y / top_grad_end)
+        alpha = int(135 * (t ** 1.25))
         d_ov.line([(0, y), (W, y)], fill=(6, 7, 13, alpha))
 
-    # 3. 상단 미니멀 타겟 캡슐 태그 (Y=390, 모던하고 절제된 형태)
-    badge_text = infer_mbtiju_badge(title, category_tag)
-    badge_font = _font(38, bold=True)
-    bbox_b = d_ov.textbbox((0, 0), badge_text, font=badge_font)
-    bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
-    px, py = 32, 14
-    pill_w = bw + px * 2
-    pill_h = bh + py * 2
-    pill_x0 = (W - pill_w) // 2
-    pill_y0 = 390
+    # 3. 상단 캡슐 뱃지 (기본 비활성화: SHOW_COVER_BADGE=true 일 때만 표시, 핵심 주제만 깔끔하게 노출)
+    show_badge = os.getenv("SHOW_COVER_BADGE", "").strip().lower() in ("1", "true", "yes")
+    if show_badge:
+        badge_text = infer_mbtiju_badge(title, category_tag)
+        badge_font = _font(36, bold=True)
+        bbox_b = d_ov.textbbox((0, 0), badge_text, font=badge_font)
+        bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
+        px, py = 30, 13
+        pill_w = bw + px * 2
+        pill_h = bh + py * 2
+        pill_x0 = (W - pill_w) // 2
+        pill_y0 = 240
+        d_ov.rounded_rectangle(
+            [pill_x0, pill_y0, pill_x0 + pill_w, pill_y0 + pill_h],
+            radius=pill_h // 2,
+            fill=(18, 20, 32, 210),
+            outline=(255, 218, 90, 180),
+            width=2,
+        )
+        d_ov.text(
+            (W // 2, pill_y0 + pill_h // 2),
+            badge_text,
+            font=badge_font,
+            fill=(255, 224, 102, 255),
+            anchor="mm",
+        )
 
-    # 은은하고 모던한 반투명 다크 캡슐
-    d_ov.rounded_rectangle(
-        [pill_x0, pill_y0, pill_x0 + pill_w, pill_y0 + pill_h],
-        radius=pill_h // 2,
-        fill=(18, 20, 32, 220),
-        outline=(255, 218, 90, 180),
-        width=2,
-    )
-    d_ov.text(
-        (W // 2, pill_y0 + pill_h // 2),
-        badge_text,
-        font=badge_font,
-        fill=(255, 224, 102, 255),
-        anchor="mm",
-    )
-
-    # 4. 화면 정중앙 초대형 2톤 임팩트 타이포그래피 (Y=620..1060)
-    # 제목 원본의 후킹성을 훼손하지 않고 온전하게 노출 (임의 단어 삭제 방지!)
+    # 4. 상단 안전 영역(3:4 프로필 그리드 Y=240~540) 내 핵심 주제 2줄 타이포그래피 (인물 얼굴 회피)
     clean_title = sanitize_title(title).replace("\n", " ").strip()
-    max_title_w = W - 140  # 좌우 70px씩 시원한 여백
+    max_title_w = W - 120  # 좌우 60px 여백
 
-    title_size = 126
+    title_size = 112
     while True:
         font = _font(title_size, bold=True)
         lines = wrap_natural_title(clean_title, font, max_title_w, max_lines=2) or [clean_title]
-        line_h = int(title_size * 1.28)
-        if (len(lines) <= 2 and len(lines) * line_h <= 380) or title_size <= 70:
+        line_h = int(title_size * 1.24)
+        if (len(lines) <= 2 and len(lines) * line_h <= 280) or title_size <= 56:
             break
         title_size -= 4
 
@@ -206,25 +209,24 @@ def build_reel_cover(
             mid = len(words) // 2
             lines = [" ".join(words[:mid]), " ".join(words[mid:])]
 
-    # 세로 중심 맞춤 (3:4 그리드 및 1:1 정사각 그리드의 완벽한 중앙)
-    total_text_h = len(lines) * line_h
-    title_start_y = 660 if len(lines) >= 2 else 720
-    stroke_w = max(8, int(title_size * 0.08))
+    # 인물 얼굴 위쪽 상단 안전 구역 배치 (3:4 그리드 Y=240 이상)
+    title_start_y = (330 if show_badge else 290) if len(lines) >= 2 else (360 if show_badge else 330)
+    stroke_w = max(7, int(title_size * 0.08))
 
     for idx, line in enumerate(lines):
         y_pos = title_start_y + idx * line_h
         # 1줄: 순백색 셋업(White), 2줄: 하이볼티지 일렉트릭 골드 펀치라인(Electric Gold)
         fill_color = (255, 226, 38, 255) if (len(lines) > 1 and idx == len(lines) - 1) else (255, 255, 255, 255)
 
-        # 또렷하고 단단한 딥 섀도우 (피드에서 글자가 칼같이 튀어나오는 시인성)
+        # 또렷하고 단단한 딥 섀도우
         d_ov.text(
-            (W // 2, y_pos + 10),
+            (W // 2, y_pos + 8),
             line,
             font=font,
-            fill=(0, 0, 0, 230),
+            fill=(0, 0, 0, 225),
             anchor="mt",
             stroke_width=stroke_w + 4,
-            stroke_fill=(0, 0, 0, 230),
+            stroke_fill=(0, 0, 0, 225),
         )
         # 메인 타이포 렌더링
         d_ov.text(
@@ -237,17 +239,17 @@ def build_reel_cover(
             stroke_fill=(5, 6, 10, 255),
         )
 
-    # 5. 하단 미니멀 브랜드 워터마크 (Y=1460, 3:4 그리드 하단 안전 영역)
-    # 기존의 잡다한 테이프/뱃지를 걷어내고 세련된 한 줄 브랜딩만 은은하게 유지
-    brand_text = "mbtiju.com 사주 × MBTI 심층 분석"
-    brand_font = _font(30, bold=False)
-    d_ov.text(
-        (W // 2, 1460),
-        brand_text,
-        font=brand_font,
-        fill=(190, 202, 225, 170),
-        anchor="mm",
-    )
+    # 5. 하단 워터마크 (기본 비활성화: SHOW_COVER_WATERMARK=true 일 때만 표시, 핵심 주제에 집중)
+    if os.getenv("SHOW_COVER_WATERMARK", "").strip().lower() in ("1", "true", "yes"):
+        brand_text = "mbtiju.com 사주 × MBTI 심층 분석"
+        brand_font = _font(30, bold=False)
+        d_ov.text(
+            (W // 2, 1460),
+            brand_text,
+            font=brand_font,
+            fill=(190, 202, 225, 170),
+            anchor="mm",
+        )
 
     # 6. 알파 합성 및 최종 고화질 JPEG 저장
     final_img = Image.alpha_composite(base_img.convert("RGBA"), overlay).convert("RGB")

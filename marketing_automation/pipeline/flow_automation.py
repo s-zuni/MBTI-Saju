@@ -53,10 +53,21 @@ _STOPWORDS = {
 
 from pipeline.visual_theme import detect_theme_from_prompt, format_flow_prompt
 
+_SCENE_DIALOGUES: Dict[int, str] = {}
+
+
+def set_scene_dialogues(dialogue_map: Optional[Dict[int, str]] = None) -> None:
+    """Flow 영상 배치 생성 시 씬별 한국어 대화 대사 컨텍스트를 등록합니다."""
+    _SCENE_DIALOGUES.clear()
+    if dialogue_map:
+        for sid, text in dialogue_map.items():
+            if text:
+                _SCENE_DIALOGUES[int(sid)] = str(text).strip()
+
 
 def extract_video_search_query(
     visual_prompt: str,
-    fallback: str = "dark aesthetic night moon candle moody",
+    fallback: str = "warm sunlit cafe friends talking aesthetic",
     visual_theme: Optional[str] = None,
 ) -> str:
     """
@@ -520,12 +531,15 @@ class FlowBrowserSession:
         asset_type: str = "video",
         timeout_sec: int = 150,
         visual_theme: Optional[str] = None,
+        dialogue: str = "",
     ) -> bool:
         if not self._ready or self._page is None:
             return False
 
         page = self._page
-        clean_prompt = format_flow_prompt(prompt, visual_theme, asset_type=asset_type)
+        clean_prompt = format_flow_prompt(
+            prompt, visual_theme, asset_type=asset_type, dialogue=dialogue
+        )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         media_tag = "img" if asset_type == "image" else "video"
 
@@ -752,7 +766,10 @@ def acquire_scene_videos_batch(
     if pending_for_flow and is_flow_enabled():
         with FlowBrowserSession() as session:
             for scene_id, prompt, video_path in pending_for_flow:
-                if session.generate_asset(prompt, video_path, asset_type="video", visual_theme=visual_theme):
+                dialogue = _SCENE_DIALOGUES.get(scene_id, "")
+                if session.generate_asset(
+                    prompt, video_path, asset_type="video", visual_theme=visual_theme, dialogue=dialogue
+                ):
                     _write_source_tag(video_path, prompt)
                     results[scene_id] = video_path
 

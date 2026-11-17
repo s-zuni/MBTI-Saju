@@ -610,6 +610,142 @@ def synthesize_with_elevenlabs(
     return result
 
 
+def prepare_flow_dialogue_audio(
+    scenes: list,
+    video_paths: Optional[Dict[int, str]] = None,
+    output_dir: Optional[str | Path] = None,
+) -> FullAudioResult:
+    """
+    나레이션 TTS를 생성하지 않고, Google Flow 등에서 생성된 실제 대화 영상(video_paths)에서
+    원본 사람 대화 오디오 트랙을 추출해 자막 타이밍과 정렬합니다.
+    - 비디오가 없거나 오디오 스트림이 비어 있는 씬(스톡/이미지 폴백 등)은 BGM이 자연스럽게 흐르도록
+      duration_estimate 기준 무음 오디오 트랙(anullsrc)으로 채웁니다.
+    """
+    import subprocess
+    from utils.ffmpeg_check import get_ffmpeg_path
+
+    if output_dir is None:
+        out_dir = Path("assets/audio")
+    else:
+        out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ffmpeg_bin = get_ffmpeg_path() or "ffmpeg"
+    vid_map = {int(k): str(v) for k, v in (video_paths or {}).items() if v}
+
+    LAST_TTS_INFO.clear()
+    LAST_TTS_INFO.update(engine="flow_dialogue", voice="real_dialogue", rate="1.0")
+
+    scene_results: List[SceneAudioResult] = []
+    current_offset = 0.0
+    extracted_cnt = 0
+
+    print("[AUDIO] 🗣️ TTS 나레이션 생략 -> Flow 영상 실제 사람 대화 오디오 추출 및 자막 싱크 정렬 중...")
+
+    for idx, sc in enumerate(scenes):
+        scene_id = int(getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1))
+        narration = str(getattr(sc, "narration", sc.get("narration") if isinstance(sc, dict) else "") or "")
+        est_dur = float(getattr(sc, "duration_estimate", sc.get("duration_estimate") if isinstance(sc, dict) else 3.5) or 3.5)
+        est_dur = max(est_dur, 2.5)
+
+        scene_path = out_dir / f"scene_{scene_id:02d}.mp3"
+        src_video = vid_map.get(scene_id, "")
+        duration = 0.0
+
+        # 1. 비디오 파일에 포함된 실제 사람 대화 오디오 추출 시도 (재인코딩 통일: 44.1kHz stereo MP3)
+        if src_video and Path(src_video).is_file():
+            cmd_extract = [
+                ffmpeg_bin, "-y",
+                "-i", str(src_video),
+                "-vn",
+                "-c:a", "libmp3lame",
+                "-ar", "44100",
+                "-ac", "2",
+                "-b:a", "192k",
+                str(scene_path),
+            ]
+            res = subprocess.run(cmd_extract, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res.returncode == 0 and scene_path.is_file() and scene_path.stat().st_size > 1000:
+                try:
+                    d = get_audio_duration(str(scene_path))
+                    if d >= 1.0:
+                        duration = d
+                        extracted_cnt += 1
+                        print(f"  🎙️ 씬 {scene_id} 실제 대화 오디오 추출 완료 ({duration:.2f}초)")
+                except Exception:
+                    duration = 0.0
+
+        # 2. 오디오 트랙이 없는 영상/이미지 씬은 무음 트랙 생성 (TTS 미사용)
+        if duration <= 0.0:
+            duration = est_dur
+            cmd_silence = [
+                ffmpeg_bin, "-y",
+                "-f", "lavfi",
+                "-i", "anullsrc=r=44100:cl=stereo",
+                "-t", f"{duration:.3f}",
+                "-c:a", "libmp3lame",
+                "-ar", "44100",
+                "-ac", "2",
+                "-b:a", "192k",
+                str(scene_path),
+            ]
+            subprocess.run(cmd_silence, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            print(f"  🔇 씬 {scene_id} 무음/BGM 전용 트랙 준비 ({duration:.2f}초, TTS 생략)")
+
+        start_time = current_offset
+        end_time = start_time + duration
+
+        # 대사 어절 길이에 비례해 자막 하이라이트 타이밍 정렬
+        words = narration.split()
+        word_timings: List[WordTiming] = []
+        if words:
+            total_chars = sum(max(len(w), 1) for w in words)
+            cur_w = start_time
+            for w in words:
+                w_span = duration * (max(len(w), 1) / total_chars)
+                word_timings.append(
+                    WordTiming(
+                        word=w,
+                        start_time=round(cur_w, 3),
+                        end_time=round(cur_w + w_span, 3),
+                    )
+                )
+                cur_w += w_span
+
+        scene_results.append(
+            SceneAudioResult(
+                scene_id=scene_id,
+                audio_path=str(scene_path.resolve()),
+                duration=round(duration, 3),
+                start_time=round(start_time, 3),
+                end_time=round(end_time, 3),
+                narration=narration,
+                word_timings=word_timings,
+            )
+        )
+        current_offset = end_time
+
+    full_audio_path = out_dir / "full_narration.mp3"
+    if scene_results:
+        _concatenate_audio_files([r.audio_path for r in scene_results], full_audio_path)
+        total_duration = get_audio_duration(str(full_audio_path))
+    else:
+        total_duration = 0.0
+
+    timing_json_path = out_dir / "timing_info.json"
+    result = FullAudioResult(
+        audio_path=str(full_audio_path.resolve()) if full_audio_path.is_file() else "",
+        total_duration=round(total_duration, 3),
+        scene_results=scene_results,
+        timing_json_path=str(timing_json_path.resolve()),
+    )
+    with open(timing_json_path, "w", encoding="utf-8") as f:
+        f.write(result.model_dump_json(indent=2))
+
+    print(f"[AUDIO] ✅ 대화 오디오 준비 완료 (대화 추출 {extracted_cnt}/{len(scenes)}씬, 총 {result.total_duration:.2f}초)")
+    return result
+
+
 def generate_speech(scenes: list, output_dir: Optional[str | Path] = None) -> FullAudioResult:
     """
     대본의 씬(scenes) 리스트를 입력받아 음성 및 타이밍 정보를 생성하고,

@@ -16,9 +16,9 @@ on:
         required: false
         default: '18:30'
       visual_theme:
-        description: '비주얼 컨셉 (auto: 8:2 자동 비율, human: 사람 공감, animal: 고정 동물 캐릭터)'
+        description: '비주얼 컨셉 (human: 사람 인물 공감 기본, auto: 8:2 자동 비율, animal: 고정 동물 캐릭터)'
         required: false
-        default: 'auto'
+        default: 'human'
 
 jobs:
   generate_and_publish:
@@ -89,7 +89,8 @@ jobs:
           FLOW_MODEL: 'Gemini Omni'
           IMAGE_ENGINE: flux
           REUSE_FLOW_FOR_CTA: 'true'
-          VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'auto' }}
+          DISABLE_TTS: 'true'
+          VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'human' }}
           # 비상 시 미완성 씬(플레이스홀더)이 생겨도 게시를 원할 경우를 위해 true 허용 (기본은 FLUX/스톡 폴백으로 자동 해결)
           ALLOW_PLACEHOLDER_PUBLISH: 'true'
           # 훅(제목/훅/씬1 음성)에서 출생연도·띠, MBTI 4글자 호명 금지 (ig-audit: 정체성 호명 훅은 조회가 낮았음)

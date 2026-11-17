@@ -243,9 +243,12 @@ def wrap_natural_title(
                 if w1 <= max_width and w2 <= max_width:
                     return [part1, part2]
 
-    # 2. 픽셀 너비 균형 분할 (Minimizing |W1 - W2|)
+    # 2. 픽셀 너비 균형 분할 + 한국어 의미 구(절 연결어미 / 수식어-명사 결속) 반영
+    clause_end_re = re.compile(r"(는데|한데|던데|지만|거든|니까|으면|다면|자마자|할\s*때|을\s*때|일\s*때|직전)$")
+    modifier_end_re = re.compile(r"(적|한|된|할|날|는|은|이|그|저|제일|가장|진짜|너무|완전|절대|갑자기)$")
+
     best_split = None
-    min_diff = float("inf")
+    min_score = float("inf")
     for i in range(1, len(words)):
         p1 = " ".join(words[:i])
         p2 = " ".join(words[i:])
@@ -255,10 +258,18 @@ def wrap_natural_title(
             penalty = 0
             # 뒤 줄에 단어가 1개만 남는데 전체 단어가 4개 이상이면 페널티
             if len(p2.split()) == 1 and len(words) >= 4:
-                penalty = 350
-            diff = abs(w1 - w2) + penalty
-            if diff < min_diff:
-                min_diff = diff
+                penalty += 350
+
+            p1_clean = re.sub(r"[,?!.]+$", "", p1).strip()
+            last_w = re.sub(r"[,?!.]+$", "", words[i - 1]).strip()
+            if clause_end_re.search(p1_clean):
+                penalty -= 280
+            elif modifier_end_re.search(last_w):
+                penalty += 220
+
+            score = abs(w1 - w2) + penalty
+            if score < min_score:
+                min_score = score
                 best_split = [p1, p2]
 
     if best_split:

@@ -535,31 +535,78 @@ def _pick_fresh(pool: List[str], recent: List[str]) -> str:
     return random.choice(fresh or pool)
 
 
+_DANGLING_MODIFIER_RE = re.compile(
+    r"(하는|되는|없는|있는|같은|만날|만나는|사귀는|갈리는|숨기는|참는|빠지는|망하는|망치는|"
+    r"보이는|느끼는|생기는|꼬이는|새는|식는|깨지는|모르는|힘든|무서운|어려운|외로운|"
+    r"벽치는|선긋는|손절하는|피하는|끌리는|헤어지는|놓치는|터지는|연락하는|좋아하는|"
+    r"싫어하는|후회하는|반복하는|멀어지는)$"
+)
+_CORE_END_NOUNS = ("이유", "특징", "속마음", "신호", "징조", "심리", "유형", "조합", "순간", "사람", "운세", "궁합", "방법")
+
+
 def _fit_title(text: str, limit: int = 22) -> str:
     """한자 제거 및 MBTI 영문 정규화 후, 큰 글씨 2줄(최대 20~22자)에 최적화된 완성된 훅 문장으로 다듬는다."""
     from pipeline.text_utils import sanitize_title, normalize_mbti_to_english
-    t = sanitize_title(text.replace("\n", " ").strip())
+
+    t = sanitize_title((text or "").replace("\n", " ").strip())
     t = normalize_mbti_to_english(t)
-    if len(t) <= limit:
-        return t
+    t = re.sub(r"\s+", " ", t).strip()
 
-    # limit 초과 시 어절 경계에서 자르되, 끝이 불완전하게 끊어지지 않도록 보정
-    cut = t[:limit]
-    if " " in cut and t[limit] != " ":
-        cut = cut[: cut.rfind(" ")]
-    cut = cut.strip(" ,?!")
+    # 1. 길이 초과 시 꼬리 군더더기/부사어를 우선 정리해 핵심 결론 명사 보존
+    if len(t) > limit:
+        cleaned = re.sub(r"[은는이가]?\s*따로\s*(있어요|있다|있음)[.!?]*$", "", t).strip()
+        if cleaned and len(cleaned) >= 8:
+            t = cleaned
+        if len(t) > limit and any(t.rstrip("?!.").endswith(n) for n in _CORE_END_NOUNS):
+            for adv in ("진짜 ", "정말 ", "제일 ", "가장 ", "지금 ", "사실 ", "갑자기 "):
+                if adv in t and len(t) > limit:
+                    t = t.replace(adv, "", 1)
+            t = re.sub(r"\s+", " ", t).strip()
 
-    # 불완전한 어미로 끝나면 자연스러운 종결형으로 보정
-    if re.search(r"(벽치는|선긋는|손절하는|피하는|끌리는|헤어지는|놓치는|터지는|외로운)$", cut):
-        cut += " 이유"
-    elif re.search(r"(이래서|왜|진짜)$", cut):
+    # 2. 어절 경계 절단
+    if len(t) > limit:
+        cut = t[:limit]
+        if " " in cut and t[limit] != " ":
+            cut = cut[: cut.rfind(" ")]
+        cut = cut.strip(" ,?!")
+    else:
+        cut = t.strip()
+
+    # 3. 끝에 외톨이 1글자 관형사("이", "그", "저") 제거 (예: "겉은 다정한데 손절 칼같은 이")
+    if re.search(r"\s+[이그저]$", cut):
+        cut = re.sub(r"\s+[이그저]$", "", cut).strip(" ,?!")
+
+    # 4. 불완전 보조사로 끝나면 자연스러운 명사형으로 정리 (예: "이유는" -> "이유")
+    if re.search(r"(이유|특징|사람|심리|신호|징조|유형|궁합)[은는]$", cut):
+        cut = cut[:-1]
+
+    # 5. 불완전 관형사형 어미("망하는", "칼같은" 등) 또는 연결부사 보정 (len <= limit 여도 수행)
+    if re.search(r"(이래서|왜|진짜)$", cut):
         cut = re.sub(r"(이래서|왜|진짜)$", "", cut).strip(" ,?!")
         if cut and not cut.endswith("이유"):
-            cut += " 이유"
+            cut = f"{cut} 이유"
     elif re.search(r"(알면|모르면)$", cut):
-        cut += " 평생 후회"
+        suffix = " 후회" if len(cut) + 3 <= limit else ""
+        if suffix:
+            cut += suffix
+    elif _DANGLING_MODIFIER_RE.search(cut):
+        if "특징" in t and "특징" not in cut:
+            suffix = " 특징"
+        elif "사람" in t and "사람" not in cut:
+            suffix = " 사람"
+        else:
+            suffix = " 이유"
+        if len(cut) + len(suffix) > limit:
+            # 앞의 부사어(지금/진짜/제일 등)를 우선 제거해 핵심 명사를 붙일 공간 확보
+            for adv in ("지금 ", "진짜 ", "정말 ", "제일 ", "가장 ", "갑자기 "):
+                if adv in cut and len(cut) + len(suffix) > limit:
+                    cut = re.sub(r"\s+", " ", cut.replace(adv, "", 1)).strip()
+            while len(cut) + len(suffix) > limit and " " in cut:
+                cut = cut[: cut.rfind(" ")].strip(" ,?!")
+        if len(cut) + len(suffix) <= limit:
+            cut = f"{cut}{suffix}"
 
-    return cut
+    return cut.strip()
 
 
 def _apply_plain(opt: Dict[str, str], use_llm: bool = True) -> Dict[str, str]:

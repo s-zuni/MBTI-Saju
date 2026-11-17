@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from PIL import ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageStat
 
 from pipeline import cover, flow_automation as fa, hook_guard
 from pipeline.mbti_saju_content import _enforce_plain_hook
@@ -25,6 +25,10 @@ class WrapNeverDropsTextTest(unittest.TestCase):
         # 126px, 940px 폭에서는 2줄로 안 들어간다 -> 예전엔 '진짜 이유'가 잘려 나갔다
         lines = wrap_natural_title(TITLE, _font(126), 940, max_lines=2)
         self.assertEqual("".join(lines).replace(" ", ""), TITLE.replace(" ", ""))
+
+    def test_wraps_after_korean_clause_ending_not_adjective(self):
+        lines = wrap_natural_title("겉은 상극인데 운명적 짝을 만날 MBTI", _font(86), 960, max_lines=2)
+        self.assertEqual(lines, ["겉은 상극인데", "운명적 짝을 만날 MBTI"])
 
 
 class CoverTest(unittest.TestCase):
@@ -60,6 +64,27 @@ class CoverTest(unittest.TestCase):
     def test_plain_badge_formats_bracket_label(self):
         self.assertEqual(cover._plain_badge("[ 반전 주의 ] 겉과 속이 다른 사람들"), "반전 주의 · 겉과 속이 다른 사람들")
         self.assertEqual(cover._plain_badge("[ 태그 ]"), "태그")
+
+    def test_cover_default_keeps_bright_portrait_and_hides_badge_watermark(self):
+        drawn_texts = []
+        real_text = ImageDraw.ImageDraw.text
+
+        def spy(self_, xy, text, *a, **kw):
+            drawn_texts.append(text)
+            return real_text(self_, xy, text, *a, **kw)
+
+        with tempfile.TemporaryDirectory() as d:
+            raw = Path(d) / "portrait.jpg"
+            out = Path(d) / "cover.jpg"
+            Image.new("RGB", (1080, 1920), (210, 185, 165)).save(raw, "JPEG")
+            cleaned = {k: v for k, v in os.environ.items() if k not in ("SHOW_COVER_BADGE", "SHOW_COVER_WATERMARK")}
+            with mock.patch.dict(os.environ, cleaned, clear=True), mock.patch.object(ImageDraw.ImageDraw, "text", spy):
+                cover.build_reel_cover(raw, "겉은 다정한데 손절 칼같은 이유", out)
+
+            center_crop = Image.open(out).crop((300, 650, 780, 1250)).convert("L")
+            mean_luma = ImageStat.Stat(center_crop).mean[0]
+            self.assertGreater(mean_luma, 140)
+            self.assertFalse(any("팩트체크" in t or "mbtiju.com" in t for t in drawn_texts))
 
 
 class VideoReuseTest(unittest.TestCase):

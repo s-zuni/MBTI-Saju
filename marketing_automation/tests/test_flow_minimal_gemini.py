@@ -189,5 +189,34 @@ class VisualThemeRatioAndCharacterTest(unittest.TestCase):
         self.assertIn("realistic physics", omni_prompt)
 
 
+class FlowDialogueModeTest(unittest.TestCase):
+    def test_format_flow_prompt_injects_korean_dialogue(self):
+        p = vt.format_flow_prompt(
+            "Two Korean friends talking in a bright cafe",
+            theme="human",
+            asset_type="video",
+            dialogue="야 너 아직 연락 안 했어?",
+        )
+        self.assertIn("With realistic natural Korean spoken dialogue and lip-sync", p)
+        self.assertIn("야 너 아직 연락 안 했어?", p)
+
+    def test_prepare_flow_dialogue_audio_skips_external_tts(self):
+        from pipeline import tts_engine as te
+
+        scenes = [
+            Scene(scene_id=1, narration="야 진짜 거짓말이지?", visual_prompt="cafe talk", duration_estimate=3, media_type="video"),
+            Scene(scene_id=2, narration="프로필 링크에서 확인해봐", visual_prompt="smile", duration_estimate=3, media_type="image"),
+        ]
+        with tempfile.TemporaryDirectory() as d:
+            audio_dir = Path(d) / "audio"
+            with mock.patch.object(te, "generate_speech") as m_tts:
+                res = te.prepare_flow_dialogue_audio(scenes, video_paths={}, output_dir=audio_dir)
+            m_tts.assert_not_called()
+            self.assertEqual(te.LAST_TTS_INFO.get("engine"), "flow_dialogue")
+            self.assertEqual(len(res.scene_results), 2)
+            self.assertGreater(res.total_duration, 5.0)
+            self.assertTrue(Path(res.audio_path).is_file())
+
+
 if __name__ == "__main__":
     unittest.main()

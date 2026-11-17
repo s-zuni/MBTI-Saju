@@ -157,18 +157,19 @@ def build_llm_visual_instruction(theme: str) -> str:
         anchor = get_animal_character_anchor()
         return (
             f"영문(English), Vertical 9:16 세로 풀스크린 구도. "
-            f"[고정 동물 캐릭터 모드 - 절대 엄수] 이 영상의 모든 씬(씬 1~마지막 씬)에는 사람이 아닌 반드시 동일한 시그니처 동물 캐릭터({anchor})만 주인공으로 등장해야 합니다! "
-            f"씬마다 다른 동물로 바꾸거나 사람을 등장시키지 마세요. "
-            f"각 씬의 한국어 대사(예: 밖에서는 텐션 높음, 집에 오자마자 현관에 뻗음, 스마트폰 보며 귀찮아함, 이불 돌돌 말고 숨음, 새침하게 삐짐)에 맞춰 "
-            f"이 똑같은 동물 캐릭터의 귀여운 행동·표정·포즈만 상황에 맞게 바꾸어 묘사하세요. "
-            f"모든 씬의 visual_prompt는 반드시 'Featuring {anchor}, '로 시작하세요. "
+            f"[고정 동물 캐릭터 모드 - 절대 엄수] 씬 1(썸네일 커버)은 밝고 따뜻한 카페/실내 자연광 아래 한국 2030 인물의 정면/반측면 얼굴 표정이 선명한 미디엄 클로즈업 구도로 시작하거나, "
+            f"본문 모든 동물 씬에는 동일한 시그니처 동물 캐릭터({anchor})가 주인공으로 등장해야 합니다. "
+            f"동물 씬마다 다른 동물로 바꾸지 말고, 각 씬의 한국어 대화 상황에 맞춰 이 똑같은 동물 캐릭터의 귀여운 행동·표정·포즈만 상황에 맞게 바꾸어 묘사하세요. "
+            f"동물 씬의 visual_prompt는 'Featuring {anchor}, '로 시작하고 밝고 따뜻한 실내 조명으로 묘사하세요. "
             f"{motion_scope}는 영상(video) 클립용으로 귀여운 미세 움직임(blinking big eyes, flopping down on rug, pawing at smartphone, twitching ears)을 포함하세요. "
-            f"no human face, no text, no watermark, no CGI, no cartoon."
+            f"no text, no watermark, no CGI, no cartoon."
         )
     return (
         "영문(English), Vertical 9:16 세로 풀스크린 구도. "
-        "감성적이고 시네마틱한 조명(어두운 밤, 은은한 조명, 미스틱한 보케, 네온, 도시 야경 등)과 자연스러운 한국 2030의 일상 장면. "
-        f"{motion_scope}는 영상(video) 클립용으로 미세한 움직임(looking at smartphone, turning head, deep breathing)을 묘사. "
+        "어두운 밤/야경/검은 배경 금지! 반드시 따뜻하고 밝은 자연광이나 감성 카페·실내 조명 아래 한국 2030 인물의 표정과 얼굴이 선명하게 보이는 미디엄 클로즈업 구도"
+        "(bright warm cafe/indoor daylight, clear expressive Korean person portrait centered in medium close-up, talking naturally with a friend/partner across the table). "
+        "특히 씬 1(썸네일 커버)은 반드시 밝은 조명에서 인물 얼굴이 정면/반측면으로 또렷이 보이는 구도로 작성. "
+        f"{motion_scope}는 영상(video) 클립용으로 실제 사람이 한국어로 대화하며 웃거나 고개를 끄덕이는 자연스러운 표정·입모양 움직임(speaking naturally in Korean conversation with expressive facial reactions)을 묘사. "
         "no text, no watermark, no CGI, no cartoon."
     )
 
@@ -220,14 +221,21 @@ def format_flow_prompt(
     prompt: str,
     theme: Optional[str] = None,
     asset_type: str = "video",
+    dialogue: str = "",
 ) -> str:
     """Google Flow(Gemini Omni / Veo) 브라우저 자동화 입력용 고품질 영문 프롬프트를 생성합니다."""
     resolved = detect_theme_from_prompt(prompt, theme)
     clean = (prompt or "").strip().rstrip(".")
+    clean_dialogue = " ".join(str(dialogue or "").split()).strip()
     is_image = str(asset_type or "video").strip().lower() == "image"
+    dialogue_clause = (
+        f' With realistic natural Korean spoken dialogue and lip-sync: "{clean_dialogue}".'
+        if (not is_image and clean_dialogue)
+        else ""
+    )
     omni_quality = (
         "smooth natural handheld smartphone motion, realistic physics, "
-        "rich dynamic range and cohesive natural lighting continuity, expressive micro-expressions"
+        "bright warm natural lighting and cohesive skin/color continuity, expressive micro-expressions"
     )
     if resolved == "animal":
         anchor = get_animal_character_anchor()
@@ -237,25 +245,25 @@ def format_flow_prompt(
             return (
                 f"Vertical 9:16 portrait smartphone photo: {clean}. "
                 f"Ultra-realistic cute pet meme photo filmed on smartphone, consistent identical animal character appearance, "
-                f"expressive face, cozy natural lighting, 9:16 vertical full-screen mobile framing, "
+                f"expressive face, warm bright cozy natural lighting, 9:16 vertical full-screen mobile framing, "
                 f"centered subject, no human face, no text, no watermark, no CGI, no cartoon."
             )
         return (
-            f"Vertical 9:16 portrait smartphone pet video: {clean}. "
+            f"Vertical 9:16 portrait smartphone pet video: {clean}.{dialogue_clause} "
             f"Ultra-realistic cute pet meme video filmed on smartphone, consistent identical animal character appearance, "
-            f"{omni_quality}, cozy natural lighting, 9:16 vertical full-screen mobile framing, "
+            f"{omni_quality}, warm bright cozy natural lighting, 9:16 vertical full-screen mobile framing, "
             f"centered subject, no human face, no text, no watermark, no CGI, no cartoon."
         )
     if is_image:
         return (
             f"Vertical 9:16 portrait smartphone photo: {clean}. "
-            f"Candid realistic Korean everyday scene, natural lighting, "
-            f"9:16 vertical full-screen mobile framing, centered subject, no text, no watermark."
+            f"Bright warm cafe or indoor daylight, clear expressive Korean person portrait centered in medium close-up, "
+            f"9:16 vertical full-screen mobile framing, no text, no watermark."
         )
     return (
-        f"Vertical 9:16 portrait smartphone video: {clean}. "
-        f"Candid realistic Korean everyday scene, {omni_quality}, natural lighting, "
-        f"9:16 vertical full-screen mobile framing, centered subject, no text, no watermark."
+        f"Vertical 9:16 portrait smartphone video: {clean}.{dialogue_clause} "
+        f"Bright warm cafe or indoor daylight, clear expressive Korean people having a natural real-life conversation in medium close-up, "
+        f"{omni_quality}, 9:16 vertical full-screen mobile framing, centered subject, no text, no watermark."
     )
 
 

@@ -85,6 +85,10 @@ class FitTitleTest(unittest.TestCase):
         self.assertFalse(t.endswith(" "))
         self.assertTrue("동업 파트너한테 병화 남자가 꼭 알아야 할 한 가지".startswith(t))
 
+    def test_repairs_dangling_determiner_or_modifier_endings(self):
+        self.assertEqual(tp._fit_title("헤어진 그 사람, 지금 연락하면 망하는"), "헤어진 그 사람, 연락하면 망하는 이유")
+        self.assertEqual(tp._fit_title("겉은 다정한데 손절 칼같은 이"), "겉은 다정한데 손절 칼같은 이유")
+
 
 class FallbackAndClassifyTest(unittest.TestCase):
     def test_fallback_option_fields(self):

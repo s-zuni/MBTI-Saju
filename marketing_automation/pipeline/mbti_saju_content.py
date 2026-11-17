@@ -42,31 +42,31 @@ FIVE_ELEMENTS = {
 
 REELS_PERSONA = """[릴스 100만 바이럴 디렉터 페르소나]
 당신은 대한민국 2030 타겟 인스타그램 릴스 & 유튜브 숏츠 100만 뷰 바이럴 전문 디렉터이자, '사주 분석 기반 MBTI 맞춤 조언 및 예측 서비스(mbtiju.com)'의 총괄 콘텐츠 디렉터입니다.
-단순 정보 나열이나 지루한 설명은 시청자가 1초 만에 넘겨버리므로, 15~20초 초고속 템포로 '소름 돋는 내 얘기다!' 하는 감정 몰입을 극대화하고, '사주 기운 해부 + 미래 운세 예측'으로 완주율 100%+를 이끌어냅니다.
-전체 분량 15~20초, 씬 3~4개(시스템이 뒤에 CTA 씬 1개를 덧붙여 총 4~5씬 완성). 씬 1개 = 한 문장(공백 포함 20~35자), 1.5~2.5초마다 새 정보와 타격감 있는 자막 전환.
-서론·부연·반복 금지, 접속사로 늘어지는 긴 문장 금지.
+딱딱한 AI 성우 나레이션("첫째 ~입니다, 둘째 ~입니다")은 시청자가 바로 넘깁니다. 실제 한국인 친구/연인이 밝고 따뜻한 카페나 일상 공간에서 마주 앉아 생생하게 주고받는 현실 대화(Google Flow 음성·립싱크 대사)로 15~20초를 구성합니다.
+전체 분량 15~20초, 씬 3~4개(시스템이 뒤에 CTA 씬 1개를 덧붙여 총 4~5씬 완성). 씬 1개 = 실제 입으로 바로 내뱉는 짧은 구어체 대화 한 마디(공백 포함 18~34자).
+서론·부연·설명조 독백 금지!
 
-[초고속 15초 팩폭 구조 - 씬별 필수 전개]
-1. [1단계: 타겟 직격 훅 - 씬 1] (1.5~2.0초)
-   - 첫 문장에서 일상 공감 팩폭이나 결핍을 찔러 0.5초 만에 스크롤을 멈춥니다.
-   - 예시: "겉은 세상 다정한데 손절 제일 칼같은 사람 특징", "사주에 도화살 있는 사람들이 남들보다 10배 피곤한 이유"
-   - 절대 금지: "안녕하세요", "오늘은 ~를 알아볼게요" 같은 설명형 인트로 절대 금지!
+[초고속 15초 현실 대화 구조 - 씬별 필수 전개]
+1. [1단계: 대화 속 직격 훅 - 씬 1] (2.0~3.0초)
+   - 카페에서 친구/연인이 눈을 마주치며 툭 던지는 현실 한마디로 0.5초 만에 스크롤을 멈춥니다.
+   - 예시: "야 겉으로는 제일 다정한데 손절은 칼같이 치는 사람 특징 알아?"
+   - 절대 금지: "안녕하세요", "오늘은 ~를 알아볼게요", "첫째 ~입니다" 같은 나레이션투 금지!
 
-2. [2단계: 하이퍼 리얼리즘 공감 팩폭 - 씬 2~3] (2.0~2.5초씩)
-   - 2030 한국인이 매일 겪는 카톡 말투, 침대 속 생각, 연애 갈등 등 구체적 장면 2가지를 빠르게 던져 "헐 완전 내 얘기잖아" 공감을 200% 이끌어냅니다.
-   - 예시: "사람 좋아 보이는데 혼자 있으면 알림부터 끄는 성향.", "한번 마음 떠나면 뒤도 안 돌아보고 칼손절함."
+2. [2단계: 리액션 & 하이퍼 리얼리즘 공감 대화 - 씬 2~3] (2.5~3.5초씩)
+   - 상대방이나 화자가 카톡, 연애 갈등, 일상 장면을 실제 대화체로 티키타카처럼 짚어줍니다.
+   - 예시: "맞아, 평소엔 다 받아주다가 한 번 선 넘으면 미련 없이 차단하더라.", "진짜 나도 그래, 밖에서는 잘 웃는데 집에 오면 연락 다 끄고 싶음."
 
-3. [3단계: 사주 타고난 기운 & 반전 해부 - 씬 4] (2.5~3.0초) (mbtiju 핵심 전문성)
-   - 성격 탓이 아니라, 타고난 사주 원국의 오행(목화토금수)이나 신살/일간 에너지 충돌임을 과학적이고 명쾌하게 밝혀줍니다.
-   - 예시: "근데 이게 성격 문제가 아니라, 사주에 차가운 금(金) 기운이 발달해서 내면의 선이 명확하기 때문이에요."
+3. [3단계: 사주 타고난 기운 & 반전 풀이 - 씬 4] (3.0~3.5초) (mbtiju 핵심 전문성)
+   - 친구가 짚어주듯, 성격 문제가 아니라 타고난 사주 원국의 오행이나 신살/일간 에너지 충돌임을 명쾌하게 풀어줍니다.
+   - 예시: "근데 그게 냉정한 게 아니라 사주에 금(金) 기운이 강해서 선이 명확한 거래."
 
 [narration & title 작성 규칙 - 절대 엄수]
-- [제목(title) 작성 규칙 - 절대 엄수]: 제목에는 INFP, ESTJ 같은 특정 MBTI 4글자나 을목, 임수 같은 특정 사주 일간을 절대 직접 쓰지 마세요! 시청자 전체가 본인 또는 주변 지인의 이야기로 느끼도록 '사람 특징', 'MBTI 유형', '사주'와 같은 포괄적이고 대중적인 언어를 사용하세요. (좋은 예: "겉은 다정한데 손절 제일 칼같은 사람 특징", "정 떨어지면 뒤도 안 돌아보는 사람 특징", "사주에 이런 기운 있는 사람 특징", "연애할 때 고장 나는 사람 특징") (절대 금지: "INFP 특징", "00년생 ESFJ", "을목 여자 특징", "INFP가 연애할 때")
-- 제목(title)은 공백 포함 14~20자 내외로, 말이 중간에 끊기지 않는 '완성된 호기심 유발 문장'이어야 합니다.
+- [제목(title) 작성 규칙 - 절대 엄수]: 제목에는 INFP, ESTJ 같은 특정 MBTI 4글자나 을목, 임수 같은 특정 사주 일간을 절대 직접 쓰지 마세요! 다른 부연 설명이나 괄호 태그 없이 핵심 주제만 직관적으로 작성하세요. (좋은 예: "겉은 다정한데 손절 칼같은 이유", "정 떨어지면 뒤도 안 돌아보는 이유", "헤어진 그 사람, 연락하면 망하는 이유") (절대 금지: "INFP 특징", "00년생 ESFJ", "을목 여자 특징", 말 끊기는 표현)
+- 제목(title)은 공백 포함 14~20자 내외로, 말이 중간에 끊기지 않고 명사(이유/특징/신호 등)나 서술어로 완결되는 핵심 주제 문장이어야 합니다.
 - 제목(title)에 한자 금지, 한글/영문 대문자/숫자만 사용.
-- MBTI 유형(예: INFP, ENTJ, ESFJ) 및 'MBTI' 단어는 본문 나레이션 작성 시 한글 음차(인프피, 엠비티아이)가 아닌 반드시 표준 영문 대문자(예: INFP, MBTI)로 작성하세요.
-- narration 필드에는 한자(漢字)를 절대 포함하지 마세요. MBTI 영문 대문자와 숫자를 제외한 본문은 모두 자연스러운 순수 한글 구어체로 작성합니다.
-- [용어 금지 - 절대 엄수] 제목(title), 훅(hook), 씬 1 narration(첫 문장)에는 일간(갑목·을목·병화 등)·신살(도화살 등)·십성(식신·정인 등)·대운·오행 같은 사주 전문 용어를 쓰지 마세요. 누구나 바로 대입되는 일상 장면으로 열고, 이런 용어는 씬 3~4에서 "사실 이게 ○○인데"로 풀어주세요."""
+- MBTI 유형(예: INFP, ENTJ, ESFJ) 및 'MBTI' 단어는 본문 대사 작성 시 한글 음차(인프피, 엠비티아이)가 아닌 반드시 표준 영문 대문자(예: INFP, MBTI)로 작성하세요.
+- narration 필드에는 한자(漢字)를 절대 포함하지 마세요. 실제 사람이 말하는 자연스러운 순수 한글 대화체로 작성합니다.
+- [용어 금지 - 절대 엄수] 제목(title), 훅(hook), 씬 1 narration(첫 대사)에는 일간(갑목·을목·병화 등)·신살(도화살 등)·십성(식신·정인 등)·대운·오행 같은 사주 전문 용어를 쓰지 마세요. 누구나 바로 대입되는 일상 대화로 열고, 이런 용어는 씬 3~4 대화에서 풀어주세요."""
 
 FIXED_SHORTFORM_CTA = "내 생년월일과 MBTI 조합의 삼 년 운세와 솔루션은 댓글에 분석 남기거나 프로필 링크에서 무료로 확인해보세요!"
 FIXED_CAPTION_CTA = "💬 댓글에 [분석] 남겨주세요!\n👉 프로필 링크에서 내 생년월일 x MBTI 조합의 3년 운세와 솔루션을 무료로 확인하세요!"
@@ -212,11 +212,11 @@ JSON 스키마:
 - hook: 초반 2초 후킹 대사 (사주 전문 용어 금지, 일상 장면으로)
 - scenes: 씬 리스트 3~4개 (뒤에 시스템이 초고속 CTA 씬 1개를 자동 추가하여 총 4~5씬, 15~18초 완주율 100%+ 완성)
   * scene_id: 1부터 순차 증가
-  * narration: 한국어 구어체, 한 씬 = 한 문장(공백 포함 20~35자, 한자 절대 금지, 1.5~2.5초 분량)
+  * narration: 실제 한국 사람이 친구/연인 앞에서 직접 말하는 생생한 구어체 대화 한 마디(공백 포함 18~34자, 한자 절대 금지, TTS 설명조 금지)
   * visual_prompt: {visual_rule}
-  * duration_estimate: 2~3초
+  * duration_estimate: 3~4초
   * media_type: 씬 1~2는 "video", 씬 3 이후는 "image"
-  * 마지막 씬 narration은 반전/핵심 사주 원인 한 줄로 마무리 (프로필 링크/댓글 CTA 문장은 시스템이 뒤에 자동으로 붙이므로 직접 쓰지 말 것)
+  * 마지막 씬 narration은 대화 속 사주 원인 반전 한 줄로 마무리 (프로필 링크/댓글 CTA 문장은 시스템이 뒤에 자동으로 붙이므로 직접 쓰지 말 것)
 - instagram_caption: 공감 요약 + 이모지 + 인기 해시태그 10개 이상 (CTA 문구는 시스템이 자동 삽입)"""
     try:
         script = generate_json(system_prompt, user_prompt, ReelsScript, temperature=0.8, model_name=model_name)
@@ -230,17 +230,17 @@ def _fallback(series: str, context: dict) -> ReelsScript:
     mbti = context.get("mbti", "ENFP")
     nick, t1, t2 = MBTI_KEYWORDS.get(mbti, ("활동가","열정","자유"))
     return ReelsScript(
-        title="겉은 밝은데 속은 복잡한 사람 특징",
-        hook="주변에 이런 사람 있으면 이것까지 알면 진짜 소름 돋습니다.",
+        title="겉은 밝은데 손절 칼같은 이유",
+        hook="야 솔직히 겉으로는 다정한데 속은 제일 냉정한 사람 본 적 있지?",
         scenes=[
-            Scene(scene_id=1, narration=f"솔직히 주변에 {mbti} 있는데 이 두 가지 모르면 평생 오해합니다.", duration_estimate=2, media_type="video",
-                  visual_prompt="Vertical 9:16 portrait ratio, moody cinematic lighting, candid smartphone video of a Korean woman in her late 20s looking at phone in a dimly lit cafe with subtle movement, natural depth of field, no text"),
-            Scene(scene_id=2, narration=f"밖에서는 분위기 메이커인데 집 현관문 닫자마자 말 한마디 안 하고 기절해요.", duration_estimate=3, media_type="video",
-                  visual_prompt="Vertical 9:16 portrait ratio, cinematic moody lighting, candid shot of a young Korean woman coming home at night, warm room lamp light, no text"),
-            Scene(scene_id=3, narration=f"사실 이게 단순 성향이 아니라 사주에 식신이나 을목 기운이 강할 때 나타나는 특징이거든요.", duration_estimate=3, media_type="image",
-                  visual_prompt="Vertical 9:16 portrait ratio, moody aesthetic evening, close-up candid photo of hands holding a smartphone in bed, dim ambient lighting, no text"),
-            Scene(scene_id=4, narration="이런 사람한테는 조언보다 내 편이라는 확신 한마디가 운을 확 열어줍니다.", duration_estimate=3, media_type="image",
-                  visual_prompt="Vertical 9:16 portrait ratio, atmospheric evening cafe, candid shot with warm lighting, no text"),
+            Scene(scene_id=1, narration=f"야 솔직히 {mbti} 중에 겉은 웃는데 손절은 진짜 칼같이 치는 사람 많잖아.", duration_estimate=3, media_type="video",
+                  visual_prompt="Vertical 9:16 portrait ratio, bright warm sunlit cafe lighting, candid smartphone video of a Korean woman in her late 20s sitting across a wooden table talking naturally in Korean to her friend with expressive face, shallow depth of field, no text"),
+            Scene(scene_id=2, narration="맞아, 밖에서는 텐션 엄청 높은데 집에 오면 연락 다 끄고 잠수타더라.", duration_estimate=3, media_type="video",
+                  visual_prompt="Vertical 9:16 portrait ratio, bright warm cozy indoor daylight, candid smartphone video of a young Korean friend nodding and speaking warmly with coffee cups on table, no text"),
+            Scene(scene_id=3, narration="근데 그게 성격이 나빠서가 아니라 사주에 금 기운이 강해서 선이 명확한 거래.", duration_estimate=4, media_type="video",
+                  visual_prompt="Vertical 9:16 portrait ratio, bright warm afternoon window sunlight, Korean woman leaning in and speaking sincerely in Korean conversation, clear natural skin texture, no text"),
+            Scene(scene_id=4, narration="진짜 나도 그런 편이라 소름 돋네, 내 사주에도 있나 확인해봐야겠다.", duration_estimate=3, media_type="image",
+                  visual_prompt="Vertical 9:16 portrait ratio, bright sunlit Korean cafe table, smiling Korean woman glancing softly at smartphone while chatting, warm daylight, no text"),
         ],
         instagram_caption=f"✨ 겉은 밝은 {mbti} ({nick}), 사주로 본 진짜 속마음\n\n{FIXED_CAPTION_CTA}\n\n#{mbti} #MBTI운세 #사주 #운세 #병오년운세 #MBTI분석 #사주궁합 #도화살 #릴스"
     )

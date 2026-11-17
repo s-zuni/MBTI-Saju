@@ -126,17 +126,17 @@ def build_shorts_overlay(
     overlay = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    # 1. 상단 & 하단 시네마틱 비네팅 그라데이션 (가독성 확보 + 영상 몰입감 유지)
-    top_end = 470
+    # 1. 상단 & 하단 시네마틱 비네팅 그라데이션 (가독성 확보 + 밝은 인물 몰입감 유지)
+    top_end = 450
     for y in range(top_end):
         t = 1.0 - (y / top_end)
-        alpha = int(205 * (t ** 1.35))
+        alpha = int(165 * (t ** 1.35))
         draw.line([(0, y), (CANVAS_W, y)], fill=(6, 7, 14, alpha))
 
-    bot_start = 1120
+    bot_start = 1160
     for y in range(bot_start, CANVAS_H):
         t = (y - bot_start) / (CANVAS_H - bot_start)
-        alpha = int(230 * (t ** 1.25))
+        alpha = int(205 * (t ** 1.25))
         draw.line([(0, y), (CANVAS_W, y)], fill=(6, 7, 14, alpha))
 
     # 2. 폰트 로드
@@ -151,47 +151,48 @@ def build_shorts_overlay(
         except Exception:
             return ImageFont.load_default()
 
-    # 3. 상단 플로팅 호기심 필 뱃지 (Y=145)
-    badge_text = category_tag.strip() if category_tag.strip() else infer_curiosity_badge(title)
-    badge_font = _load(36)
-    bbox = draw.textbbox((0, 0), badge_text, font=badge_font)
-    bw, bh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    pad_x, pad_y = 34, 15
-    pill_w = bw + pad_x * 2
-    pill_h = bh + pad_y * 2
-    pill_x0 = (CANVAS_W - pill_w) // 2
-    pill_y0 = 142
-    draw.rounded_rectangle(
-        [pill_x0, pill_y0, pill_x0 + pill_w, pill_y0 + pill_h],
-        radius=pill_h // 2,
-        fill=(14, 15, 26, 215),
-        outline=(255, 212, 59, 235),
-        width=3,
-    )
-    draw.text(
-        (CANVAS_W // 2, pill_y0 + pill_h // 2),
-        badge_text,
-        font=badge_font,
-        fill=(255, 224, 102, 255),
-        anchor="mm",
-    )
+    # 3. 상단 캡슐 뱃지 (기본 비활성화: SHOW_OVERLAY_BADGE=true 일 때만 표시, 핵심 주제만 깔끔하게 노출)
+    show_badge = os.getenv("SHOW_OVERLAY_BADGE", "").strip().lower() in ("1", "true", "yes")
+    title_y = 190
+    if show_badge:
+        badge_text = category_tag.strip() if category_tag.strip() else infer_curiosity_badge(title)
+        badge_font = _load(36)
+        bbox = draw.textbbox((0, 0), badge_text, font=badge_font)
+        bw, bh = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        pad_x, pad_y = 34, 15
+        pill_w = bw + pad_x * 2
+        pill_h = bh + pad_y * 2
+        pill_x0 = (CANVAS_W - pill_w) // 2
+        pill_y0 = 142
+        draw.rounded_rectangle(
+            [pill_x0, pill_y0, pill_x0 + pill_w, pill_y0 + pill_h],
+            radius=pill_h // 2,
+            fill=(14, 15, 26, 215),
+            outline=(255, 212, 59, 235),
+            width=3,
+        )
+        draw.text(
+            (CANVAS_W // 2, pill_y0 + pill_h // 2),
+            badge_text,
+            font=badge_font,
+            fill=(255, 224, 102, 255),
+            anchor="mm",
+        )
+        title_y = pill_y0 + pill_h + 26
 
-    # 4. 상단 플로팅 2톤 훅 타이틀 (Y=232)
+    # 4. 상단 플로팅 핵심 주제 2톤 훅 타이틀 (글자 잘림/말줄임표 없이 전체 노출)
     clean_title = sanitize_title(title).replace(chr(10), " ").strip()
     max_title_width = CANVAS_W - 110
-    title_size = 86
+    title_size = 90
     while True:
         title_font = _load(title_size)
         lines = wrap_natural_title(clean_title, title_font, max_title_width, max_lines=2) or [clean_title]
-        if len(lines) <= 2 or title_size <= 64:
+        if len(lines) <= 2 or title_size <= 52:
             break
-        title_size -= 6
+        title_size -= 4
     if len(lines) > 2:
-        lines = lines[:2]
-        lines[-1] = lines[-1].rstrip() + "…"
-
-    title_y = pill_y0 + pill_h + 26
-    line_h = int(title_size * 1.22)
+        lines = [lines[0], " ".join(lines[1:])]
+    line_h = int(title_size * 1.24)
     for idx, line in enumerate(lines):
         # 첫 줄은 깔끔한 화이트, 마지막 줄(핵심 키워드)은 시선을 끄는 일렉트릭 골드
         fill_color = (255, 216, 64, 255) if (len(lines) > 1 and idx == len(lines) - 1) else (255, 255, 255, 255)
@@ -541,6 +542,7 @@ def generate_scene_images(
         acquire_scene_videos_batch,
         generate_with_google_flow_browser,
         is_flow_enabled,
+        set_scene_dialogues,
     )
     from pipeline.visual_theme import enforce_scene_visual_consistency
 
@@ -578,13 +580,22 @@ def generate_scene_images(
     batch_videos: Dict[int, Path] = {}
     if not force_mock:
         video_tasks = []
+        dialogue_map: Dict[int, str] = {}
+        disable_tts = os.getenv("DISABLE_TTS", "true").strip().lower() not in ("0", "false", "no")
         for idx, sc in enumerate(scenes):
             scene_id = getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1)
             prompt = getattr(sc, "visual_prompt", sc.get("visual_prompt") if isinstance(sc, dict) else "")
+            narration = getattr(sc, "narration", sc.get("narration") if isinstance(sc, dict) else "")
             if _should_use_video_for_scene(scene_id, sc, idx=idx, total_scenes=total_scenes, flow_enabled=flow_enabled):
                 video_tasks.append((scene_id, prompt))
+                if disable_tts and narration:
+                    dialogue_map[int(scene_id)] = str(narration)
         if video_tasks:
-            batch_videos = acquire_scene_videos_batch(video_tasks, video_dir, visual_theme=visual_theme)
+            set_scene_dialogues(dialogue_map)
+            try:
+                batch_videos = acquire_scene_videos_batch(video_tasks, video_dir, visual_theme=visual_theme)
+            finally:
+                set_scene_dialogues(None)
 
     for idx, sc in enumerate(scenes):
         scene_id = getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1)

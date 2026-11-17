@@ -40,7 +40,12 @@ from utils.ffmpeg_check import check_ffmpeg
 from pipeline.script_gen import generate_script, create_sample_script, ReelsScript
 from pipeline.mbti_saju_content import generate_mbti_saju_script
 from pipeline.text_utils import sanitize_narration, sanitize_title
-from pipeline.tts_engine import generate_speech, FullAudioResult, LAST_TTS_INFO
+from pipeline.tts_engine import (
+    generate_speech,
+    prepare_flow_dialogue_audio,
+    FullAudioResult,
+    LAST_TTS_INFO,
+)
 from pipeline.cta import has_share_line, infer_cta_kind, detect_cta_kind, adapt_caption_for_youtube
 from pipeline.visual_gen import generate_scene_images
 from pipeline.visual_theme import resolve_visual_theme, enforce_scene_visual_consistency
@@ -133,16 +138,8 @@ def run_pipeline(
     }
     variant.update(classify_hook(script.hook or script.title))  # 훅 공식/용어 유무/길이 기록(ig-audit 비교용)
 
-    # 2. 음성 합성
-    print("\n[2/7] 🎙️ 한국어 내레이션 음성 합성 및 -30dB 무음 칼컷 중...")
-    t0 = time.time()
-    audio_result: FullAudioResult = generate_speech(script.scenes)
-    print(f"  ✅ 음성 합성 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
-    variant.update(tts_engine=LAST_TTS_INFO.get("engine", ""), tts_rate=LAST_TTS_INFO.get("rate", ""),
-                   tts_voice=LAST_TTS_INFO.get("voice", ""), duration_s=round(audio_result.total_duration, 1))
-
-    # 3. 비주얼 생성
-    print("\n[3/7] 🎨 Flow 우선 비주얼 생성(Gemini 미디어 API 최소화) 및 상단 제목 릴스 프레임 합성 중...")
+    # 2. Flow 비주얼/대화 영상 생성 (원본 대화 오디오 추출을 위해 오디오 단계보다 먼저 실행)
+    print("\n[2/7] 🎨 Flow 우선 비주얼·대화 영상 생성(Gemini 미디어 API 최소화) 및 상단 핵심 제목 합성 중...")
     if mock_images:
         print("  ⚠️ [--mock-images 활성화] 실제 AI 사진 생성을 건너뛰고 단색 플레이스홀더를 사용합니다.")
     else:
@@ -161,6 +158,20 @@ def run_pipeline(
     image_paths = visual_result.image_paths
     variant["video_scenes"] = len(visual_result.video_paths)
     print(f"  ✅ 비주얼 준비 완료 ({time.time() - t0:.1f}초)")
+
+    # 3. 오디오 준비: 기본(DISABLE_TTS=true)은 TTS 나레이션 없이 Flow 영상의 실제 사람 대화 음성을 추출
+    use_tts = _env_flag("USE_TTS") or os.getenv("DISABLE_TTS", "true").strip().lower() in ("0", "false", "no")
+    t0 = time.time()
+    if use_tts:
+        print("\n[3/7] 🎙️ 한국어 내레이션 음성 합성 및 -30dB 무음 칼컷 중...")
+        audio_result: FullAudioResult = generate_speech(script.scenes)
+        print(f"  ✅ 음성 합성 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
+    else:
+        print("\n[3/7] 🗣️ TTS 나레이션 미사용 -> Flow 실제 대화 오디오 추출 및 자막 싱크 정렬 중...")
+        audio_result = prepare_flow_dialogue_audio(script.scenes, visual_result.video_paths)
+        print(f"  ✅ 대화 오디오 준비 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
+    variant.update(tts_engine=LAST_TTS_INFO.get("engine", ""), tts_rate=LAST_TTS_INFO.get("rate", ""),
+                   tts_voice=LAST_TTS_INFO.get("voice", ""), duration_s=round(audio_result.total_duration, 1))
 
     # 4. 영상 합성
     print("\n[4/7] 🎬 하이브리드 비디오/다이내믹 모션 + SFX + 자막 하드코딩 영상 합성 중...")
