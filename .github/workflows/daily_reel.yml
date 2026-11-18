@@ -18,7 +18,7 @@ on:
       visual_theme:
         description: '비주얼 컨셉 (human: 사람 인물 공감 기본, auto: 8:2 자동 비율, animal: 고정 동물 캐릭터)'
         required: false
-        default: 'human'
+        default: 'animal'
 
 jobs:
   generate_and_publish:
@@ -87,12 +87,15 @@ jobs:
           USE_GOOGLE_FLOW: ${{ secrets.FLOW_STORAGE_STATE_B64 != '' && 'true' || 'false' }}
           FLOW_HEADLESS: 'true'
           FLOW_MODEL: 'Gemini Omni'
+          FLOW_PROJECT_NAME: 'mbtiju'
+          FLOW_PROJECT_URL: 'https://flow.google.com/project/afef330a-4abd-491c-84ef-f3f484fb9c94'
+          FLOW_ANIMAL_EXTEND: 'true'
           IMAGE_ENGINE: flux
           REUSE_FLOW_FOR_CTA: 'true'
           DISABLE_TTS: 'true'
-          VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'human' }}
+          VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'animal' }}
           # 비상 시 미완성 씬(플레이스홀더)이 생겨도 게시를 원할 경우를 위해 true 허용 (기본은 FLUX/스톡 폴백으로 자동 해결)
-          ALLOW_PLACEHOLDER_PUBLISH: 'true'
+          ALLOW_PLACEHOLDER_PUBLISH: 'false'
           # 훅(제목/훅/씬1 음성)에서 출생연도·띠, MBTI 4글자 호명 금지 (ig-audit: 정체성 호명 훅은 조회가 낮았음)
           HOOK_BAN_BIRTHYEAR: 'true'
           HOOK_BAN_MBTI: 'true'

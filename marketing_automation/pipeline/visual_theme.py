@@ -20,14 +20,16 @@ STATE_FILE = PROJECT_ROOT / "assets" / "output" / ".visual_theme_queue.json"
 
 # 매 동물 영상 & 모든 씬에서 동일하게 유지되는 시그니처 동물 캐릭터 (환경변수 ANIMAL_CHARACTER_PROMPT로 커스텀 가능)
 DEFAULT_ANIMAL_CHARACTER = (
-    "the exact same cute chubby cream-colored British Shorthair cat with big round expressive amber eyes, "
-    "plump fluffy cheeks, a tiny pink nose, and wearing a signature soft pastel sky-blue knitted collar"
+    "Pixar-style 3D animation, one adorable super cute fluffy fennec fox wearing a red plaid shirt (left) "
+    "and a chubby glossy river otter wearing a light blue hoodie (right), sitting together at a wooden table "
+    "in a cozy sunlit cafe"
 )
 
 # 동물 모드임을 프롬프트 텍스트 자체에서도 식별하기 위한 내부 시그니처 키워드
 _ANIMAL_MARKER_KEYWORDS = (
-    "british shorthair",
-    "knitted collar",
+    "fennec fox",
+    "river otter",
+    "pixar-style",
     "identical animal character",
     "cute pet",
 )
@@ -156,13 +158,13 @@ def build_llm_visual_instruction(theme: str) -> str:
     if theme == "animal":
         anchor = get_animal_character_anchor()
         return (
-            f"영문(English), Vertical 9:16 세로 풀스크린 구도. "
-            f"[고정 동물 캐릭터 모드 - 절대 엄수] 씬 1(썸네일 커버)은 밝고 따뜻한 카페/실내 자연광 아래 한국 2030 인물의 정면/반측면 얼굴 표정이 선명한 미디엄 클로즈업 구도로 시작하거나, "
-            f"본문 모든 동물 씬에는 동일한 시그니처 동물 캐릭터({anchor})가 주인공으로 등장해야 합니다. "
-            f"동물 씬마다 다른 동물로 바꾸지 말고, 각 씬의 한국어 대화 상황에 맞춰 이 똑같은 동물 캐릭터의 귀여운 행동·표정·포즈만 상황에 맞게 바꾸어 묘사하세요. "
-            f"동물 씬의 visual_prompt는 'Featuring {anchor}, '로 시작하고 밝고 따뜻한 실내 조명으로 묘사하세요. "
-            f"{motion_scope}는 영상(video) 클립용으로 귀여운 미세 움직임(blinking big eyes, flopping down on rug, pawing at smartphone, twitching ears)을 포함하세요. "
-            f"no text, no watermark, no CGI, no cartoon."
+            "영문(English). [고정 캐릭터 모드 - 절대 엄수] 모든 씬의 주인공은 항상 같은 두 캐릭터입니다: "
+            f"{anchor}. 사람은 등장시키지 마세요. "
+            "visual_prompt에는 장소·조명을 다시 설명하지 말고, 그 씬에서 두 캐릭터가 하는 행동·표정·리액션만 영어로 묘사하세요 "
+            "(예: the fennec fox slams the cup down and sighs with tiny steam puffing from its big ears / "
+            "the otter puts on round glasses and points calmly at the fox). "
+            "씬 narration은 해당 씬에서 한 캐릭터가 한국어로 말하는 대사 한 덩어리입니다(여우=고민하는 쪽, 수달=차분히 풀이해주는 쪽). "
+            "no text, no watermark."
         )
     return (
         "영문(English), Vertical 9:16 세로 풀스크린 구도. "
@@ -207,7 +209,7 @@ def enforce_scene_visual_consistency(scenes: list, theme: str) -> None:
             action = default_animal_actions[idx % len(default_animal_actions)]
             cleaned = f"Vertical 9:16 portrait ratio, Featuring {anchor}, {action}, cozy natural lighting, no human face, no text, no watermark"
         else:
-            cleaned = _HUMAN_SUBJECT_RE.sub("the cute cat", raw_prompt).strip()
+            cleaned = _HUMAN_SUBJECT_RE.sub("the cute fennec fox", raw_prompt).strip()
             if anchor.lower()[:30] not in cleaned.lower():
                 cleaned = f"Featuring {anchor}, {cleaned}"
 
@@ -239,20 +241,18 @@ def format_flow_prompt(
     )
     if resolved == "animal":
         anchor = get_animal_character_anchor()
-        if anchor.lower()[:30] not in clean.lower():
-            clean = f"Featuring {anchor}. {clean}"
+        if "pixar" not in clean.lower() and "fennec" not in clean.lower():
+            clean = f"{anchor}. {clean}"
         if is_image:
             return (
-                f"Vertical 9:16 portrait smartphone photo: {clean}. "
-                f"Ultra-realistic cute pet meme photo filmed on smartphone, consistent identical animal character appearance, "
-                f"expressive face, warm bright cozy natural lighting, 9:16 vertical full-screen mobile framing, "
-                f"centered subject, no human face, no text, no watermark, no CGI, no cartoon."
+                f"Vertical 9:16 image, Pixar-style 3D animation: {clean}. "
+                f"Cozy warm lighting, shallow depth of field, ultra-detailed fur texture, no text, no watermark."
             )
+        if "vertical 9:16" in clean.lower():
+            return f"{clean}.{dialogue_clause}".replace("..", ".")
         return (
-            f"Vertical 9:16 portrait smartphone pet video: {clean}.{dialogue_clause} "
-            f"Ultra-realistic cute pet meme video filmed on smartphone, consistent identical animal character appearance, "
-            f"{omni_quality}, warm bright cozy natural lighting, 9:16 vertical full-screen mobile framing, "
-            f"centered subject, no human face, no text, no watermark, no CGI, no cartoon."
+            f"Vertical 9:16 video, Pixar-style 3D animation, same cozy sunlit cafe and wooden table. {clean}.{dialogue_clause} "
+            f"Cozy warm lighting, shallow depth of field, ultra-detailed fur texture, no text, no watermark."
         )
     if is_image:
         return (

@@ -57,6 +57,7 @@ from pipeline.bgm import pick_bgm
 from pipeline.cover import build_reel_cover
 from pipeline.insights import record_post, classify_hook
 from pipeline.youtube_publisher import upload_shorts_to_youtube
+from pipeline import media_check
 
 
 def run_pipeline(
@@ -119,6 +120,18 @@ def run_pipeline(
 
     enforce_scene_visual_consistency(script.scenes, chosen_theme)
 
+    # 동물 캐릭터 숏폼: Flow 'mbtiju' 프로젝트에서 영상 1개 + 연장 2번(클립 3개, ~30초)으로 제작
+    from pipeline.flow_automation import is_flow_enabled
+    extend_mode = (
+        chosen_theme == "animal" and is_flow_enabled() and not mock_images
+        and os.getenv("FLOW_ANIMAL_EXTEND", "true").strip().lower() not in ("0", "false", "no")
+    )
+    if extend_mode:
+        from pipeline.flow_extend import collapse_scenes_for_clips, DEFAULT_CLIPS
+        n_clips = int(os.getenv("FLOW_EXTEND_CLIPS", str(DEFAULT_CLIPS)) or DEFAULT_CLIPS)
+        script.scenes[:] = collapse_scenes_for_clips(script.scenes, n_clips)
+        print(f"  🎞️ 동물 숏폼 연장 모드: 씬 {len(script.scenes)}개 = Flow 클립 {len(script.scenes)}개(영상 1 + 연장 {len(script.scenes) - 1})")
+
     # 한자가 섞여 있으면 TTS가 한글+한자를 중복 발음(예: "토(土)"->"토토")하므로
     # 나레이션에서 한자를 제거합니다. (제목/캡션은 시각 요소이므로 그대로 유지)
     for sc in script.scenes:
@@ -153,7 +166,8 @@ def run_pipeline(
         )
     t0 = time.time()
     visual_result = generate_scene_images(
-        script.scenes, force_mock=mock_images, title=script.title, visual_theme=chosen_theme
+        script.scenes, force_mock=mock_images, title=script.title, visual_theme=chosen_theme,
+        extend_clips=extend_mode,
     )
     image_paths = visual_result.image_paths
     variant["video_scenes"] = len(visual_result.video_paths)
@@ -176,7 +190,7 @@ def run_pipeline(
     # 4. 영상 합성
     print("\n[4/7] 🎬 하이브리드 비디오/다이내믹 모션 + SFX + 자막 하드코딩 영상 합성 중...")
     t0 = time.time()
-    bgm_path = pick_bgm(series, seed=script.title)
+    bgm_path = pick_bgm(series, seed=script.title, mood=os.getenv("ANIMAL_BGM_MOOD", "default") if chosen_theme == "animal" else None)
     if bgm_path:
         print(f"  🎵 BGM 선택: {bgm_path.name}")
     else:
@@ -212,13 +226,26 @@ def run_pipeline(
 
     # AI 이미지 생성이 실패해 단색 플레이스홀더가 섞인 영상은 자동 게시하지 않습니다.
     # (강제로 게시하려면 ALLOW_PLACEHOLDER_PUBLISH=true)
-    block_publish = visual_result.placeholder_count > 0 and not _env_flag("ALLOW_PLACEHOLDER_PUBLISH")
+    # 이미지/영상 렌더링 실패(플레이스홀더, 빈 화면, 연장 영상 누락, 너무 짧은 영상)는 어떤 환경변수로도 게시하지 않는다.
+    block_reasons = []
+    if visual_result.placeholder_count > 0:
+        block_reasons.append(f"렌더링 실패 씬 {visual_result.placeholder_count}개(플레이스홀더)")
+    if not mock_images:
+        raw_imgs = [Path("assets/images") / f"scene_{int(getattr(sc, 'scene_id', i + 1)):02d}_raw.jpg"
+                    for i, sc in enumerate(script.scenes)]
+        block_reasons += media_check.find_visual_problems(
+            raw_imgs, visual_result.video_paths,
+            require_video_scene_ids=[int(getattr(sc, "scene_id", i + 1)) for i, sc in enumerate(script.scenes)] if extend_mode else None,
+        )
+        min_total = float(os.getenv("FLOW_MIN_TOTAL_SEC", "20")) if extend_mode else 5.0
+        block_reasons += media_check.find_final_video_problems(final_video, min_duration=min_total)
+    block_publish = bool(block_reasons)
     gate_blocked = False
     insta_result = {}
     youtube_result = {}
 
     if block_publish:
-        reason = f"단색 플레이스홀더 씬 {visual_result.placeholder_count}개 감지"
+        reason = "; ".join(block_reasons)[:300]
         print(f"\n⛔ {reason} -> Instagram/YouTube 자동 게시를 건너뜁니다.")
         if publish_insta:
             insta_result = {"skipped": True, "reason": reason}

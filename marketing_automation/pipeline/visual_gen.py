@@ -516,6 +516,7 @@ def generate_scene_images(
     force_mock: bool = False,
     title: str = "릴스 주제",
     visual_theme: Optional[str] = None,
+    extend_clips: bool = False,
 ) -> "ImageGenResult":
     """
     씬 리스트의 visual_prompt를 바탕으로 Flow 우선 하이브리드 비주얼(영상 + 무료 폴백)을 생성한 후
@@ -578,7 +579,17 @@ def generate_scene_images(
 
     total_scenes = len(scenes)
     batch_videos: Dict[int, Path] = {}
-    if not force_mock:
+    if extend_clips and not force_mock:
+        # Flow 'mbtiju' 프로젝트: 영상 1개 + 연장 N-1번 -> 하나의 ~30초 영상을 씬 단위로 분할
+        from pipeline.flow_extend import generate_extended_clips
+        prompts = {}
+        dialogues = {}
+        for idx, sc in enumerate(scenes):
+            sid = int(getattr(sc, "scene_id", sc.get("scene_id") if isinstance(sc, dict) else idx + 1))
+            prompts[sid] = getattr(sc, "visual_prompt", sc.get("visual_prompt") if isinstance(sc, dict) else "")
+            dialogues[sid] = str(getattr(sc, "narration", sc.get("narration") if isinstance(sc, dict) else "") or "")
+        batch_videos = generate_extended_clips(prompts, dialogues, video_dir, visual_theme=visual_theme)
+    elif not force_mock:
         video_tasks = []
         dialogue_map: Dict[int, str] = {}
         disable_tts = os.getenv("DISABLE_TTS", "true").strip().lower() not in ("0", "false", "no")
@@ -614,56 +625,58 @@ def generate_scene_images(
                     generated = True
                     print(f"  🎬 씬 {scene_id} 하이브리드 비디오 클립 연결 완료 -> {vid_path.name}")
 
-            # 0-a. 마지막 CTA 씬은 추가 API/Flow 크레딧 없이 앞선 Flow 비디오 클립을 재활용
-            if (
-                not generated
-                and _reuse_flow_for_cta()
-                and _is_cta_scene(idx, total_scenes, str(narration))
-                and result.video_paths
-            ):
-                donor_id = sorted(result.video_paths.keys())[-1]
-                donor_vid = Path(result.video_paths[donor_id])
-                if donor_vid.is_file():
-                    result.video_paths[scene_id] = str(donor_vid.resolve())
-                    if extract_first_frame_from_video(donor_vid, img_path, seek_sec="1.50") or extract_first_frame_from_video(donor_vid, img_path):
+            # 연장 모드에서는 Flow 영상이 없으면 FLUX/스톡/재활용으로 때우지 않고 실패(플레이스홀더)로 남긴다 -> 게시 차단
+            if not (extend_clips and not generated):
+                # 0-a. 마지막 CTA 씬은 추가 API/Flow 크레딧 없이 앞선 Flow 비디오 클립을 재활용
+                if (
+                    not generated
+                    and _reuse_flow_for_cta()
+                    and _is_cta_scene(idx, total_scenes, str(narration))
+                    and result.video_paths
+                ):
+                    donor_id = sorted(result.video_paths.keys())[-1]
+                    donor_vid = Path(result.video_paths[donor_id])
+                    if donor_vid.is_file():
+                        result.video_paths[scene_id] = str(donor_vid.resolve())
+                        if extract_first_frame_from_video(donor_vid, img_path, seek_sec="1.50") or extract_first_frame_from_video(donor_vid, img_path):
+                            generated = True
+                            print(f"  ♻️ 씬 {scene_id} (CTA) 앞선 Flow 비디오 재활용 완료 -> {donor_vid.name} (API 호출 0회)")
+
+                # 0-b. Google Flow 이미지 모드 (USE_GOOGLE_FLOW=true & USE_GOOGLE_FLOW_IMAGES=true)
+                if not generated and flow_enabled and os.getenv("USE_GOOGLE_FLOW_IMAGES", "").strip().lower() in ("1", "true", "yes"):
+                    generated = generate_with_google_flow_browser(prompt, img_path, asset_type="image", visual_theme=visual_theme)
+
+                # 1. 무료 FLUX 우선 또는 허용된 경우에만 Gemini Media API 폴백
+                if not generated and engine_preference in ("gemini", "nanobanana") and allow_gemini_media:
+                    if can_use_nanobanana:
+                        generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
+                    if not generated:
+                        generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
+                    if not generated and can_use_vertex:
+                        generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
+
+                elif not generated and engine_preference == "flux":
+                    generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
+                    if not generated and can_use_nanobanana:
+                        generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
+                    if not generated and can_use_vertex:
+                        generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
+
+                elif not generated:
+                    if can_use_vertex:
+                        generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
+                    if not generated and can_use_nanobanana:
+                        generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
+                    if not generated:
+                        generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
+
+                # 2. 무료 소스도 일시 실패했고 Gemini API가 차단된 상태면, 이미 확보한 Flow 영상 프레임을 재활용
+                if not generated and result.video_paths:
+                    donor_ids = sorted(result.video_paths.keys())
+                    donor_vid = Path(result.video_paths[donor_ids[idx % len(donor_ids)]])
+                    if donor_vid.is_file() and extract_first_frame_from_video(donor_vid, img_path, seek_sec=f"{1.0 + (idx % 3) * 0.8:.2f}"):
                         generated = True
-                        print(f"  ♻️ 씬 {scene_id} (CTA) 앞선 Flow 비디오 재활용 완료 -> {donor_vid.name} (API 호출 0회)")
-
-            # 0-b. Google Flow 이미지 모드 (USE_GOOGLE_FLOW=true & USE_GOOGLE_FLOW_IMAGES=true)
-            if not generated and flow_enabled and os.getenv("USE_GOOGLE_FLOW_IMAGES", "").strip().lower() in ("1", "true", "yes"):
-                generated = generate_with_google_flow_browser(prompt, img_path, asset_type="image", visual_theme=visual_theme)
-
-            # 1. 무료 FLUX 우선 또는 허용된 경우에만 Gemini Media API 폴백
-            if not generated and engine_preference in ("gemini", "nanobanana") and allow_gemini_media:
-                if can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
-                if not generated:
-                    generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
-                if not generated and can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
-
-            elif not generated and engine_preference == "flux":
-                generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
-                if not generated and can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
-                if not generated and can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
-
-            elif not generated:
-                if can_use_vertex:
-                    generated = generate_with_vertex_imagen(prompt, img_path, project_id, location, model_name, visual_theme=visual_theme)
-                if not generated and can_use_nanobanana:
-                    generated = generate_with_gemini_nanobanana(prompt, img_path, visual_theme=visual_theme)
-                if not generated:
-                    generated = generate_with_pollinations_flux(prompt, img_path, visual_theme=visual_theme)
-
-            # 2. 무료 소스도 일시 실패했고 Gemini API가 차단된 상태면, 이미 확보한 Flow 영상 프레임을 재활용
-            if not generated and result.video_paths:
-                donor_ids = sorted(result.video_paths.keys())
-                donor_vid = Path(result.video_paths[donor_ids[idx % len(donor_ids)]])
-                if donor_vid.is_file() and extract_first_frame_from_video(donor_vid, img_path, seek_sec=f"{1.0 + (idx % 3) * 0.8:.2f}"):
-                    generated = True
-                    print(f"  ♻️ 씬 {scene_id} 기존 Flow 영상 프레임 재활용 (Gemini API 0회)")
+                        print(f"  ♻️ 씬 {scene_id} 기존 Flow 영상 프레임 재활용 (Gemini API 0회)")
 
         if not generated:
             print(f"  [VISUAL] 씬 {scene_id} 9:16 플레이스홀더 생성")

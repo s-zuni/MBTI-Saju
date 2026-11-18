@@ -35,13 +35,13 @@ def _local_tracks(folder: Path):
     return sorted(p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in AUDIO_EXTS)
 
 
-def pick_bgm(series: str = "", seed: Optional[str] = None) -> Optional[Path]:
+def pick_bgm(series: str = "", seed: Optional[str] = None, mood: Optional[str] = None) -> Optional[Path]:
     """
     시리즈 분위기에 맞는 BGM 트랙을 고릅니다.
     로컬 음원이 없으면 Google Drive BGM 폴더에서 실시간으로 조회하여 다운로드 후 사용합니다.
     seed를 주면 같은 입력에 같은 트랙을 재현성 있게 선택합니다.
     """
-    mood = SERIES_MOOD.get(series, "default")
+    mood = mood if mood in MOODS else SERIES_MOOD.get(series, "default")
 
     # 1. 해당 무드의 로컬 캐시 확인
     local_candidates = _local_tracks(BGM_DIR / mood)

@@ -75,7 +75,7 @@ def extract_video_search_query(
     동물 모드('animal')일 때는 일관된 캐릭터 톤 유지를 위해 고정 동물 검색어를 반환합니다.
     """
     if detect_theme_from_prompt(visual_prompt, visual_theme) == "animal":
-        return "cute british shorthair cat kitten"
+        return "cute fennec fox and otter cartoon"
 
     words = re.findall(r"[a-zA-Z]+", (visual_prompt or "").lower())
     filtered = [w for w in words if len(w) > 2 and w not in _STOPWORDS]
@@ -329,7 +329,8 @@ class FlowBrowserSession:
     (매 씬마다 브라우저를 껐다 켜는 오버헤드 제거 및 Flow 배치 생성 속도 극대화)
     """
 
-    def __init__(self):
+    def __init__(self, project_name: Optional[str] = None):
+        self._project_name = (project_name or os.getenv("FLOW_PROJECT_NAME", "")).strip()
         self._pw_cm = None
         self._pw = None
         self._browser = None
@@ -490,8 +491,17 @@ class FlowBrowserSession:
         page = self._page
         if page is None:
             return
-        page.goto(FLOW_URL, wait_until="domcontentloaded", timeout=35_000)
-        page.wait_for_timeout(3000)
+        # 프로젝트 주소를 직접 지정하면(FLOW_PROJECT_URL) 카드 탐색 없이 바로 그 프로젝트로 들어간다.
+        project_url = os.getenv("FLOW_PROJECT_URL", "").strip()
+        page.goto(project_url or FLOW_URL, wait_until="domcontentloaded", timeout=35_000)
+        page.wait_for_timeout(5000 if project_url else 3000)
+        if project_url:
+            if "/project/" not in page.url:
+                print(f"    [GOOGLE-FLOW][WARN] 프로젝트 주소로 진입하지 못했습니다 (현재: {page.url}). 로그인 상태를 확인하세요.")
+                self._ready = False
+                return
+            self._ready = True
+            return
 
         agree_btn = page.locator("button:has-text('동의함'), button:has-text('I agree')")
         if agree_btn.count() > 0 and agree_btn.first.is_visible():
@@ -502,8 +512,21 @@ class FlowBrowserSession:
                 pass
 
         if "project" not in page.url:
+            if self._project_name:
+                named = page.locator("a[href*='/project/'], div[data-project-id]").filter(has_text=self._project_name).first
+                if named.count() > 0 and named.is_visible():
+                    try:
+                        named.click()
+                        page.wait_for_timeout(4000)
+                    except Exception:
+                        pass
+                if "project" not in page.url:
+                    # 지정한 프로젝트를 못 찾으면 엉뚱한(다른/새) 프로젝트에 생성하지 않고 중단한다.
+                    print(f"    [GOOGLE-FLOW][WARN] Flow 프로젝트 '{self._project_name}'를 찾지 못했습니다.")
+                    self._ready = False
+                    return
             prefer_new = os.getenv("FLOW_NEW_PROJECT_PER_REEL", "").strip().lower() in ("1", "true", "yes")
-            if not prefer_new:
+            if not prefer_new and "project" not in page.url:
                 proj_card = page.locator("a[href*='/project/'], div[data-project-id]").first
                 if proj_card.count() > 0 and proj_card.is_visible():
                     try:
@@ -578,38 +601,45 @@ class FlowBrowserSession:
             else:
                 input_box.press("Enter")
 
-            page.wait_for_timeout(3000)
-            approve_btn = None
-            for approve_text in ["항상 승인", "승인", "Always approve", "Approve"]:
-                candidate = page.get_by_text(approve_text, exact=False).first
-                try:
-                    if candidate.count() > 0 and candidate.is_visible():
-                        approve_btn = candidate
-                        break
-                except Exception:
-                    continue
-
-            if approve_btn is not None:
-                try:
-                    print("    [GOOGLE-FLOW] 💳 크레딧 승인 버튼 감지 및 자동 승인 클릭...")
-                    approve_btn.click(timeout=3000)
-                    page.wait_for_timeout(2000)
-                except Exception as ex_app:
-                    print(f"    [GOOGLE-FLOW] 승인 버튼 클릭 스킵(이미 승인됨): {ex_app}")
-
-            initial_wait_ms = 12_000 if asset_type == "image" else 35_000
-            print(f"    [GOOGLE-FLOW] ⏳ Flow {asset_type.upper()} 렌더링 대기 중 (최대 {timeout_sec}초)...")
-            start_wait = time.time()
-            page.wait_for_timeout(initial_wait_ms)
-
-            while time.time() - start_wait < timeout_sec:
-                _focus_newest_media_card(page, before_srcs, tag=media_tag)
-                if _trigger_flow_download(page, output_path, asset_type=asset_type):
-                    print(f"    [GOOGLE-FLOW] ✅ 에셋 다운로드 완료 -> {output_path.name} ({output_path.stat().st_size // 1024} KB)")
-                    return True
-                page.wait_for_timeout(6000)
+            return self._collect_after_submit(before_srcs, output_path, asset_type, timeout_sec, media_tag)
         except Exception as e:
             print(f"    [GOOGLE-FLOW][WARN] 브라우저 자동화 예외 발생: {e}")
+        return False
+
+    def _collect_after_submit(self, before_srcs, output_path: Path, asset_type: str,
+                              timeout_sec: int, media_tag: str) -> bool:
+        """프롬프트 제출 직후: 크레딧 승인 처리 -> 렌더링 대기 -> 새 카드 다운로드."""
+        page = self._page
+        page.wait_for_timeout(3000)
+        approve_btn = None
+        for approve_text in ["항상 승인", "승인", "Always approve", "Approve"]:
+            candidate = page.get_by_text(approve_text, exact=False).first
+            try:
+                if candidate.count() > 0 and candidate.is_visible():
+                    approve_btn = candidate
+                    break
+            except Exception:
+                continue
+
+        if approve_btn is not None:
+            try:
+                print("    [GOOGLE-FLOW] 💳 크레딧 승인 버튼 감지 및 자동 승인 클릭...")
+                approve_btn.click(timeout=3000)
+                page.wait_for_timeout(2000)
+            except Exception as ex_app:
+                print(f"    [GOOGLE-FLOW] 승인 버튼 클릭 스킵(이미 승인됨): {ex_app}")
+
+        initial_wait_ms = 12_000 if asset_type == "image" else 35_000
+        print(f"    [GOOGLE-FLOW] ⏳ Flow {asset_type.upper()} 렌더링 대기 중 (최대 {timeout_sec}초)...")
+        start_wait = time.time()
+        page.wait_for_timeout(initial_wait_ms)
+
+        while time.time() - start_wait < timeout_sec:
+            _focus_newest_media_card(page, before_srcs, tag=media_tag)
+            if _trigger_flow_download(page, output_path, asset_type=asset_type):
+                print(f"    [GOOGLE-FLOW] ✅ 에셋 다운로드 완료 -> {output_path.name} ({output_path.stat().st_size // 1024} KB)")
+                return True
+            page.wait_for_timeout(6000)
         return False
 
 
