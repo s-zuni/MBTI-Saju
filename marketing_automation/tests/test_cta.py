@@ -143,9 +143,13 @@ class CtaTextRulesTest(unittest.TestCase):
             self.assertIn("[상담]", cap)
             self.assertIn("카톡 1:1", cap)
 
-            # Threads 규칙: 카톡 채널 주소 슬롯, 9,900원 가격 표기, 전문가 직접 검수 문구 필수
+            # Threads 규칙: 카톡 채널 주소 슬롯, 가격 미표기 + 질문 1회 무료 유도, 전문가 직접 검수 문구 필수
             self.assertIn("{url}", th_tpl)
-            self.assertIn("9,900원", th_tpl)
+            self.assertIn("질문 1회", th_tpl)
+            self.assertIn("무료", th_tpl)
+            self.assertNotIn("9,900", th_tpl)
+            self.assertNotIn("19,900", th_tpl)
+            self.assertNotRegex(th_tpl, r"\d[\d,]*\s*원")
             self.assertIn("AI 분석을 바탕으로 운세 서비스 전문가가 직접 검수", th_tpl)
             self.assertIn("24시간", th_tpl)
             # 금지 표현
@@ -159,7 +163,11 @@ class ThreadsCtaUrlTest(unittest.TestCase):
         # 기본 카톡 채널 주소
         res = cta.pick_threads_cta("https://mbtiju.com/premium", topic="재회 연락 기다리는 사람")
         self.assertIn("https://pf.kakao.com/_xcdXJX/chat", res)
-        self.assertIn("9,900원", res)
+        self.assertIn("질문 1회", res)
+        self.assertIn("무료", res)
+        self.assertNotIn("9,900", res)
+        self.assertNotIn("19,900", res)
+        self.assertNotRegex(res, r"\d[\d,]*\s*원")
 
         # 환경변수로 덮어쓰기
         with mock.patch.dict(os.environ, {"KAKAO_CHAT_URL": "https://pf.kakao.com/_custom/chat"}):
@@ -212,6 +220,12 @@ class ThreadsBanmalAndZeroEmojiTest(unittest.TestCase):
         for v in tc.CTA_VARIANTS:
             self.assertEqual(tc._strip_emojis(v), v)
             self.assertFalse(tc._has_polite_ending([v]))
+            self.assertNotIn("9,900", v)
+            self.assertNotIn("19,900", v)
+            self.assertNotRegex(v, r"\d[\d,]*\s*원")
+            if "카톡" in v:
+                self.assertIn("질문 1회", v)
+                self.assertIn("무료", v)
 
     def test_strip_emojis_and_convert_polite_to_banmal(self):
         from pipeline import threads_content as tc
