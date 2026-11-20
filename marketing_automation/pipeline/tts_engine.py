@@ -742,6 +742,7 @@ def prepare_flow_dialogue_audio(
     with open(timing_json_path, "w", encoding="utf-8") as f:
         f.write(result.model_dump_json(indent=2))
 
+    LAST_TTS_INFO["extracted_scenes"] = extracted_cnt
     print(f"[AUDIO] ✅ 대화 오디오 준비 완료 (대화 추출 {extracted_cnt}/{len(scenes)}씬, 총 {result.total_duration:.2f}초)")
     return result
 

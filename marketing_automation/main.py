@@ -160,16 +160,26 @@ def run_pipeline(
     print(f"  ✅ 비주얼 준비 완료 ({time.time() - t0:.1f}초)")
 
     # 3. 오디오 준비: 기본(DISABLE_TTS=true)은 TTS 나레이션 없이 Flow 영상의 실제 사람 대화 음성을 추출
+    #    단, Flow 비디오가 없거나 대화 오디오 추출이 0건이면 무음 영상을 막기 위해 TTS로 자동 폴백한다.
     use_tts = _env_flag("USE_TTS") or os.getenv("DISABLE_TTS", "true").strip().lower() in ("0", "false", "no")
     t0 = time.time()
     if use_tts:
         print("\n[3/7] 🎙️ 한국어 내레이션 음성 합성 및 -30dB 무음 칼컷 중...")
         audio_result: FullAudioResult = generate_speech(script.scenes)
         print(f"  ✅ 음성 합성 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
+    elif not visual_result.video_paths:
+        print("\n[3/7] ⚠️ 확보된 대화 비디오가 0개입니다 -> 무음 영상 방지를 위해 TTS 나레이션으로 자동 폴백합니다...")
+        audio_result = generate_speech(script.scenes)
+        print(f"  ✅ TTS 폴백 합성 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
     else:
         print("\n[3/7] 🗣️ TTS 나레이션 미사용 -> Flow 실제 대화 오디오 추출 및 자막 싱크 정렬 중...")
         audio_result = prepare_flow_dialogue_audio(script.scenes, visual_result.video_paths)
-        print(f"  ✅ 대화 오디오 준비 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
+        if LAST_TTS_INFO.get("extracted_scenes", 0) == 0:
+            print("  ⚠️ 비디오에서 추출된 대화 오디오가 0개입니다 -> 무음 영상 방지를 위해 TTS 나레이션으로 자동 폴백합니다...")
+            audio_result = generate_speech(script.scenes)
+            print(f"  ✅ TTS 폴백 합성 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
+        else:
+            print(f"  ✅ 대화 오디오 준비 완료 ({time.time() - t0:.1f}초) | {audio_result.total_duration:.1f}초 분량")
     variant.update(tts_engine=LAST_TTS_INFO.get("engine", ""), tts_rate=LAST_TTS_INFO.get("rate", ""),
                    tts_voice=LAST_TTS_INFO.get("voice", ""), duration_s=round(audio_result.total_duration, 1))
 

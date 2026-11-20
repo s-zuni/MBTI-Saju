@@ -88,11 +88,13 @@ jobs:
           FLOW_HEADLESS: 'true'
           FLOW_MODEL: 'Gemini Omni'
           IMAGE_ENGINE: flux
+          # Flow/스톡/FLUX가 CI에서 실패할 때 단색 플레이스홀더 대신 Gemini 2.5 Flash Image / Vertex 폴백 허용 (Veo API는 USE_VEO_API 미설정으로 계속 차단)
+          ALLOW_GEMINI_MEDIA_API: 'true'
           REUSE_FLOW_FOR_CTA: 'true'
           DISABLE_TTS: 'true'
           VISUAL_THEME: ${{ github.event.inputs.visual_theme || 'human' }}
-          # 비상 시 미완성 씬(플레이스홀더)이 생겨도 게시를 원할 경우를 위해 true 허용 (기본은 FLUX/스톡 폴백으로 자동 해결)
-          ALLOW_PLACEHOLDER_PUBLISH: 'true'
+          # 단색 플레이스홀더(빈 화면) 씬이 섞인 영상은 절대 자동 게시하지 않음 (차단 후 텔레그램 알림)
+          ALLOW_PLACEHOLDER_PUBLISH: 'false'
           # 훅(제목/훅/씬1 음성)에서 출생연도·띠, MBTI 4글자 호명 금지 (ig-audit: 정체성 호명 훅은 조회가 낮았음)
           HOOK_BAN_BIRTHYEAR: 'true'
           HOOK_BAN_MBTI: 'true'

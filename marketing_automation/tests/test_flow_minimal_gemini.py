@@ -213,9 +213,21 @@ class FlowDialogueModeTest(unittest.TestCase):
                 res = te.prepare_flow_dialogue_audio(scenes, video_paths={}, output_dir=audio_dir)
             m_tts.assert_not_called()
             self.assertEqual(te.LAST_TTS_INFO.get("engine"), "flow_dialogue")
+            self.assertEqual(te.LAST_TTS_INFO.get("extracted_scenes"), 0)
             self.assertEqual(len(res.scene_results), 2)
             self.assertGreater(res.total_duration, 5.0)
             self.assertTrue(Path(res.audio_path).is_file())
+
+    def test_pollinations_flux_fails_fast_on_503_pollen_key_limit(self):
+        fake_resp = mock.MagicMock(
+            status_code=503,
+            content=b'{"status":503,"error":{"code":"SERVICE_UNAVAILABLE","message":"get full access with a pollen key"}}',
+            text='{"status":503,"error":{"code":"SERVICE_UNAVAILABLE","message":"get full access with a pollen key"}}',
+        )
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(vg.requests, "get", return_value=fake_resp) as m_get:
+            ok = vg.generate_with_pollinations_flux("korean cafe", Path(d) / "out.jpg", retries=3)
+        self.assertFalse(ok)
+        m_get.assert_called_once()
 
 
 if __name__ == "__main__":

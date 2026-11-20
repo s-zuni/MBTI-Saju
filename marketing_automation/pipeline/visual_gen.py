@@ -351,6 +351,9 @@ def generate_with_pollinations_flux(
                     f.write(r.content)
                 return True
             print(f"    [WARN] FLUX 응답 비정상 (code={r.status_code}, len={len(r.content)})")
+            if r.status_code in (401, 403, 503) and ("pollen key" in r.text.lower() or "service_unavailable" in r.text.lower()):
+                print("    [WARN] Pollinations Classic API 제한/유료 전환 감지 -> 즉시 다음 이미지 엔진으로 폴백합니다.")
+                break
         except Exception as e:
             print(f"    [WARN] FLUX 생성 실패 (시도 {attempt}/{retries}): {e}")
 
