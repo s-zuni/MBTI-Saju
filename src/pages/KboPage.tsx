@@ -135,7 +135,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
     const [genError, setGenError] = useState<string | null>(null);
 
-    const userName = profile.name || '방문자';
+    const userName = profile.name?.trim() || '이용자';
 
     const { object: result, submit, isLoading, error: aiError } = useObject({
         api: '/api/analysis-special',

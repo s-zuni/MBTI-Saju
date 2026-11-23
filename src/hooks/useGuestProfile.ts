@@ -35,37 +35,61 @@ const STORAGE_KEY = 'mbtiju_guest_profile';
 const SYNC_EVENT = 'mbtiju_guest_profile_change';
 
 export const DEFAULT_GUEST_PROFILE: GuestProfile = {
-  name: '방문자',
+  name: '',
   gender: 'female',
-  birthDate: '1998-05-15',
+  birthDate: '',
   birthTime: '',
   mbti: 'ENFP',
 };
 
+let memoryFallbackProfile: GuestProfile | null = null;
+
+function sanitizeStoredProfile(parsed: any): GuestProfile {
+  const isLegacyV1 = !parsed?.v;
+  let rawName = typeof parsed?.name === 'string' ? parsed.name : DEFAULT_GUEST_PROFILE.name;
+  let rawBirthDate = typeof parsed?.birthDate === 'string' ? parsed.birthDate : DEFAULT_GUEST_PROFILE.birthDate;
+
+  // 구버전(v1) 기본값으로 자동 저장되어 있던 '방문자'·'1998-05-15'는 빈 입력 상태로 정리
+  if (isLegacyV1 && rawName === '방문자') {
+    rawName = '';
+    if (rawBirthDate === '1998-05-15') {
+      rawBirthDate = '';
+    }
+  }
+
+  return {
+    name: rawName,
+    gender: parsed?.gender === 'male' ? 'male' : 'female',
+    birthDate: rawBirthDate,
+    birthTime: typeof parsed?.birthTime === 'string' ? parsed.birthTime : '',
+    mbti:
+      typeof parsed?.mbti === 'string' && MBTI_OPTIONS.includes(parsed.mbti)
+        ? parsed.mbti
+        : DEFAULT_GUEST_PROFILE.mbti,
+  };
+}
+
 export function readGuestProfile(): GuestProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_GUEST_PROFILE };
+    if (!raw) return memoryFallbackProfile ? { ...memoryFallbackProfile } : { ...DEFAULT_GUEST_PROFILE };
     const parsed = JSON.parse(raw);
-    return {
-      name: typeof parsed.name === 'string' && parsed.name.trim() ? parsed.name : DEFAULT_GUEST_PROFILE.name,
-      gender: parsed.gender === 'male' ? 'male' : 'female',
-      birthDate: typeof parsed.birthDate === 'string' && parsed.birthDate ? parsed.birthDate : DEFAULT_GUEST_PROFILE.birthDate,
-      birthTime: typeof parsed.birthTime === 'string' ? parsed.birthTime : '',
-      mbti: typeof parsed.mbti === 'string' && MBTI_OPTIONS.includes(parsed.mbti) ? parsed.mbti : DEFAULT_GUEST_PROFILE.mbti,
-    };
+    const sanitized = sanitizeStoredProfile(parsed);
+    memoryFallbackProfile = sanitized;
+    return sanitized;
   } catch {
-    return { ...DEFAULT_GUEST_PROFILE };
+    return memoryFallbackProfile ? { ...memoryFallbackProfile } : { ...DEFAULT_GUEST_PROFILE };
   }
 }
 
 export function writeGuestProfile(next: GuestProfile) {
+  memoryFallbackProfile = { ...next };
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new Event(SYNC_EVENT));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...next, v: 2 }));
   } catch {
     // ignore storage quota errors
   }
+  window.dispatchEvent(new CustomEvent<GuestProfile>(SYNC_EVENT, { detail: next }));
 }
 
 /**
@@ -75,7 +99,14 @@ export const useGuestProfile = () => {
   const [profile, setProfile] = useState<GuestProfile>(() => readGuestProfile());
 
   useEffect(() => {
-    const handleSync = () => setProfile(readGuestProfile());
+    const handleSync = (event: Event) => {
+      const customEvent = event as CustomEvent<GuestProfile>;
+      if (event.type === SYNC_EVENT && customEvent.detail) {
+        setProfile(customEvent.detail);
+      } else {
+        setProfile(readGuestProfile());
+      }
+    };
     window.addEventListener(SYNC_EVENT, handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
@@ -85,11 +116,10 @@ export const useGuestProfile = () => {
   }, []);
 
   const updateProfile = useCallback((patch: Partial<GuestProfile>) => {
-    setProfile((prev) => {
-      const next = { ...prev, ...patch };
-      writeGuestProfile(next);
-      return next;
-    });
+    const current = readGuestProfile();
+    const next: GuestProfile = { ...current, ...patch };
+    setProfile(next);
+    writeGuestProfile(next);
   }, []);
 
   return { profile, updateProfile };

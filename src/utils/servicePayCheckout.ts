@@ -115,6 +115,7 @@ export async function startServicePayment<T = any>(params: {
     payload,
     customerName = '비회원',
   } = params;
+  const safeCustomerName = (customerName || '').trim() || '비회원';
 
   const orderId = `SVC_${serviceType}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const customerKey = `GUEST_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -134,7 +135,7 @@ export async function startServicePayment<T = any>(params: {
     amount: price,
     orderId,
     customerKey,
-    customerName,
+    customerName: safeCustomerName,
     successUrl: `${window.location.origin}/payment/success?serviceOrder=1`,
     failUrl: `${window.location.origin}/payment/fail`,
     metadata: {

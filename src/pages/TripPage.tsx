@@ -75,10 +75,6 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     }, [submit]);
 
     useEffect(() => {
-        setSelectedRegion(tripType === 'domestic' ? DOMESTIC_REGIONS[16] : INTERNATIONAL_REGIONS[0]);
-    }, [tripType]);
-
-    useEffect(() => {
         let interval: NodeJS.Timeout;
         if (isLoading && !result) {
             setCurrentLoadingMessage(getRandomLoadingMessage('trip'));
@@ -184,13 +180,19 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                     </label>
                                     <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full mb-6">
                                         <button
-                                            onClick={() => setTripType('domestic')}
+                                            onClick={() => {
+                                                setTripType('domestic');
+                                                setSelectedRegion(DOMESTIC_REGIONS[16]);
+                                            }}
                                             className={`flex-1 py-4 text-sm font-bold rounded-xl transition-all ${tripType === 'domestic' ? 'bg-white shadow-md text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             국내여행
                                         </button>
                                         <button
-                                            onClick={() => setTripType('international')}
+                                            onClick={() => {
+                                                setTripType('international');
+                                                setSelectedRegion(INTERNATIONAL_REGIONS[0]);
+                                            }}
                                             className={`flex-1 py-4 text-sm font-bold rounded-xl transition-all ${tripType === 'international' ? 'bg-white shadow-md text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             해외여행

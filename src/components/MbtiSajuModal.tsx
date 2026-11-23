@@ -6,7 +6,7 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
-import { calculateSaju } from '../utils/sajuUtils';
+import { calculateSaju, safeCalculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../config/deepReportConfig';
 import { useGuestProfile } from '../hooks/useGuestProfile';
@@ -780,24 +780,30 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 showName
                 title="STEP 1 · 나의 사주 · MBTI 정보 기입"
               />
-              {profile.birthDate ? (
-                <FreeSajuPreviewCard
-                  saju={calculateSaju(profile.birthDate, profile.birthTime || null, profile.gender)}
-                  mbti={profile.mbti || 'ISTJ'}
-                  userName={profile.name}
-                  isPaying={isPaying}
-                  onUnlockClick={handlePayAndGenerate}
-                />
-              ) : (
-                <button
-                  onClick={handlePayAndGenerate}
-                  disabled={isPaying}
-                  className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  <span>생년월일을 입력하면 무료 만세력과 분석 프리뷰가 표시됩니다</span>
-                </button>
-              )}
+              {(() => {
+                const previewSaju = safeCalculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
+                if (previewSaju) {
+                  return (
+                    <FreeSajuPreviewCard
+                      saju={previewSaju}
+                      mbti={profile.mbti || 'ISTJ'}
+                      userName={profile.name}
+                      isPaying={isPaying}
+                      onUnlockClick={handlePayAndGenerate}
+                    />
+                  );
+                }
+                return (
+                  <button
+                    onClick={handlePayAndGenerate}
+                    disabled={isPaying}
+                    className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    <span>생년월일을 입력하면 무료 만세력과 분석 프리뷰가 표시됩니다</span>
+                  </button>
+                );
+              })()}
             </div>
           )}
         </div>

@@ -46,7 +46,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const receiptTokenRef = useRef<string | null>(null);
 
     const [error, setError] = useState<string | null>(null);
-    const [targetBirthDate, setTargetBirthDate] = useState(profile.birthDate || '1998-05-15');
+    const [targetBirthDate, setTargetBirthDate] = useState(profile.birthDate || '');
     const [targetBirthTime, setTargetBirthTime] = useState(profile.birthTime ? toBirthTimeSlot(profile.birthTime) : '');
     const [targetGender, setTargetGender] = useState<'male' | 'female'>(profile.gender || 'female');
     const [isPaying, setIsPaying] = useState(false);

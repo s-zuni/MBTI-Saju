@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { calculateSaju, SajuResult } from '../utils/sajuUtils';
+import { safeCalculateSaju, SajuResult } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
 import FreeSajuPreviewCard from './saju/FreeSajuPreviewCard';
@@ -21,18 +21,19 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const sajuResult = useMemo<SajuResult | null>(() => {
-    if (!profile.birthDate) return null;
-    try {
-      return calculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
-    } catch {
-      return null;
-    }
+    return safeCalculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
   }, [profile.birthDate, profile.birthTime, profile.gender]);
+
+  const showFreeResult = hasSubmittedFree && !!sajuResult;
 
   const handleShowFreeResult = (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile.birthDate) {
       setErrorMsg('생년월일을 입력해 주세요.');
+      return;
+    }
+    if (!sajuResult) {
+      setErrorMsg('1900년~2050년 사이의 유효한 생년월일을 입력해 주세요.');
       return;
     }
     setErrorMsg(null);
@@ -90,11 +91,11 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
             무료 만세력 · 사주 × MBTI 프리뷰
           </div>
           <div className="flex items-center gap-1.5 text-[11px] font-bold">
-            <span className={`px-2.5 py-0.5 rounded-full ${!hasSubmittedFree ? 'bg-slate-950 text-white font-black' : 'bg-emerald-50 text-emerald-700'}`}>
+            <span className={`px-2.5 py-0.5 rounded-full ${!showFreeResult ? 'bg-slate-950 text-white font-black' : 'bg-emerald-50 text-emerald-700'}`}>
               1. 정보 기입
             </span>
             <span className="text-slate-300">&rarr;</span>
-            <span className={`px-2.5 py-0.5 rounded-full ${hasSubmittedFree ? 'bg-violet-600 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>
+            <span className={`px-2.5 py-0.5 rounded-full ${showFreeResult ? 'bg-violet-600 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>
               2. 무료 만세력·프리뷰
             </span>
             <span className="text-slate-300">&rarr;</span>
@@ -105,12 +106,12 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
         </div>
 
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-1.5 tracking-tight">
-          {!hasSubmittedFree
+          {!showFreeResult
             ? '내 생년월일과 MBTI를 입력하고 무료 만세력 결과를 확인하세요'
-            : `${profile.name ? `${profile.name}님의 ` : ''}무료 만세력 원국 & 핵심 분석 프리뷰`}
+            : `${profile.name.trim() ? `${profile.name.trim()}님의 ` : ''}무료 만세력 원국 & 핵심 분석 프리뷰`}
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mb-6 font-medium">
-          {!hasSubmittedFree
+          {!showFreeResult
             ? '한 번 입력해 두면 오늘의 운세(무료)와 모든 사주·타로 분석에서 다시 입력할 필요가 없습니다.'
             : '만세력 4주 8자 원국과 타고난 일간·MBTI 시너지 요약입니다. 끊긴 심층 분석은 [분석 더보기]로 즉시 열람하실 수 있습니다.'}
         </p>
@@ -133,7 +134,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
             </div>
           )}
 
-          {!hasSubmittedFree ? (
+          {!showFreeResult ? (
             <button
               type="submit"
               className="w-full py-4 rounded-2xl bg-slate-950 hover:bg-violet-600 text-white font-black text-sm sm:text-base shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
@@ -159,7 +160,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
         </form>
 
         {/* STEP 2 & 3: 무료 결과 (만세력 + 끊겨있는 분석 문장) -> 분석 더보기 (결제창 이동) */}
-        {hasSubmittedFree && sajuResult && (
+        {showFreeResult && sajuResult && (
           <div className="mt-6 pt-6 border-t border-slate-100">
             <FreeSajuPreviewCard
               saju={sajuResult}

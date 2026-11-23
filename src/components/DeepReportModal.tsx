@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Info, Clock } from 'lucide-react';
 import { requestPayment } from '../payment';
+import { readGuestProfile } from '../hooks/useGuestProfile';
 import {
   DEEP_REPORT_ORIGINAL_PRICE,
   DEEP_REPORT_SALE_PRICE,
@@ -82,16 +83,17 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   }, [isOpen, availableDates]);
 
   useEffect(() => {
-    if (isOpen && session?.user?.user_metadata) {
-      const meta = session.user.user_metadata;
-      setFormData(prev => ({
-        ...prev,
-        email: session.user.email || prev.email,
-        birthDate: meta.birth_date || prev.birthDate,
-        birthTime: meta.birth_time || prev.birthTime,
-        mbti: meta.mbti || prev.mbti,
-      }));
-    }
+    if (!isOpen) return;
+    const guest = readGuestProfile();
+    const meta = session?.user?.user_metadata;
+    setFormData(prev => ({
+      ...prev,
+      email: session?.user?.email || prev.email,
+      birthDate: prev.birthDate || meta?.birth_date || guest.birthDate || '',
+      birthTime: prev.birthTime || meta?.birth_time || '',
+      mbti: prev.mbti || meta?.mbti || guest.mbti || '',
+      gender: prev.gender || meta?.gender || guest.gender || '',
+    }));
   }, [isOpen, session]);
 
   useEffect(() => {

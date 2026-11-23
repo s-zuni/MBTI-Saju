@@ -92,6 +92,8 @@ const GuestProfileCard: React.FC<GuestProfileCardProps> = ({
           <input
             type="date"
             value={profile.birthDate}
+            min="1900-01-01"
+            max="2050-12-31"
             onChange={(e) => onChange({ birthDate: e.target.value })}
             className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200"
           />
