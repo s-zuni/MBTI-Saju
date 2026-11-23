@@ -23,21 +23,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart, user, onOpenDeepRepo
             </>
           ) : (
             <>
-              1,000만 데이터 기반<br />
+              만세력 정밀 연산 기반<br />
               <span className="text-violet-600">과학적 정밀 운명 분석</span>
             </>
           )}
         </h1>
 
         <p className="text-sm md:text-base text-slate-600 max-w-xl mx-auto mb-8 font-normal leading-relaxed">
-          신비로운 예측이 아닌 1,000만 건 데이터 알고리즘 분석과 전문가의 엄격한 수기 점검으로 당신의 성향과 미래 흐름을 정밀하게 제시합니다.
+          신비로운 예측이 아닌 만세력 정밀 알고리즘과 MBTI 성향 모델의 교차 분석, 전문가의 수기 점검으로 당신의 성향과 미래 흐름을 정밀하게 제시합니다.
         </p>
 
         {/* Feature list */}
         <div className="flex flex-wrap justify-center gap-4 mb-10 text-xs font-medium text-slate-600">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-violet-600" />
-            <span>1,000만 데이터 분석</span>
+            <span>만세력 정밀 연산</span>
           </div>
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-violet-600" />

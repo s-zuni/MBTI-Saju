@@ -110,6 +110,18 @@ const GuestProfileCard: React.FC<GuestProfileCardProps> = ({
           </select>
         </div>
       </div>
+
+      <p className="text-[11px] leading-relaxed text-slate-500 pt-2 border-t border-slate-200/70">
+        입력 정보는 현재 브라우저에만 임시 저장되며, 결제 진행 시{' '}
+        <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-bold text-slate-700 hover:text-violet-600">
+          이용약관
+        </a>
+        {' '}및{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-bold text-slate-700 hover:text-violet-600">
+          개인정보처리방침
+        </a>
+        과 함께 <strong>결제 즉시 분석 생성이 개시되어 단순 변심·입력 오기재·브라우저 삭제로 인한 환불(청약철회)이 제한</strong>됨에 동의하게 됩니다.
+      </p>
     </div>
   );
 };

@@ -240,7 +240,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">정밀 만세력 연산과 최신 MBTI 심리 모델의 교차 분석</strong>을 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -599,8 +599,18 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="material-symbols-outlined">auto_awesome</span>}
              {amount.toLocaleString()}원 결제하고 리포트 신청하기
            </button>
-           <p className="text-center text-xs text-slate-400 mt-4 font-bold flex items-center justify-center gap-1">
-             <Info className="w-4 h-4" /> 주문 제작 상품이므로 작성 착수 후에는 환불이 불가능합니다.
+           <p className="text-center text-xs text-slate-500 mt-4 font-bold leading-relaxed flex flex-col items-center gap-1">
+             <span className="inline-flex items-center gap-1">
+               <Info className="w-4 h-4 shrink-0" />
+               개별 주문 제작 상품으로 작성 착수 후 전자상거래법 제17조 제2항에 따라 환불(청약철회)이 불가합니다.
+             </span>
+             <span className="font-medium text-slate-400">
+               결제 시{' '}
+               <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-slate-600 hover:text-violet-600">이용약관</a>
+               {' '}및{' '}
+               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-slate-600 hover:text-violet-600">개인정보처리방침</a>
+               에 동의하게 됩니다.
+             </span>
            </p>
         </div>
       </div>

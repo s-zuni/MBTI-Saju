@@ -135,15 +135,20 @@ const PricingPage: React.FC<PricingPageProps> = () => {
                 <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-slate-950" />
-                        결제 및 환불 안내
+                        결제 · 청약철회 제한 및 환불 안내
                     </h3>
                     <div className="space-y-3 text-sm text-slate-600 leading-relaxed font-medium">
-                        <p>• <strong>단건 과금 방식</strong>: 별도의 구독이나 크레딧 선충전 없이, 선택한 서비스 1회 이용 요금만 결제됩니다.</p>
-                        <p>• <strong>오류 시 환불</strong>: 시스템 오류로 인해 분석 결과가 전혀 생성되지 않은 경우 고객센터 문의를 통해 동일 결제수단으로 환불 처리해 드립니다.</p>
-                        <p>• <strong>입력 정보 보관</strong>: 비회원으로 입력하신 생년월일·MBTI 정보는 현재 브라우저에만 임시 저장되어 다른 서비스 이용 시 자동으로 불러와집니다.</p>
+                        <p>• <strong>단건 과금 방식</strong>: 별도의 구독이나 크레딧 선충전 없이, 선택한 서비스 1회 이용 요금(사주·자미두수 990원 / 운세·타로·여행·KBO·AI채팅 5회권 490원)만 결제됩니다.</p>
+                        <p>• <strong>즉시 개시 디지털 콘텐츠 청약철회 제한</strong>: 결제 완료와 동시에 입력 정보에 맞춘 AI 결과 생성이 개시되므로 전자상거래법 제17조 제2항 제5호·제6호에 따라 단순 변심, 결과 불만족, 입력 정보 오기재, 브라우저 데이터 삭제로 인한 유실 시 환불이 불가합니다.</p>
+                        <p>• <strong>서버 장애 미생성 시 환불</strong>: 이용자 귀책이 아닌 회사 서버·결제 시스템 장애로 결과가 전혀 생성되지 않은 경우에 한해 결제일로부터 7일 이내 주문번호(`orderId`)와 오류 화면을 고객센터로 접수하시면 확인 후 동일 결제수단으로 환불해 드립니다.</p>
+                        <p>• <strong>기존 유료 크레딧 경과 안내</strong>: 정책 변경 전 유료 충전 후 미사용 크레딧 잔액이 남은 회원은 결제일로부터 1년 이내 고객센터를 통해 환불을 신청할 수 있습니다. (무상·이벤트 크레딧 제외)</p>
+                        <p>• <strong>입력 정보 보관 책임</strong>: 비회원 입력 정보 및 결과는 현재 브라우저(`localStorage`)에만 임시 저장되므로 필요한 결과는 직접 저장(PDF/이미지)해 두시기 바랍니다.</p>
                     </div>
-                    <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                        <p>이용 중 불편한 점이 있으시다면 언제든 고객센터로 문의해주세요.</p>
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => navigate('/terms')} className="text-slate-600 font-bold hover:underline">이용약관 전문 보기</button>
+                            <button onClick={() => navigate('/privacy')} className="text-slate-600 font-bold hover:underline">개인정보처리방침</button>
+                        </div>
                         <button onClick={() => navigate('/support')} className="text-slate-950 font-bold hover:underline">고객센터 바로가기 &rarr;</button>
                     </div>
                 </div>

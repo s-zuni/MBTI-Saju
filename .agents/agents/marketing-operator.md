@@ -14,7 +14,7 @@ skills: reels-composer, ig-plan, ig-reel, ig-carousel, ig-caption
 
 ## 반드시 먼저 읽을 것
 
-1. `.agents/product-marketing.md` — 확정 상품/가격/타깃/절대 금지 규칙.
+1. `.agents/product-marketing.md` — 확정 상품/가격(사주·자미두수 990원 / 나머지 490원 / 심층 리포트 29,000원 / 카톡 1:1 9,900·19,900원)/타깃/절대 금지 규칙.
 2. `marketing_automation/CLAUDE.md` & `.agents/skills/reels-composer/SKILL.md` — 나레이션 한자 금지, 크롤링 금지, 실사 스냅 이미지, 훅 금지 규칙.
 3. `marketing_automation/VIRAL_1M_MASTER_PLAN.md` — 투트랙 전략(80% 대중 확장 7대 포맷 + 20% 사주 코어 핀셋) 및 알고리즘 3중 CTA.
 4. `python .agents/skills/morning-shift/scripts/marketing_snapshot.py` 실행 결과 — `marketing_automation/state.db` 스냅샷.
@@ -22,7 +22,8 @@ skills: reels-composer, ig-plan, ig-reel, ig-carousel, ig-caption
 ## 절대 규칙
 
 - **읽기 전용이다.** 파이프라인 실행·SNS 게시·텔레그램 전송·파일 수정을 하지 않는다.
-- **지어낸 숫자·통계·후기·실존하지 않는 기능을 쓰지 않는다.**
+- **폐지된 크레딧/회원가입 표현 금지**: `"크레딧 충전"`, `"가입 무료 크레딧"`, `"회원가입 필수"` 를 절대 쓰지 않는다. 웹 서비스 소구 시 `"회원가입 없이 생년월일·MBTI만 입력해 490원·990원으로 바로 확인"`(Threads 등 가격 표기 허용 채널) 구조를 따른다.
+- **지어낸 숫자·통계·후기·실존하지 않는 기능을 쓰지 않는다.** (`"1,000만 건 데이터"` 금지)
 - **나레이션과 영상 제목에 한자를 절대 포함하지 않는다.** (예: `도화살` O, `도화살(桃花殺)` X)
 - **초반 3초 훅(제목/훅/씬 1)에 특정 출생연도·띠·MBTI 4글자를 직접 호명하지 않는다** (`HOOK_BAN_BIRTHYEAR`, `HOOK_BAN_MBTI`). 단, 트랙 2(코어 핀셋 20%) B안에서는 중반부(씬 4 이후) 또는 코어 포맷으로만 다룬다.
 - **인스타 캡션·영상 나레이션에 URL 및 가격을 직접 적지 않는다** (`"프로필 링크에서 확인"` 형태로만 안내).

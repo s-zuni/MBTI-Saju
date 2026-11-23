@@ -1,6 +1,6 @@
 ---
 name: ops-checker
-description: MBTIJU 서비스 상태를 읽기 전용으로 점검하는 실무 워커. Supabase 로그·성능 advisor·마이그레이션 정합성, 프런트/API 타입 체크, mbtiju.com 응답, 최근 git 변경을 수집해 요약 반환한다. morning-shift 스킬이 호출한다.
+description: MBTIJU 서비스 상태를 읽기 전용으로 점검하는 실무 워커. Supabase 로그·성능 advisor·마이그레이션 정합성, 프런트/API 타입 체크, mbtiju.com 응답 및 점검 모드 상태, 최근 git 변경을 수집해 요약 반환한다. morning-shift 스킬이 호출한다.
 model: gemini-3.8-flash-high
 fallback_model: gemini-4-hydrogen-medium
 effort: low
@@ -21,27 +21,31 @@ tools: Read, Grep, Glob, Bash, mcp__supabase__query_logs, mcp__supabase__get_adv
 
 ## 점검 항목
 
-1. **랜딩 응답**: `curl -sS -o /dev/null -w "%{http_code} %{time_total}" https://www.mbtiju.com` 로 HTTP 상태 코드 및 응답 시간 확인.
+1. **브랜치·점검 모드·랜딩 응답**:
+   - `git branch --show-current` 및 `src/App.tsx`, `api/_utils/auth.ts`, `api/_utils/rate-limit.ts`의 `IS_MAINTENANCE_MODE` 활성 여부를 함께 확인·표기한다.
+   - `curl -sS -o /dev/null -w "%{http_code} %{time_total}" https://www.mbtiju.com` 로 HTTP 상태 코드 및 응답 시간 확인.
 2. **타입 검증**:
    - 프런트: `npx tsc --noEmit -p tsconfig.json`
    - 백엔드: `npx tsc --noEmit -p api/tsconfig.json`
    각 에러 수와 발생 시 상위 5개 파일만 적는다.
-3. **Supabase 로그 (최근 24시간)**:
+3. **가격·약관 단일 소스 정합성 (v2)**:
+   - `src/config/creditConfig.ts`와 `api/_utils/auth.ts`의 `SERVICE_COSTS` (990원 / 490원) 일치 여부 확인.
+4. **Supabase 로그 (최근 24시간)**:
    - `query_logs` (`project_id: "tffvsyarxfujmvbqlutr"`)에서 `select source, count(*) as cnt from logs group by source` 실행
-   - `select source, event_message from logs where event_message ilike '%error%' or event_message ilike '%500%' or event_message ilike '%fail%' or event_message ilike '%timeout%' limit 20` 실행해 오류/타임아웃 유형별 건수와 대표 1줄 인용.
-4. **성능 Advisor & Edge Function**:
+   - `select source, event_message from logs where event_message ilike '%error%' or event_message ilike '%500%' or event_message ilike '%503%' or event_message ilike '%fail%' or event_message ilike '%timeout%' limit 20` 실행해 오류/타임아웃/점검차단 유형별 건수와 대표 1줄 인용.
+5. **성능 Advisor & Edge Function**:
    - `get_advisors(type="performance")` 주요 경고(인덱스 누락, `auth_rls_initplan` 등) 요약
    - `list_edge_functions` 상태 확인 (MBTIJU는 Vercel Serverless `api/*.ts` 사용 여부 함께 표기).
-5. **마이그레이션 정합성**:
-   - `list_migrations` 결과와 로컬 `supabase/migrations/` 폴더 파일 목록(`01_*.sql` ~ `14_*.sql`)을 비교해 원격 이력 누락 건수를 적는다.
-6. **최근 변경 & 작업 트리**:
+6. **마이그레이션 정합성**:
+   - `list_migrations` 결과와 로컬 `supabase/migrations/` 폴더 파일 목록을 비교해 원격 이력 누락 건수를 적는다.
+7. **최근 변경 & 작업 트리**:
    - `git log --since="48 hours ago" --oneline` 및 `git status --short` 로 미커밋 변경/미추적 파일 현황을 요약한다.
 
 ## 반환 형식 (60줄 이내)
 
 ```
 ## 서비스 점검 결과
-- 종합: 정상 | 주의 | 장애 의심 (한 줄 근거)
+- 종합: 정상 | 주의 | 점검모드 | 장애 의심 (한 줄 근거)
 
 ### 발견 사항
 | 영역 | 내용 | 근거(건수/대표 로그/파일) | 제안 심각도 |
