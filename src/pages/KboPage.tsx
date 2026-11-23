@@ -198,7 +198,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                 payload: {
                     type: 'kbo',
                     name: userName,
-                    mbti: profile.mbti,
+                    mbti: profile.mbti || '미입력',
                     birthDate: profile.birthDate,
                     birthTime: profile.birthTime,
                     sajuData,

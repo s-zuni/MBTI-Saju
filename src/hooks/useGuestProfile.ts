@@ -39,22 +39,31 @@ export const DEFAULT_GUEST_PROFILE: GuestProfile = {
   gender: 'female',
   birthDate: '',
   birthTime: '',
-  mbti: 'ENFP',
+  mbti: '',
 };
 
 let memoryFallbackProfile: GuestProfile | null = null;
 
 function sanitizeStoredProfile(parsed: any): GuestProfile {
-  const isLegacyV1 = !parsed?.v;
+  const version = Number(parsed?.v || 1);
   let rawName = typeof parsed?.name === 'string' ? parsed.name : DEFAULT_GUEST_PROFILE.name;
   let rawBirthDate = typeof parsed?.birthDate === 'string' ? parsed.birthDate : DEFAULT_GUEST_PROFILE.birthDate;
+  let rawMbti =
+    parsed?.mbti === ''
+      ? ''
+      : typeof parsed?.mbti === 'string' && MBTI_OPTIONS.includes(parsed.mbti)
+      ? parsed.mbti
+      : DEFAULT_GUEST_PROFILE.mbti;
 
-  // 구버전(v1) 기본값으로 자동 저장되어 있던 '방문자'·'1998-05-15'는 빈 입력 상태로 정리
-  if (isLegacyV1 && rawName === '방문자') {
+  // 구버전(v1/v2) 기본값 정리: 자동 저장된 '방문자'·'1998-05-15'·기본 MBTI는 선택 입력으로 비워둠
+  if (version < 2 && rawName === '방문자') {
     rawName = '';
     if (rawBirthDate === '1998-05-15') {
       rawBirthDate = '';
     }
+  }
+  if (version < 3 && !rawBirthDate && rawMbti === 'ENFP') {
+    rawMbti = '';
   }
 
   return {
@@ -62,10 +71,7 @@ function sanitizeStoredProfile(parsed: any): GuestProfile {
     gender: parsed?.gender === 'male' ? 'male' : 'female',
     birthDate: rawBirthDate,
     birthTime: typeof parsed?.birthTime === 'string' ? parsed.birthTime : '',
-    mbti:
-      typeof parsed?.mbti === 'string' && MBTI_OPTIONS.includes(parsed.mbti)
-        ? parsed.mbti
-        : DEFAULT_GUEST_PROFILE.mbti,
+    mbti: rawMbti,
   };
 }
 
@@ -85,7 +91,7 @@ export function readGuestProfile(): GuestProfile {
 export function writeGuestProfile(next: GuestProfile) {
   memoryFallbackProfile = { ...next };
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...next, v: 2 }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...next, v: 3 }));
   } catch {
     // ignore storage quota errors
   }
@@ -93,7 +99,7 @@ export function writeGuestProfile(next: GuestProfile) {
 }
 
 /**
- * 회원가입 없이 브라우저 내에 생년월일·시간·성별·MBTI를 보존/동기화하는 훅
+ * 회원가입 없이 브라우저 내에 생년월일·시간·성별·MBTI(선택)를 보존/동기화하는 훅
  */
 export const useGuestProfile = () => {
   const [profile, setProfile] = useState<GuestProfile>(() => readGuestProfile());

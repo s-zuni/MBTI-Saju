@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, CreditCard, XCircle, Palette, Gift, MapPin, Coffee, Sun, Moon, Award, Gem } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, XCircle, Palette, Gift, MapPin, Coffee, Sun, Moon, Award, Gem } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
@@ -232,7 +232,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     const birthDate = profile.birthDate || initialSession?.user?.user_metadata?.birth_date;
     const birthTime = profile.birthTime ?? initialSession?.user?.user_metadata?.birth_time ?? '';
     const gender = profile.gender || initialSession?.user?.user_metadata?.gender || 'female';
-    const mbti = profile.mbti || initialSession?.user?.user_metadata?.mbti || 'INFJ';
+    const mbti = profile.mbti || initialSession?.user?.user_metadata?.mbti || '미입력';
     const name = profile.name || initialSession?.user?.user_metadata?.full_name || '이용자';
 
     if (!birthDate) {
@@ -786,7 +786,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   return (
                     <FreeSajuPreviewCard
                       saju={previewSaju}
-                      mbti={profile.mbti || 'ISTJ'}
+                      mbti={profile.mbti}
                       userName={profile.name}
                       isPaying={isPaying}
                       onUnlockClick={handlePayAndGenerate}

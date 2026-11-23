@@ -224,7 +224,7 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                     birthDate: profile.birthDate,
                     birthTime: profile.birthTime,
                     gender: profile.gender,
-                    mbti: profile.mbti || 'ENFP',
+                    mbti: profile.mbti || '미입력',
                     name: profile.name || '이용자',
                     sajuData,
                     businessField,

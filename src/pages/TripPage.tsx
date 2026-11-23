@@ -108,7 +108,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                     type: 'trip',
                     serviceType: 'trip',
                     birthDate: profile.birthDate,
-                    mbti: profile.mbti,
+                    mbti: profile.mbti || '미입력',
                     sajuData,
                     tripType,
                     selectedRegion,

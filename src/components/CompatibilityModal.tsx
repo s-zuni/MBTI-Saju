@@ -132,13 +132,13 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     }, [isLoading, result]);
 
     const runAnalysis = async () => {
-        if (!profile.birthDate || !profile.mbti) {
-            setLocalError('내 생년월일과 MBTI를 입력해주세요.');
+        if (!profile.birthDate) {
+            setLocalError('내 생년월일을 입력해주세요.');
             return;
         }
         // Validation for Partner Mode only if it's explicitly turned on
-        if (isPartnerMode && (!targetName || !targetBirthDate || !targetMbti)) {
-            setLocalError('상대방 정보를 모두 입력해주세요.');
+        if (isPartnerMode && (!targetName || !targetBirthDate)) {
+            setLocalError('상대방 이름과 생년월일을 입력해주세요.');
             return;
         }
 
@@ -162,11 +162,11 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                     targetName,
                     targetBirthDate,
                     targetBirthTime,
-                    targetMbti,
+                    targetMbti: targetMbti || '미입력',
                     userName: profile.name || '이용자',
                     userBirthDate: profile.birthDate,
                     userBirthTime: profile.birthTime,
-                    userMbti: profile.mbti,
+                    userMbti: profile.mbti || '미입력',
                     userGender: profile.gender,
                     sajuData: userSajuData,
                     targetSajuData,
@@ -284,7 +284,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">상대방 MBTI</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">상대방 MBTI (선택)</label>
                                     <input
                                         type="text"
                                         value={targetMbti}

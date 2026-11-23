@@ -291,11 +291,6 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
             return;
         }
 
-        if (!targetMbti) {
-            alert('상대방 MBTI를 입력해주세요.');
-            return;
-        }
-
         if (!targetBirthDate) {
             alert('상대방 생년월일을 입력해주세요.');
             return;
@@ -321,11 +316,11 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
                     birthDate: profile.birthDate,
                     birthTime: profile.birthTime,
                     gender: profile.gender,
-                    mbti: profile.mbti,
+                    mbti: profile.mbti || '미입력',
                     name: profile.name || '이용자',
                     sajuData,
                     targetName,
-                    targetMbti,
+                    targetMbti: targetMbti || '미입력',
                     targetBirthDate,
                     targetBirthTime,
                     targetGender,
@@ -484,13 +479,13 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest pl-1">상대방 MBTI</label>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest pl-1">상대방 MBTI (선택 · 몰라도 가능)</label>
                                             <div className="grid grid-cols-4 gap-2">
                                                 {MBTI_LIST.map((m) => (
                                                     <button
                                                         key={m}
                                                         type="button"
-                                                        onClick={() => setTargetMbti(m)}
+                                                        onClick={() => setTargetMbti(targetMbti === m ? '' : m)}
                                                         className={`py-2.5 rounded-xl text-xs font-black transition-all border ${
                                                             targetMbti === m
                                                                 ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-100'

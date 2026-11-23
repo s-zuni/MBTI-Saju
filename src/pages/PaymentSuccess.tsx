@@ -68,11 +68,21 @@ const PaymentSuccess: React.FC = () => {
                     localStorage.removeItem('pending_shop_order');
                 }
 
-                const data = await response.json();
+                const rawBody = await response.text();
+                let data: any = null;
+                try {
+                    data = rawBody ? JSON.parse(rawBody) : null;
+                } catch {
+                    throw new Error(
+                        response.ok
+                            ? '결제 승인 응답 형식이 올바르지 않습니다.'
+                            : `서버 오류가 발생했습니다 (HTTP ${response.status}). 잠시 후 다시 시도해 주세요.`
+                    );
+                }
 
-                if (!response.ok || data.success === false) {
-                    console.error('Failed API Response:', data);
-                    const errorMessage = data.error || data.message || '결제 승인 중 오류가 발생했습니다.';
+                if (!response.ok || !data || data.success === false) {
+                    console.error('Failed API Response:', data || rawBody);
+                    const errorMessage = data?.error || data?.message || `결제 승인 중 오류가 발생했습니다 (HTTP ${response.status}).`;
                     throw new Error(errorMessage);
                 }
 

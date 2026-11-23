@@ -73,12 +73,15 @@ const GuestProfileCard: React.FC<GuestProfileCardProps> = ({
         </div>
 
         <div className="space-y-1">
-          <label className="block text-[11px] font-bold text-slate-500">MBTI</label>
+          <label className="block text-[11px] font-bold text-slate-500">
+            MBTI <span className="text-slate-400 font-normal">(선택 · 몰라도 가능)</span>
+          </label>
           <select
             value={profile.mbti}
             onChange={(e) => onChange({ mbti: e.target.value })}
             className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 cursor-pointer"
           >
+            <option value="">모름 / 선택 안함</option>
             {MBTI_OPTIONS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}

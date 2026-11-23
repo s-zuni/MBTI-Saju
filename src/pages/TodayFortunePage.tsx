@@ -94,7 +94,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
             birthDate: profile.birthDate,
             birthTime: profile.birthTime || null,
             gender: profile.gender,
-            mbti: profile.mbti || 'ISTJ',
+            mbti: profile.mbti || '미입력',
             sajuData,
             scope: 'today',
         });
@@ -116,7 +116,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                     birthDate: profile.birthDate,
                     birthTime: profile.birthTime || null,
                     gender: profile.gender,
-                    mbti: profile.mbti || 'ISTJ',
+                    mbti: profile.mbti || '미입력',
                     sajuData,
                     scope: 'tomorrow',
                 },

@@ -238,7 +238,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
 
             const userContext = {
                 name: profile.name || '이용자',
-                mbti: profile.mbti || 'INFJ',
+                mbti: profile.mbti || '미입력',
                 birthDate: profile.birthDate,
                 birthTime: profile.birthTime,
                 gender: profile.gender,
