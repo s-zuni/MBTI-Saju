@@ -2,7 +2,7 @@ import { streamText } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser, getSupabaseAdmin } from './_utils/auth';
+import { authenticateUser, getSupabaseAdmin, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
@@ -52,19 +52,31 @@ export default async (req: Request) => {
         });
     }
 
+    let receiptToRelease: string | null = null;
+    let supabaseForRelease: any = null;
+
     try {
         const body = await req.json().catch(() => ({}));
         const { sessionId, message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = body;
 
-        // 1. 호출자 인증 (비회원/게스트 허용)
-        const authCheck = await authenticateUser(req, { allowAnonymous: true, cost: 0 });
+        // 1. 호출자 인증 및 AI_CHAT_5 결제 티켓(5회권) 검증
+        const authCheck = await authenticateUser(req, {
+            allowAnonymous: true,
+            serviceType: 'AI_CHAT_5',
+            allowedServiceTypes: ['AI_CHAT_5'],
+            requirePaymentReceipt: true,
+        });
         if (authCheck.errorResponse) {
             return authCheck.errorResponse;
         }
+        receiptToRelease = authCheck.receiptToken ?? null;
+        supabaseForRelease = authCheck.supabaseAdmin;
+
         const userId = authCheck.user?.id || null;
         const isGuestSession = !userId || !sessionId || String(sessionId).startsWith('guest_');
 
         if (!sessionId) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '유효한 채팅 세션(sessionId)이 필요합니다.' }), { 
                 status: 400, 
                 headers: reqCorsHeaders 
@@ -82,6 +94,7 @@ export default async (req: Request) => {
                 .single();
 
             if (!sessionData || sessionError) {
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
                 return new Response(JSON.stringify({ error: '유효한 채팅 세션을 찾을 수 없습니다.' }), { 
                     status: 404, 
                     headers: reqCorsHeaders 
@@ -168,8 +181,9 @@ ${pastContext ? `\n[이전 상담 요약]\n${pastContext}\n` : ''}`.trim();
             throw error;
         }
     } catch (error: any) {
+        await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
         console.error('ChatServer Error:', error);
-        return new Response(JSON.stringify({ error: error.message || "채팅 분석 중 오류가 발생했습니다." }), { 
+        return new Response(JSON.stringify({ error: '채팅 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: reqCorsHeaders 
         });

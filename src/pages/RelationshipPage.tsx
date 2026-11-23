@@ -8,7 +8,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const MBTI_LIST = [
     'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
@@ -215,9 +215,12 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
         }
     };
 
+    const receiptTokenRef = useRef<string | null>(null);
+
     const { object: result, submit, isLoading } = useObject({
         api: `/api/love-saju?type=${activeTab}`,
         schema: loveSajuSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[RelationshipPage] Result validation failed:', validationError);
@@ -241,6 +244,7 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
             'LOVE_CRUSH',
         ]);
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             const p = ticket.payload;
             if (p.type && ['couple', 'married', 'marriage', 'reunion', 'crush'].includes(p.type)) {
                 setActiveTab(p.type);

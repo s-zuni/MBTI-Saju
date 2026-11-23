@@ -8,7 +8,7 @@ import { singleDayFortuneSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { profile, updateProfile } = useGuestProfile();
@@ -19,10 +19,12 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
     const [isPaying, setIsPaying] = useState(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
     const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
 
     const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
         api: '/api/fortune?scope=today',
         schema: singleDayFortuneSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onError: (error) => {
             console.error('[TodayFortunePage] Today fortune generation failed:', error);
             alert('오늘의 운세를 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.');
@@ -32,6 +34,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
     const { object: tomorrowFortune, submit: fetchTomorrow, isLoading: isTomorrowLoading } = useObject({
         api: '/api/fortune?scope=tomorrow',
         schema: singleDayFortuneSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: async ({ object }) => {
             if (!object) {
                 console.error('[TodayFortunePage] Tomorrow fortune result validation failed');
@@ -49,6 +52,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket(['FORTUNE_TODAY', 'FORTUNE_TOMORROW']);
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             if (ticket.serviceType === 'FORTUNE_TOMORROW') {
                 setTab('tomorrow');
                 setTomorrowUnlocked(true);

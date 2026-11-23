@@ -74,6 +74,7 @@ const AdminDashboard: React.FC = () => {
                 weekUsersResult,
                 recentUsersResult,
                 creditUsageResult,
+                serviceOrdersResult,
             ] = await Promise.allSettled([
                 // 1. 기존 통합 통계
                 supabase.rpc('get_admin_dashboard_stats'),
@@ -85,9 +86,22 @@ const AdminDashboard: React.FC = () => {
                 supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekISO),
                 // 5. 최근 가입자 5명 (이름 + 이메일 + 가입일)
                 supabase.from('profiles').select('email, created_at, name').order('created_at', { ascending: false }).limit(5),
-                // 6. 서비스별 크레딧 사용 내역
+                // 6. 서비스별 크레딧 사용 내역 (레거시)
                 supabase.from('credit_usages').select('service_type').gte('used_at', weekISO),
+                // 7. 단건 결제 내역 (migration 18 적용 전에도 graceful 처리)
+                supabase.from('service_orders').select('service_type, amount, status, created_at'),
             ]);
+
+            let singleServiceSales = 0;
+            if (
+                serviceOrdersResult.status === 'fulfilled' &&
+                !serviceOrdersResult.value.error &&
+                Array.isArray(serviceOrdersResult.value.data)
+            ) {
+                singleServiceSales = serviceOrdersResult.value.data
+                    .filter((row: any) => row.status !== 'refunded' && row.status !== 'cancelled')
+                    .reduce((sum: number, row: any) => sum + (Number(row.amount) || 0), 0);
+            }
 
             // 기본 통계
             if (rpcResult.status === 'fulfilled' && !rpcResult.value.error && rpcResult.value.data) {
@@ -95,9 +109,14 @@ const AdminDashboard: React.FC = () => {
                 setStats(prev => ({
                     ...prev,
                     totalUsers: d.user_count || 0,
-                    totalSales: d.total_sales || 0,
+                    totalSales: (d.total_sales || 0) + singleServiceSales,
                     pendingRefunds: d.pending_refunds || 0,
                     pendingInquiries: d.pending_inquiries || 0,
+                }));
+            } else if (singleServiceSales > 0) {
+                setStats(prev => ({
+                    ...prev,
+                    totalSales: singleServiceSales,
                 }));
             }
 
@@ -134,13 +153,27 @@ const AdminDashboard: React.FC = () => {
                 randomVariance
             );
 
-            // 서비스 사용 집계
+            // 서비스 사용 집계 (레거시 credit_usages + 단건 결제 service_orders 주간 집계)
             let mbtiCount = 0, compatCount = 0, fortuneCount = 0;
             if (creditUsageResult.status === 'fulfilled' && Array.isArray(creditUsageResult.value.data)) {
                 creditUsageResult.value.data.forEach((row: any) => {
                     if (row.service_type?.includes('mbti')) mbtiCount++;
                     else if (row.service_type?.includes('compat')) compatCount++;
                     else if (row.service_type?.includes('fortune')) fortuneCount++;
+                });
+            }
+            if (
+                serviceOrdersResult.status === 'fulfilled' &&
+                !serviceOrdersResult.value.error &&
+                Array.isArray(serviceOrdersResult.value.data)
+            ) {
+                serviceOrdersResult.value.data.forEach((row: any) => {
+                    if (row.status === 'refunded' || row.status === 'cancelled') return;
+                    if (row.created_at && row.created_at < weekISO) return;
+                    const svc = String(row.service_type || '');
+                    if (svc.startsWith('COMPATIBILITY') || svc.startsWith('LOVE_')) compatCount++;
+                    else if (svc.startsWith('FORTUNE_') || svc === 'TAROT' || svc === 'TRIP' || svc === 'KBO' || svc === 'AI_CHAT_5') fortuneCount++;
+                    else mbtiCount++;
                 });
             }
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
@@ -32,8 +32,13 @@ export default async (req: Request) => {
         });
     }
 
-    // 데일리 인연 궁합 인증 및 5 크레딧 차감
-    const authResult = await authenticateUser(req, { serviceType: 'COMPATIBILITY', cost: 5 });
+    // 데일리 인연 궁합 단건 결제 티켓 검증 및 Rate Limit
+    const authResult = await authenticateUser(req, {
+        serviceType: 'COMPATIBILITY',
+        allowedServiceTypes: ['COMPATIBILITY', 'RELATIONSHIP_ADD'],
+        requirePaymentReceipt: true,
+        allowAnonymous: true,
+    });
     if (authResult.errorResponse) {
         return authResult.errorResponse;
     }
@@ -43,6 +48,7 @@ export default async (req: Request) => {
         const { myProfile, partners } = body;
 
         if (!myProfile || !partners || !Array.isArray(partners)) {
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
             return new Response(JSON.stringify({ error: 'Invalid input. myProfile and partners array are required.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -98,15 +104,17 @@ export default async (req: Request) => {
             }
             throw lastError;
         } catch (error: any) {
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
             console.error('Daily Relationship API Error:', error);
-            return new Response(JSON.stringify({ error: error.message }), { 
+            return new Response(JSON.stringify({ error: '궁합 분석 중 오류가 발생했습니다.' }), { 
                 status: 500, 
                 headers: responseHeaders 
             });
         }
     } catch (error: any) {
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
         console.error('Daily Relationship API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: '궁합 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: responseHeaders 
         });

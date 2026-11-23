@@ -14,7 +14,7 @@ import { DEEP_REPORT_SALE_PRICE } from '../../config/deepReportConfig';
 
 interface Payment {
     id: string;
-    type: 'credit' | 'deep_report';
+    type: 'credit' | 'deep_report' | 'single_service';
     user_id: string | null;
     price_paid: number;
     purchased_credits: number | null;
@@ -82,7 +82,23 @@ const PaymentManagement: React.FC = () => {
 
             if (reportError) throw reportError;
 
-            // 3. Map credit purchases
+            // 3. Fetch single service orders (graceful until migration 18 is applied)
+            let svcData: any[] = [];
+            try {
+                const { data: serviceOrderData, error: svcError } = await supabase
+                    .from('service_orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!svcError && serviceOrderData) {
+                    svcData = serviceOrderData;
+                } else if (svcError) {
+                    console.warn('[PaymentManagement] service_orders query skipped:', svcError.message);
+                }
+            } catch (svcErr) {
+                console.warn('[PaymentManagement] service_orders fetch exception:', svcErr);
+            }
+
+            // 4. Map credit purchases
             const mappedCredits: Payment[] = (creditData || []).map(p => ({
                 id: p.id,
                 type: 'credit',
@@ -99,7 +115,7 @@ const PaymentManagement: React.FC = () => {
             }));
 
 
-            // 4. Map deep report requests
+            // 5. Map deep report requests
             const mappedReports: Payment[] = (reportData || []).map(p => {
                 const displayName = p.profiles?.name || p.generated_data?.clientName || (p.email ? p.email.split('@')[0] : '비회원');
                 const displayEmail = p.profiles?.email || p.email || '-';
@@ -120,9 +136,25 @@ const PaymentManagement: React.FC = () => {
                 };
             });
 
+            // 6. Map single service orders
+            const mappedServices: Payment[] = (svcData || []).map(s => ({
+                id: s.id,
+                type: 'single_service',
+                user_id: s.user_id || '',
+                price_paid: s.amount,
+                purchased_credits: null,
+                product_name: s.service_name || s.service_type || '단건 이용권',
+                status: s.status === 'refunded' ? 'refunded' : 'paid',
+                purchased_at: s.created_at,
+                payment_id: s.payment_key || '-',
+                order_id: s.order_id,
+                payment_method: s.payment_method || '카드',
+                profiles: { name: s.user_id ? '회원' : '비회원', email: s.service_type || '-' },
+            }));
 
-            // 5. Merge and sort by purchased_at descending
-            const merged = [...mappedCredits, ...mappedReports].sort((a, b) => {
+
+            // 7. Merge and sort by purchased_at descending
+            const merged = [...mappedCredits, ...mappedReports, ...mappedServices].sort((a, b) => {
                 return new Date(formatSafariDate(b.purchased_at)).getTime() - new Date(formatSafariDate(a.purchased_at)).getTime();
             });
 
@@ -139,15 +171,21 @@ const PaymentManagement: React.FC = () => {
     }, [fetchPayments]);
 
     const handleRefund = async (payment: Payment) => {
-        const productName = payment.type === 'deep_report' ? payment.product_name : `${payment.purchased_credits} 크레딧`;
+        const productName = payment.type === 'credit'
+            ? `${payment.purchased_credits} 크레딧`
+            : payment.product_name;
         const confirmRefund = window.confirm(`[${payment.profiles?.name}]님의 ${productName} 결제를 환불하시겠습니까? 토스페이먼츠 승인이 취소됩니다.`);
         if (!confirmRefund) return;
 
         setRefundingId(payment.id);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch('/api/payment?action=cancel', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                },
                 body: JSON.stringify({ 
                     purchaseId: payment.id,
                     type: payment.type,
@@ -183,8 +221,12 @@ const PaymentManagement: React.FC = () => {
 
         setInfoLoadingId(payment.id);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`/api/payment?action=info&${queryParam}`, {
                 method: 'GET',
+                headers: {
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                },
             });
             const result = await response.json();
             
@@ -343,6 +385,8 @@ const PaymentManagement: React.FC = () => {
                                             <div className="flex items-start gap-2.5">
                                                 {p.type === 'deep_report' ? (
                                                     <span className="bg-violet-50 text-violet-600 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">심층리포트</span>
+                                                ) : p.type === 'single_service' ? (
+                                                    <span className="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">단건결제</span>
                                                 ) : (
                                                     <span className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">크레딧충전</span>
                                                 )}
@@ -360,7 +404,7 @@ const PaymentManagement: React.FC = () => {
                                             {p.price_paid?.toLocaleString()}원
                                         </td>
                                         <td className="px-6 py-4 text-slate-950 font-black">
-                                            {p.type === 'deep_report' ? (
+                                            {p.type === 'deep_report' || p.type === 'single_service' ? (
                                                 <span className="text-slate-800 font-bold">{p.product_name}</span>
                                             ) : (
                                                 <span>{p.purchased_credits?.toLocaleString()} C</span>

@@ -8,7 +8,7 @@ description: MBTIJU 출근 브리핑 오케스트레이션 스킬. 서비스 점
 너는 이 스킬을 실행하는 **총괄 팀장(고성능 모델 — Argon / Carbon / Neon)**이다.
 단순 수집·로그 조회·초안 작성은 **저비용 효율 모델(Hydrogen / Flash)** 워커 3명에게 병렬 위임하고, 너는 **교차 검증·보안 최종 판정·마케팅 팩트체크·우선순위 및 기획 수립**에만 집중한다.
 
-> **현재 서비스 기준 (v2)**: 일반 운세·사주·타로·채팅은 **100% 비회원(로그인 없음) + 크레딧 폐지 + 단건 결제(사주·자미두수 990원 / 나머지 490원)** 모델이다. (`main` 브랜치는 서비스 개편 점검 모드 `IS_MAINTENANCE_MODE = true` 일 수 있으므로 브랜치/점검 상태를 구분해 판정한다.)
+> **현재 서비스 기준 (v2)**: 일반 운세·사주·타로·채팅은 **회원가입 없는 비회원 기본 즉시 이용(선택적 소셜 로그인 `/mypage` 및 `/reviews` 후기 작성 로그인 유지) + 크레딧 폐지 + 단건 결제(사주·자미두수 990원 / 나머지 490원) + 카톡 채널 1:1 상담 일원화(`/chat`, `/room`) + 굿즈 장바구니(`/shop`, `/shop/cart`) 준비 중 유지** 모델이다. (`main` 브랜치는 서비스 개편 점검 모드 `IS_MAINTENANCE_MODE = true` 일 수 있으므로 브랜치/점검 상태를 구분해 판정한다.)
 
 ## 전체 규칙
 
@@ -31,7 +31,7 @@ Antigravity 공식 오케스트레이션에 따라 아래 3개 역할을 **`defi
 | 워커 | 역할 정의 파일 | 프롬프트 지시사항 |
 |---|---|---|
 | `ops-checker` | `.agents/agents/ops-checker.md` | 오늘 날짜 전달. "정의된 점검 항목(브랜치·점검 모드, 랜딩 응답, 프런트/API `tsc`, `SERVICE_COSTS` 990/490원 정합성, Supabase `tffvsyarxfujmvbqlutr` 로그·advisor·마이그레이션 정합성, 최근 커밋)을 수행하고 60줄 이내 형식대로 반환하라." |
-| `security-collector` | `.agents/agents/security-collector.md` | 오늘 날짜 전달. 금요일이면 "수집 범위를 최근 7일로 확장하라" 추가. "`CLAUDE.md` §3.1 기해소·크레딧 종료 항목은 회귀 근거가 없으면 제외하고, §3.2 v2 위험(비회원 `allowAnonymous` API 결제 티켓 검증 우회, `SVC_*` DB 기록/추적 공백, `generate-and-save-report`, DB RLS, `localStorage`/XSS, 시크릿·`npm audit`) 증거만 수집하라." |
+| `security-collector` | `.agents/agents/security-collector.md` | 오늘 날짜 전달. 금요일이면 "수집 범위를 최근 7일로 확장하라" 추가. "`CLAUDE.md` §3.1 기해소·크레딧 종료 항목은 회귀 근거가 없으면 제외하고, §3.2 v2 위험(`18_service_orders.sql` 운영 DB 반영 여부, `X-Service-Receipt`/`service_orders` 회귀 여부, `generate-and-save-report`, DB RLS, `localStorage`/XSS, 시크릿·`npm audit`) 증거만 수집하라." |
 | `marketing-operator` | `.agents/agents/marketing-operator.md` | 오늘 날짜·요일 전달. 전일 브리핑 포맷이 있으면 "동일 포맷 반복 회피" 지시. "`marketing_snapshot.py` 실행 후 v2 비회원 건별 결제(490원/990원·가입 없음) 기준으로 Threads 3슬롯, 릴스/숏츠 투트랙 2안(`hookscore.py` 측정 포함), 인스타 캐러셀 6장, 실험 제안 1개를 반환하라." |
 
 워커가 실패하거나 빈 결과를 반환하면 1회만 재시도한다. 재실패 시 해당 영역을 "점검 실패"로 기록하고 추측으로 채우지 않는다.
@@ -58,7 +58,7 @@ Antigravity 공식 오케스트레이션에 따라 아래 3개 역할을 **`defi
 ## 4단계 — 우선순위 및 기획 수립 (팀장 직접 수행)
 
 점검 결과 + `CLAUDE.md` + `VIRAL_1M_MASTER_PLAN.md` + 최근 변경을 종합해:
-- **오늘의 우선순위 3개** (`무엇을 / 왜 오늘 / 예상 작업 범위`) — 확정된 Critical/High 보안 이슈(예: 비회원 결제 티켓 서버 검증) 및 장애가 항상 최우선.
+- **오늘의 우선순위 3개** (`무엇을 / 왜 오늘 / 예상 작업 범위`) — 확정된 Critical/High 보안 이슈(예: `18_service_orders.sql` 미반영, `generate-and-save-report` 동시성/에러 노출) 및 장애가 항상 최우선.
 - **기획 제안 1~2개** — 비회원 건별 결제 퍼널 전환·리텐션·약관/CS·자동화 개선안.
 - 금요일에는 이번 주 브리핑 흐름과 다음 주 제안을 덧붙인다.
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 
 const luckySchema = z.object({
     color: z.string().describe("행운의 색상"),
@@ -234,20 +234,36 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 서비스별 비회원 허용 + Rate Limit 검증
+    // 서비스별 단건 결제 티켓 검증 + Rate Limit 검증
     let serviceType: string | undefined = undefined;
-    if (targetType === 'fortune_today') serviceType = 'FORTUNE_TODAY';
-    else if (targetType === 'fortune_tomorrow') serviceType = 'FORTUNE_TOMORROW';
-    else if (targetType === 'jamidusu') serviceType = 'JAMIDUSU';
-    else if (targetType === 'trip') serviceType = 'TRIP';
-    else if (targetType === 'kbo') serviceType = 'KBO';
+    let allowedServiceTypes: string[] | undefined = undefined;
+    if (targetType === 'fortune_today') {
+        serviceType = 'FORTUNE_TODAY';
+        allowedServiceTypes = ['FORTUNE_TODAY'];
+    } else if (targetType === 'fortune_tomorrow') {
+        serviceType = 'FORTUNE_TOMORROW';
+        allowedServiceTypes = ['FORTUNE_TOMORROW'];
+    } else if (targetType === 'jamidusu') {
+        serviceType = 'JAMIDUSU';
+        allowedServiceTypes = ['JAMIDUSU'];
+    } else if (targetType === 'trip') {
+        serviceType = 'TRIP';
+        allowedServiceTypes = ['TRIP', 'COMPATIBILITY_TRIP'];
+    } else if (targetType === 'kbo') {
+        serviceType = 'KBO';
+        allowedServiceTypes = ['KBO'];
+    } else {
+        serviceType = 'FORTUNE_TODAY';
+        allowedServiceTypes = ['TRIP', 'COMPATIBILITY_TRIP', 'FORTUNE_TODAY', 'MBTI_SAJU', 'REGENERATE_MBTI_SAJU'];
+    }
 
     const cacheKey = buildCacheKey(targetType, body);
     let cachedResult: unknown = null;
 
     const authResult = await authenticateUser(req, {
         serviceType,
-        cost: 0,
+        allowedServiceTypes,
+        requirePaymentReceipt: true,
         allowAnonymous: true,
     });
 
@@ -408,8 +424,9 @@ MBTI: ${mbti}
         }
         throw lastError;
     } catch (error: any) {
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
         console.error(`[Streaming Error - ${targetType}]:`, error);
-        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), { 
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다." }), { 
             status: 500, 
             headers: reqCorsHeaders 
         });

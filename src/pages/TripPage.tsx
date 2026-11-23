@@ -11,7 +11,7 @@ import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const DOMESTIC_REGIONS = [
     '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시', 
@@ -39,11 +39,13 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [error, setError] = useState<string | null>(null);
     const [isPaying, setIsPaying] = useState(false);
     const shareRef = useRef<HTMLDivElement>(null);
+    const receiptTokenRef = useRef<string | null>(null);
     const [isSharing, setIsSharing] = useState(false);
 
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special?type=trip',
         schema: tripSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[TripPage] Result validation failed:', validationError);
@@ -61,6 +63,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket(['TRIP', 'COMPATIBILITY_TRIP']);
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             if (ticket.payload.tripType) setTripType(ticket.payload.tripType);
             if (ticket.payload.selectedRegion) setSelectedRegion(ticket.payload.selectedRegion);
             if (ticket.payload.duration) setDuration(ticket.payload.duration);

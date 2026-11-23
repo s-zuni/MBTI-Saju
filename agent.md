@@ -11,15 +11,17 @@
 
 **MBTIJU(엠비티아이주)**는 만세력 기반의 **정통 사주명리학(四柱命理學)**과 **MBTI 성격 유형 분석**을 융합해 현대적인 운세·궁합·타로·심층 리포트를 제공하는 독립 웹 플랫폼(`https://www.mbtiju.com`)입니다.
 
-### 핵심 제공 가치 (v2 운영 모델)
-1. **회원가입 ZERO · 인라인 즉시 분석**: 일반 운세·사주·자미두수·타로·궁합·AI 채팅을 로그인 없이 브라우저 인라인 입력(`GuestProfileCard`)만으로 즉시 이용.
-2. **투명한 건별 단품 과금 (크레딧 선충전 폐지)**:
+### 핵심 제공 가치 (v2.1 운영 확정 모델)
+1. **회원가입 ZERO 기본 · 선택적 소셜 로그인 유지**: 일반 운세·사주·자미두수·타로·궁합·AI 채팅을 로그인 없이 브라우저 인라인 입력(`GuestProfileCard`)만으로 즉시 이용. 추후 확장을 위해 카카오·구글 소셜 로그인(`/mypage`, `Navbar` 로그인 메뉴)은 선택 기능으로 유지하며, **이용후기 작성(`/reviews`)은 로그인 필수** 정책을 유지.
+2. **투명한 건별 단품 과금 (크레딧 선충전 폐지 + 서버 영수증 검증)**:
    - **사주·자미두수 계열 (`990원`)**: MBTI × 사주 통합/재생성, 자미두수 12궁, 심층 궁합, 연애/부부/결혼/재회/짝사랑 사주, 재물/창업/취직/이직 사주
    - **운세·타로·테마 계열 (`490원`)**: 오늘의 운세, 내일의 운세, 신비타로, 여행지 추천, KBO 팬궁합, AI 사주·타로 채팅(5회 이용권)
 3. **고부가가치 3년 심층 사주 리포트 (`/premium`, `29,000원`)**:
    - 정가 49,000원 → 판매가 29,000원. 비회원 신청·결제 후 결정론적 만세력 계산 + AI 해석 + 관리자 수기 점검을 거쳐 A4 20장 내외 PDF/DOCX로 제공.
-4. **카카오톡 채널 1:1 상담 (`9,900원` / `19,900원`)**:
-   - 1문항 9,900원 / 3문항 19,900원, 비회원 가능, 입금 확인 후 평일 기준 24시간 이내 답변.
+4. **카카오톡 채널 1:1 상담 일원화 (`/chat`, `/room`, `9,900원` / `19,900원`)**:
+   - 웹 내 1:1 상담 티켓 결제 대신 `ConsultationPage`(`/chat`, `/room`)를 공식 카카오톡 채널 1:1 상담(`KakaoConsultCard`)으로 일원화. (1문항 9,900원 / 3문항 19,900원, 비회원 가능, 입금 확인 후 평일 기준 24시간 이내 답변)
+5. **굿즈 상점 및 장바구니 (`/shop`, `/shop/cart` 준비 중 유지)**:
+   - 상단 네비게이션 장바구니 아이콘 및 상점 라우트 클릭 진입을 허용하되, 전 품목/장바구니는 `"운세 상점은 현재 준비 중입니다"` 안내 후 홈으로 이동(실결제 미오픈).
 
 ---
 
@@ -27,15 +29,15 @@
 
 ```mermaid
 graph TD
-    User["👤 비회원/이용자 (Browser + localStorage)"] --> ReactApp["📱 React 18 SPA + Tailwind"]
+    User["👤 비회원/선택회원 (Browser + localStorage)"] --> ReactApp["📱 React 18 SPA + Tailwind"]
     ReactApp -->|"건별 결제 요청 (startServicePayment)"| TossSDK["💳 TossPayments v2 웹 SDK"]
     TossSDK -->|"/payment/success?paymentKey&orderId&amount"| VercelPayment["⚡ /api/payment?action=confirm"]
-    VercelPayment -->|"승인 후 SVC_* 티켓 활성화"| ReactApp
-    ReactApp -->|"스트리밍 AI 요청 (/api/*)"| VercelAPI["⚡ Vercel Serverless (Edge/Node)"]
-    VercelAPI --> RateLimit["🛡️ IP Rate Limit (api/_utils/rate-limit.ts)"]
+    VercelPayment -->|"service_orders 적재 + receiptToken 발급"| ReactApp
+    ReactApp -->|"X-Service-Receipt 헤더 + AI 요청 (/api/*)"| VercelAPI["⚡ Vercel Serverless (Edge/Node)"]
+    VercelAPI --> AuthReceipt["🔐 영수증 소비 RPC + IP Rate Limit (api/_utils/auth.ts)"]
     VercelAPI --> AIProvider["🧠 AI Orchestrator (OpenAI GPT-4o-mini 주 / Gemini 폴백)"]
     VercelAPI --> Manseryeok["📜 만세력 엔진 (api/_utils/saju.ts, manseryeok)"]
-    VercelAPI <--> Supabase["🗄️ Supabase (orders, deep_report*, rate_limits, admin Auth)"]
+    VercelAPI <--> Supabase["🗄️ Supabase (service_orders, orders, deep_report*, rate_limits, reviews, admin Auth)"]
 ```
 
 ---
@@ -47,21 +49,21 @@ MBTI-Saju/
 ├── api/                             # [백엔드] Vercel Serverless Functions (Edge/Node)
 │   ├── _utils/
 │   │   ├── ai-provider.ts           # OpenAI GPT-4o-mini(주) / Google Gemini(폴백) 팩토리
-│   │   ├── auth.ts                  # SERVICE_COSTS(490/990원), allowAnonymous 기본 허용, Rate Limit / 점검 모드
+│   │   ├── auth.ts                  # SERVICE_COSTS, X-Service-Receipt 소비/복구 RPC 검증, Rate Limit / 점검 모드
 │   │   ├── rate-limit.ts            # Edge/Node IP 기반 Rate Limit 및 점검 모드 503 가드
-│   │   ├── cors.ts                  # 허용 오리진 CORS 처리
+│   │   ├── cors.ts                  # 허용 오리진 CORS + x-service-receipt 헤더 허용 (`*` 폴백 제거)
 │   │   ├── prompts.ts               # 사주/MBTI 프롬프트
 │   │   ├── saju.ts                  # 만세력 및 오행/십신 연산 엔진
 │   │   └── report-*.ts              # 3년 심층 리포트 결정론적 계산 및 검증 엔진
-│   ├── analysis-main.ts             # MBTI × 사주 통합 분석 API (allowAnonymous: true)
-│   ├── analysis-special.ts          # 오늘/내일 운세, 자미두수, 여행, KBO API (allowAnonymous: true)
-│   ├── compatibility.ts             # MBTI × 사주 심층 궁합 API
-│   ├── daily_relationship.ts        # 관계 조언 API
-│   ├── gold.ts                      # 재물/창업/취직/이직 사주 API
-│   ├── love-saju.ts                 # 연인/부부/결혼/재회/짝사랑 사주 API
-│   ├── tarot.ts                     # 신비타로 3카드 리딩 API
-│   ├── chat.ts                      # AI 사주/타로 채팅 API (비회원 guest_ 세션 지원)
-│   ├── payment.ts                   # TossPayments 승인/취소/조회 (SVC_* 단건 + deep_report + 레거시)
+│   ├── analysis-main.ts             # MBTI × 사주 통합 분석 API (requirePaymentReceipt + Admin 우회)
+│   ├── analysis-special.ts          # 오늘/내일 운세, 자미두수, 여행, KBO API (requirePaymentReceipt)
+│   ├── compatibility.ts             # MBTI × 사주 심층 궁합 API (requirePaymentReceipt)
+│   ├── daily_relationship.ts        # 관계 조언 API (requirePaymentReceipt)
+│   ├── gold.ts                      # 재물/창업/취직/이직 사주 API (requirePaymentReceipt)
+│   ├── love-saju.ts                 # 연인/부부/결혼/재회/짝사랑 사주 API (requirePaymentReceipt)
+│   ├── tarot.ts                     # 신비타로 3카드 리딩 API (requirePaymentReceipt)
+│   ├── chat.ts                      # AI 사주/타로 채팅 API (AI_CHAT_5 영수증 차감 지원)
+│   ├── payment.ts                   # TossPayments 승인(사전 금액 검증 + 보상 취소 + service_orders)/취소/조회(admin Auth)
 │   ├── report-preview.ts            # /premium 무료 3년 점수표 미리보기
 │   ├── generate-and-save-report.ts  # 심층 리포트 생성/저장
 │   └── generate-deep-report.ts / generate-consultation-draft.ts # 관리자 전용 생성 API (allowAnonymous: false)
@@ -88,13 +90,16 @@ MBTI-Saju/
 │   │   ├── RelationshipPage.tsx     # 연애/부부/결혼/재회/짝사랑 사주 (990원)
 │   │   ├── GoldPage.tsx             # 재물/창업/취직/이직 사주 (990원)
 │   │   ├── ChatPage.tsx             # AI 타로/사주 실시간 채팅 (/tarot, /saju, 5회권 490원)
-│   │   ├── PaymentSuccess.tsx       # Toss 승인 후 SVC_* 티켓 승격 및 returnPath 자동 복귀
+│   │   ├── PaymentSuccess.tsx       # Toss 승인 후 receiptToken 포함 SVC_* 티켓 승격 · orderId 복사 · 복귀
+│   │   ├── ConsultationPage.tsx     # /chat, /room 카카오톡 채널 1:1 상담 일원화 안내
+│   │   ├── ReviewCollectionPage.tsx # /reviews 이용후기 (작성은 로그인 필수 유지)
+│   │   ├── ShopPage.tsx / CartPage.tsx # /shop, /shop/cart 클릭 진입 가능 ("준비 중" 안내 유지)
 │   │   ├── PricingPage.tsx          # 건별 요금 안내 및 환불 규정 (/pricing, /store)
 │   │   ├── TermsPage.tsx / PrivacyPage.tsx / SupportPage.tsx # 약관·개인정보·비회원 고객센터
-│   │   └── admin/, DeepReportLandingPage.tsx, MyPage.tsx(레거시)
+│   │   └── admin/, DeepReportLandingPage.tsx, MyPage.tsx(선택 로그인 · 저장 리포트 · 잔여 레거시 크레딧 안내)
 │   ├── payment/                     # TossPayments v2 SDK 래퍼 (`requestPayment`)
 │   └── utils/
-│       ├── servicePayCheckout.ts    # startServicePayment, promotePendingOrderToTicket, consumePaidServiceTicket
+│       ├── servicePayCheckout.ts    # startServicePayment, buildServiceRequestHeaders, promotePendingOrderToTicket, consumePaidServiceTicket
 │       ├── chatService.ts           # AI 채팅 클라이언트 (guest_ 세션 분기 포함)
 │       └── sajuUtils.ts, pdfGenerator.ts, docxGenerator.ts, exportUtils.ts
 └── supabase/migrations/             # PostgreSQL 스키마 및 RLS

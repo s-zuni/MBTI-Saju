@@ -11,7 +11,7 @@ import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../config/deepReportConfig';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -55,6 +55,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const [analysis, setAnalysis] = useState<any>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
   const ticketCheckedRef = useRef(false);
+  const receiptTokenRef = useRef<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -67,6 +68,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading, error: analysisError } = useObject({
     api: '/api/analysis-main?part=full',
     schema: analysisSchema,
+    headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
     onFinish: ({ object, error: validationError }) => {
       if (object) {
         setGenerationError(null);
@@ -171,6 +173,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       ticketCheckedRef.current = true;
       const ticket = consumePaidServiceTicket(['MBTI_SAJU', 'REGENERATE_MBTI_SAJU']);
       if (ticket?.payload) {
+        receiptTokenRef.current = ticket.receiptToken || null;
         setGenerationError(null);
         setAnalysis(null);
         submitFull(ticket.payload);

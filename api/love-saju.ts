@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
@@ -68,6 +68,9 @@ export default async (req: Request) => {
         });
     }
 
+    let receiptToRelease: string | null = null;
+    let supabaseForRelease: any = null;
+
     try {
         const body = await req.json();
         const url = new URL(req.url);
@@ -79,11 +82,18 @@ export default async (req: Request) => {
         else if (type === 'reunion') serviceType = 'LOVE_REUNION';
         else if (type === 'crush') serviceType = 'LOVE_CRUSH';
 
-        // 연애 사주 인증 및 5 크레딧 차감
-        const authResult = await authenticateUser(req, { serviceType, cost: 5 });
+        // 단건 결제 티켓 검증 + Rate Limit
+        const authResult = await authenticateUser(req, {
+            serviceType,
+            allowedServiceTypes: ['LOVE_COUPLE', 'LOVE_MARRIED', 'LOVE_MARRIAGE', 'LOVE_REUNION', 'LOVE_CRUSH'],
+            requirePaymentReceipt: true,
+            allowAnonymous: true,
+        });
         if (authResult.errorResponse) {
             return authResult.errorResponse;
         }
+        receiptToRelease = authResult.receiptToken ?? null;
+        supabaseForRelease = authResult.supabaseAdmin;
 
         const {
             birthDate, birthTime, mbti, name, gender,
@@ -92,6 +102,7 @@ export default async (req: Request) => {
         } = body;
 
         if (!birthDate) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '본인 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -105,6 +116,7 @@ export default async (req: Request) => {
         }
 
         if (type !== 'crush' && !targetSaju && targetBirthDate) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '상대방 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -189,8 +201,9 @@ ${targetRichSaju}
                 throw err;
             }
     } catch (error: any) {
+        await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
         console.error('Love Saju API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: '연애 사주 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: responseHeaders 
         });

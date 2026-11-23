@@ -68,7 +68,8 @@ export const sendMessage = async (
     userMessage: string,
     history: ChatMessage[],
     userContext: any,
-    onToken?: (token: string) => void
+    onToken?: (token: string) => void,
+    receiptToken?: string | null
 ): Promise<string> => {
     try {
         let pastContext = '';
@@ -100,7 +101,8 @@ export const sendMessage = async (
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+                ...(receiptToken ? { 'X-Service-Receipt': receiptToken } : {})
             },
             body: JSON.stringify({
                 sessionId,

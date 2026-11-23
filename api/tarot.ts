@@ -2,7 +2,7 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
@@ -44,10 +44,12 @@ export default async (req: Request) => {
         });
     }
 
-    // 신비타로 인증 및 크레딧 차감 (2 크레딧)
+    // 신비타로 단건 결제 티켓 검증 및 Rate Limit
     const authResult = await authenticateUser(req, {
         serviceType: 'TAROT',
-        cost: 2
+        allowedServiceTypes: ['TAROT'],
+        requirePaymentReceipt: true,
+        allowAnonymous: true,
     });
 
     if (authResult.errorResponse) {
@@ -141,15 +143,17 @@ export default async (req: Request) => {
             }
             throw lastError;
         } catch (error: any) {
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
             console.error("Tarot API Error:", error);
-            return new Response(JSON.stringify({ error: error.message }), { 
+            return new Response(JSON.stringify({ error: '타로 해석 중 오류가 발생했습니다.' }), { 
                 status: 500, 
                 headers: reqCorsHeaders 
             });
         }
     } catch (error: any) {
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
         console.error("Tarot API Error:", error);
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: '타로 해석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: reqCorsHeaders 
         });

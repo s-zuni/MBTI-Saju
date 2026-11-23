@@ -7,7 +7,7 @@ import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BIRTH_TIME_SLOTS = [
     { value: 'unknown', label: '모름' },
@@ -42,6 +42,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
     const resultCardRef = useRef<HTMLDivElement>(null);
     const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
 
     const [error, setError] = useState<string | null>(null);
     const [targetBirthDate, setTargetBirthDate] = useState(profile.birthDate || '1998-05-15');
@@ -52,6 +53,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[JamidusuPage] Result validation failed:', validationError);
@@ -69,6 +71,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket('JAMIDUSU');
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             if (ticket.payload.birthDate) setTargetBirthDate(ticket.payload.birthDate);
             if (ticket.payload.birthTime !== undefined) setTargetBirthTime(ticket.payload.birthTime);
             if (ticket.payload.gender) setTargetGender(ticket.payload.gender);

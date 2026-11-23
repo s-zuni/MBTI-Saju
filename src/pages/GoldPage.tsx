@@ -8,7 +8,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 type GoldType = 'wealth' | 'business' | 'job' | 'jobchange';
 
@@ -138,9 +138,12 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         }
     };
 
+    const receiptTokenRef = useRef<string | null>(null);
+
     const { object: result, submit, isLoading } = useObject({
         api: `/api/gold?type=${activeTab}`,
         schema: goldSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[GoldPage] Result validation failed:', validationError);
@@ -158,6 +161,7 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket(['GOLD_WEALTH', 'GOLD_BUSINESS', 'GOLD_JOB', 'GOLD_JOBCHANGE']);
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             const p = ticket.payload;
             if (p.type && ['wealth', 'business', 'job', 'jobchange'].includes(p.type)) {
                 setActiveTab(p.type);

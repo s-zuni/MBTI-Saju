@@ -49,7 +49,6 @@ const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const AdminConsultations = lazy(() => import('./pages/admin/AdminConsultations'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
-const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModal'));
 
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
@@ -89,24 +88,6 @@ function App() {
   const isAppInitializing = isAuthLoading || (isCreditsLoading && !!session);
 
   // 비회원 즉시 이용 모드: 자동 프로필 완성 강제 모달을 띄우지 않는다.
-
-  // Handle openService redirect after payment
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const openService = params.get('openService');
-    if (openService === 'mbtiSaju') {
-      openModal('mbtiSaju');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (openService === 'compatibility') {
-      openModal('compatibility');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    if (params.get('event_trigger') === 'true' && session && !isAuthLoading) {
-      openModal('deepReportEvent');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [session, isAuthLoading, openModal]);
 
 
   if (showSplash) {
@@ -169,6 +150,20 @@ function AppContent({
   useEffect(() => {
     closeAllModals();
   }, [location.pathname, closeAllModals]);
+
+  // 결제 완료 후 홈 복귀 시 대상 모달 자동 오픈
+  useEffect(() => {
+    if (location.pathname !== '/') return;
+    const params = new URLSearchParams(location.search);
+    const openService = params.get('openService');
+    if (openService === 'mbtiSaju') {
+      openModal('mbtiSaju');
+      window.history.replaceState({}, document.title, '/');
+    } else if (openService === 'compatibility') {
+      openModal('compatibility');
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, [location.pathname, location.search, openModal]);
 
   const handleCloseOnboarding = () => {
     if (session?.user) {
@@ -458,12 +453,6 @@ function AppContent({
                 onClose={handleCloseOnboarding}
                 onCheckPlans={() => openModal('creditPurchase')}
                 userName={session?.user?.user_metadata?.full_name}
-              />
-
-              <DeepReportEventModal
-                isOpen={modals?.deepReportEvent?.isOpen || false}
-                onClose={() => closeModal('deepReportEvent')}
-                session={session}
               />
 
               <PopupModal />

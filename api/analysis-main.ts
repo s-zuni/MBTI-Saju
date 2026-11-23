@@ -3,7 +3,7 @@ import { streamObject, generateObject } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser, SERVICE_COSTS } from './_utils/auth';
+import { authenticateUser, releaseServiceReceipt, SERVICE_COSTS } from './_utils/auth';
 import { 
     analysisSchema as coreAnalysisSchema, 
     yearlyFortuneSchema as fortuneAnalysisSchema, 
@@ -85,10 +85,12 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 비회원 즉시 이용 + Rate Limit 검사 (건당 결제 모델)
+    // 비회원/회원 공용 단건 결제 티켓 검증 + Rate Limit 검사
     const authResult = await authenticateUser(req, {
         allowAnonymous: true,
-        cost: 0,
+        serviceType: 'MBTI_SAJU',
+        allowedServiceTypes: ['MBTI_SAJU', 'REGENERATE_MBTI_SAJU'],
+        requirePaymentReceipt: true,
     });
 
     if (authResult.errorResponse) {
@@ -152,9 +154,10 @@ ${sajuContextBlock}`;
             throw lastError;
         }
     } catch (error: any) {
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
         console.error(`[Streaming Error - ${part}]:`, error);
 
-        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), {
+        return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다." }), {
             status: 500,
             headers: reqCorsHeaders
         });

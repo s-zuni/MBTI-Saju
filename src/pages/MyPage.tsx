@@ -3,7 +3,6 @@ import { supabase, ensureValidSession } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Users, Sparkles, Coins, Loader2, AlertCircle, Key, FileText, Gem, Star, Palette, Gift, MapPin, Coffee, Sun, Moon, Zap, Award } from 'lucide-react';
 import AnalysisModal from '../components/AnalysisModal';
-import CreditPurchaseModal from '../components/CreditPurchaseModal';
 import SajuGrid from '../components/saju/SajuGrid';
 import { getShiShenStyle, translateShiShen, formatHiddenStems } from '../constants/saju';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
@@ -114,7 +113,6 @@ const MyPage: React.FC<MyPageProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const navigate = useNavigate();
-  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Core Streaming Hook
@@ -142,8 +140,6 @@ const MyPage: React.FC<MyPageProps> = ({
 
         supabase.auth.updateUser({
           data: { analysis: finalData }
-        }).then(() => {
-          if (refreshCredits) refreshCredits();
         }).catch((err) => {
           console.error('Supabase metadata update error:', err);
         });
@@ -249,79 +245,15 @@ const MyPage: React.FC<MyPageProps> = ({
 
   // Handle re-analysis manually
   const handleReAnalyze = () => {
-    const isFirstTime = !analysis;
-    if (isFirstTime) {
-      handleGenerateAnalysis();
-      return;
-    }
-    
-    const cost = getCost('REGENERATE_MBTI_SAJU');
-    const confirmMsg = `기존 분석 결과가 사라지고 새로 분석합니다.\n재분석은 ${cost}코인이 차감됩니다. 계속하시겠습니까?`;
-    if (window.confirm(confirmMsg)) {
-      handleGenerateAnalysis();
-    }
+    void handleGenerateAnalysis();
   };
 
   const handleGenerateAnalysis = async () => {
-    const isFirstTime = !analysis;
-    const serviceType = isFirstTime ? 'MBTI_SAJU' : 'REGENERATE_MBTI_SAJU';
-    
-    // 크레딧 확인 (첫 분석은 무료, 재분석만 체크)
-    if (!isFirstTime && !checkSufficientCredits(serviceType)) {
-      setError(`크레딧이 부족합니다. (재분석 비용: ${getCost(serviceType)} 크레딧)`);
-      setIsCreditModalOpen(true);
-      return;
+    if (analysis) {
+      const confirmMsg = '새로운 MBTI × 사주 분석 페이지로 이동합니다. 건별 결제(990원) 후 신규 분석을 받으실 수 있습니다.';
+      if (!window.confirm(confirmMsg)) return;
     }
-
-    if (!profile) {
-      setError('프로필 정보가 없습니다.');
-      return;
-    }
-
-    if (!profile.birth_date || !profile.mbti) {
-      setError('생년월일과 MBTI 정보가 필요합니다. [정보 수정] 버튼을 눌러 프로필을 먼저 등록해 주세요.');
-      setIsEditModalOpen(true);
-      return;
-    }
-
-    setAnalysisLoading(true);
-    setError(null);
-
-    try {
-      const activeSession = await ensureValidSession() || initialSession;
-      
-      if (!activeSession) {
-        throw new Error('인증되지 않은 사용자입니다. 다시 로그인해주세요.');
-      }
-
-      // 사주 만세력 데이터를 즉시 계산하여 스트리밍 시작과 동시에 화면에 표출
-      const sajuData = calculateSaju(profile.birth_date, profile.birth_time ?? null);
-      setAnalysis((prev: any) => ({
-        ...(prev || {}),
-        saju: sajuData,
-        full_name: profile.name,
-        gender: profile.gender,
-        mbti: profile.mbti,
-        birth_date: profile.birth_date,
-      }));
-
-      const requestPayload = {
-        part: 'core',
-        name: profile.name,
-        gender: profile.gender,
-        birthDate: profile.birth_date,
-        birthTime: profile.birth_time,
-        mbti: profile.mbti,
-      };
-
-      // Trigger the streaming hook
-      submitCore(requestPayload);
-
-    } catch (e: any) {
-      console.error('handleGenerateAnalysis Error:', e);
-      setError(e.message || '분석을 시작하는 중 오류가 발생했습니다.');
-      setAnalysisLoading(false);
-    }
+    navigate('/?openService=mbtiSaju');
   };
 
   const handleLogout = async () => {
@@ -339,7 +271,7 @@ const MyPage: React.FC<MyPageProps> = ({
   };
 
   const handleWithdraw = async () => {
-    const confirm1 = window.confirm('정말 탈퇴하시겠습니까? 탈퇴 시 모든 크레딧 정보와 분석 리포트가 즉시 삭제됩니다.');
+    const confirm1 = window.confirm('정말 탈퇴하시겠습니까? 탈퇴 시 저장된 프로필과 분석 리포트가 즉시 삭제됩니다.');
     if (!confirm1) return;
     
     const confirm2 = window.confirm('마지막 확인입니다. 모든 데이터는 복구가 불가능합니다. 정말 탈퇴하시겠습니까?');
@@ -471,26 +403,28 @@ const MyPage: React.FC<MyPageProps> = ({
               )}
             </div>
 
-            {/* Credit & Account Management Card */}
+            {/* Account & Legacy Credit Notice Card */}
             <div className="flex-1 space-y-4">
-              {/* Credit Balance Card */}
               <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Coins className="w-5 h-5 text-slate-950" />
-                    <h3 className="font-bold text-slate-800">보유 크레딧</h3>
+                    <h3 className="font-bold text-slate-800">이용 및 결제 안내</h3>
                   </div>
-                  <button
-                    onClick={() => setIsCreditModalOpen(true)}
-                    className="text-slate-950 text-xs font-bold hover:underline"
-                  >
-                    충전하기
-                  </button>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                    건별 결제 전환
+                  </span>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-slate-950">{credits}</span>
-                  <span className="text-sm text-slate-500">크레딧</span>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  크레딧 충전 없이 이용할 때마다 건별(490원~990원)로 바로 결제할 수 있습니다.
+                </p>
+
+                {typeof credits === 'number' && credits > 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                    <div className="font-bold mb-1">기존 미사용 크레딧: {credits.toLocaleString()} 크레딧</div>
+                    <div>크레딧 제도 종료에 따라 잔여 크레딧 환불·정산이 필요하시면 고객센터 또는 카카오톡 채널로 문의해 주세요.</div>
+                  </div>
+                )}
 
                 {/* Quick Transaction History Summary */}
                 <div className="mt-4 pt-4 border-t border-slate-200">
@@ -500,7 +434,7 @@ const MyPage: React.FC<MyPageProps> = ({
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg text-xs">
-                      <span className="text-slate-600">결제 및 환불 문의</span>
+                      <span className="text-slate-600">결제 · 환불 및 기존 크레딧 문의</span>
                       <button onClick={() => navigate('/support')} className="text-slate-950 font-bold">고객센터</button>
                     </div>
                   </div>
@@ -508,10 +442,10 @@ const MyPage: React.FC<MyPageProps> = ({
 
                 <div className="flex gap-2 w-full mt-4">
                   <button
-                    onClick={() => setIsCreditModalOpen(true)}
+                    onClick={() => navigate('/')}
                     className="flex-1 py-2.5 bg-slate-950 text-white rounded-lg font-bold text-sm hover:bg-black transition-colors shadow-sm"
                   >
-                    크레딧 충전하기
+                    운세 서비스 보기
                   </button>
                   <button
                     onClick={handleNavigateToHistory}
@@ -938,8 +872,8 @@ const MyPage: React.FC<MyPageProps> = ({
                 </>
               ) : (
                 analysis 
-                  ? `내 운명 재분석 하기 (${getCost('REGENERATE_MBTI_SAJU')} 크레딧)`
-                  : "내 운명 분석 시작 (무료)"
+                  ? '내 운명 다시 분석하기 (990원)'
+                  : '내 운명 분석 시작하기 (990원)'
               )}
             </button>
           </div>
@@ -976,16 +910,6 @@ const MyPage: React.FC<MyPageProps> = ({
         mode="edit"
         initialData={profile}
         onUpdate={() => fetchProfileData()}
-      />
-
-      <CreditPurchaseModal
-        isOpen={isCreditModalOpen}
-        onClose={() => setIsCreditModalOpen(false)}
-        userEmail={profile?.email}
-        currentCredits={credits}
-        onSuccess={async (planId: string, pricePaid: number, creditAmount: number, paymentId?: string) => {
-          await purchaseCredits(planId, pricePaid, creditAmount, paymentId);
-        }}
       />
     </div>
   );

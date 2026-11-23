@@ -10,7 +10,7 @@ import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface PrefillData {
     targetName: string;
@@ -68,6 +68,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const { profile, updateProfile } = useGuestProfile();
     const reportRef = useRef<HTMLDivElement>(null);
     const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
     const [localError, setLocalError] = useState<string | null>(null);
     const [isPaying, setIsPaying] = useState<boolean>(false);
     const [isPartnerMode, setIsPartnerMode] = useState<boolean>(true);
@@ -84,6 +85,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const { object: result, submit, isLoading, error: analysisError } = useObject({
         api: '/api/compatibility',
         schema: compatibilitySchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (object) {
                 if (refreshCredits) {
@@ -104,6 +106,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket('COMPATIBILITY');
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             const p = ticket.payload;
             if (typeof p.isPartnerMode === 'boolean') setIsPartnerMode(p.isPartnerMode);
             if (p.relationshipType) setRelationshipType(p.relationshipType);

@@ -7,6 +7,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
 import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { supabase } from '../supabaseClient';
 
 const MESSAGES_PER_PACK = 5;
 
@@ -30,6 +31,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
     const { profile, updateProfile } = useGuestProfile();
     const storageMsgKey = `mbtiju_guest_chat_${defaultService}`;
     const storageQuotaKey = `mbtiju_guest_chat_quota_${defaultService}`;
+    const storageTokenKey = `mbtiju_guest_chat_token_${defaultService}`;
 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
@@ -38,7 +40,29 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showProfilePanel, setShowProfilePanel] = useState(false);
     const [isPaying, setIsPaying] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const ticketCheckedRef = useRef(false);
+
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user?.id || !active) return;
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .single();
+                if (active && data?.role === 'admin') {
+                    setIsAdmin(true);
+                }
+            } catch {
+                // ignore
+            }
+        })();
+        return () => { active = false; };
+    }, []);
 
     const [remainingQuota, setRemainingQuota] = useState<number>(() => {
         try {
@@ -50,11 +74,32 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
         }
     });
 
+    const [receiptToken, setReceiptToken] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem(storageTokenKey);
+        } catch {
+            return null;
+        }
+    });
+
     const saveQuota = (next: number) => {
         const clamped = Math.max(0, next);
         setRemainingQuota(clamped);
         try {
             localStorage.setItem(storageQuotaKey, String(clamped));
+        } catch {
+            // ignore
+        }
+    };
+
+    const saveReceiptToken = (token: string | null) => {
+        setReceiptToken(token);
+        try {
+            if (token) {
+                localStorage.setItem(storageTokenKey, token);
+            } else {
+                localStorage.removeItem(storageTokenKey);
+            }
         } catch {
             // ignore
         }
@@ -99,7 +144,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket('AI_CHAT_5');
         if (ticket) {
-            saveQuota(remainingQuota + MESSAGES_PER_PACK);
+            if (ticket.receiptToken) {
+                saveReceiptToken(ticket.receiptToken);
+            }
+            saveQuota(remainingQuota + (ticket.remainingUses ?? MESSAGES_PER_PACK));
             if (ticket.payload?.draftMessage) {
                 setInputText(ticket.payload.draftMessage);
             }
@@ -160,7 +208,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
         e?.preventDefault();
         if (!inputText.trim() || isTyping) return;
 
-        if (remainingQuota <= 0) {
+        if (!isAdmin && (!receiptToken || remainingQuota <= 0)) {
             await handlePurchasePack(inputText);
             return;
         }
@@ -177,7 +225,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
             createdAt: new Date()
         };
         setMessages(prev => [...prev, tempMsg]);
-        saveQuota(remainingQuota - 1);
+        if (!isAdmin) saveQuota(remainingQuota - 1);
 
         try {
             const initialBotMsg: ChatMessage = {
@@ -209,10 +257,17 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
                         m.id === botMessageId ? { ...m, content: cleanText } : m
                     ));
                     setShouldAutoScroll(true);
-                }
+                },
+                receiptToken
             );
         } catch (err: any) {
-            saveQuota(remainingQuota);
+            const errMsg = String(err?.message || '');
+            if (errMsg.includes('402') || errMsg.includes('이용권') || errMsg.includes('receipt')) {
+                saveQuota(0);
+                saveReceiptToken(null);
+            } else {
+                saveQuota(remainingQuota);
+            }
             setMessages(prev => prev.filter(m => m.id !== botMessageId));
 
             const errorMsg: ChatMessage = {

@@ -11,7 +11,7 @@ import { tarotSchema } from '../config/schemas';
 import { TIERS } from '../hooks/useSubscription';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TarotCardBack = ({ className = "" }: { className?: string }) => (
     <div className={`w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 relative flex items-center justify-center p-3 border border-purple-500/20 rounded-xl overflow-hidden ${className}`}>
@@ -80,11 +80,13 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [isSharing, setIsSharing] = useState(false);
     const [isPaying, setIsPaying] = useState(false);
     const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
 
     // Streaming Hook
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
         api: '/api/tarot',
         schema: tarotSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: async ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[TarotPage] Result validation failed:', validationError);
@@ -102,6 +104,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket('TAROT');
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             if (ticket.payload.spreadType) setSelectedSpread(ticket.payload.spreadType);
             if (ticket.payload.question) setQuestion(ticket.payload.question);
             if (Array.isArray(ticket.payload.selectedCards)) setSelectedCards(ticket.payload.selectedCards);

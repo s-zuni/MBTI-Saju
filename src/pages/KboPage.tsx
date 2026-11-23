@@ -11,7 +11,7 @@ import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from '../components/KboShareCard';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
-import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -125,6 +125,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const reportRef = useRef<HTMLDivElement>(null);
     const shareRef = useRef<HTMLDivElement>(null);
     const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
     const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
@@ -138,6 +139,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const { object: result, submit, isLoading, error: aiError } = useObject({
         api: '/api/analysis-special',
         schema: kboSchema,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object }) => {
             if (!object) {
                 console.error('[KboPage] Result validation failed');
@@ -155,6 +157,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         ticketCheckedRef.current = true;
         const ticket = consumePaidServiceTicket('KBO');
         if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
             if (ticket.payload.requirements) setSelectedTeam(ticket.payload.requirements);
             setHasStarted(true);
             submit(ticket.payload);

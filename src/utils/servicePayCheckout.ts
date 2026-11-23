@@ -1,5 +1,6 @@
 import { ServiceType, SERVICE_NAMES, getServicePrice } from '../config/creditConfig';
 import { requestPayment, PaymentResponse } from '../payment';
+import { supabase } from '../supabaseClient';
 
 const PENDING_ORDER_KEY = 'mbtiju_pending_service_order';
 const PAID_TICKETS_KEY = 'mbtiju_paid_service_tickets';
@@ -11,7 +12,25 @@ export interface PendingServiceOrder<T = any> {
   price: number;
   returnPath: string;
   payload: T;
+  receiptToken?: string;
+  remainingUses?: number;
   createdAt: number;
+}
+
+export async function buildServiceRequestHeaders(receiptToken?: string | null): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {};
+  if (receiptToken) {
+    headers['X-Service-Receipt'] = receiptToken;
+  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  } catch {
+    // ignore auth lookup errors for guests
+  }
+  return headers;
 }
 
 export function savePendingServiceOrder(order: PendingServiceOrder): void {
@@ -34,19 +53,28 @@ export function getPendingServiceOrder(): PendingServiceOrder | null {
   }
 }
 
-export function promotePendingOrderToTicket(approvedOrderId: string): PendingServiceOrder | null {
+export function promotePendingOrderToTicket(
+  approvedOrderId: string,
+  receiptToken?: string,
+  remainingUses?: number
+): PendingServiceOrder | null {
   const pending = getPendingServiceOrder();
   if (!pending || pending.orderId !== approvedOrderId) return null;
+  const enriched: PendingServiceOrder = {
+    ...pending,
+    ...(receiptToken ? { receiptToken } : {}),
+    ...(typeof remainingUses === 'number' ? { remainingUses } : {}),
+  };
   try {
     const rawTickets = localStorage.getItem(PAID_TICKETS_KEY);
     const tickets: Record<string, PendingServiceOrder> = rawTickets ? JSON.parse(rawTickets) : {};
-    tickets[pending.serviceType] = pending;
+    tickets[enriched.serviceType] = enriched;
     localStorage.setItem(PAID_TICKETS_KEY, JSON.stringify(tickets));
     localStorage.removeItem(PENDING_ORDER_KEY);
   } catch {
     // ignore
   }
-  return pending;
+  return enriched;
 }
 
 export function consumePaidServiceTicket(

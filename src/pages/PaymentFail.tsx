@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { XCircle, AlertCircle } from 'lucide-react';
+import { getPendingServiceOrder } from '../utils/servicePayCheckout';
 
 
 const PaymentFail: React.FC = () => {
@@ -10,6 +11,7 @@ const PaymentFail: React.FC = () => {
     const code = searchParams.get('code');
     const message = searchParams.get('message');
     const orderId = searchParams.get('orderId');
+    const retryPath = getPendingServiceOrder()?.returnPath || '/pricing';
 
     return (
         <div className="min-h-screen bg-slate-50 pt-14 md:pt-20 pb-24 flex flex-col items-center justify-center px-4">
@@ -53,7 +55,7 @@ const PaymentFail: React.FC = () => {
                         홈으로
                     </button>
                     <button
-                        onClick={() => navigate('/pricing')}
+                        onClick={() => navigate(retryPath)}
                         className="btn-primary py-3.5 px-4 text-sm"
                     >
                         다시 시도하기

@@ -28,8 +28,9 @@ tools: Read, Grep, Glob, Bash, mcp__supabase__query_logs, mcp__supabase__get_adv
    - 프런트: `npx tsc --noEmit -p tsconfig.json`
    - 백엔드: `npx tsc --noEmit -p api/tsconfig.json`
    각 에러 수와 발생 시 상위 5개 파일만 적는다.
-3. **가격·약관 단일 소스 정합성 (v2)**:
+3. **가격 · 운영정책 정합성 (v2)**:
    - `src/config/creditConfig.ts`와 `api/_utils/auth.ts`의 `SERVICE_COSTS` (990원 / 490원) 일치 여부 확인.
+   - 선택 로그인 유지(`Navbar.tsx`, `/mypage`), `/reviews` 로그인 필수 후기 작성, `/chat`·`/room` 카카오톡 채널 1:1 일원화(`ConsultationPage.tsx`), `/shop`·`/shop/cart` 준비 중 안내 유지 여부 점검.
 4. **Supabase 로그 (최근 24시간)**:
    - `query_logs` (`project_id: "tffvsyarxfujmvbqlutr"`)에서 `select source, count(*) as cnt from logs group by source` 실행
    - `select source, event_message from logs where event_message ilike '%error%' or event_message ilike '%500%' or event_message ilike '%503%' or event_message ilike '%fail%' or event_message ilike '%timeout%' limit 20` 실행해 오류/타임아웃/점검차단 유형별 건수와 대표 1줄 인용.
@@ -37,7 +38,7 @@ tools: Read, Grep, Glob, Bash, mcp__supabase__query_logs, mcp__supabase__get_adv
    - `get_advisors(type="performance")` 주요 경고(인덱스 누락, `auth_rls_initplan` 등) 요약
    - `list_edge_functions` 상태 확인 (MBTIJU는 Vercel Serverless `api/*.ts` 사용 여부 함께 표기).
 6. **마이그레이션 정합성**:
-   - `list_migrations` 결과와 로컬 `supabase/migrations/` 폴더 파일 목록을 비교해 원격 이력 누락 건수를 적는다.
+   - `list_migrations` 결과와 로컬 `supabase/migrations/` 폴더 파일 목록을 비교해 원격 이력 누락 건수를 적는다(특히 `18_service_orders.sql` 미적용 시 즉시 강조).
 7. **최근 변경 & 작업 트리**:
    - `git log --since="48 hours ago" --oneline` 및 `git status --short` 로 미커밋 변경/미추적 파일 현황을 요약한다.
 

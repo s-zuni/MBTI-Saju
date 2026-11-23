@@ -18,17 +18,19 @@
 
 1. **브랜치/운영 상태 인식**:
    - `main` 브랜치는 서비스 개편을 위해 **점검 모드(`IS_MAINTENANCE_MODE = true`, HTTP 503 차단)** 일 수 있으며, 비회원·건별 결제 전환 구현은 `feat/guest-pay-per-service` 브랜치(및 이후 머지 본)에 있다. 점검 시 현재 체크아웃 브랜치와 `main` 상태를 구분해 보고한다.
-2. **비회원 즉시 이용 & 크레딧 폐지 (`SERVICE_COSTS` 원화 단건 과금)**:
-   - 일반 운세·사주·타로·채팅 서비스는 **회원가입/로그인 없이 즉시 이용** 가능하며, 입력 프로필과 결제 티켓은 `localStorage`(`useGuestProfile.ts`, `servicePayCheckout.ts`)로 관리된다.
+2. **비회원 기본 이용(선택 로그인 유지) & 크레딧 폐지 (`SERVICE_COSTS` 원화 단건 과금)**:
+   - 일반 운세·사주·타로·AI 채팅 서비스는 **회원가입/로그인 없이 즉시 이용** 가능하며, 입력 프로필과 결제 티켓은 `localStorage`(`useGuestProfile.ts`, `servicePayCheckout.ts`)로 관리된다.
+   - 추후 확장을 위해 카카오·구글 소셜 로그인(`/auth/callback`, `/mypage` 저장 리포트·프로필 조회)은 선택 기능으로 유지하며, **이용후기 작성(`/reviews`)은 로그인 필수** 정책을 유지한다.
    - **사주·자미두수 계열 (`990원`)**: `MBTI_SAJU`, `REGENERATE_MBTI_SAJU`, `JAMIDUSU`, `COMPATIBILITY`, 재물/창업/취직/이직 사주(`GOLD_*` 4종), 연인/부부/결혼/재회/짝사랑 사주(`LOVE_*` 5종)
    - **나머지 서비스 계열 (`490원`)**: 오늘/내일의 운세(`FORTUNE_TODAY`, `FORTUNE_TOMORROW`), 신비타로(`TAROT`), 여행 추천(`TRIP`, `COMPATIBILITY_TRIP`), KBO 팬궁합(`KBO`), AI 사주·타로 채팅 5회권(`AI_CHAT_5`)
-3. **프리미엄 및 별도 채널 상품 (유지)**:
+3. **프리미엄 · 상담 일원화 · 굿즈 상점 · 인증 유지 영역**:
    - **3년 심층 사주 리포트 (`/premium`)**: 정가 49,000원 → 판매가 29,000원 (비회원 신청·결제 가능)
-   - **카카오톡 채널 1:1 상담**: 1문항 9,900원 / 3문항 19,900원 (비회원 가능, 평일 24시간 내 답변)
-   - **인증 유지 영역**: 관리자 페이지(`/admin`), 어드민 전용 생성 API(`api/generate-deep-report.ts`, `api/generate-consultation-draft.ts`), 기존 회원 데이터/환불 CS 조회.
+   - **카카오톡 채널 1:1 상담 (`/chat`, `/room` 일원화)**: 웹 내 상담 티켓 결제 없이 카카오톡 채널 1:1 상담으로 일원화 안내 (1문항 9,900원 / 3문항 19,900원, 비회원 가능, 평일 24시간 내 답변)
+   - **굿즈 상점·장바구니 (`/shop`, `/shop/cart`)**: 상단 장바구니 아이콘 클릭 및 라우트 진입은 가능하나, 전 품목/장바구니 `"준비 중"` 안내 후 홈으로 이동(실결제 미오픈)
+   - **인증 유지 영역**: 관리자 페이지(`/admin`), 어드민 전용 생성 API(`api/generate-deep-report.ts`, `api/generate-consultation-draft.ts`), 이용후기 작성(`/reviews`), 마이페이지(`/mypage`), 기존 회원 레거시 데이터/미사용 크레딧 환불 CS 조회.
 4. **금지 & 오탐 방지 수칙**:
-   - 구 정책 표현(`"크레딧 충전"`, `"가입 무료 1회"`, `"로그인 필수"`, `"1,000만 건 데이터"`)을 마케팅·UI에 쓰지 않는다.
-   - 구 `useCredits.requestRefund` / `deduct_credits` 기반 크레딧 점검을 v2 코드에 억지로 대입해 오탐하지 말고, v2 기준인 **`allowAnonymous: true` 환경의 서버측 결제 검증 공백(`SVC_*`)과 Rate Limit** 을 핵심으로 점검한다.
+   - 구 정책 표현(`"크레딧 충전"`, `"가입 무료 1회"`, `"로그인 필수"(단건 운세 기준)`, `"1,000만 건 데이터"`)을 마케팅·UI에 쓰지 않는다.
+   - 구 `useCredits.requestRefund` / `deduct_credits` 기반 크레딧 점검을 v2 코드에 억지로 대입해 오탐하지 말고, v2 기준인 **`service_orders` + `X-Service-Receipt` 일회성 서버 영수증 검증(`supabase/migrations/18_service_orders.sql` 반영 여부)과 AI 엔드포인트 Rate Limit** 을 핵심으로 점검한다.
 
 ## 3. 참조 문서 우선순위
 
