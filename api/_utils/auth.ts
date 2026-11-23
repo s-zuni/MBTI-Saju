@@ -111,8 +111,27 @@ export interface AuthResult {
 /**
  * AI 엔드포인트 공통 인증 및 크레딧 차감 미들웨어 (Edge / Node 공용)
  */
+const IS_MAINTENANCE_MODE: boolean = true;
+
 export async function authenticateUser(req: Request | any, options: AuthOptions = {}): Promise<AuthResult> {
     const corsHeaders = getCorsHeaders(req);
+    if (IS_MAINTENANCE_MODE) {
+        return {
+            user: null as any,
+            supabaseAdmin: null as any,
+            errorResponse: new Response(
+                JSON.stringify({
+                    success: false,
+                    error: '현재 서비스 개편 및 시스템 점검 중입니다. 잠시 후 다시 이용해 주세요.',
+                    code: 'SERVICE_MAINTENANCE'
+                }),
+                {
+                    status: 503,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                }
+            )
+        };
+    }
     const supabaseAdmin = getSupabaseAdmin();
     const token = extractBearerToken(req);
 

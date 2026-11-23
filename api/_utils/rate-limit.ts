@@ -119,12 +119,23 @@ export function sendNodeRateLimitResponse(res: any, retryAfter: number) {
  * Node 서버리스 핸들러용 공통 Rate Limit 검사.
  * 초과 시 429 응답을 전송하고 false를 반환하며, 통과 시 true를 반환한다.
  */
+const IS_MAINTENANCE_MODE: boolean = true;
+
 export async function enforceNodeRateLimit(
     supabaseAdmin: SupabaseClient | null,
     req: any,
     res: any,
     options: { scope: string; limit: number; windowSeconds: number }
 ): Promise<boolean> {
+    if (IS_MAINTENANCE_MODE) {
+        res.status(503).json({
+            success: false,
+            error: '현재 서비스 개편 및 시스템 점검 중입니다. 잠시 후 다시 이용해 주세요.',
+            message: '현재 서비스 개편 및 시스템 점검 중입니다. 잠시 후 다시 이용해 주세요.',
+            code: 'SERVICE_MAINTENANCE',
+        });
+        return false;
+    }
     if (!supabaseAdmin) return true;
     const rl = await checkRateLimit(supabaseAdmin, {
         key: `${options.scope}:ip:${getClientIp(req)}`,

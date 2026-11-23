@@ -68,7 +68,46 @@ const CartPage = lazy(() => import('./pages/CartPage'));
 const AdminShopProducts = lazy(() => import('./pages/admin/AdminShopProducts'));
 const AdminShopOrders = lazy(() => import('./pages/admin/AdminShopOrders'));
 
+const IS_MAINTENANCE_MODE: boolean = true;
+
+function MaintenanceScreen() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-6">
+      <div className="max-w-lg w-full bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-10 text-center shadow-2xl space-y-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-black tracking-wide">
+          SYSTEM MAINTENANCE · 서비스 개편 점검 안내
+        </div>
+        <div className="space-y-3">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-snug">
+            더 나은 서비스를 위해<br />시스템 점검 중입니다
+          </h1>
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            현재 MBTIJU(엠비티아이주) 서비스 전면 개편 및 시스템 안정화 점검이 진행 중입니다.
+            점검 시간 동안 모든 사주·운세·타로 분석 및 결제 서비스가 일시 중단됩니다.
+            더 간편하고 새로운 서비스로 곧 다시 찾아뵙겠습니다.
+          </p>
+        </div>
+        <div className="pt-4 border-t border-white/10 text-xs text-slate-400 space-y-3">
+          <p>이용에 불편을 드려 죄송합니다. 긴급 문의는 공식 카카오톡 채널을 이용해 주세요.</p>
+          <a
+            href="https://pf.kakao.com/_xcdXJX/chat"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors"
+          >
+            카카오톡 채널 문의하기
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  return IS_MAINTENANCE_MODE ? <MaintenanceScreen /> : <ActiveApp />;
+}
+
+function ActiveApp() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
   
