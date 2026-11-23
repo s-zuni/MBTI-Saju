@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
@@ -91,6 +91,36 @@ def get_me(token: Optional[str] = None) -> Dict[str, Any]:
     if not res.ok:
         return {"error": _api_error(res)}
     return res.json()
+
+
+def get_recent_threads(
+    limit: int = 35,
+    user_id: Optional[str] = None,
+    access_token: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """최근 발행된 Threads 본문 목록을 조회합니다 (중복 발행 방지용)."""
+    uid = user_id or os.getenv("THREADS_USER_ID", "")
+    token = clean_token(access_token or os.getenv("THREADS_ACCESS_TOKEN", ""))
+    if not uid or not token:
+        return []
+    try:
+        res = requests.get(
+            _url(f"{uid}/threads"),
+            params={
+                "fields": "id,text,timestamp,permalink",
+                "limit": max(1, min(int(limit), 100)),
+                "access_token": token,
+            },
+            timeout=15,
+        )
+        if not res.ok:
+            print(f"[THREADS][WARN] 최근 글 목록 조회 실패: HTTP {res.status_code}")
+            return []
+        data = res.json().get("data", [])
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"[THREADS][WARN] 최근 글 목록 조회 예외: {e}")
+        return []
 
 
 def publish_text_to_threads(
