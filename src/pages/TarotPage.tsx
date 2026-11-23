@@ -369,7 +369,9 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 </div>
                                             </div>
                                             <div className={`grid gap-8 mb-20 px-4 ${selectedSpread === 'daily' ? 'grid-cols-1 max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-3'}`}>
-                                                {reading.cardReadings?.map((card: any, idx: number) => (
+                                                {reading.cardReadings?.map((card: any, idx: number) => {
+                                                    if (!card) return null;
+                                                    return (
                                                     <div key={idx} className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-white shadow-sm hover:shadow-xl transition-all h-full">
                                                         <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-6">Position {idx + 1}</div>
                                                         <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-purple-100/50">
@@ -378,10 +380,11 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                                 return face ? <TarotCardFace card={face} className="border-none" /> : <TarotCardBack className="border-none" />;
                                                             })()}
                                                         </div>
-                                                        <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName}</h4>
+                                                        <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName || ''}</h4>
                                                         <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation ?? '')}</p>
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                             <div className="space-y-10 mb-20 px-4">
                                                 <div className="bg-slate-950 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">

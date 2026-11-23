@@ -2,7 +2,9 @@
  * 텍스트에서 마크다운 볼드 기호(**), 언더바(__), 헤더(#) 등 마크다운 기호를 제거합니다.
  */
 export const stripMarkdown = (text: any): string => {
-    if (typeof text !== 'string') return text || '';
+    if (typeof text !== 'string') {
+        return typeof text === 'number' ? String(text) : '';
+    }
     return text
         .replace(/\*\*/g, '')
         .replace(/__/g, '')

@@ -151,17 +151,13 @@ function AppContent({
     closeAllModals();
   }, [location.pathname, closeAllModals]);
 
-  // 결제 완료 후 홈 복귀 시 처리 (freePreview는 팝업 없이 인라인 영역으로 스크롤)
+  // 결제 완료 후 홈 복귀 시 처리 (freePreview는 FreePreview 컴포넌트가 직접 티켓 소비·스크롤·URL 정리)
   useEffect(() => {
     if (location.pathname !== '/') return;
     const params = new URLSearchParams(location.search);
     const openService = params.get('openService');
     if (openService === 'freePreview') {
-      const timer = setTimeout(() => {
-        document.getElementById('free-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        window.history.replaceState({}, document.title, '/');
-      }, 250);
-      return () => clearTimeout(timer);
+      return;
     }
     if (openService === 'mbtiSaju') {
       openModal('mbtiSaju');

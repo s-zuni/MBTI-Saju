@@ -298,11 +298,13 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 <MapPin className="w-6 h-6 text-sky-500" /> 추천 여행지 BEST 3
                                             </h4>
                                             <div className="grid gap-8">
-                                                {result?.places?.map((place: any, i: number) => (
+                                                {result?.places?.map((place: any, i: number) => {
+                                                    if (!place) return null;
+                                                    return (
                                                     <div key={i} className="bg-slate-50 p-8 rounded-[40px] border border-slate-100 hover:bg-white hover:shadow-xl transition-all group">
                                                         <div className="flex items-start justify-between mb-6">
                                                             <h5 className="text-2xl font-black text-slate-950 leading-tight">
-                                                                <span className="text-sky-500 mr-2">0{i+1}.</span> {place.name}
+                                                                <span className="text-sky-500 mr-2">0{i+1}.</span> {place.name || ''}
                                                             </h5>
                                                         </div>
                                                         <div className="space-y-6">
@@ -328,7 +330,8 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             )}
                                                         </div>
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </section>
 
@@ -337,14 +340,16 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 <Calendar className="w-6 h-6 text-sky-500" /> 맞춤 일정 가이드
                                             </h4>
                                             <div className="space-y-6">
-                                                {result?.itinerary?.map((day: any, i: number) => (
+                                                {result?.itinerary?.map((day: any, i: number) => {
+                                                    if (!day) return null;
+                                                    return (
                                                     <div key={i} className="bg-white p-8 rounded-[40px] border-2 border-slate-50 shadow-sm">
                                                         <h5 className="text-xl font-black text-sky-600 mb-6 flex items-center gap-3">
                                                             <span className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center text-sm">{i+1}</span>
-                                                            {day.day}
+                                                            {day.day || `Day ${i + 1}`}
                                                         </h5>
                                                         <ul className="space-y-4">
-                                                            {day.schedule?.map((item: string, j: number) => (
+                                                            {day.schedule?.filter((item: any): item is string => typeof item === 'string').map((item: string, j: number) => (
                                                                 <li key={j} className="flex gap-4 items-start text-lg text-slate-700 font-medium leading-relaxed">
                                                                     <span className="mt-2 w-1.5 h-1.5 bg-sky-300 rounded-full shrink-0" />
                                                                     <span className="break-keep">{stripMarkdown(item)}</span>
@@ -352,7 +357,8 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             ))}
                                                         </ul>
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </section>
 

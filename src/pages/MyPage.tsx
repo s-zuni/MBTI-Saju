@@ -651,15 +651,15 @@ const MyPage: React.FC<MyPageProps> = ({
                   <div className="mt-6 pt-6 border-t border-slate-100">
                     <h4 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">핵심 융합 시너지 포인트</h4>
                     <div className="grid md:grid-cols-3 gap-4">
-                      {analysis.deepIntegration.synergyPoints.map((point: any, idx: number) => (
+                      {analysis.deepIntegration.synergyPoints.filter(Boolean).map((point: any, idx: number) => (
                         <div key={idx} className="bg-white border border-slate-150 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                           <div className="absolute top-0 left-0 w-1 h-full bg-violet-500"></div>
                           <h5 className="font-bold text-slate-800 mb-2 flex items-center gap-1.5 text-xs">
                             <span className="text-violet-500 font-extrabold text-xs">#{idx + 1}</span>
-                            {point.subtitle}
+                            {point?.subtitle || ''}
                           </h5>
                           <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            {point.content}
+                            {point?.content || ''}
                           </p>
                         </div>
                       ))}
@@ -674,7 +674,7 @@ const MyPage: React.FC<MyPageProps> = ({
              (analysis.deepIntegration?.integrationPoints || (analysis as any).commonalities) && (
               renderAnalysisSection(Users, "두 결과의 공통점 및 융합 분석",
                 analysis.deepIntegration?.integrationPoints 
-                  ? analysis.deepIntegration.integrationPoints.map((p: any) => p.content).join('\n\n') 
+                  ? analysis.deepIntegration.integrationPoints.filter(Boolean).map((p: any) => p?.content || '').join('\n\n') 
                   : (analysis as any).commonalities, 
                 true)
             )}

@@ -25,29 +25,6 @@ interface MbtiSajuModalProps {
   onOpenDeepReport?: ((reportType?: string) => void) | undefined;
 }
 
-interface ElementColor {
-  bg: string;
-  text: string;
-  bar: string;
-}
-
-const ELEMENT_COLORS: Record<string, ElementColor> = {
-  '목(木)': { bg: 'bg-green-50', text: 'text-green-700', bar: 'bg-green-500' },
-  '화(火)': { bg: 'bg-red-50', text: 'text-red-700', bar: 'bg-red-500' },
-  '토(土)': { bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-500' },
-  '금(金)': { bg: 'bg-slate-100', text: 'text-slate-700', bar: 'bg-slate-500' },
-  '수(水)': { bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-500' },
-};
-
-const DEFAULT_COLOR: ElementColor = { bg: 'bg-slate-50', text: 'text-slate-700', bar: 'bg-slate-400' };
-
-const getElementColor = (element: string): ElementColor => {
-  for (const key in ELEMENT_COLORS) {
-    if (element.includes(key.slice(0, 1))) return ELEMENT_COLORS[key] as ElementColor;
-  }
-  return DEFAULT_COLOR;
-};
-
 const GUEST_MBTI_SAJU_RESULT_KEY = 'mbtiju_guest_mbti_saju_result';
 
 const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, refreshCredits, onSuccess, session: initialSession, onOpenDeepReport }) => {
@@ -360,6 +337,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div ref={reportRef}>
               <FullSajuReportContent
                 analysis={analysis}
+                isStreaming={isAnalysisLoading}
                 isDownloading={isDownloading}
                 isRegenerating={isRegenerating}
                 onDownloadReport={handleDownloadReport}

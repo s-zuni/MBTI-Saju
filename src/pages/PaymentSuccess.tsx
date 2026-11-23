@@ -104,7 +104,7 @@ const PaymentSuccess: React.FC = () => {
                     setApprovedServiceName(ticket?.serviceName || '운세 서비스');
                     setReturnTargetPath(nextPath);
                     setLoading(false);
-                    setTimeout(() => navigate(nextPath), 1200);
+                    setTimeout(() => navigate(nextPath, { replace: true }), 400);
                     return;
                 }
 
@@ -221,7 +221,7 @@ const PaymentSuccess: React.FC = () => {
                         <p className="text-slate-900 font-black text-lg">{approvedServiceName || '운세 분석'} 결제 완료!</p>
                         <p className="text-slate-500 font-medium text-sm leading-relaxed">
                             결제가 정상 승인되었습니다.<br />
-                            잠시 후 결과 생성 화면으로 자동 이동합니다.
+                            지금 바로 결과 화면으로 이동하여 풀이를 시작합니다.
                         </p>
                     </div>
                 ) : (
