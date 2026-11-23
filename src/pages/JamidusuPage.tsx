@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, Sparkles, Star, Briefcase, Heart, User } from 'lucide-react';
+import { Download, ChevronLeft, Coins, Sparkles, Star, Briefcase, Heart, User, CreditCard } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BIRTH_TIME_SLOTS = [
     { value: 'unknown', label: '모름' },
@@ -40,42 +38,22 @@ const toBirthTimeSlot = (time?: string | null): string => {
 };
 
 const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
     const resultCardRef = useRef<HTMLDivElement>(null);
+    const ticketCheckedRef = useRef(false);
 
     const [error, setError] = useState<string | null>(null);
-    const [targetBirthDate, setTargetBirthDate] = useState('');
-    const [targetBirthTime, setTargetBirthTime] = useState('');
-    const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
-    const [birthTimeAutoFilled, setBirthTimeAutoFilled] = useState(false);
-
-    useEffect(() => {
-        if (session?.user?.user_metadata) {
-            const metadata = session.user.user_metadata;
-            if (metadata.birth_date) setTargetBirthDate(metadata.birth_date);
-            if (metadata.birth_time) {
-                const slot = toBirthTimeSlot(metadata.birth_time);
-                setTargetBirthTime(slot);
-                setBirthTimeAutoFilled(!!slot);
-            }
-            if (metadata.gender === 'male' || metadata.gender === 'female') setTargetGender(metadata.gender);
-        }
-    }, [session]);
+    const [targetBirthDate, setTargetBirthDate] = useState(profile.birthDate || '1998-05-15');
+    const [targetBirthTime, setTargetBirthTime] = useState(profile.birthTime ? toBirthTimeSlot(profile.birthTime) : '');
+    const [targetGender, setTargetGender] = useState<'male' | 'female'>(profile.gender || 'female');
+    const [isPaying, setIsPaying] = useState(false);
 
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object, error: validationError }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[JamidusuPage] Result validation failed:', validationError);
                 setError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
             }
@@ -86,6 +64,18 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     });
 
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket('JAMIDUSU');
+        if (ticket?.payload) {
+            if (ticket.payload.birthDate) setTargetBirthDate(ticket.payload.birthDate);
+            if (ticket.payload.birthTime !== undefined) setTargetBirthTime(ticket.payload.birthTime);
+            if (ticket.payload.gender) setTargetGender(ticket.payload.gender);
+            submit(ticket.payload);
+        }
+    }, [submit]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!targetBirthDate) {
@@ -93,24 +83,37 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             return;
         }
 
-        const cost = SERVICE_COSTS.JAMIDUSU;
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
-            return;
-        }
+        const cleanBirthTime = targetBirthTime === 'unknown' ? '' : targetBirthTime;
+        updateProfile({
+            birthDate: targetBirthDate,
+            birthTime: cleanBirthTime,
+            gender: targetGender,
+        });
 
+        setIsPaying(true);
         try {
             setError(null);
-            const sajuData = calculateSaju(targetBirthDate, targetBirthTime === 'unknown' ? '' : targetBirthTime);
-            submit({
-                type: 'jamidusu',
-                gender: targetGender,
-                birthDate: targetBirthDate,
-                birthTime: targetBirthTime === 'unknown' ? '' : targetBirthTime,
-                sajuData
+            const sajuData = calculateSaju(targetBirthDate, cleanBirthTime);
+            const res = await startServicePayment({
+                serviceType: 'JAMIDUSU',
+                serviceName: '자미두수 수호별 찾기',
+                returnPath: '/myluck?type=jamidusu',
+                payload: {
+                    type: 'jamidusu',
+                    gender: targetGender,
+                    birthDate: targetBirthDate,
+                    birthTime: cleanBirthTime,
+                    sajuData,
+                },
+                customerName: profile.name,
             });
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
         } catch (e: any) {
             setError(e.message);
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -132,32 +135,9 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     };
 
-    if (isAuthLoading) return null;
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-indigo-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8">나의 수호별 찾기 서비스를 이용하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4 bg-slate-900 text-white rounded-xl shadow hover:bg-indigo-600 transition-colors"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className={isEmbedded ? "pb-12" : "min-h-screen bg-slate-50 pb-32 pt-20"}>
             <div className="max-w-xl mx-auto px-4">
-                {/* Header Navigation */}
                 {!isEmbedded && (
                     <div className="flex items-center justify-between mb-8 px-2">
                         <button 
@@ -166,9 +146,9 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         >
                             <ChevronLeft className="w-6 h-6 text-slate-600" />
                         </button>
-                        <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
-                            <Coins className="w-4 h-4" />
-                            {credits}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
+                            <CreditCard className="w-4 h-4" />
+                            {SERVICE_COSTS.JAMIDUSU.toLocaleString()}원
                         </div>
                     </div>
                 )}
@@ -219,7 +199,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                     <label className="block text-sm font-medium text-slate-700">태어난 시간 (선택사항)</label>
                                     <select 
                                         value={targetBirthTime} 
-                                        onChange={(e) => { setTargetBirthTime(e.target.value); setBirthTimeAutoFilled(false); }}
+                                        onChange={(e) => setTargetBirthTime(e.target.value)}
                                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                                     >
                                         <option value="">시간을 선택해주세요 (모르면 선택 안함)</option>
@@ -227,17 +207,15 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             <option key={slot.value} value={slot.value}>{slot.label}</option>
                                         ))}
                                     </select>
-                                    {birthTimeAutoFilled && (
-                                        <p className="text-xs text-indigo-500">내 프로필의 태어난 시간으로 자동 입력했어요.</p>
-                                    )}
                                 </div>
 
                                 <button 
                                     type="submit" 
-                                    className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-lg shadow hover:bg-indigo-600 transition-colors flex flex-col items-center justify-center gap-1"
+                                    disabled={isPaying}
+                                    className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-lg shadow hover:bg-indigo-600 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-60"
                                 >
-                                    <span>결과 확인하기</span>
-                                    <span className="text-xs text-indigo-300 font-normal">{SERVICE_COSTS.JAMIDUSU} 크레딧 차감</span>
+                                    <span>결과 확인하기 ({SERVICE_COSTS.JAMIDUSU.toLocaleString()}원 결제)</span>
+                                    <span className="text-xs text-indigo-300 font-normal">회원가입 없이 1회 단품 결제 · 즉시 분석</span>
                                 </button>
                             </form>
                         ) : (

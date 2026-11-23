@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { Loader2, X, Instagram, ChevronLeft, Coins } from 'lucide-react';
+import { Loader2, X, Instagram, ChevronLeft, CreditCard } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
 import { getTeamInfo } from '../config/teamConfig';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from '../components/KboShareCard';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -121,33 +119,27 @@ const KBO_TEAMS = [
 ];
 
 const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
 
     const reportRef = useRef<HTMLDivElement>(null);
     const shareRef = useRef<HTMLDivElement>(null);
+    const ticketCheckedRef = useRef(false);
     const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [hasStarted, setHasStarted] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
     const [genError, setGenError] = useState<string | null>(null);
 
-    const userName = session?.user?.user_metadata?.full_name || '사용자';
+    const userName = profile.name || '방문자';
 
     const { object: result, submit, isLoading, error: aiError } = useObject({
         api: '/api/analysis-special',
         schema: kboSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[KboPage] Result validation failed');
                 setGenError('분석 결과를 생성하지 못했습니다. 다시 시도해주세요.');
             }
@@ -157,6 +149,17 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         }
     });
+
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket('KBO');
+        if (ticket?.payload) {
+            if (ticket.payload.requirements) setSelectedTeam(ticket.payload.requirements);
+            setHasStarted(true);
+            submit(ticket.payload);
+        }
+    }, [submit]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -174,40 +177,38 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             setError('응원 구단을 선택해주세요.');
             return;
         }
-
-        const cost = SERVICE_COSTS.KBO;
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
+        if (!profile.birthDate) {
+            setError('생년월일을 입력해주세요.');
             return;
         }
 
+        setIsPaying(true);
+        setError(null);
+        setGenError(null);
         try {
-            const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-            const activeSession = fetchedSession || session;
-            
-            const metadata = activeSession?.user?.user_metadata;
-            if (!metadata) throw new Error('로그인이 필요합니다.');
-            if (!metadata.birth_date || !metadata.mbti) {
-                throw new Error('프로필 정보(생년월일, MBTI)가 설정되지 않았습니다.');
-            }
-
-            setHasStarted(true);
-            setError(null);
-            setGenError(null);
-
-            const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
-            submit({
-                type: 'kbo',
-                name: metadata.full_name || '사용자',
-                mbti: metadata.mbti,
-                birthDate: metadata.birth_date,
-                birthTime: metadata.birth_time,
-                sajuData,
-                requirements: selectedTeam
+            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
+            const res = await startServicePayment({
+                serviceType: 'KBO',
+                serviceName: 'KBO 팬 궁합 분석',
+                returnPath: '/myluck?type=kbo',
+                payload: {
+                    type: 'kbo',
+                    name: userName,
+                    mbti: profile.mbti,
+                    birthDate: profile.birthDate,
+                    birthTime: profile.birthTime,
+                    sajuData,
+                    requirements: selectedTeam
+                },
+                customerName: userName,
             });
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
         } catch (e: any) {
             setError(e.message);
-            setHasStarted(false);
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -225,16 +226,9 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     };
 
-    if (isAuthLoading) return null;
-    if (!session) {
-        navigate('/');
-        return null;
-    }
-
     return (
         <div className={isEmbedded ? "pb-12 animate-fade-in font-sans" : "min-h-screen bg-[#F9F7F2] pb-32 pt-20 animate-fade-in font-sans"}>
             <div className="max-w-2xl mx-auto px-4">
-                {/* Header Navigation */}
                 {!isEmbedded && (
                     <div className="flex items-center justify-between mb-8 px-4">
                         <button 
@@ -243,21 +237,25 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         >
                             <ChevronLeft className="w-6 h-6 text-slate-600" />
                         </button>
-                        <div className="flex items-center gap-1 px-3 py-1.5 bg-[#000666]/10 text-[#000666] rounded-full text-sm font-bold">
-                            <Coins className="w-4 h-4" />
-                            {credits}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#000666]/10 text-[#000666] rounded-full text-sm font-bold">
+                            <CreditCard className="w-4 h-4" />
+                            {SERVICE_COSTS.KBO.toLocaleString()}원
                         </div>
                     </div>
                 )}
 
                 {!hasStarted ? (
                     <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/50 overflow-hidden border border-white p-10 animate-fade-up">
-                        <div className="text-center mb-12">
+                        <div className="text-center mb-8">
                             <div className="flex items-center justify-center gap-2 text-[#000666] font-black tracking-widest text-[10px] uppercase mb-4">
                                 <BaseballIcon className="w-5 h-5" /> KBO 팬 궁합
                             </div>
                             <h1 className="text-4xl font-black text-slate-950 tracking-tighter">구단 궁합 분석</h1>
-                            <p className="text-slate-400 font-bold mt-4">응원하는 구단을 선택해주세요</p>
+                            <p className="text-slate-400 font-bold mt-3">사주·MBTI를 확인하고 응원 구단을 선택해주세요</p>
+                        </div>
+
+                        <div className="mb-8">
+                            <GuestProfileCard profile={profile} onChange={updateProfile} compact />
                         </div>
 
                         <div className="grid grid-cols-2 gap-px bg-slate-100 border-2 border-slate-100 rounded-3xl overflow-hidden mb-12">
@@ -292,10 +290,11 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
                         <button
                             onClick={startAnalysis}
-                            className="w-full py-6 bg-[#000666] text-white font-black text-xl rounded-[32px] shadow-2xl hover:bg-[#000444] transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2"
+                            disabled={isPaying}
+                            className="w-full py-6 bg-[#000666] text-white font-black text-xl rounded-[32px] shadow-2xl hover:bg-[#000444] transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2 disabled:opacity-60"
                         >
-                            <span>궁합 분석 시작하기</span>
-                            <span className="text-xs text-[#E5E5E5]/60 font-bold tracking-widest">{SERVICE_COSTS.KBO} 크레딧</span>
+                            <span>궁합 분석 시작하기 ({SERVICE_COSTS.KBO.toLocaleString()}원 결제)</span>
+                            <span className="text-xs text-[#E5E5E5]/70 font-bold tracking-widest">가입 없이 1회 단품 결제 · 즉시 분석</span>
                         </button>
                     </div>
                 ) : (

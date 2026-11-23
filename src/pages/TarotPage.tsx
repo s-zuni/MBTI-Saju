@@ -1,20 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, Lock, Instagram } from 'lucide-react';
+import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, Instagram } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
 import SpreadSelector, { SpreadType } from '../components/tarot/SpreadSelector';
-import { supabase } from '../supabaseClient';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tarotSchema } from '../config/schemas';
-import { ensureValidSession } from '../supabaseClient';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
-import { useSubscription } from '../hooks/useSubscription';
+import { TIERS } from '../hooks/useSubscription';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TarotCardBack = ({ className = "" }: { className?: string }) => (
     <div className={`w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 relative flex items-center justify-center p-3 border border-purple-500/20 rounded-xl overflow-hidden ${className}`}>
@@ -72,11 +69,7 @@ const resolveTarotCard = (cardName: string | undefined, idx: number, picked: Tar
 };
 
 const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
-    const navigate = useNavigate();
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal, closeAllModals } = useModalStore();
-    const { tier } = useSubscription(session);
+    const { profile, updateProfile } = useGuestProfile();
 
     const [step, setStep] = useState<'spread' | 'question' | 'shuffle' | 'select' | 'result'>('spread');
     const [selectedSpread, setSelectedSpread] = useState<SpreadType>('daily');
@@ -85,31 +78,15 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
     const shareRef = useRef<HTMLDivElement>(null);
     const [isSharing, setIsSharing] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
+    const ticketCheckedRef = useRef(false);
 
     // Streaming Hook
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
         api: '/api/tarot',
         schema: tarotSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: async ({ object, error: validationError }) => {
-            if (object) {
-                await refreshCredits();
-
-                const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-                const activeSession = fetchedSession || session;
-                if (activeSession) {
-                    await supabase.from('tarot_readings').insert({
-                        user_id: activeSession.user.id,
-                        spread_type: selectedSpread,
-                        question: question || '일상 타로 점술',
-                        selected_cards: selectedCards,
-                        result_data: object
-                    });
-                }
-            } else {
+            if (!object) {
                 console.error('[TarotPage] Result validation failed:', validationError);
                 alert('타로 해석 결과를 만드는 데 실패했습니다. 다시 시도해 주세요.');
             }
@@ -121,8 +98,17 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     });
 
     useEffect(() => {
-        closeAllModals();
-    }, [closeAllModals]);
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket('TAROT');
+        if (ticket?.payload) {
+            if (ticket.payload.spreadType) setSelectedSpread(ticket.payload.spreadType);
+            if (ticket.payload.question) setQuestion(ticket.payload.question);
+            if (Array.isArray(ticket.payload.selectedCards)) setSelectedCards(ticket.payload.selectedCards);
+            setStep('result');
+            submit(ticket.payload);
+        }
+    }, [submit]);
 
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
@@ -159,7 +145,6 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         return selectedSpread === 'daily' ? 1 : 3;
     };
 
-
     const handleCardSelect = (card: TarotCard) => {
         const requiredCount = getRequiredCardCount();
         if (selectedCards.length >= requiredCount) return;
@@ -167,43 +152,35 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
         const newSelected = [...selectedCards, card];
         setSelectedCards(newSelected);
-
-        if (newSelected.length === requiredCount) {
-            setTimeout(() => handleAnalyze(newSelected), 600);
-        }
     };
 
     const handleAnalyze = async (cards: TarotCard[]) => {
-        if (!session?.user) {
-            openModal('analysis', 'login');
-            return;
-        }
-
-        const tarotCost = SERVICE_COSTS.TAROT;
-        if (credits !== undefined && credits < tarotCost) {
-            openModal('creditPurchase', undefined, { requiredCredits: tarotCost });
-            return;
-        }
-
-        setStep('result');
-
+        setIsPaying(true);
         try {
-            const user = session?.user?.user_metadata || {};
-            submit({
-                question,
-                selectedCards: cards,
-                spreadType: selectedSpread,
-                userContext: {
-                    name: user.full_name,
-                    mbti: user.mbti,
-                    birthDate: user.birth_date
-                }
+            const res = await startServicePayment({
+                serviceType: 'TAROT',
+                serviceName: '신비타로 해석',
+                returnPath: '/myluck?type=tarot',
+                payload: {
+                    question,
+                    selectedCards: cards,
+                    spreadType: selectedSpread,
+                    userContext: {
+                        name: profile.name,
+                        mbti: profile.mbti,
+                        birthDate: profile.birthDate
+                    }
+                },
+                customerName: profile.name,
             });
+            if (!res.success && res.error_msg) {
+                alert(res.error_msg);
+            }
         } catch (err) {
             console.error(err);
-            alert("타로 해석 중 오류가 발생했습니다. 다시 시도해 주세요.");
-            setStep('select');
-            setSelectedCards([]);
+            alert("결제 준비 중 오류가 발생했습니다. 다시 시도해 주세요.");
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -221,35 +198,6 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     };
 
-    if (isAuthLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-            </div>
-        );
-    }
-
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf8fe] p-6 text-center">
-                <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-purple-600" />
-                </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8 font-medium">타로 오라클 서비스를 이용하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-purple-600 transition-all active:scale-95"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className={isEmbedded ? "pb-12" : "min-h-screen bg-white pb-32"}>
             {/* Header */}
@@ -264,11 +212,14 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                     <div className="flex-1 relative z-10">
                         <div className="flex flex-col items-center justify-center min-h-full py-8">
                             {step === 'spread' && (
-                                <div className="w-full animate-fade-up">
+                                <div className="w-full animate-fade-up space-y-6">
+                                    <div className="max-w-2xl mx-auto px-4">
+                                        <GuestProfileCard profile={profile} onChange={updateProfile} compact title="내 정보 (타로 개인화용 · 선택)" />
+                                    </div>
                                     <SpreadSelector 
                                         onSelect={handleSpreadSelect} 
-                                        tier={tier} 
-                                        onUpgradeRequired={() => openModal('creditPurchase', undefined, { requiredCredits: SERVICE_COSTS.TAROT })} 
+                                        tier={TIERS.FREE} 
+                                        onUpgradeRequired={() => {}} 
                                     />
                                 </div>
                             )}
@@ -326,7 +277,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                         <h2 className="text-2xl font-black text-slate-900"><span className="text-purple-600">{getRequiredCardCount()}장</span>의 카드를 선택하세요</h2>
                                         <p className="text-slate-400 mt-2 font-medium">당신의 에너지가 강하게 느껴지는 카드를 뽑아주세요</p>
                                     </div>
-                                    <div className="flex gap-4 mb-14 min-h-[160px] items-center">
+                                    <div className="flex gap-4 mb-10 min-h-[160px] items-center">
                                         {Array.from({ length: getRequiredCardCount() }).map((_, idx) => {
                                             const card = selectedCards[idx];
                                             return (
@@ -336,6 +287,17 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             );
                                         })}
                                     </div>
+                                    {selectedCards.length === getRequiredCardCount() && (
+                                        <div className="mb-10 w-full max-w-md animate-fade-up">
+                                            <button
+                                                onClick={() => handleAnalyze(selectedCards)}
+                                                disabled={isPaying}
+                                                className="w-full py-5 bg-slate-950 hover:bg-purple-600 text-white rounded-2xl font-black text-base shadow-xl transition-all active:scale-95 disabled:opacity-60"
+                                            >
+                                                {isPaying ? '결제창 여는 중...' : `카드 해석 확인하기 (${SERVICE_COSTS.TAROT.toLocaleString()}원 결제)`}
+                                            </button>
+                                        </div>
+                                    )}
                                     <div className="w-full max-w-5xl px-4 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-3">
                                         {deck.map((card) => {
                                             const isSelected = selectedCards.find(c => c.id === card.id);
@@ -360,7 +322,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             <p className="text-slate-500 mb-10 leading-relaxed font-medium">
                                                 {analysisError.message || "별들의 메시지를 읽어오는 데 실패했습니다."}
                                                 <br /><br />
-                                                <span className="text-purple-600 font-black underline underline-offset-4 decoration-purple-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
+                                                <span className="text-purple-600 font-black underline underline-offset-4 decoration-purple-200">다시 한 번 시도해 주세요.</span>
                                                 <br />잠시 후 다시 카드를 뽑아주세요.
                                             </p>
                                             <button
@@ -387,7 +349,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 w-full max-w-lg border-2 border-slate-100 italic">
                                                 <p className="text-sm text-slate-500 font-bold leading-relaxed">
                                                     💡 별의 기운이 약해져 일시적인 통신 오류가 발생했습니다. <br/>
-                                                    <span className="text-purple-600 block mt-2 text-base">안심하세요! 해석에 실패한 경우 크레딧은 차감되지 않았습니다.</span>
+                                                    <span className="text-purple-600 block mt-2 text-base">잠시 후 아래 버튼으로 다시 시도해 주세요.</span>
                                                 </p>
                                             </div>
                                             <button onClick={() => handleAnalyze(selectedCards)} className="px-12 py-5 bg-slate-950 text-white rounded-[1.5rem] font-black text-lg shadow-2xl hover:scale-[1.05] transition-transform">
@@ -439,7 +401,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             reading={reading as any}
                                                             question={question}
                                                             cardImages={((reading as any).cardReadings || []).map((r: any, i: number) => resolveTarotCard(r?.cardName, i, selectedCards)?.image)}
-                                                            userName={session?.user?.user_metadata?.full_name || '사용자'}
+                                                            userName={profile.name || '사용자'}
                                                         />
                                                     )}
                                                 </div>

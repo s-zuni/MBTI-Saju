@@ -1,49 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Heart, Menu, LogOut, ShoppingCart } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { Menu } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { useModalStore } from '../hooks/useModalStore';
-import { useShopCart } from '../hooks/useShopCart';
 import Logo from './Logo';
 
-interface NavbarProps { }
-
-const Navbar: React.FC<NavbarProps> = () => {
-  const [loading, setLoading] = useState(false);
+const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { session } = useAuth();
-  const { openModal, isAnyModalOpen } = useModalStore();
-  const { cartCount } = useShopCart();
-  const [answeredCount, setAnsweredCount] = useState(0);
+  const { isAnyModalOpen } = useModalStore();
 
-  // 라우트 변경 시 모바일 메뉴 자동 닫기
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
-  // 답변 완료된 상담 수 가져오기 (단순 표시용)
-  useEffect(() => {
-    if (!session) {
-      setAnsweredCount(0);
-      return;
-    }
-    const fetchCount = async () => {
-      const { count } = await supabase
-        .from('consultation_questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
-        .eq('status', 'answered');
-      if (count) setAnsweredCount(count);
-    };
-    fetchCount();
-  }, [session, location.pathname]); // 라우트 변경될 때마다 갱신
-
-  // 외부 클릭 시 모바일 메뉴 닫기
   useEffect(() => {
     if (!isMobileMenuOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,41 +31,27 @@ const Navbar: React.FC<NavbarProps> = () => {
     };
   }, [isMobileMenuOpen]);
 
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Logout timeout')), 3000));
-      await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeoutPromise]);
-    } catch (error: any) {
-      console.error('Logout Error:', error.message);
-    } finally {
-      setLoading(false);
-      window.location.href = '/';
-    }
-  };
+  const textColor = 'text-slate-800';
+  const navBg = 'bg-white/75 backdrop-blur-xl border-b border-slate-100/70 py-3 shadow-sm';
 
-  const handleMyPageClick = () => {
-    if (session) {
-      navigate('/mypage');
-    } else {
-      openModal('analysis', 'login');
-    }
-  };
-
-  const handleTarotClick = () => {
-    navigate('/myluck?type=tarot');
-  };
-
-  // Dynamic styles: Aura Ethereal high-contrast style
-  const textColor = "text-slate-800"; // #30323a equivalent
-  const iconColor = "text-slate-700";
-  const buttonHover = "hover:text-slate-950";
-  const navBg = 'bg-white/70 backdrop-blur-xl border-b border-slate-100/50 py-3 shadow-sm';
+  const menuItems = [
+    { label: '오늘의 운세', path: '/myluck?type=today' },
+    { label: '자미두수', path: '/myluck?type=jamidusu' },
+    { label: '타로', path: '/myluck?type=tarot' },
+    { label: '연애 사주', path: '/relationship' },
+    { label: '재물 사주', path: '/gold' },
+    { label: '3년 심층 리포트', path: '/premium' },
+    { label: '이용후기', path: '/reviews' },
+  ];
 
   return (
-    <nav ref={navRef} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${navBg} ${isAnyModalOpen ? 'translate-y-[-105%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+    <nav
+      ref={navRef}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${navBg} ${
+        isAnyModalOpen ? 'translate-y-[-105%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
-        {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>
           <div className="w-10 h-10 relative flex items-center justify-center transition-transform group-hover:scale-105">
             <Logo className="text-slate-900 group-hover:text-violet-600 transition-colors" size={36} />
@@ -101,137 +59,50 @@ const Navbar: React.FC<NavbarProps> = () => {
           <span className={`text-xl font-bold tracking-tight ${textColor} transition-colors font-sans`}>MBTIJU</span>
         </div>
 
-        {/* Center Navigation Menu (Hidden on Home) */}
-        <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <button onClick={() => navigate('/myluck')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            운세 보기
-          </button>
-          <button onClick={() => navigate('/premium')} className={`relative text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            3년 심층 사주 리포트
-            {answeredCount > 0 && (
-              <span className="absolute -top-1 -right-3 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
-            )}
-          </button>
-          <button onClick={handleTarotClick} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            타로
-          </button>
-          <button onClick={() => navigate('/shop')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            운세 상점
-          </button>
-          <button onClick={() => navigate('/reviews')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            이용후기
-          </button>
-          <button onClick={() => openModal('creditPurchase')} className={`text-sm font-semibold transition-colors ${textColor} hover:text-slate-950`}>
-            요금제
-          </button>
+        <div className="hidden lg:flex items-center gap-6">
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`text-sm font-semibold transition-colors ${textColor} hover:text-violet-600 whitespace-nowrap`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex-1"></div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-6">
-          <div className={`flex items-center gap-4 md:gap-5 border-l pl-6 transition-colors border-slate-200`}>
-            <div className="flex items-center gap-2">
-              {session ? (
-                <>
-                  <button
-                    onClick={handleMyPageClick}
-                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
-                    disabled={loading}
-                  >
-                    <User className="w-6 h-6" />
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">마이페이지</span>
-                  </button>
-                  <button
-                    onClick={() => navigate('/shop/cart')}
-                    className={`relative group p-1 ${iconColor} ${buttonHover} transition-all`}
-                  >
-                    <ShoppingCart className="w-6 h-6" />
-                    {cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-violet-600 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
-                        {cartCount}
-                      </span>
-                    )}
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">장바구니</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className={`hidden md:block relative group p-1 ${iconColor} ${buttonHover} transition-all`}
-                    disabled={loading}
-                  >
-                    <LogOut className="w-6 h-6" />
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">로그아웃</span>
-                  </button>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openModal('analysis', 'login')}
-                    className="inline-flex items-center gap-2 px-5 py-2 bg-slate-950 text-white font-semibold rounded-full shadow-md hover:bg-slate-800 transition-all text-sm active:scale-95"
-                    disabled={loading}
-                  >
-                    시작하기
-                  </button>
-                </div>
-              )}
-            </div>
-            <button className={`relative group p-1 ${iconColor} ${buttonHover} transition-all hidden md:block`}>
-              <Heart className="w-6 h-6" />
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">찜</span>
-            </button>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`md:hidden p-1 ${textColor}`}
-              disabled={loading}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/myluck?type=today')}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 text-white font-semibold rounded-full shadow-md hover:bg-violet-600 transition-all text-xs sm:text-sm active:scale-95 whitespace-nowrap"
+          >
+            가입 없이 바로 보기
+          </button>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`lg:hidden p-1.5 ${textColor}`}
+            aria-label="메뉴 열기"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         </div>
       </div>
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
-          <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
-            <div className="flex flex-col gap-2">
-              <button onClick={() => { navigate('/myluck'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 보기</button>
-              <button onClick={() => { navigate('/premium'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">3년 심층 사주 리포트</button>
-              <button onClick={() => { handleTarotClick(); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">타로</button>
-              <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">운세 상점</button>
-              <button onClick={() => { navigate('/reviews'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">이용후기</button>
-              <button onClick={() => { openModal('creditPurchase'); setIsMobileMenuOpen(false); }} className="text-left py-2 font-medium text-slate-700 hover:text-slate-950">요금제</button>
-            </div>
 
-            <div className="border-t border-slate-200 pt-4">
-              {session ? (
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-red-500 font-semibold rounded-full hover:bg-red-50 transition-colors text-sm"
-                    disabled={loading}
-                  >
-                    <LogOut className="w-5 h-5" />
-                    로그아웃
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      openModal('analysis', 'login');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-950 text-white font-semibold rounded-full shadow-md hover:bg-slate-800 transition-colors text-sm"
-                    disabled={loading}
-                  >
-                    시작하기
-                  </button>
-                </div>
-              )}
-            </div>
+      {isMobileMenuOpen && (
+        <div className="lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-xl">
+          <div className="max-w-7xl mx-auto px-6 py-4 space-y-2 flex flex-col">
+            {menuItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left py-2.5 font-semibold text-slate-700 hover:text-violet-600 border-b border-slate-100/70 last:border-b-0"
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       )}

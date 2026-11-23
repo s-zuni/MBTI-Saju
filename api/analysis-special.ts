@@ -234,52 +234,21 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 서비스별 비용 매핑 및 인증/과금 검증
-    let cost = 5;
+    // 서비스별 비회원 허용 + Rate Limit 검증
     let serviceType: string | undefined = undefined;
-    let allowAnonymous = false;
+    if (targetType === 'fortune_today') serviceType = 'FORTUNE_TODAY';
+    else if (targetType === 'fortune_tomorrow') serviceType = 'FORTUNE_TOMORROW';
+    else if (targetType === 'jamidusu') serviceType = 'JAMIDUSU';
+    else if (targetType === 'trip') serviceType = 'TRIP';
+    else if (targetType === 'kbo') serviceType = 'KBO';
 
-    if (targetType === 'fortune_today') {
-        cost = 0;
-        serviceType = 'FORTUNE_TODAY';
-        allowAnonymous = true;
-    } else if (targetType === 'fortune_tomorrow') {
-        cost = 3;
-        serviceType = 'FORTUNE_TOMORROW';
-    } else if (targetType === 'jamidusu') {
-        cost = 15;
-        serviceType = 'JAMIDUSU';
-    } else if (targetType === 'trip') {
-        cost = 5;
-        serviceType = 'TRIP';
-    } else if (targetType === 'kbo') {
-        cost = 5;
-        serviceType = 'KBO';
-    }
-
-    // 이미 생성된 결과가 있으면 재생성/재과금 없이 그대로 돌려준다.
     const cacheKey = buildCacheKey(targetType, body);
     let cachedResult: unknown = null;
 
     const authResult = await authenticateUser(req, {
         serviceType,
-        cost,
-        allowAnonymous,
-        ...(cacheKey ? {
-            resolveCost: async ({ user, supabaseAdmin }) => {
-                const { data } = await supabaseAdmin
-                    .from('ai_result_cache')
-                    .select('result')
-                    .eq('user_id', user.id)
-                    .eq('cache_key', cacheKey)
-                    .maybeSingle();
-                if (data?.result) {
-                    cachedResult = data.result;
-                    return { serviceType, cost: 0 };
-                }
-                return { serviceType, cost };
-            }
-        } : {})
+        cost: 0,
+        allowAnonymous: true,
     });
 
     if (authResult.errorResponse) {

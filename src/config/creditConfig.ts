@@ -1,4 +1,4 @@
-// 크레딧 패키지 및 서비스 비용 설정
+// 건당 단품 과금 가격 설정 (회원가입·크레딧 폐지)
 
 export interface CreditPackage {
   id: string;
@@ -8,13 +8,14 @@ export interface CreditPackage {
   isDiscount: boolean;
 }
 
+/** @deprecated 크레딧 제도 폐지 (기존 어드민 호환용 빈 배열/유지) */
 export const COIN_PACKAGES: CreditPackage[] = [
   { id: 'credit_100', credits: 100, originalPrice: 15000, price: 12000, isDiscount: true },
   { id: 'credit_50', credits: 50, originalPrice: 10000, price: 6900, isDiscount: true },
   { id: 'credit_10', credits: 10, originalPrice: 3000, price: 1500, isDiscount: true }
 ];
 
-// 심층 리포트 구매 고객 전용 이벤트 패키지 (일반 웹 전용)
+// 심층 리포트 구매 고객 전용 이벤트 패키지 (기존 호환용)
 export const EVENT_CREDIT_PACKAGE = {
   id: 'event_credit_500',
   credits: 500,
@@ -43,36 +44,38 @@ export const CONSULTATION_PACKAGES = {
   },
 } as const;
 
-
+/**
+ * 서비스별 건당 이용 요금 (KRW 원)
+ * - 사주, 자미두수 계열: 990원
+ * - 나머지 운세 서비스(오늘/내일 운세, 타로, 여행, KBO 등): 490원
+ */
 export const SERVICE_COSTS = {
-  FORTUNE_TODAY: 0,
-  FORTUNE_TOMORROW: 3,
-  MBTI_SAJU: 20,
-  COMPATIBILITY_TRIP: 5,
-  COMPATIBILITY: 5,
-  TRIP: 5,
-  JAMIDUSU: 15,
-  KBO: 5,
-  RELATIONSHIP_ADD: 5,
-  AI_CHAT_5: 20,
-  TAROT: 2,
-  REGENERATE_MBTI_SAJU: 10,
-  GOLD_WEALTH: 5,
-  GOLD_BUSINESS: 5,
-  GOLD_JOB: 5,
-  GOLD_JOBCHANGE: 5,
-  LOVE_COUPLE: 5,
-  LOVE_MARRIED: 5,
-  LOVE_MARRIAGE: 5,
-  LOVE_REUNION: 5,
-  LOVE_CRUSH: 5
+  FORTUNE_TODAY: 490,
+  FORTUNE_TOMORROW: 490,
+  MBTI_SAJU: 990,
+  COMPATIBILITY_TRIP: 490,
+  COMPATIBILITY: 990,
+  TRIP: 490,
+  JAMIDUSU: 990,
+  KBO: 490,
+  RELATIONSHIP_ADD: 490,
+  AI_CHAT_5: 490,
+  TAROT: 490,
+  REGENERATE_MBTI_SAJU: 990,
+  GOLD_WEALTH: 990,
+  GOLD_BUSINESS: 990,
+  GOLD_JOB: 990,
+  GOLD_JOBCHANGE: 990,
+  LOVE_COUPLE: 990,
+  LOVE_MARRIED: 990,
+  LOVE_MARRIAGE: 990,
+  LOVE_REUNION: 990,
+  LOVE_CRUSH: 990
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
 
 export const REFUND_PERIOD_DAYS = 7;
-
-
 
 // 서비스 이름 한글화
 export const SERVICE_NAMES: Record<ServiceType, string> = {
@@ -81,20 +84,35 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   MBTI_SAJU: 'MBTI & 사주 분석',
   COMPATIBILITY_TRIP: '궁합여행',
   COMPATIBILITY: '심층 궁합',
-  TRIP: '여행지 추천',
-  JAMIDUSU: '자미두수',
-  KBO: 'KBO 프로야구 성향 분석',
+  TRIP: '행운의 여행지 분석',
+  JAMIDUSU: '자미두수 수호별 찾기',
+  KBO: 'KBO 팬 궁합',
   RELATIONSHIP_ADD: '인연 추가',
-  AI_CHAT_5: '운명 심층 상담 (5회)',
+  AI_CHAT_5: 'AI 운명 상담',
   TAROT: '신비타로',
-  REGENERATE_MBTI_SAJU: 'MBTI & 사주 재분석',
+  REGENERATE_MBTI_SAJU: 'MBTI & 사주 분석',
   GOLD_WEALTH: '내 재물운 보기',
   GOLD_BUSINESS: '창업 및 사업 사주',
   GOLD_JOB: '취직 사주',
   GOLD_JOBCHANGE: '이직 사주',
-  LOVE_COUPLE: '연인 궁합',
-  LOVE_MARRIED: '부부 궁합',
-  LOVE_MARRIAGE: '결혼 궁합',
+  LOVE_COUPLE: '연인 궁합 사주',
+  LOVE_MARRIED: '부부 궁합 사주',
+  LOVE_MARRIAGE: '결혼 궁합 사주',
   LOVE_REUNION: '재회 사주',
   LOVE_CRUSH: '짝사랑 사주'
 };
+
+export function getServicePrice(serviceType: ServiceType | string): number {
+  if (serviceType in SERVICE_COSTS) {
+    return SERVICE_COSTS[serviceType as ServiceType];
+  }
+  const upper = String(serviceType).toUpperCase();
+  if (upper.includes('SAJU') || upper.includes('JAMIDUSU') || upper.includes('GOLD') || upper.includes('LOVE') || upper.includes('COMPATIBILITY')) {
+    return 990;
+  }
+  return 490;
+}
+
+export function formatServicePrice(serviceType: ServiceType | string): string {
+  return `${getServicePrice(serviceType).toLocaleString()}원`;
+}

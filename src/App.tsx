@@ -19,7 +19,6 @@ import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
 
-import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -39,9 +38,8 @@ import { useInactivityLogout } from './hooks/useInactivityLogout';
 import AuthCallback from './components/auth/AuthCallback';
 // Lazy load modals for better initial performance
 import FreePreview from './components/FreePreview';
-import ResumeCheckoutBanner from './components/ResumeCheckoutBanner';
 import KakaoConsultCard from './components/KakaoConsultCard';
-import { track, trackOnce } from './utils/analytics';
+import { trackOnce } from './utils/analytics';
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
 const DeepReportModal = lazy(() => import('./components/DeepReportModal'));
@@ -90,43 +88,23 @@ function App() {
   // Unified loading state for Safari (Session + Credits initial fetch)
   const isAppInitializing = isAuthLoading || (isCreditsLoading && !!session);
 
-  // Check if profile needs completion (Korean service only)
-  useEffect(() => {
-    const isChineseRoute = typeof window !== 'undefined' && (
-      window.location.hostname.startsWith('zh.') ||
-      window.location.hostname.startsWith('tw.') ||
-      window.location.hostname.startsWith('global.') ||
-      window.location.pathname.startsWith('/zh')
-    );
-    if (session?.user && !isAuthLoading && !isChineseRoute) {
-      const meta = session.user.user_metadata;
-      // 가입 마찰을 줄이기 위해 필수는 생년월일·성별만. MBTI/출생시간은 이후 선택 입력.
-      const needsProfile = !meta?.birth_date || !meta?.gender;
+  // 비회원 즉시 이용 모드: 자동 프로필 완성 강제 모달을 띄우지 않는다.
 
-      if (needsProfile) {
-        // Prevent infinite loop by checking if the modal is already open in the correct mode
-        if (modals?.analysis?.mode !== 'complete_profile' || !modals?.analysis?.isOpen) {
-          openModal('analysis', 'complete_profile');
-        }
-      }
-      // 온보딩 모달은 더 이상 자동으로 띄우지 않는다. 첫 결과 화면(MyLuckPage)의 웰컴 배너가 대체.
-    }
-  }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen]);
-
-  // Handle login trigger from URL
+  // Handle openService redirect after payment
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'true' && !session && !isAuthLoading) {
-      openModal('analysis', 'login');
-      // Clean up URL
+    const openService = params.get('openService');
+    if (openService === 'mbtiSaju') {
+      openModal('mbtiSaju');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (openService === 'compatibility') {
+      openModal('compatibility');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // 심층 리포트 구매 후 비회원이 가입하고 돌아왔을 때 이벤트 모달 자동 노출
     if (params.get('event_trigger') === 'true' && session && !isAuthLoading) {
-        openModal('deepReportEvent');
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+      openModal('deepReportEvent');
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [session, isAuthLoading, openModal]);
 
@@ -173,8 +151,7 @@ function AppContent({
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const handleStart = () => {
-    if (session) navigate('/myluck?type=today');
-    else openModal('analysis', 'signup');
+    navigate('/myluck?type=today');
   };
 
   // Handle automatic modal opening from share link
@@ -258,21 +235,11 @@ function AppContent({
             <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
               <Navbar />
 
-              {isAuthLoading && !session && location.pathname !== '/premium' ? (
-                <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
-                  </div>
-                  <p className="text-slate-500 font-bold tracking-tight mb-4">당신의 운명을 불러오는 중...</p>
-                  
-                </div>
-              ) : (
-                <Routes>
+              <Routes>
                   <Route path="/" element={
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => navigate('/premium')} />
-                      {!session && <FreePreview onSignup={() => { track('signup_cta_click', { from: 'preview' }); openModal('analysis', 'signup'); }} />}
+                      <FreePreview onSignup={() => navigate('/myluck?type=today')} />
                       <FeatureGrids />
 
 
@@ -423,7 +390,6 @@ function AppContent({
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
-              )}
 
               {!isChatPage && <Footer />}
               {!isAdminPage && <BottomNav />}
@@ -500,16 +466,6 @@ function AppContent({
                 session={session}
               />
 
-              <PremiumBanner
-                isVisible={showPremiumBanner}
-                onClose={() => setShowPremiumBanner(false)}
-                onCheckPlans={() => openModal('creditPurchase')}
-                currentCredits={credits}
-              />
-              <ResumeCheckoutBanner
-                enabled={!!session && !modals?.creditPurchase?.isOpen}
-                onResume={(p) => openModal('creditPurchase', undefined, { resumePlanId: p.planId })}
-              />
               <PopupModal />
             </div>
           } />

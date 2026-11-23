@@ -8,7 +8,9 @@ import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { ensureValidSession } from '../supabaseClient';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from './GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface PrefillData {
     targetName: string;
@@ -57,17 +59,17 @@ interface CompatibilityContentProps {
 }
 
 const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
-    onUseCredit,
     refreshCredits,
     onSuccess,
-    credits,
     session,
     onReset,
     prefillData,
-    autoStart = false,
 }) => {
+    const { profile, updateProfile } = useGuestProfile();
     const reportRef = useRef<HTMLDivElement>(null);
+    const ticketCheckedRef = useRef(false);
     const [localError, setLocalError] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState<boolean>(false);
     const [isPartnerMode, setIsPartnerMode] = useState<boolean>(true);
     const [relationshipType, setRelationshipType] = useState<string>('lover');
     
@@ -75,7 +77,6 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const [targetBirthDate, setTargetBirthDate] = useState(prefillData?.targetBirthDate || '');
     const [targetBirthTime, setTargetBirthTime] = useState(prefillData?.targetBirthTime || '');
     const [targetMbti, setTargetMbti] = useState(prefillData?.targetMbti || '');
-    const hasAutoStarted = useRef(false);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
 
 
@@ -83,10 +84,6 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const { object: result, submit, isLoading, error: analysisError } = useObject({
         api: '/api/compatibility',
         schema: compatibilitySchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object, error: validationError }) => {
             if (object) {
                 if (refreshCredits) {
@@ -102,6 +99,22 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
         }
     });
 
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket('COMPATIBILITY');
+        if (ticket?.payload) {
+            const p = ticket.payload;
+            if (typeof p.isPartnerMode === 'boolean') setIsPartnerMode(p.isPartnerMode);
+            if (p.relationshipType) setRelationshipType(p.relationshipType);
+            if (p.targetName) setTargetName(p.targetName);
+            if (p.targetBirthDate) setTargetBirthDate(p.targetBirthDate);
+            if (p.targetBirthTime) setTargetBirthTime(p.targetBirthTime);
+            if (p.targetMbti) setTargetMbti(p.targetMbti);
+            submit(p);
+        }
+    }, [submit]);
+
     // 로딩 메시지 순환 효과
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -115,65 +128,56 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     }, [isLoading, result]);
 
     const runAnalysis = async () => {
+        if (!profile.birthDate || !profile.mbti) {
+            setLocalError('내 생년월일과 MBTI를 입력해주세요.');
+            return;
+        }
         // Validation for Partner Mode only if it's explicitly turned on
         if (isPartnerMode && (!targetName || !targetBirthDate || !targetMbti)) {
             setLocalError('상대방 정보를 모두 입력해주세요.');
             return;
         }
 
-        const cost = SERVICE_COSTS.COMPATIBILITY;
-        if (credits !== undefined && credits < cost) {
-            setLocalError('크레딧이 부족합니다.');
-            return;
-        }
-
+        setIsPaying(true);
         try {
             setLocalError(null);
-            const metadata = session?.user?.user_metadata;
-            if (!metadata) throw new Error('로그인이 필요합니다.');
-
-            const userSajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
+            const userSajuData = calculateSaju(profile.birthDate, profile.birthTime);
             
             let targetSajuData = null;
             if (isPartnerMode) {
                 targetSajuData = calculateSaju(targetBirthDate, targetBirthTime);
             }
 
-            submit({
-                isPartnerMode,
-                relationshipType,
-                targetName,
-                targetBirthDate,
-                targetBirthTime,
-                targetMbti,
-                userName: metadata.full_name,
-                userBirthDate: metadata.birth_date,
-                userBirthTime: metadata.birth_time,
-                userMbti: metadata.mbti,
-                userGender: metadata.gender,
-                sajuData: userSajuData,
-                targetSajuData
+            const res = await startServicePayment({
+                serviceType: 'COMPATIBILITY',
+                serviceName: isPartnerMode ? 'MBTI × 사주 심층 궁합' : '나의 이상 궁합 찾기',
+                returnPath: '/?openService=compatibility',
+                payload: {
+                    isPartnerMode,
+                    relationshipType,
+                    targetName,
+                    targetBirthDate,
+                    targetBirthTime,
+                    targetMbti,
+                    userName: profile.name || '이용자',
+                    userBirthDate: profile.birthDate,
+                    userBirthTime: profile.birthTime,
+                    userMbti: profile.mbti,
+                    userGender: profile.gender,
+                    sajuData: userSajuData,
+                    targetSajuData,
+                },
+                customerName: profile.name || '비회원',
             });
+            if (!res.success && res.error_msg) {
+                setLocalError(res.error_msg);
+            }
         } catch (e: any) {
-            setLocalError(e.message);
+            setLocalError(e.message || '결제 요청 중 오류가 발생했습니다.');
+        } finally {
+            setIsPaying(false);
         }
     };
-
-    // 자동 분석 로직 고도화
-    useEffect(() => {
-        if (
-            autoStart &&
-            !hasAutoStarted.current &&
-            prefillData?.targetName &&
-            prefillData?.targetBirthDate &&
-            prefillData?.targetMbti
-        ) {
-            hasAutoStarted.current = true;
-            setIsPartnerMode(true);
-            runAnalysis();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoStart, prefillData]);
 
     const handleFetchCompatibility = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -192,11 +196,9 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const [copied, setCopied] = useState(false);
     const handleShareLink = () => {
         const userId = session?.user?.id;
-        if (!userId) {
-            alert('공유를 위해 로그인이 필요합니다.');
-            return;
-        }
-        const shareUrl = `${window.location.origin}/share/compatibility/${userId}`;
+        const shareUrl = userId
+            ? `${window.location.origin}/share/compatibility/${userId}`
+            : `${window.location.origin}/?openService=compatibility`;
         navigator.clipboard.writeText(shareUrl).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -208,6 +210,13 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             {/* 분석 전 폼 */}
             {!result && !isLoading && (
                 <form onSubmit={handleFetchCompatibility} className="space-y-6 animate-fade-up">
+                    <GuestProfileCard
+                        profile={profile}
+                        onChange={updateProfile}
+                        showName
+                        compact
+                        title="내 정보 (사주 · MBTI)"
+                    />
                     
                     {/* 분석 모드 선택: 탭 스타일 */}
                     <div className="space-y-6">
@@ -326,13 +335,15 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
 
                     <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || isPaying}
                         className="w-full py-5 bg-slate-950 text-white rounded-full font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-95 transition-all mt-4 flex items-center justify-center gap-3 disabled:opacity-50"
                     >
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Heart className="w-5 h-5 fill-white" />}
-                        {isPartnerMode ? '심층 궁합 분석하기' : '나의 이상 궁합 찾기'} ({SERVICE_COSTS.COMPATIBILITY} 크레딧)
+                        {isLoading || isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Heart className="w-5 h-5 fill-white" />}
+                        {isPaying
+                            ? '결제 창 여는 중...'
+                            : `${isPartnerMode ? '심층 궁합 분석하기' : '나의 이상 궁합 찾기'} (${SERVICE_COSTS.COMPATIBILITY.toLocaleString()}원 결제)`}
                     </button>
-                    <p className="text-center text-[10px] text-slate-400 font-bold tracking-tight">상담 결과는 마이페이지에 저장됩니다</p>
+                    <p className="text-center text-[10px] text-slate-400 font-bold tracking-tight">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다</p>
                 </form>
             )}
 

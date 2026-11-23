@@ -3,27 +3,27 @@ import { getCorsHeaders } from './cors';
 import { checkRateLimit, createRateLimitEdgeResponse, getClientIp } from './rate-limit';
 
 export const SERVICE_COSTS = {
-    FORTUNE_TODAY: 0,
-    FORTUNE_TOMORROW: 3,
-    MBTI_SAJU: 20,
-    COMPATIBILITY_TRIP: 5,
-    COMPATIBILITY: 5,
-    TRIP: 5,
-    JAMIDUSU: 15,
-    KBO: 5,
-    RELATIONSHIP_ADD: 5,
-    AI_CHAT_5: 20,
-    TAROT: 2,
-    REGENERATE_MBTI_SAJU: 10,
-    GOLD_WEALTH: 5,
-    GOLD_BUSINESS: 5,
-    GOLD_JOB: 5,
-    GOLD_JOBCHANGE: 5,
-    LOVE_COUPLE: 5,
-    LOVE_MARRIED: 5,
-    LOVE_MARRIAGE: 5,
-    LOVE_REUNION: 5,
-    LOVE_CRUSH: 5
+    FORTUNE_TODAY: 490,
+    FORTUNE_TOMORROW: 490,
+    MBTI_SAJU: 990,
+    COMPATIBILITY_TRIP: 490,
+    COMPATIBILITY: 990,
+    TRIP: 490,
+    JAMIDUSU: 990,
+    KBO: 490,
+    RELATIONSHIP_ADD: 490,
+    AI_CHAT_5: 490,
+    TAROT: 490,
+    REGENERATE_MBTI_SAJU: 990,
+    GOLD_WEALTH: 990,
+    GOLD_BUSINESS: 990,
+    GOLD_JOB: 990,
+    GOLD_JOBCHANGE: 990,
+    LOVE_COUPLE: 990,
+    LOVE_MARRIED: 990,
+    LOVE_MARRIAGE: 990,
+    LOVE_REUNION: 990,
+    LOVE_CRUSH: 990
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
@@ -109,15 +109,19 @@ export interface AuthResult {
 }
 
 /**
- * AI 엔드포인트 공통 인증 및 크레딧 차감 미들웨어 (Edge / Node 공용)
+ * AI 엔드포인트 공통 인증 및 Rate Limit 미들웨어 (Edge / Node 공용)
+ * 크레딧 제도 폐지 및 비회원 즉시 이용 전환에 따라:
+ * - allowAnonymous가 명시적으로 false가 아니면 비회원(토큰 없음) 요청도 허용한다.
+ * - DB 크레딧 차감(deduct_credits)은 수행하지 않고 IP/사용자 Rate Limit만 적용한다.
  */
 export async function authenticateUser(req: Request | any, options: AuthOptions = {}): Promise<AuthResult> {
     const corsHeaders = getCorsHeaders(req);
     const supabaseAdmin = getSupabaseAdmin();
     const token = extractBearerToken(req);
+    const requireAuth = options.allowAnonymous === false;
 
     if (!token) {
-        if (options.allowAnonymous && (options.cost === 0 || !options.cost)) {
+        if (!requireAuth) {
             if (!options.skipRateLimit) {
                 const rl = await checkRateLimit(supabaseAdmin, {
                     key: `ai:ip:${getClientIp(req)}`,
@@ -132,7 +136,7 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
                     };
                 }
             }
-            return { user: null, supabaseAdmin, errorResponse: null };
+            return { user: null, supabaseAdmin, errorResponse: null, deductedCredits: 0 };
         }
         return {
             user: null,
@@ -155,6 +159,24 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+        if (!requireAuth) {
+            // 비회원 전환 이후 구 만료 토큰이 전달된 경우에도 일반 AI 엔드포인트는 비회원으로 통과 허용
+            if (!options.skipRateLimit) {
+                const rl = await checkRateLimit(supabaseAdmin, {
+                    key: `ai:ip:${getClientIp(req)}`,
+                    limit: options.rateLimitMax ?? 20,
+                    windowSeconds: options.rateLimitWindowSeconds ?? 60,
+                });
+                if (!rl.allowed) {
+                    return {
+                        user: null,
+                        supabaseAdmin,
+                        errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+                    };
+                }
+            }
+            return { user: null, supabaseAdmin, errorResponse: null, deductedCredits: 0 };
+        }
         return {
             user: null,
             supabaseAdmin,
@@ -172,7 +194,7 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
         };
     }
 
-    // 사용자 단위 AI/API Rate Limit (크레딧 차감 및 무료 슬롯 소비 전에 검사)
+    // 사용자 단위 AI/API Rate Limit
     if (!options.skipRateLimit) {
         const rl = await checkRateLimit(supabaseAdmin, {
             key: `ai:user:${user.id}`,
@@ -188,94 +210,10 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
         }
     }
 
-    // 실제 청구 대상(serviceType/cost) 결정: resolveCost가 있으면 그 결과가 우선한다.
-    let effectiveServiceType = options.serviceType;
-    let effectiveCost = options.cost;
-
-    if (options.resolveCost) {
-        try {
-            const resolved = await options.resolveCost({ user, supabaseAdmin });
-            effectiveServiceType = resolved.serviceType;
-            effectiveCost = resolved.cost;
-        } catch (resolveError) {
-            console.error('[auth] resolveCost error:', resolveError);
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: '요청 처리 중 오류가 발생했습니다.',
-                        code: 'RESOLVE_COST_ERROR'
-                    }),
-                    {
-                        status: 500,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                    }
-                )
-            };
-        }
-    }
-
-    // 크레딧 차감 결정
-    let costToDeduct = 0;
-    if (typeof effectiveCost === 'number') {
-        costToDeduct = effectiveCost;
-    } else if (effectiveServiceType && effectiveServiceType in SERVICE_COSTS) {
-        costToDeduct = SERVICE_COSTS[effectiveServiceType as ServiceType];
-    }
-
-    if (costToDeduct > 0) {
-        const { data: deductResult, error: deductError } = await supabaseAdmin.rpc('deduct_credits', {
-            p_user_id: user.id,
-            p_service_type: effectiveServiceType || 'AI_SERVICE',
-            p_cost: costToDeduct
-        });
-
-        if (deductError) {
-            console.error('[auth] Credit deduction RPC error:', deductError);
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({ 
-                        success: false, 
-                        error: '크레딧 처리 중 오류가 발생했습니다.', 
-                        code: 'CREDIT_ERROR' 
-                    }),
-                    { 
-                        status: 500, 
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-                    }
-                )
-            };
-        }
-
-        if (deductResult && deductResult.success === false) {
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({ 
-                        success: false, 
-                        error: `크레딧이 부족합니다. (필요: ${costToDeduct}C, 보유: ${deductResult.current_credits ?? 0}C)`, 
-                        code: 'INSUFFICIENT_CREDITS',
-                        requiredCredits: costToDeduct,
-                        currentCredits: deductResult.current_credits ?? 0
-                    }),
-                    { 
-                        status: 402, 
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-                    }
-                )
-            };
-        }
-    }
-
-    return { 
-        user, 
-        supabaseAdmin, 
-        errorResponse: null, 
-        deductedCredits: costToDeduct 
+    return {
+        user,
+        supabaseAdmin,
+        errorResponse: null,
+        deductedCredits: 0
     };
 }

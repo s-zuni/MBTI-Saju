@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, Sparkles, Download, ChevronLeft, Coins, Lock, Info, Calendar, AlertCircle } from 'lucide-react';
+import { Heart, Sparkles, Download, ChevronLeft, CreditCard, Calendar, AlertCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { loveSajuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const MBTI_LIST = [
     'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
@@ -166,23 +165,19 @@ const RadarChart: React.FC<{ data: { label: string; value: number }[] }> = ({ da
     );
 };
 
-const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
-    const { session: hookSession, loading: isAuthLoading } = useAuth();
-    const session = propSession || hookSession;
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+const RelationshipPage: React.FC<{ session?: any }> = () => {
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const resultCardRef = useRef<HTMLDivElement>(null);
 
     const [error, setError] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState(false);
+    const [pendingAutoPayload, setPendingAutoPayload] = useState<any>(null);
+    const ticketCheckedRef = useRef(false);
     const [activeTab, setActiveTab] = useState<LoveSajuType>((searchParams.get('type') as LoveSajuType) || 'couple');
 
-    // Form states
-    const [birthDate, setBirthDate] = useState('');
-    const [birthTime, setBirthTime] = useState('');
-    const [gender, setGender] = useState<'male' | 'female'>('female');
-
+    // Target form states
     const [targetName, setTargetName] = useState('');
     const [targetMbti, setTargetMbti] = useState('');
     const [targetBirthDate, setTargetBirthDate] = useState('');
@@ -200,36 +195,31 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
         }
     }, [searchParams]);
 
-    useEffect(() => {
-        if (session?.user?.user_metadata) {
-            const metadata = session.user.user_metadata;
-            if (metadata.birth_date) setBirthDate(metadata.birth_date);
-            if (metadata.birth_time) setBirthTime(metadata.birth_time);
-            if (metadata.gender === 'male' || metadata.gender === 'female') setGender(metadata.gender);
-        }
-    }, [session]);
-
     const getServiceKey = (tab: LoveSajuType) => {
         switch (tab) {
-            case 'couple': return 'LOVE_COUPLE';
-            case 'married': return 'LOVE_MARRIED';
-            case 'marriage': return 'LOVE_MARRIAGE';
-            case 'reunion': return 'LOVE_REUNION';
-            case 'crush': return 'LOVE_CRUSH';
+            case 'couple': return 'LOVE_COUPLE' as const;
+            case 'married': return 'LOVE_MARRIED' as const;
+            case 'marriage': return 'LOVE_MARRIAGE' as const;
+            case 'reunion': return 'LOVE_REUNION' as const;
+            case 'crush': return 'LOVE_CRUSH' as const;
+        }
+    };
+
+    const getTabLabel = (tab: LoveSajuType) => {
+        switch (tab) {
+            case 'couple': return '연인 궁합';
+            case 'married': return '부부 궁합';
+            case 'marriage': return '결혼 궁합';
+            case 'reunion': return '재회 사주';
+            case 'crush': return '짝사랑 사주';
         }
     };
 
     const { object: result, submit, isLoading } = useObject({
         api: `/api/love-saju?type=${activeTab}`,
         schema: loveSajuSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object, error: validationError }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[RelationshipPage] Result validation failed:', validationError);
                 setError('궁합 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
             }
@@ -240,6 +230,40 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
         }
     });
 
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket([
+            'LOVE_COUPLE',
+            'LOVE_MARRIED',
+            'LOVE_MARRIAGE',
+            'LOVE_REUNION',
+            'LOVE_CRUSH',
+        ]);
+        if (ticket?.payload) {
+            const p = ticket.payload;
+            if (p.type && ['couple', 'married', 'marriage', 'reunion', 'crush'].includes(p.type)) {
+                setActiveTab(p.type);
+            }
+            if (p.targetName) setTargetName(p.targetName);
+            if (p.targetMbti) setTargetMbti(p.targetMbti);
+            if (p.targetBirthDate) setTargetBirthDate(p.targetBirthDate);
+            if (p.targetBirthTime) setTargetBirthTime(p.targetBirthTime);
+            if (p.targetGender) setTargetGender(p.targetGender);
+            if (p.separationDate) setSeparationDate(p.separationDate);
+            if (p.separationReason) setSeparationReason(p.separationReason);
+            setPendingAutoPayload(p);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (pendingAutoPayload && (!pendingAutoPayload.type || activeTab === pendingAutoPayload.type)) {
+            const payloadToRun = pendingAutoPayload;
+            setPendingAutoPayload(null);
+            submit(payloadToRun);
+        }
+    }, [pendingAutoPayload, activeTab, submit]);
+
     const handleTabChange = (tab: LoveSajuType) => {
         setActiveTab(tab);
         setSearchParams({ type: tab });
@@ -248,8 +272,12 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!birthDate) {
+        if (!profile.birthDate) {
             alert('본인 생년월일을 입력해주세요.');
+            return;
+        }
+        if (!profile.mbti) {
+            alert('본인 MBTI를 선택해주세요.');
             return;
         }
 
@@ -274,35 +302,41 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
         }
 
         const serviceKey = getServiceKey(activeTab);
-        const cost = SERVICE_COSTS[serviceKey];
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
-            return;
-        }
-
+        setIsPaying(true);
         try {
             setError(null);
-            const sajuData = calculateSaju(birthDate, birthTime);
+            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
             const targetSajuData = calculateSaju(targetBirthDate, targetBirthTime);
-            submit({
-                type: activeTab,
-                birthDate,
-                birthTime,
-                gender,
-                mbti: session?.user?.user_metadata?.mbti || 'ENFP',
-                name: session?.user?.user_metadata?.full_name || '이용자',
-                sajuData,
-                targetName,
-                targetMbti,
-                targetBirthDate,
-                targetBirthTime,
-                targetGender,
-                targetSajuData,
-                separationDate,
-                separationReason
+            const res = await startServicePayment({
+                serviceType: serviceKey,
+                serviceName: `연애 · 궁합 사주 (${getTabLabel(activeTab)})`,
+                returnPath: `/relationship?type=${activeTab}`,
+                payload: {
+                    type: activeTab,
+                    birthDate: profile.birthDate,
+                    birthTime: profile.birthTime,
+                    gender: profile.gender,
+                    mbti: profile.mbti,
+                    name: profile.name || '이용자',
+                    sajuData,
+                    targetName,
+                    targetMbti,
+                    targetBirthDate,
+                    targetBirthTime,
+                    targetGender,
+                    targetSajuData,
+                    separationDate,
+                    separationReason,
+                },
+                customerName: profile.name || '비회원',
             });
-        } catch (e: any) {
-            setError(e.message);
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
+        } catch (err: any) {
+            setError(err?.message || '결제 요청 중 오류가 발생했습니다.');
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -324,29 +358,8 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
         }
     };
 
-    if (isAuthLoading) return null;
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-                <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-rose-500" />
-                </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4.5 bg-slate-900 text-white rounded-full font-bold shadow hover:bg-rose-600 transition-colors"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
-    const userName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || '사용자';
-    const myMbti = session?.user?.user_metadata?.mbti || 'INFJ';
+    const userName = profile.name || '이용자';
+    const myMbti = profile.mbti || 'INFJ';
     const partnerMbti = targetMbti || 'ESTP';
     const targetDisplayName = targetName.trim() || userName;
 
@@ -364,8 +377,8 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
                         <ChevronLeft className="w-6 h-6 text-slate-600" />
                     </button>
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-100 text-slate-700 rounded-full text-xs font-black shadow-sm">
-                        <Coins className="w-4 h-4 text-rose-500 fill-rose-500/10" />
-                        보유: {credits}크레딧
+                        <CreditCard className="w-4 h-4 text-rose-500" />
+                        건당 {cost.toLocaleString()}원 · 비회원 이용
                     </div>
                 </div>
 
@@ -415,18 +428,13 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
 
                             <div className="p-8">
                                 <form onSubmit={handleSubmit} className="space-y-6 text-left">
-                                    {/* 본인 인적사항 확인 */}
-                                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                                        <h3 className="text-xs font-black text-slate-600 flex items-center gap-1.5 mb-3">
-                                            <Info className="w-4 h-4 text-slate-400" /> 나의 사주 정보 (설정됨)
-                                        </h3>
-                                        <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-500">
-                                            <div>생년월일: <span className="text-slate-900">{birthDate}</span></div>
-                                            <div>태어난 시간: <span className="text-slate-900">{birthTime || '모름'}</span></div>
-                                            <div className="col-span-2 mt-1">성별: <span className="text-slate-900">{gender === 'female' ? '여성' : '남성'}</span></div>
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 mt-2">사주 정보 변경은 마이페이지 혹은 홈 화면의 사주 등록 폼에서 가능합니다.</p>
-                                    </div>
+                                    {/* 본인 인적사항 입력 */}
+                                    <GuestProfileCard
+                                        profile={profile}
+                                        onChange={updateProfile}
+                                        showName
+                                        title="나의 사주 · MBTI 정보"
+                                    />
 
                                     <div className="h-[1px] bg-slate-100 my-2"></div>
 
@@ -551,12 +559,13 @@ const RelationshipPage: React.FC<{ session?: any }> = ({ session: propSession })
 
                                     <button 
                                         type="submit" 
-                                        className="w-full py-4.5 bg-slate-900 hover:bg-rose-600 text-white rounded-2xl font-black text-sm shadow hover:scale-[1.01] transition-all flex items-center justify-center gap-2"
+                                        disabled={isPaying}
+                                        className="w-full py-4.5 bg-slate-900 hover:bg-rose-600 text-white rounded-2xl font-black text-sm shadow hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <Heart className="w-4 h-4 fill-current" />
-                                        궁합 분석 시작하기 ({cost} 크레딧)
+                                        {isPaying ? '결제 창 여는 중...' : `궁합 분석 시작하기 (${cost.toLocaleString()}원 결제)`}
                                     </button>
-                                    <p className="text-center text-[10px] text-slate-400 font-bold">상담 결과는 마이페이지에 저장됩니다.</p>
+                                    <p className="text-center text-[10px] text-slate-400 font-bold">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다.</p>
                                 </form>
                             </div>
                         </div>

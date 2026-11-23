@@ -56,14 +56,14 @@ export default async (req: Request) => {
         const body = await req.json().catch(() => ({}));
         const { sessionId, message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = body;
 
-        // 1. 호출자 인증 (세션 유효성 우선 검증)
-        const authCheck = await authenticateUser(req, { allowAnonymous: false, cost: 0 });
+        // 1. 호출자 인증 (비회원/게스트 허용)
+        const authCheck = await authenticateUser(req, { allowAnonymous: true, cost: 0 });
         if (authCheck.errorResponse) {
             return authCheck.errorResponse;
         }
-        const userId = authCheck.user!.id;
+        const userId = authCheck.user?.id || null;
+        const isGuestSession = !userId || !sessionId || String(sessionId).startsWith('guest_');
 
-        // 2. sessionId 검증 (소유권 확인)
         if (!sessionId) {
             return new Response(JSON.stringify({ error: '유효한 채팅 세션(sessionId)이 필요합니다.' }), { 
                 status: 400, 
@@ -72,73 +72,41 @@ export default async (req: Request) => {
         }
 
         const supabaseAdmin = getSupabaseAdmin();
-        const { data: sessionData, error: sessionError } = await supabaseAdmin
-            .from('chat_sessions')
-            .select('id')
-            .eq('id', sessionId)
-            .eq('user_id', userId)
-            .single();
 
-        if (!sessionData || sessionError) {
-            return new Response(JSON.stringify({ error: '유효한 채팅 세션을 찾을 수 없습니다.' }), { 
-                status: 404, 
-                headers: reqCorsHeaders 
-            });
-        }
+        if (!isGuestSession) {
+            const { data: sessionData, error: sessionError } = await supabaseAdmin
+                .from('chat_sessions')
+                .select('id')
+                .eq('id', sessionId)
+                .eq('user_id', userId)
+                .single();
 
-        // 3. 서버 권위 데이터(chat_messages 실제 저장 수)로 과금 턴 엄격 판정
-        // 클라이언트의 body.shouldDeductCredit이나 messages 배열 길이는 완전히 무시함
-        const { count: dbMsgCount, error: countError } = await supabaseAdmin
-            .from('chat_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('session_id', sessionId)
-            .eq('role', 'user');
-
-        if (countError) {
-            console.error('Failed to query chat_messages count:', countError);
-            return new Response(JSON.stringify({ error: '채팅 기록 조회에 실패했습니다.' }), { 
-                status: 500, 
-                headers: reqCorsHeaders 
-            });
-        }
-
-        const userTurnCount = dbMsgCount || 0;
-        // 5회 단위 과금: 0, 5, 10, 15... 번째 메시지 전송 시 20 크레딧 차감
-        const isChargeTurn = userTurnCount % 5 === 0;
-
-        // 4. 과금 턴인 경우 크레딧 차감 (원자적 DB RPC 호출, 부족 시 402 즉시 반환)
-        if (isChargeTurn) {
-            const deductResult = await authenticateUser(req, {
-                serviceType: 'AI_CHAT_5',
-                cost: 20,
-                skipRateLimit: true
-            });
-
-            if (deductResult.errorResponse) {
-                return deductResult.errorResponse;
-            }
-        }
-
-        // 5. 크레딧 검증 성공 후 서버에서 권위적으로 사용자 메시지 저장 (턴 수 카운트 확정)
-        if (message && typeof message === 'string') {
-            const { error: insertError } = await supabaseAdmin
-                .from('chat_messages')
-                .insert({
-                    session_id: sessionId,
-                    role: 'user',
-                    content: message.trim()
+            if (!sessionData || sessionError) {
+                return new Response(JSON.stringify({ error: '유효한 채팅 세션을 찾을 수 없습니다.' }), { 
+                    status: 404, 
+                    headers: reqCorsHeaders 
                 });
-
-            if (insertError) {
-                console.error('Failed to save user message in chat_messages:', insertError);
             }
-        }
 
-        // 세션 갱신 시간 업데이트
-        await supabaseAdmin
-            .from('chat_sessions')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('id', sessionId);
+            if (message && typeof message === 'string') {
+                const { error: insertError } = await supabaseAdmin
+                    .from('chat_messages')
+                    .insert({
+                        session_id: sessionId,
+                        role: 'user',
+                        content: message.trim()
+                    });
+
+                if (insertError) {
+                    console.error('Failed to save user message in chat_messages:', insertError);
+                }
+            }
+
+            await supabaseAdmin
+                .from('chat_sessions')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', sessionId);
+        }
 
         // Calculate Saju deterministically
         let sajuInfo = "사주 정보를 불러올 수 없습니다.";

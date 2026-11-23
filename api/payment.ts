@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { setNodeCorsHeaders } from './_utils/cors';
-import { extractBearerToken, getSupabaseAdmin } from './_utils/auth';
+import { extractBearerToken, getSupabaseAdmin, SERVICE_COSTS } from './_utils/auth';
 import { enforceNodeRateLimit } from './_utils/rate-limit';
 import { DEEP_REPORT_SALE_PRICE } from '../src/config/deepReportConfig';
 import { REFUND_PERIOD_DAYS } from '../src/config/creditConfig';
@@ -115,9 +115,37 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         }
 
         const approvedAmount = Number(tossData.totalAmount || amount);
-        const productId = tossData.metadata?.productId || 'credit_custom';
+        const productId = tossData.metadata?.productId || (String(orderId).startsWith('SVC_') ? 'single_service' : 'credit_custom');
         const metadataUserId = tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const isNamedUser = (val?: string | null) => Boolean(val && val !== 'ANONYMOUS' && !val.startsWith('GUEST_'));
+
+        if (productId === 'single_service' || String(orderId).startsWith('SVC_')) {
+            const serviceType = String(tossData.metadata?.serviceType || '');
+            const expectedAmount =
+                serviceType in SERVICE_COSTS
+                    ? SERVICE_COSTS[serviceType as keyof typeof SERVICE_COSTS]
+                    : (String(orderId).includes('MBTI_SAJU') ||
+                       String(orderId).includes('JAMIDUSU') ||
+                       String(orderId).includes('GOLD') ||
+                       String(orderId).includes('LOVE') ||
+                       String(orderId).includes('COMPATIBILITY'))
+                      ? 990
+                      : 490;
+
+            if (approvedAmount !== expectedAmount) {
+                console.error(`[Security] Suspicious single_service amount: ${approvedAmount}, expected: ${expectedAmount}, orderId: ${orderId}`);
+                return res.status(400).json({
+                    success: false,
+                    message: `결제 승인 금액이 서비스 이용 요금과 일치하지 않습니다. (기대: ${expectedAmount.toLocaleString()}원)`
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: '서비스 단품 결제 승인 완료',
+                data: { serviceType, approvedAmount, toss: tossData }
+            });
+        }
 
         let userId: string | undefined;
         if (productId === 'deep_report') {

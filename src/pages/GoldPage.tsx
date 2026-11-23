@@ -1,31 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, TrendingUp } from 'lucide-react';
+import { Download, ChevronLeft, CreditCard, TrendingUp } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { goldSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
-
-const BIRTH_TIME_SLOTS = [
-    { value: '', label: '시간 모름' },
-    { value: '23:00-01:00', label: '자시 (23:00~01:00)' },
-    { value: '01:00-03:00', label: '축시 (01:00~03:00)' },
-    { value: '03:00-05:00', label: '인시 (03:00~05:00)' },
-    { value: '05:00-07:00', label: '묘시 (05:00~07:00)' },
-    { value: '07:00-09:00', label: '진시 (07:00~09:00)' },
-    { value: '09:00-11:00', label: '사시 (09:00~11:00)' },
-    { value: '11:00-13:00', label: '오시 (11:00~13:00)' },
-    { value: '13:00-15:00', label: '미시 (13:00~15:00)' },
-    { value: '15:00-17:00', label: '신시 (15:00~17:00)' },
-    { value: '17:00-19:00', label: '유시 (17:00~19:00)' },
-    { value: '19:00-21:00', label: '술시 (19:00~21:00)' },
-    { value: '21:00-23:00', label: '해시 (21:00~23:00)' },
-];
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 type GoldType = 'wealth' | 'business' | 'job' | 'jobchange';
 
@@ -111,22 +94,19 @@ const renderWealthReport = (reportText: string) => {
     );
 };
 
-const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
-    const { session: hookSession, loading: isAuthLoading } = useAuth();
-    const session = propSession || hookSession;
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+const GoldPage: React.FC<{ session?: any }> = () => {
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const resultCardRef = useRef<HTMLDivElement>(null);
 
     const [error, setError] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState(false);
+    const [pendingAutoPayload, setPendingAutoPayload] = useState<any>(null);
+    const ticketCheckedRef = useRef(false);
     const [activeTab, setActiveTab] = useState<GoldType>((searchParams.get('type') as GoldType) || 'wealth');
 
-    // Form states
-    const [birthDate, setBirthDate] = useState('');
-    const [birthTime, setBirthTime] = useState('');
-    const [gender, setGender] = useState<'male' | 'female'>('female');
+    // Service-specific form states
     const [businessField, setBusinessField] = useState('');
     const [desiredCompany, setDesiredCompany] = useState('');
     const [desiredRole, setDesiredRole] = useState('');
@@ -140,35 +120,29 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
         }
     }, [searchParams]);
 
-    useEffect(() => {
-        if (session?.user?.user_metadata) {
-            const metadata = session.user.user_metadata;
-            if (metadata.birth_date) setBirthDate(metadata.birth_date);
-            if (metadata.birth_time) setBirthTime(metadata.birth_time);
-            if (metadata.gender === 'male' || metadata.gender === 'female') setGender(metadata.gender);
-        }
-    }, [session]);
-
     const getServiceKey = (tab: GoldType) => {
         switch (tab) {
-            case 'wealth': return 'GOLD_WEALTH';
-            case 'business': return 'GOLD_BUSINESS';
-            case 'job': return 'GOLD_JOB';
-            case 'jobchange': return 'GOLD_JOBCHANGE';
+            case 'wealth': return 'GOLD_WEALTH' as const;
+            case 'business': return 'GOLD_BUSINESS' as const;
+            case 'job': return 'GOLD_JOB' as const;
+            case 'jobchange': return 'GOLD_JOBCHANGE' as const;
+        }
+    };
+
+    const getTabLabel = (tab: GoldType) => {
+        switch (tab) {
+            case 'wealth': return '재물운';
+            case 'business': return '창업/사업';
+            case 'job': return '취직운';
+            case 'jobchange': return '이직운';
         }
     };
 
     const { object: result, submit, isLoading } = useObject({
         api: `/api/gold?type=${activeTab}`,
         schema: goldSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object, error: validationError }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[GoldPage] Result validation failed:', validationError);
                 setError('재물 사주 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
             }
@@ -179,6 +153,32 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
         }
     });
 
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket(['GOLD_WEALTH', 'GOLD_BUSINESS', 'GOLD_JOB', 'GOLD_JOBCHANGE']);
+        if (ticket?.payload) {
+            const p = ticket.payload;
+            if (p.type && ['wealth', 'business', 'job', 'jobchange'].includes(p.type)) {
+                setActiveTab(p.type);
+            }
+            if (p.businessField) setBusinessField(p.businessField);
+            if (p.desiredCompany) setDesiredCompany(p.desiredCompany);
+            if (p.desiredRole) setDesiredRole(p.desiredRole);
+            if (p.currentJob) setCurrentJob(p.currentJob);
+            if (p.desiredJob) setDesiredJob(p.desiredJob);
+            setPendingAutoPayload(p);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (pendingAutoPayload && (!pendingAutoPayload.type || activeTab === pendingAutoPayload.type)) {
+            const payloadToRun = pendingAutoPayload;
+            setPendingAutoPayload(null);
+            submit(payloadToRun);
+        }
+    }, [pendingAutoPayload, activeTab, submit]);
+
     const handleTabChange = (tab: GoldType) => {
         setActiveTab(tab);
         setSearchParams({ type: tab });
@@ -187,7 +187,7 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!birthDate) {
+        if (!profile.birthDate) {
             alert('생년월일을 입력해주세요.');
             return;
         }
@@ -206,31 +206,37 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
         }
 
         const serviceKey = getServiceKey(activeTab);
-        const cost = SERVICE_COSTS[serviceKey];
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
-            return;
-        }
-
+        setIsPaying(true);
         try {
             setError(null);
-            const sajuData = calculateSaju(birthDate, birthTime);
-            submit({
-                type: activeTab,
-                birthDate,
-                birthTime,
-                gender,
-                mbti: session?.user?.user_metadata?.mbti || 'ENFP',
-                name: session?.user?.user_metadata?.full_name || '이용자',
-                sajuData,
-                businessField,
-                desiredCompany,
-                desiredRole,
-                currentJob,
-                desiredJob
+            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
+            const res = await startServicePayment({
+                serviceType: serviceKey,
+                serviceName: `재물 · 직장 사주 (${getTabLabel(activeTab)})`,
+                returnPath: `/gold?type=${activeTab}`,
+                payload: {
+                    type: activeTab,
+                    birthDate: profile.birthDate,
+                    birthTime: profile.birthTime,
+                    gender: profile.gender,
+                    mbti: profile.mbti || 'ENFP',
+                    name: profile.name || '이용자',
+                    sajuData,
+                    businessField,
+                    desiredCompany,
+                    desiredRole,
+                    currentJob,
+                    desiredJob,
+                },
+                customerName: profile.name || '비회원',
             });
-        } catch (e: any) {
-            setError(e.message);
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
+        } catch (err: any) {
+            setError(err?.message || '결제 요청 중 오류가 발생했습니다.');
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -252,30 +258,8 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
         }
     };
 
-    if (isAuthLoading) return null;
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-                <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-amber-500" />
-                </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
-                <p className="text-slate-500 text-sm mb-8 leading-relaxed">재물 사주 분석 서비스를 이용하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4.5 bg-slate-900 text-white rounded-full font-bold shadow hover:bg-amber-600 transition-colors"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
-    const userName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'mbtiju';
-    const userMbti = session?.user?.user_metadata?.mbti || 'ESTJ';
+    const userName = profile.name || '이용자';
+    const userMbti = profile.mbti || 'ESTJ';
 
     const cost = SERVICE_COSTS[getServiceKey(activeTab)];
 
@@ -291,8 +275,8 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
                         <ChevronLeft className="w-6 h-6 text-slate-600" />
                     </button>
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-100 text-slate-700 rounded-full text-xs font-black shadow-sm">
-                        <Coins className="w-4 h-4 text-amber-500" />
-                        보유: {credits}크레딧
+                        <CreditCard className="w-4 h-4 text-amber-500" />
+                        건당 {cost.toLocaleString()}원 · 비회원 이용
                     </div>
                 </div>
 
@@ -340,49 +324,12 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
 
                             <div className="p-8">
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest pl-1">성별</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => setGender('female')} 
-                                                    className={`py-3.5 rounded-xl text-xs font-bold transition-colors ${gender === 'female' ? 'bg-slate-900 text-white shadow' : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100'}`}
-                                                >
-                                                    여성
-                                                </button>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => setGender('male')} 
-                                                    className={`py-3.5 rounded-xl text-xs font-bold transition-colors ${gender === 'male' ? 'bg-slate-900 text-white shadow' : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100'}`}
-                                                >
-                                                    남성
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest pl-1">태어난 시간 (선택)</label>
-                                            <select 
-                                                value={birthTime} 
-                                                onChange={(e) => setBirthTime(e.target.value)} 
-                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-200 outline-none transition-all cursor-pointer"
-                                            >
-                                                {BIRTH_TIME_SLOTS.map((slot) => (
-                                                    <option key={slot.value} value={slot.value}>{slot.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest pl-1">생년월일</label>
-                                        <input 
-                                            type="date" 
-                                            value={birthDate} 
-                                            onChange={(e) => setBirthDate(e.target.value)} 
-                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-amber-200 outline-none transition-all" 
-                                        />
-                                    </div>
+                                    <GuestProfileCard
+                                        profile={profile}
+                                        onChange={updateProfile}
+                                        showName
+                                        title="나의 사주 · MBTI 정보"
+                                    />
 
                                     {/* 서비스 유형별 입력 폼 */}
                                     {activeTab === 'business' && (
@@ -455,12 +402,13 @@ const GoldPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
 
                                     <button 
                                         type="submit" 
-                                        className="w-full py-4.5 bg-slate-900 hover:bg-amber-600 text-white rounded-2xl font-black text-sm shadow hover:scale-[1.01] transition-all flex items-center justify-center gap-2"
+                                        disabled={isPaying}
+                                        className="w-full py-4.5 bg-slate-900 hover:bg-amber-600 text-white rounded-2xl font-black text-sm shadow hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <TrendingUp className="w-4 h-4" />
-                                        재물 사주 분석하기 ({cost} 크레딧)
+                                        {isPaying ? '결제 창 여는 중...' : `재물 사주 분석하기 (${cost.toLocaleString()}원 결제)`}
                                     </button>
-                                    <p className="text-center text-[10px] text-slate-400 font-bold">상담 결과는 마이페이지에 저장됩니다.</p>
+                                    <p className="text-center text-[10px] text-slate-400 font-bold">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다.</p>
                                 </form>
                             </div>
                         </div>

@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, Home, Receipt } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { clearPendingCheckout } from '../utils/pendingCheckout';
+import { promotePendingOrderToTicket } from '../utils/servicePayCheckout';
 import { track } from '../utils/analytics';
 
 const DeepReportEventModal = lazy(() => import('../components/DeepReportEventModal'));
@@ -14,6 +15,8 @@ const PaymentSuccess: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [showEventModal, setShowEventModal] = useState(false);
     const [session, setSession] = useState<any>(null);
+    const [approvedServiceName, setApprovedServiceName] = useState<string>('');
+    const [returnTargetPath, setReturnTargetPath] = useState<string>('/');
 
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
@@ -82,7 +85,17 @@ const PaymentSuccess: React.FC = () => {
                    await supabase.from('profiles').select('*').eq('id', user.id).single();
                 }
 
-                // 4. 심층 리포트인 경우 자동 생성 트리거 + 이벤트 팝업
+                // 4. 심층 리포트 또는 단품 운세 서비스 처리
+                if (orderId?.startsWith('SVC_')) {
+                    const ticket = promotePendingOrderToTicket(orderId);
+                    const nextPath = ticket?.returnPath || '/myluck?type=today';
+                    setApprovedServiceName(ticket?.serviceName || '운세 서비스');
+                    setReturnTargetPath(nextPath);
+                    setLoading(false);
+                    setTimeout(() => navigate(nextPath), 1200);
+                    return;
+                }
+
                 if (orderId?.startsWith('DEEPREPORT')) {
                     setIsGenerating(true);
                     fetch('/api/generate-and-save-report', {
@@ -202,8 +215,16 @@ const PaymentSuccess: React.FC = () => {
                             운명 심층 상담권이 성공적으로 지급되었습니다. 잠시 후 상담 화면으로 이동합니다.
                         </p>
                     </div>
+                ) : orderId?.startsWith('SVC_') ? (
+                    <div className="space-y-3 mb-6">
+                        <p className="text-slate-900 font-black text-lg">{approvedServiceName || '운세 분석'} 결제 완료!</p>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                            결제가 정상 승인되었습니다.<br />
+                            잠시 후 결과 생성 화면으로 자동 이동합니다.
+                        </p>
+                    </div>
                 ) : (
-                    <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
+                    <p className="text-slate-500 mb-6 font-medium">결제가 성공적으로 반영되었습니다.</p>
                 )}
                 
                 <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
@@ -217,9 +238,15 @@ const PaymentSuccess: React.FC = () => {
                     <button onClick={() => navigate('/')} className="flex items-center justify-center gap-2 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm">
                         <Home size={18} /> 홈으로
                     </button>
-                    <button onClick={() => navigate('/usage-history')} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
-                        <Receipt size={18} /> 내역 확인
-                    </button>
+                    {orderId?.startsWith('SVC_') ? (
+                        <button onClick={() => navigate(returnTargetPath)} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
+                            <Receipt size={18} /> 결과 바로 보기
+                        </button>
+                    ) : (
+                        <button onClick={() => navigate('/myluck?type=today')} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
+                            <Receipt size={18} /> 운세 보러가기
+                        </button>
+                    )}
                 </div>
             </div>
 

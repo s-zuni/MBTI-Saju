@@ -72,24 +72,27 @@ export const sendMessage = async (
 ): Promise<string> => {
     try {
         let pastContext = '';
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: sessions } = await supabase.from('chat_sessions')
-                .select('id').eq('user_id', user.id).neq('id', sessionId)
-                .order('created_at', { ascending: false }).limit(3);
+        const isGuest = sessionId.startsWith('guest_');
+        if (!isGuest) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: sessions } = await supabase.from('chat_sessions')
+                    .select('id').eq('user_id', user.id).neq('id', sessionId)
+                    .order('created_at', { ascending: false }).limit(3);
 
-            if (sessions && sessions.length > 0) {
-                const sessionIds = sessions.map(s => s.id);
-                const { data: msgs } = await supabase.from('chat_messages')
-                    .select('*').in('session_id', sessionIds)
-                    .order('created_at', { ascending: false }).limit(5);
-                if (msgs && msgs.length > 0) {
-                    pastContext = msgs.reverse().map(m => `${m.role === 'user' ? '사용자' : '신령님'}: ${m.content}`).join('\n');
+                if (sessions && sessions.length > 0) {
+                    const sessionIds = sessions.map(s => s.id);
+                    const { data: msgs } = await supabase.from('chat_messages')
+                        .select('*').in('session_id', sessionIds)
+                        .order('created_at', { ascending: false }).limit(5);
+                    if (msgs && msgs.length > 0) {
+                        pastContext = msgs.reverse().map(m => `${m.role === 'user' ? '사용자' : '신령님'}: ${m.content}`).join('\n');
+                    }
                 }
             }
         }
 
-        // 2. Call Backend API with Auth Token (서버가 sessionId 및 DB 기록 기준으로 과금 턴 자동 판정)
+        // 2. Call Backend API
         const { data: { session: activeSession } } = await supabase.auth.getSession();
         const authToken = activeSession?.access_token;
 
@@ -135,15 +138,16 @@ export const sendMessage = async (
             if (onToken) onToken(chunk);
         }
 
-        // 4. Save Final Bot Response to DB
-        await supabase.from('chat_messages').insert({
-            session_id: sessionId,
-            role: 'assistant',
-            content: fullText
-        });
+        // 4. Save Final Bot Response to DB (signed-in users only)
+        if (!isGuest) {
+            await supabase.from('chat_messages').insert({
+                session_id: sessionId,
+                role: 'assistant',
+                content: fullText
+            });
 
-        // Update session timestamp
-        await supabase.from('chat_sessions').update({ updated_at: new Date() }).eq('id', sessionId);
+            await supabase.from('chat_sessions').update({ updated_at: new Date() }).eq('id', sessionId);
+        }
 
         return fullText;
 

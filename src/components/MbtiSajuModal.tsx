@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, XCircle, Palette, Gift, MapPin, Coffee, Sun, Moon, Award, Gem } from 'lucide-react';
+import { Loader2, Sparkles, Brain, ScrollText, Zap, Share2, Download, Calendar, Layers, AlertTriangle, TrendingUp, Briefcase, Heart, Coins, CreditCard, XCircle, Palette, Gift, MapPin, Coffee, Sun, Moon, Award, Gem } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { stripMarkdown } from '../utils/textUtils';
@@ -8,8 +8,10 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { ensureValidSession } from '../supabaseClient';
 import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../config/deepReportConfig';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from './GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface MbtiSajuModalProps {
   isOpen: boolean;
@@ -46,12 +48,17 @@ const getElementColor = (element: string): ElementColor => {
   return DEFAULT_COLOR;
 };
 
-const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, onUseCredit, refreshCredits, onSuccess, credits, session: initialSession, onOpenDeepReport }) => {
+const GUEST_MBTI_SAJU_RESULT_KEY = 'mbtiju_guest_mbti_saju_result';
+
+const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNavigate, refreshCredits, onSuccess, session: initialSession, onOpenDeepReport }) => {
+  const { profile, updateProfile } = useGuestProfile();
   const [analysis, setAnalysis] = useState<any>(null);
   const reportRef = React.useRef<HTMLDivElement>(null);
+  const ticketCheckedRef = useRef(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
   const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -60,10 +67,6 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const { object: fullObj, submit: submitFull, isLoading: isAnalysisLoading, error: analysisError } = useObject({
     api: '/api/analysis-main?part=full',
     schema: analysisSchema,
-    headers: async () => {
-      const activeSession = await ensureValidSession();
-      return { 'Authorization': `Bearer ${activeSession?.access_token || initialSession?.access_token || ''}` };
-    },
     onFinish: ({ object, error: validationError }) => {
       if (object) {
         setGenerationError(null);
@@ -101,24 +104,36 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       setAnalysis((prev: any) => ({
         ...(prev || {}),
         ...fullObj,
-        full_name: initialSession?.user?.user_metadata?.full_name || prev?.full_name,
-        mbti: initialSession?.user?.user_metadata?.mbti || prev?.mbti,
-        birth_date: initialSession?.user?.user_metadata?.birth_date || prev?.birth_date,
+        full_name: initialSession?.user?.user_metadata?.full_name || prev?.full_name || profile.name || '이용자',
+        mbti: initialSession?.user?.user_metadata?.mbti || prev?.mbti || profile.mbti,
+        birth_date: initialSession?.user?.user_metadata?.birth_date || prev?.birth_date || profile.birthDate,
+        gender: initialSession?.user?.user_metadata?.gender || prev?.gender || profile.gender,
       }));
     }
-  }, [fullObj, initialSession]);
+  }, [fullObj, initialSession, profile]);
 
   // Loading state consolidation
   useEffect(() => {
     if (!isAnalysisLoading && fullObj) {
-      const finalizeSave = async () => {
-        await supabase.auth.updateUser({
-          data: { ...initialSession?.user?.user_metadata, analysis: fullObj }
-        });
+      const merged = {
+        ...fullObj,
+        full_name: initialSession?.user?.user_metadata?.full_name || profile.name || '이용자',
+        mbti: initialSession?.user?.user_metadata?.mbti || profile.mbti,
+        birth_date: initialSession?.user?.user_metadata?.birth_date || profile.birthDate,
+        gender: initialSession?.user?.user_metadata?.gender || profile.gender,
       };
-      finalizeSave();
+      try {
+        localStorage.setItem(GUEST_MBTI_SAJU_RESULT_KEY, JSON.stringify(merged));
+      } catch {
+        // ignore storage errors
+      }
+      if (initialSession?.user) {
+        supabase.auth.updateUser({
+          data: { ...initialSession.user.user_metadata, analysis: fullObj }
+        }).catch(() => {});
+      }
     }
-  }, [isAnalysisLoading, fullObj, initialSession]);
+  }, [isAnalysisLoading, fullObj, initialSession, profile]);
 
   const loadAnalysis = React.useCallback(async () => {
     try {
@@ -136,17 +151,34 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           mbti: metadata.mbti,
           gender: metadata.gender
         });
+        return;
+      }
+      const cached = localStorage.getItem(GUEST_MBTI_SAJU_RESULT_KEY);
+      if (cached) {
+        setAnalysis(JSON.parse(cached));
       }
     } catch (err) {
       console.error('MbtiSajuModal loadAnalysis error:', err);
-    } finally {
-      // No more loading state to clear
     }
   }, [initialSession]);
 
   useEffect(() => {
-    if (isOpen) loadAnalysis();
-  }, [isOpen, loadAnalysis]);
+    if (!isOpen) {
+      ticketCheckedRef.current = false;
+      return;
+    }
+    if (!ticketCheckedRef.current) {
+      ticketCheckedRef.current = true;
+      const ticket = consumePaidServiceTicket(['MBTI_SAJU', 'REGENERATE_MBTI_SAJU']);
+      if (ticket?.payload) {
+        setGenerationError(null);
+        setAnalysis(null);
+        submitFull(ticket.payload);
+        return;
+      }
+    }
+    loadAnalysis();
+  }, [isOpen, loadAnalysis, submitFull]);
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -191,35 +223,74 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   };
 
 
-  const handleRegenerate = async () => {
-    if (!window.confirm("기존 결과는 보존되지 않으며, 크레딧이 10회 차감됩니다. 계속하시겠습니까?")) return;
-    const cost = SERVICE_COSTS.REGENERATE_MBTI_SAJU;
-    if (credits !== undefined && credits < cost) {
-      onNavigate('creditPurchase' as any);
-      onClose();
-      return;
+  const buildAnalysisPayload = () => {
+    const birthDate = profile.birthDate || initialSession?.user?.user_metadata?.birth_date;
+    const birthTime = profile.birthTime ?? initialSession?.user?.user_metadata?.birth_time ?? '';
+    const gender = profile.gender || initialSession?.user?.user_metadata?.gender || 'female';
+    const mbti = profile.mbti || initialSession?.user?.user_metadata?.mbti || 'INFJ';
+    const name = profile.name || initialSession?.user?.user_metadata?.full_name || '이용자';
+
+    if (!birthDate) {
+      alert('생년월일을 입력해주세요.');
+      return null;
     }
+
+    const sajuData = calculateSaju(birthDate, birthTime);
+    return {
+      name,
+      gender,
+      birthDate,
+      birthTime,
+      mbti,
+      sajuData,
+    };
+  };
+
+  const handlePayAndGenerate = async () => {
+    const payload = buildAnalysisPayload();
+    if (!payload) return;
+    setIsPaying(true);
+    setGenerationError(null);
+    try {
+      const res = await startServicePayment({
+        serviceType: 'MBTI_SAJU',
+        serviceName: 'MBTI × 사주 통합 분석',
+        returnPath: '/?openService=mbtiSaju',
+        payload,
+        customerName: payload.name || '비회원',
+      });
+      if (!res.success && res.error_msg) {
+        setGenerationError(res.error_msg);
+      }
+    } catch (err: any) {
+      setGenerationError(err?.message || '결제 요청 중 오류가 발생했습니다.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    const cost = SERVICE_COSTS.REGENERATE_MBTI_SAJU;
+    if (!window.confirm(`기존 결과는 새로 생성되며, 재생성 비용 ${cost.toLocaleString()}원이 결제됩니다. 계속하시겠습니까?`)) return;
+    const payload = buildAnalysisPayload();
+    if (!payload) return;
+
     setIsRegenerating(true);
     setGenerationError(null);
     try {
-      const { data: { session: fetchedSession } } = await supabase.auth.getSession();
-      const activeSession = fetchedSession || initialSession;
-
-      const metadata = activeSession?.user?.user_metadata;
-      const sajuData = calculateSaju(metadata.birth_date, metadata.birth_time);
-      const payload = {
-        name: metadata.full_name,
-        gender: metadata.gender,
-        birthDate: metadata.birth_date,
-        birthTime: metadata.birth_time,
-        mbti: metadata.mbti,
-        sajuData,
-      };
-      setAnalysis(null);
-      submitFull(payload);
-      // onUseCredit call moved to onFinish of useObject
+      const res = await startServicePayment({
+        serviceType: 'REGENERATE_MBTI_SAJU',
+        serviceName: 'MBTI × 사주 정밀 재생성',
+        returnPath: '/?openService=mbtiSaju',
+        payload,
+        customerName: payload.name || '비회원',
+      });
+      if (!res.success && res.error_msg) {
+        setGenerationError(res.error_msg);
+      }
     } catch (error: any) {
       console.error("Regenerate Error:", error);
+      setGenerationError(error?.message || '결제 요청 중 오류가 발생했습니다.');
     } finally {
       setIsRegenerating(false);
     }
@@ -626,7 +697,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             리포트 PDF 다운로드
           </button>
           <button onClick={handleRegenerate} disabled={isRegenerating} className="mt-4 text-slate-400 text-xs font-bold underline">
-            {isRegenerating ? "진행 중..." : "정밀 데이터 재생성 (10크레딧)"}
+            {isRegenerating ? "결제 창 여는 중..." : `정밀 데이터 재생성 (${SERVICE_COSTS.REGENERATE_MBTI_SAJU.toLocaleString()}원)`}
           </button>
         </div>
       </div>
@@ -669,10 +740,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
                 {analysisError?.message || generationError || "일시적인 서버 부하로 분석이 중단되었습니다."}
                 <br />
-                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-violet-200">걱정 마세요! 크레딧은 차감되지 않았습니다.</span>
+                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-violet-200">결제하신 분석은 다시 시도하실 수 있습니다.</span>
               </p>
               <button 
-                onClick={() => { setAnalysis(null); loadAnalysis(); }} 
+                onClick={() => { setGenerationError(null); setAnalysis(null); loadAnalysis(); }} 
                 className="px-8 py-4 bg-slate-950 text-white rounded-full font-black text-sm shadow-xl active:scale-95 transition-all"
               >
                 다시 시도하기
@@ -681,9 +752,29 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           ) : analysis ? (
             <div ref={reportRef}>{renderSoulReport()}</div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-slate-950 font-black text-lg mb-8">리포트를 먼저 생성해주세요.</p>
-              <button onClick={onClose} className="px-10 py-4 bg-slate-950 text-white rounded-full font-black">확인</button>
+            <div className="space-y-6 py-4">
+              <div className="text-center space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-black">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  건당 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원 · 회원가입 없이 바로 이용
+                </span>
+                <h4 className="text-xl font-black text-slate-950 tracking-tight">MBTI × 사주 통합 운명 리포트</h4>
+                <p className="text-xs text-slate-500 font-medium">내 사주와 MBTI를 입력하고 결제하면 즉시 리포트가 생성됩니다.</p>
+              </div>
+              <GuestProfileCard
+                profile={profile}
+                onChange={updateProfile}
+                showName
+                title="나의 정보 입력"
+              />
+              <button
+                onClick={handlePayAndGenerate}
+                disabled={isPaying}
+                className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Sparkles className="w-5 h-5" />
+                {isPaying ? '결제 창 여는 중...' : `MBTI × 사주 분석 시작 (${SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원 결제)`}
+              </button>
             </div>
           )}
         </div>

@@ -85,37 +85,10 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 인증 및 크레딧 차감
-    // "첫 분석 무료" 여부는 클라이언트가 보내는 플래그(isRegenerate 등)를 신뢰하지 않고,
-    // 서버가 profiles.mbti_saju_free_used를 원자적으로 조회/소진(claim_mbti_saju_free_slot RPC)해 판정한다.
-    // 그래야 요청 body를 조작해 반복 호출로 무제한 무료 생성을 받는 것을 막을 수 있다.
-    let claimedFreeSlotThisRequest = false;
-
+    // 비회원 즉시 이용 + Rate Limit 검사 (건당 결제 모델)
     const authResult = await authenticateUser(req, {
-        resolveCost: async ({ user, supabaseAdmin }) => {
-            if (part !== 'full' && part !== 'core') {
-                // fortune/strategy 단계는 이 엔드포인트에서 별도 과금하지 않음 (기존 동작 유지)
-                return { cost: 0 };
-            }
-
-            const { data: claimedFree, error: claimError } = await supabaseAdmin.rpc(
-                'claim_mbti_saju_free_slot',
-                { p_user_id: user.id }
-            );
-
-            if (claimError) {
-                console.error('[analysis-main] claim_mbti_saju_free_slot RPC error:', claimError);
-                // 무료 슬롯 판정에 실패하면 안전하게 유료(재분석) 경로로 처리한다.
-                return { serviceType: 'REGENERATE_MBTI_SAJU', cost: SERVICE_COSTS.REGENERATE_MBTI_SAJU };
-            }
-
-            if (claimedFree) {
-                claimedFreeSlotThisRequest = true;
-                return { serviceType: 'MBTI_SAJU', cost: 0 };
-            }
-
-            return { serviceType: 'REGENERATE_MBTI_SAJU', cost: SERVICE_COSTS.REGENERATE_MBTI_SAJU };
-        }
+        allowAnonymous: true,
+        cost: 0,
     });
 
     if (authResult.errorResponse) {
@@ -180,17 +153,6 @@ ${sajuContextBlock}`;
         }
     } catch (error: any) {
         console.error(`[Streaming Error - ${part}]:`, error);
-
-        // AI 생성이 완전히 실패한 경우, 사용자가 손해보지 않도록 방금 소진한 무료 슬롯을 되돌려준다.
-        if (claimedFreeSlotThisRequest && authResult.user) {
-            const { error: releaseError } = await authResult.supabaseAdmin.rpc(
-                'release_mbti_saju_free_slot',
-                { p_user_id: authResult.user.id }
-            );
-            if (releaseError) {
-                console.error('[analysis-main] release_mbti_saju_free_slot failed:', releaseError);
-            }
-        }
 
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다.", details: error.message }), {
             status: 500,

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, Coins, Compass, Moon, Plane, Star, CircleDot, X, LucideIcon } from 'lucide-react';
+import { ChevronLeft, Compass, Moon, Plane, Star, CircleDot, CreditCard, LucideIcon } from 'lucide-react';
 import { trackOnce } from '../utils/analytics';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
 
 import TodayFortunePage from './TodayFortunePage';
 import TarotPage from './TarotPage';
@@ -16,22 +14,19 @@ export type LuckType = 'today' | 'tarot' | 'trip' | 'jamidusu' | 'kbo';
 interface TabOption {
   id: LuckType;
   label: string;
-  shortLabel: string;
+  priceLabel: string;
   icon: LucideIcon;
 }
 
 const TABS: TabOption[] = [
-  { id: 'today', label: '오늘/내일 운세', shortLabel: '오늘/내일', icon: Compass },
-  { id: 'tarot', label: '타로', shortLabel: '타로', icon: Moon },
-  { id: 'trip', label: '여행', shortLabel: '여행', icon: Plane },
-  { id: 'jamidusu', label: '자미두수', shortLabel: '자미두수', icon: Star },
-  { id: 'kbo', label: 'KBO 팬궁합', shortLabel: 'KBO 팬궁합', icon: CircleDot },
+  { id: 'today', label: '오늘/내일 운세', priceLabel: '490원', icon: Compass },
+  { id: 'tarot', label: '타로', priceLabel: '490원', icon: Moon },
+  { id: 'trip', label: '여행', priceLabel: '490원', icon: Plane },
+  { id: 'jamidusu', label: '자미두수', priceLabel: '990원', icon: Star },
+  { id: 'kbo', label: 'KBO 팬궁합', priceLabel: '490원', icon: CircleDot },
 ];
 
-const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
-  const { session: hookSession } = useAuth();
-  const session = propSession || hookSession;
-  const { credits } = useCredits(session);
+const MyLuckPage: React.FC<{ session?: any }> = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -48,37 +43,20 @@ const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
     }
   }, [searchParams]);
 
-  const welcomeKey = session?.user?.id ? `hasSeenOnboarding_${session.user.id}` : null;
-  const [showWelcome, setShowWelcome] = useState(false);
-
   useEffect(() => {
-    if (!welcomeKey) return;
-    try {
-      setShowWelcome(!localStorage.getItem(welcomeKey));
-    } catch {
-      setShowWelcome(false);
-    }
     trackOnce('first_result_view');
-  }, [welcomeKey]);
+  }, []);
 
-  const dismissWelcome = () => {
-    try {
-      if (welcomeKey) localStorage.setItem(welcomeKey, 'true');
-    } catch {
-      // ignore
-    }
-    setShowWelcome(false);
-  };
-
-  const handleTabChange =(tab: LuckType) => {
+  const handleTabChange = (tab: LuckType) => {
     setActiveTab(tab);
     setSearchParams({ type: tab });
   };
 
+  const currentTabInfo = TABS.find((t) => t.id === activeTab) || TABS[0];
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32 pt-20 animate-fade-in">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header Navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => navigate('/')}
@@ -87,28 +65,12 @@ const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
           >
             <ChevronLeft className="w-6 h-6 text-slate-600" />
           </button>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-100 text-slate-700 rounded-full text-xs font-black shadow-sm">
-            <Coins className="w-4 h-4 text-amber-500 fill-amber-500/10" />
-            보유: {credits}크레딧
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-full text-xs font-black shadow-sm">
+            <CreditCard className="w-3.5 h-3.5 text-violet-600" />
+            비회원 건당 이용 · {currentTabInfo?.priceLabel || '490원'}
           </div>
         </div>
 
-        {/* 가입 직후 1회 웰컴 배너 (온보딩 모달 대체) */}
-        {showWelcome && (
-          <div className="mb-4 p-4 bg-violet-50 border border-violet-100 rounded-2xl flex items-start gap-3">
-            <div className="flex-1">
-              <p className="text-sm font-bold text-violet-900">가입을 환영해요! 🎉</p>
-              <p className="text-xs text-violet-700 mt-0.5">
-                가입 축하 크레딧으로 아래 운세를 바로 볼 수 있어요. 크레딧이 부족해지면 필요한 만큼만 충전하면 돼요.
-              </p>
-            </div>
-            <button onClick={dismissWelcome} aria-label="닫기" className="p-1 text-violet-400 hover:text-violet-700">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Pill Tabs (토스 스타일) */}
         <div className="flex gap-1.5 p-1.5 bg-slate-100/90 rounded-2xl mb-6 overflow-x-auto no-scrollbar shadow-inner">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -130,7 +92,6 @@ const MyLuckPage: React.FC<{ session?: any }> = ({ session: propSession }) => {
           })}
         </div>
 
-        {/* Active Tab View */}
         <div className="transition-all duration-300">
           {activeTab === 'today' && <TodayFortunePage isEmbedded />}
           {activeTab === 'tarot' && <TarotPage isEmbedded />}

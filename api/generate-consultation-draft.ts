@@ -31,7 +31,7 @@ export default async function handler(req: Request) {
     }
 
     // 관리자 인증 및 인가 검증 (generate-deep-report.ts 패턴 동일)
-    const authResult = await authenticateUser(req);
+    const authResult = await authenticateUser(req, { allowAnonymous: false });
     if (authResult.errorResponse) return authResult.errorResponse;
 
     const { data: profile } = await authResult.supabaseAdmin

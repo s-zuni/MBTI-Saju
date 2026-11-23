@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Plane, Calendar, Globe, CalendarDays, PenLine, ChevronLeft, Coins, Lock, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart, Loader2, Instagram } from 'lucide-react';
+import { MapPin, Plane, Calendar, Globe, CalendarDays, PenLine, ChevronLeft, CreditCard, Camera, Coffee, Users, Sparkles, Lightbulb, Clock, Heart, Loader2, Instagram } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import TripShareCard from '../components/TripShareCard';
 import { stripMarkdown } from '../utils/textUtils';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tripSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { ensureValidSession } from '../supabaseClient';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import { consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const DOMESTIC_REGIONS = [
     '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시', 
@@ -26,11 +25,10 @@ const INTERNATIONAL_REGIONS = [
 ];
 
 const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
     const reportRef = useRef<HTMLDivElement>(null);
+    const ticketCheckedRef = useRef(false);
 
     const [isFormSubmitted, setIsFormSubmitted] = useState(false);
     const [tripType, setTripType] = useState<'domestic' | 'international'>('domestic');
@@ -39,21 +37,15 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const [requirements, setRequirements] = useState('');
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState(false);
     const shareRef = useRef<HTMLDivElement>(null);
     const [isSharing, setIsSharing] = useState(false);
 
-    // Streaming Hook
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special?type=trip',
         schema: tripSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
         onFinish: ({ object, error: validationError }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[TripPage] Result validation failed:', validationError);
                 setError('여행지 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
             }
@@ -63,6 +55,20 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
+
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket(['TRIP', 'COMPATIBILITY_TRIP']);
+        if (ticket?.payload) {
+            if (ticket.payload.tripType) setTripType(ticket.payload.tripType);
+            if (ticket.payload.selectedRegion) setSelectedRegion(ticket.payload.selectedRegion);
+            if (ticket.payload.duration) setDuration(ticket.payload.duration);
+            if (ticket.payload.requirements) setRequirements(ticket.payload.requirements);
+            setIsFormSubmitted(true);
+            submit(ticket.payload);
+        }
+    }, [submit]);
 
     useEffect(() => {
         setSelectedRegion(tripType === 'domestic' ? DOMESTIC_REGIONS[16] : INTERNATIONAL_REGIONS[0]);
@@ -85,38 +91,40 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!session?.user?.user_metadata) {
-            openModal('analysis', 'login');
+        if (!profile.birthDate) {
+            alert('생년월일을 입력해주세요.');
             return;
         }
 
-        const cost = SERVICE_COSTS.COMPATIBILITY_TRIP;
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
-            return;
-        }
-
-        setIsFormSubmitted(true);
+        setIsPaying(true);
         setError(null);
-
         try {
-            const user = session.user.user_metadata;
-            const sajuData = calculateSaju(user.birth_date, user.birth_time);
-
-            submit({
-                type: 'trip',
-                serviceType: 'trip',
-                birthDate: user.birth_date,
-                mbti: user.mbti,
-                sajuData,
-                tripType,
-                selectedRegion,
-                duration,
-                requirements
+            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
+            const res = await startServicePayment({
+                serviceType: 'TRIP',
+                serviceName: '행운의 여행지 분석',
+                returnPath: '/myluck?type=trip',
+                payload: {
+                    type: 'trip',
+                    serviceType: 'trip',
+                    birthDate: profile.birthDate,
+                    mbti: profile.mbti,
+                    sajuData,
+                    tripType,
+                    selectedRegion,
+                    duration,
+                    requirements
+                },
+                customerName: profile.name,
             });
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
         } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다.');
+            setError('결제 준비 중 오류가 발생했습니다.');
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -134,38 +142,9 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     };
 
-    if (isAuthLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
-            </div>
-        );
-    }
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-indigo-600" />
-                </div>
-                <h2 className="text-2xl font-black text-slate-950 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8">여행 운세 서비스를 이용하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-600 transition-all active:scale-95 animate-bounce"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className={isEmbedded ? "pb-12 animate-fade-in" : "min-h-screen bg-slate-50 pb-32 pt-20 animate-fade-in"}>
             <div className="max-w-2xl mx-auto px-4">
-                {/* Header Navigation */}
                 {!isEmbedded && (
                     <div className="flex items-center justify-between mb-8 px-4">
                         <button 
@@ -174,9 +153,9 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         >
                             <ChevronLeft className="w-6 h-6 text-slate-600" />
                         </button>
-                        <div className="flex items-center gap-1 px-3 py-1.5 bg-sky-100 text-sky-600 rounded-full text-sm font-bold">
-                            <Coins className="w-4 h-4" />
-                            {credits}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-100 text-sky-700 rounded-full text-sm font-bold">
+                            <CreditCard className="w-4 h-4" />
+                            {SERVICE_COSTS.TRIP.toLocaleString()}원
                         </div>
                     </div>
                 )}
@@ -194,6 +173,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                     <div className="p-10">
                         {!isFormSubmitted ? (
                             <div className="space-y-10 animate-fade-in">
+                                <GuestProfileCard profile={profile} onChange={updateProfile} compact />
                                 <section className="space-y-6">
                                     <label className="flex items-center gap-3 text-sm font-black text-slate-950 uppercase tracking-[0.2em]">
                                         <Globe className="w-5 h-5 text-sky-500" /> 어디로 떠날까요?
@@ -260,10 +240,11 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                 <div className="pt-8">
                                     <button 
                                         onClick={handleAnalyzeClick} 
-                                        className="w-full py-6 bg-slate-950 hover:bg-sky-600 text-white rounded-[32px] font-black text-xl shadow-2xl hover:shadow-sky-200/50 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2"
+                                        disabled={isPaying}
+                                        className="w-full py-6 bg-slate-950 hover:bg-sky-600 text-white rounded-[32px] font-black text-xl shadow-2xl hover:shadow-sky-200/50 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2 disabled:opacity-60"
                                     >
-                                        <span>운명의 여행지 찾기</span>
-                                        <span className="text-xs text-sky-400 font-bold tracking-widest">{SERVICE_COSTS.TRIP} 크레딧</span>
+                                        <span>운명의 여행지 찾기 ({SERVICE_COSTS.TRIP.toLocaleString()}원 결제)</span>
+                                        <span className="text-xs text-sky-300 font-bold tracking-widest">가입 없이 1회 단품 결제 · 즉시 분석</span>
                                     </button>
                                 </div>
                             </div>
@@ -426,7 +407,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 <TripShareCard
                                                     ref={shareRef}
                                                     result={result as any}
-                                                    userName={session?.user?.user_metadata?.full_name || '사용자'}
+                                                    userName={profile.name || '사용자'}
                                                 />
                                             )}
                                         </div>
