@@ -372,7 +372,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => navigate('/?openService=mbtiSaju')}
+                                        onClick={() => navigate('/?openService=freePreview')}
                                         className="py-4 px-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
                                     >
                                         <Sparkles className="w-4 h-4 shrink-0" />

@@ -101,10 +101,21 @@ export default async function handler(req: Request) {
     const finalSaju = getPreciseSajuData({ birthDate, birthTime, gender });
     const sajuContextBlock = buildRichSajuContext(finalSaju);
 
+    const mbtiLabel = !mbti || mbti === '미입력'
+        ? '미입력 (사주 원국 중심으로 정밀 분석하고, MBTI 연동 섹션에서는 타고난 기질이 일상 행동·심리로 드러나는 양상을 자연스럽게 풀어주세요)'
+        : mbti;
+
     const userQuery = `[분석 대상자 정보]
-사용자 성함: ${name}, MBTI: ${mbti}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender || '알수없음'}
+사용자 성함: ${name || '이용자'}, MBTI: ${mbtiLabel}, 생년월일시: ${birthDate} ${birthTime || ''}, 성별: ${gender || '알수없음'}
 
 ${sajuContextBlock}`;
+
+    let receiptReleased = false;
+    const safeReleaseReceipt = async () => {
+        if (receiptReleased) return;
+        receiptReleased = true;
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+    };
 
     try {
         if (part === 'full' || part === 'core') {
@@ -119,6 +130,16 @@ ${sajuContextBlock}`;
                         prompt: userQuery,
                         maxOutputTokens: 16384,
                         maxRetries: 0, // Faster fallback
+                        onError: async ({ error }) => {
+                            console.warn(`[analysis-main stream onError]:`, error);
+                            await safeReleaseReceipt();
+                        },
+                        onFinish: async ({ object, error }) => {
+                            if (!object || error) {
+                                console.warn(`[analysis-main stream onFinish invalid]:`, error);
+                                await safeReleaseReceipt();
+                            }
+                        },
                     });
                     return result.toTextStreamResponse({ headers: reqCorsHeaders });
                 } catch (error) {

@@ -77,11 +77,10 @@ export const strategySchema = z.object({
     solution: z.string()
 });
 
-// Full Consolidated Analysis
-export const fullAnalysisSchema = z.intersection(
-    z.intersection(analysisSchema, yearlyFortuneSchema),
-    strategySchema
-);
+// Full Consolidated Analysis (flat object schema — avoids top-level allOf rejected by OpenAI Structured Outputs)
+export const fullAnalysisSchema = analysisSchema
+    .extend(yearlyFortuneSchema.shape)
+    .extend(strategySchema.shape);
 
 // Quick Fortune (Daily/Tomorrow)
 const fortuneItemSchema = z.object({

@@ -216,6 +216,13 @@ ${richSajuContext}
 (뇌리에 박힐 강렬하고 단호한 통찰 한 줄)`;
             }
 
+            let receiptReleased = false;
+            const safeReleaseReceipt = async () => {
+                if (receiptReleased) return;
+                receiptReleased = true;
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+            };
+
             try {
                 let lastError;
                 for (let attempt = 0; attempt < 4; attempt++) {
@@ -228,6 +235,10 @@ ${richSajuContext}
                             prompt: userQuery,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
+                            onError: async () => { await safeReleaseReceipt(); },
+                            onFinish: async ({ object, error }) => {
+                                if (!object || error) await safeReleaseReceipt();
+                            },
                         });
                         return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {

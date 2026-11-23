@@ -121,6 +121,13 @@ export default async (req: Request) => {
             advice: z.string()
         });
 
+        let receiptReleased = false;
+        const safeReleaseReceipt = async () => {
+            if (receiptReleased) return;
+            receiptReleased = true;
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+        };
+
         try {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
@@ -133,6 +140,10 @@ export default async (req: Request) => {
                         prompt: userQuery,
                         maxOutputTokens: 16384,
                         maxRetries: 0, // Faster switching
+                        onError: async () => { await safeReleaseReceipt(); },
+                        onFinish: async ({ object, error }) => {
+                            if (!object || error) await safeReleaseReceipt();
+                        },
                     });
                     return result.toTextStreamResponse({ headers: reqCorsHeaders });
                 } catch (error) {

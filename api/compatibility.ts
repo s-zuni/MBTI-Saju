@@ -130,6 +130,13 @@ export default async (req: Request) => {
             userQuery += `위 정보를 바탕으로 본인의 '이상형(궁합)'과 관계 조언을 수행해 주세요. 특히 ${relationshipStr} 관점에서 어떤 스타일의 사람을 만나야 성공적인지 분석해 주세요.`;
         }
 
+        let receiptReleased = false;
+        const safeReleaseReceipt = async () => {
+            if (receiptReleased) return;
+            receiptReleased = true;
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+        };
+
         try {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
@@ -151,6 +158,10 @@ export default async (req: Request) => {
                         prompt: userQuery,
                         maxOutputTokens: 16384,
                         maxRetries: 0,
+                        onError: async () => { await safeReleaseReceipt(); },
+                        onFinish: async ({ object, error }) => {
+                            if (!object || error) await safeReleaseReceipt();
+                        },
                     });
                     return result.toTextStreamResponse({ headers: reqCorsHeaders });
                 } catch (error) {

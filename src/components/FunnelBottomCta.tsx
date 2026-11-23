@@ -7,7 +7,7 @@ import { track } from '../utils/analytics';
 
 interface FunnelBottomCtaProps {
   from?: string;
-  onOpenDeepReport?: () => void;
+  onOpenDeepReport?: (() => void) | undefined;
   title?: string;
   subtitle?: string;
 }

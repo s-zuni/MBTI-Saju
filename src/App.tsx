@@ -151,11 +151,18 @@ function AppContent({
     closeAllModals();
   }, [location.pathname, closeAllModals]);
 
-  // 결제 완료 후 홈 복귀 시 대상 모달 자동 오픈
+  // 결제 완료 후 홈 복귀 시 처리 (freePreview는 팝업 없이 인라인 영역으로 스크롤)
   useEffect(() => {
     if (location.pathname !== '/') return;
     const params = new URLSearchParams(location.search);
     const openService = params.get('openService');
+    if (openService === 'freePreview') {
+      const timer = setTimeout(() => {
+        document.getElementById('free-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState({}, document.title, '/');
+      }, 250);
+      return () => clearTimeout(timer);
+    }
     if (openService === 'mbtiSaju') {
       openModal('mbtiSaju');
       window.history.replaceState({}, document.title, '/');

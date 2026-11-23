@@ -76,6 +76,13 @@ export default async (req: Request) => {
         일자: ${new Date().toLocaleDateString('ko-KR')}
         파트너 리스트: ${JSON.stringify(partnersData)}`;
 
+        let receiptReleased = false;
+        const safeReleaseReceipt = async () => {
+            if (receiptReleased) return;
+            receiptReleased = true;
+            await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+        };
+
         try {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
@@ -94,6 +101,10 @@ export default async (req: Request) => {
                         prompt: userQuery,
                         maxOutputTokens: 16384,
                         maxRetries: 0,
+                        onError: async () => { await safeReleaseReceipt(); },
+                        onFinish: async ({ object, error }) => {
+                            if (!object || error) await safeReleaseReceipt();
+                        },
                     });
                     return result.toTextStreamResponse({ headers: responseHeaders });
                 } catch (error) {

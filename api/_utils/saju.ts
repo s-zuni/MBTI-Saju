@@ -175,7 +175,7 @@ export function getPreciseSajuData(input: SajuInput): PreciseSajuData {
     const { birthDate, birthTime, gender, isLunar, isLeapMonth, longitude, dayBoundary } = input;
 
     // 1. 날짜 및 시간 파싱
-    const cleanDate = birthDate.replace(/[-./]/g, '');
+    const cleanDate = String(birthDate || '1990-01-01').replace(/[-./]/g, '');
     const year = Number(cleanDate.substring(0, 4)) || 1990;
     const month = Number(cleanDate.substring(4, 6)) || 1;
     const day = Number(cleanDate.substring(6, 8)) || 1;

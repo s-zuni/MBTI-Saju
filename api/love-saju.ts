@@ -177,6 +177,13 @@ ${targetRichSaju}
 7. specialSection (마음 포착 솔루션):
    - "향후 N개월 안에 승부를 봐야 합니다" 또는 "사주명리학적으로 1년간은 서로 간의 흐름이 불리합니다" 등 사실적 타임라인 기운을 선제시하고 500자 이상으로 종합 제언 및 승부 행동 지침을 서술하십시오.`;
 
+            let receiptReleased = false;
+            const safeReleaseReceipt = async () => {
+                if (receiptReleased) return;
+                receiptReleased = true;
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+            };
+
             try {
                 let lastError;
                 for (let attempt = 0; attempt < 4; attempt++) {
@@ -189,6 +196,10 @@ ${targetRichSaju}
                             prompt: userQuery,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
+                            onError: async () => { await safeReleaseReceipt(); },
+                            onFinish: async ({ object, error }) => {
+                                if (!object || error) await safeReleaseReceipt();
+                            },
                         });
                         return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {

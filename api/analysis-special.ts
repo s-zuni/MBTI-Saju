@@ -388,6 +388,13 @@ MBTI: ${mbti}
 
     const finalUserQuery = `${sajuContextBlock}\n\n${userQuery}`;
 
+    let receiptReleased = false;
+    const safeReleaseReceipt = async () => {
+        if (!requirePaymentReceipt || receiptReleased) return;
+        receiptReleased = true;
+        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+    };
+
     try {
         let lastError;
         for (let attempt = 0; attempt < 4; attempt++) {
@@ -400,9 +407,17 @@ MBTI: ${mbti}
                     prompt: finalUserQuery,
                     maxOutputTokens: 16384,
                     maxRetries: 0,
-                    onFinish: async ({ object }) => {
+                    onError: async ({ error }) => {
+                        console.warn(`[analysis-special stream onError - ${targetType}]:`, error);
+                        await safeReleaseReceipt();
+                    },
+                    onFinish: async ({ object, error }) => {
+                        if (!object || error) {
+                            await safeReleaseReceipt();
+                            return;
+                        }
                         // 검증을 통과한 완성 결과만 저장 (같은 날/같은 입력이면 재사용)
-                        if (!object || !cacheKey || !authResult.user) return;
+                        if (!cacheKey || !authResult.user) return;
                         try {
                             await authResult.supabaseAdmin
                                 .from('ai_result_cache')
@@ -428,7 +443,7 @@ MBTI: ${mbti}
         }
         throw lastError;
     } catch (error: any) {
-        await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+        await safeReleaseReceipt();
         console.error(`[Streaming Error - ${targetType}]:`, error);
         return new Response(JSON.stringify({ error: "분석 중 오류가 발생했습니다." }), { 
             status: 500, 
