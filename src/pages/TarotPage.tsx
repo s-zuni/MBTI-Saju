@@ -11,6 +11,7 @@ import { tarotSchema } from '../config/schemas';
 import { TIERS } from '../hooks/useSubscription';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TarotCardBack = ({ className = "" }: { className?: string }) => (
@@ -430,6 +431,9 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                     결과 이미지 저장 (인스타 공유)
                                                 </button>
                                                 <button onClick={() => setStep('spread')} className="px-10 py-5 rounded-[1.8rem] bg-slate-900 text-white font-black hover:bg-slate-800 shadow-xl transition-all order-2">다른 주제 선택</button>
+                                            </div>
+                                            <div className="px-4 pb-12">
+                                                <FunnelBottomCta from="tarot_result" />
                                             </div>
                                         </div>
                                     )}

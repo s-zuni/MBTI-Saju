@@ -3,7 +3,7 @@ import { getCorsHeaders } from './cors';
 import { checkRateLimit, createRateLimitEdgeResponse, getClientIp } from './rate-limit';
 
 export const SERVICE_COSTS = {
-    FORTUNE_TODAY: 490,
+    FORTUNE_TODAY: 0,
     FORTUNE_TOMORROW: 490,
     MBTI_SAJU: 990,
     COMPATIBILITY_TRIP: 490,

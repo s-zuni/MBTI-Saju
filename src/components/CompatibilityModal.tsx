@@ -10,6 +10,7 @@ import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
+import FunnelBottomCta from './FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface PrefillData {
@@ -465,6 +466,8 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                     다른 인연 분석하기
                                 </button>
                             </div>
+
+                            <FunnelBottomCta from="compatibility_modal_result" />
                         </div>
                     ) : null}
                 </div>

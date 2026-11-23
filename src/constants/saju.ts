@@ -7,21 +7,32 @@ export const ELEMENT_STYLES: Record<string, string> = {
   default: 'bg-slate-50 text-slate-400 border-slate-100'
 };
 
-export const GAN_INFO: Record<string, { element: string; name: string }> = {
-  '甲': { element: 'wood', name: '갑목' }, '乙': { element: 'wood', name: '을목' },
-  '丙': { element: 'fire', name: '병화' }, '丁': { element: 'fire', name: '정화' },
-  '戊': { element: 'earth', name: '무토' }, '己': { element: 'earth', name: '기토' },
-  '庚': { element: 'metal', name: '경금' }, '辛': { element: 'metal', name: '신금' },
-  '壬': { element: 'water', name: '임수' }, '癸': { element: 'water', name: '계수' },
+export const GAN_INFO: Record<string, { element: string; name: string; hanja?: string }> = {
+  '甲': { element: 'wood', name: '갑목', hanja: '甲' }, '乙': { element: 'wood', name: '을목', hanja: '乙' },
+  '丙': { element: 'fire', name: '병화', hanja: '丙' }, '丁': { element: 'fire', name: '정화', hanja: '丁' },
+  '戊': { element: 'earth', name: '무토', hanja: '戊' }, '己': { element: 'earth', name: '기토', hanja: '己' },
+  '庚': { element: 'metal', name: '경금', hanja: '庚' }, '辛': { element: 'metal', name: '신금', hanja: '辛' },
+  '壬': { element: 'water', name: '임수', hanja: '壬' }, '癸': { element: 'water', name: '계수', hanja: '癸' },
+  '갑': { element: 'wood', name: '갑목', hanja: '甲' }, '을': { element: 'wood', name: '을목', hanja: '乙' },
+  '병': { element: 'fire', name: '병화', hanja: '丙' }, '정': { element: 'fire', name: '정화', hanja: '丁' },
+  '무': { element: 'earth', name: '무토', hanja: '戊' }, '기': { element: 'earth', name: '기토', hanja: '己' },
+  '경': { element: 'metal', name: '경금', hanja: '庚' }, '신': { element: 'metal', name: '신금', hanja: '辛' },
+  '임': { element: 'water', name: '임수', hanja: '壬' }, '계': { element: 'water', name: '계수', hanja: '癸' },
 };
 
-export const ZHI_INFO: Record<string, { element: string; name: string }> = {
-  '子': { element: 'water', name: '자수' }, '丑': { element: 'earth', name: '축토' },
-  '寅': { element: 'wood', name: '인목' }, '卯': { element: 'wood', name: '묘목' },
-  '辰': { element: 'earth', name: '진토' }, '巳': { element: 'fire', name: '사화' },
-  '午': { element: 'fire', name: '오화' }, '未': { element: 'earth', name: '미토' },
-  '申': { element: 'metal', name: '신금' }, '酉': { element: 'metal', name: '유금' },
-  '戌': { element: 'earth', name: '술토' }, '亥': { element: 'water', name: '해수' },
+export const ZHI_INFO: Record<string, { element: string; name: string; hanja?: string }> = {
+  '子': { element: 'water', name: '자수', hanja: '子' }, '丑': { element: 'earth', name: '축토', hanja: '丑' },
+  '寅': { element: 'wood', name: '인목', hanja: '寅' }, '卯': { element: 'wood', name: '묘목', hanja: '卯' },
+  '辰': { element: 'earth', name: '진토', hanja: '辰' }, '巳': { element: 'fire', name: '사화', hanja: '巳' },
+  '午': { element: 'fire', name: '오화', hanja: '午' }, '未': { element: 'earth', name: '미토', hanja: '未' },
+  '申': { element: 'metal', name: '신금', hanja: '申' }, '酉': { element: 'metal', name: '유금', hanja: '酉' },
+  '戌': { element: 'earth', name: '술토', hanja: '戌' }, '亥': { element: 'water', name: '해수', hanja: '亥' },
+  '자': { element: 'water', name: '자수', hanja: '子' }, '축': { element: 'earth', name: '축토', hanja: '丑' },
+  '인': { element: 'wood', name: '인목', hanja: '寅' }, '묘': { element: 'wood', name: '묘목', hanja: '卯' },
+  '진': { element: 'earth', name: '진토', hanja: '辰' }, '사': { element: 'fire', name: '사화', hanja: '巳' },
+  '오': { element: 'fire', name: '오화', hanja: '午' }, '미': { element: 'earth', name: '미토', hanja: '未' },
+  '신': { element: 'metal', name: '신금', hanja: '申' }, '유': { element: 'metal', name: '유금', hanja: '酉' },
+  '술': { element: 'earth', name: '술토', hanja: '戌' }, '해': { element: 'water', name: '해수', hanja: '亥' },
 };
 
 export const SHISHEN_MAP: Record<string, string> = {

@@ -10,14 +10,17 @@
 **One-liner:** 회원가입 없이 만세력 사주명리학(8자·일간·십성·대운/세운/월운)과 서양 MBTI 성격 유형을 교차 분석하는 비회원 건별 결제 운세·심층 리포트 플랫폼.
 **Web URL:** `https://www.mbtiju.com` (React SPA + Vercel Serverless + TossPayments 웹 SDK v2).
 **Core Offerings & Confirmed Pricing (크레딧 선충전 제도 폐지 — 100% 비회원 건별 단품 과금):**
-1. **사주 · 자미두수 계열 (`990원` / 1회, `src/config/creditConfig.ts`)**:
+1. **무료 진입 퍼널 서비스 (`0원` / 무료, `src/config/creditConfig.ts`)**:
+   - 오늘의 운세 (`FORTUNE_TODAY`, `/myluck?type=today`) — 회원가입·결제 없이 100% 무료 제공
+   - 정통 만세력 4주 8자 원국표 & 끊겨있는 사주 프리뷰 (`FreePreview.tsx`, `FreeSajuPreviewCard.tsx`) — 무료 확인 후 `[분석 더보기]` 클릭 시 결제창 이동
+2. **사주 · 자미두수 계열 (`990원` / 1회, `src/config/creditConfig.ts`)**:
    - MBTI × 사주 통합 분석 (`MBTI_SAJU`) / 정밀 재생성 (`REGENERATE_MBTI_SAJU`)
    - 자미두수 12궁 수호별/명반 해설 (`JAMIDUSU`)
    - MBTI × 사주 심층 궁합 (`COMPATIBILITY`)
    - 연애 · 부부 · 결혼 · 재회 · 짝사랑 사주 (`LOVE_*` 5종)
    - 재물 · 창업/사업 · 취직 · 이직 사주 (`GOLD_*` 4종)
-2. **운세 · 타로 · 테마 · 채팅 계열 (`490원` / 1회, `src/config/creditConfig.ts`)**:
-   - 오늘의 운세 (`FORTUNE_TODAY`) / 내일의 운세 (`FORTUNE_TOMORROW`)
+3. **내일 운세 · 타로 · 테마 · 채팅 계열 (`490원` / 1회, `src/config/creditConfig.ts`)**:
+   - 내일의 운세 (`FORTUNE_TOMORROW`)
    - 신비한 셔플 타로 3카드 리딩 (`TAROT`)
    - 행운의 여행지 추천 (`TRIP`, `COMPATIBILITY_TRIP`)
    - KBO 프로야구 팬 궁합 (`KBO`)

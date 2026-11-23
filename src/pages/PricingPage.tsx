@@ -25,13 +25,24 @@ const PAY_PER_SERVICE_ITEMS = [
         ],
     },
     {
-        group: '운세 · 타로 · 테마 서비스',
+        group: '무료 운세 · 만세력 프리뷰',
         price: SERVICE_COSTS.FORTUNE_TODAY,
+        badge: '0원 (무료)',
+        accent: 'border-emerald-300 bg-emerald-50/50 text-emerald-700',
+        btnStyle: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+        services: [
+            { title: '오늘의 운세 (무료)', desc: '일간 기반의 오늘 운세와 데일리 미션·행운 컬러·숫자 무료 확인', path: '/myluck?type=today', icon: Sun },
+            { title: '정통 만세력 4주 8자 & 사주 프리뷰', desc: '생년월일시·MBTI 기반 만세력 원국표 및 오행 분포 무료 분석', path: '/#free-preview', icon: Sparkles },
+        ],
+    },
+    {
+        group: '내일 운세 · 타로 · 테마 서비스',
+        price: SERVICE_COSTS.FORTUNE_TOMORROW,
         badge: '건당 490원',
         accent: 'border-amber-300 bg-amber-50/40 text-amber-700',
         btnStyle: 'bg-slate-900 hover:bg-amber-600 text-white',
         services: [
-            { title: '오늘 · 내일의 운세', desc: '일간 기반의 오늘/내일 운세와 행운 컬러·숫자', path: '/myluck?type=today', icon: Sun },
+            { title: '내일의 운세 미리보기', desc: '내일 하루의 행운 흐름과 핵심 미션·행운 코디 예보', path: '/myluck?type=today', icon: Sun },
             { title: '신비한 셔플 타로', desc: '고민에 맞춰 뽑는 3장 스프레드 1:1 카드 리딩', path: '/myluck?type=tarot', icon: Layers },
             { title: '운명의 여행지 · 힐링 추천', desc: '내 사주와 성향에 기운을 보태는 맞춤 여행지', path: '/myluck?type=trip', icon: Compass },
             { title: 'KBO 프로야구 운세 궁합', desc: '내 사주로 보는 올해 응원 팀·선수 케미 분석', path: '/myluck?type=kbo', icon: Zap },
@@ -69,7 +80,7 @@ const PricingPage: React.FC<PricingPageProps> = () => {
                                 <p className="text-xs text-slate-500 mt-1">회원가입 없이 브라우저에서 입력 후 즉시 결제 · 결과 생성</p>
                             </div>
                             <span className={`px-4 py-1.5 rounded-full text-sm font-black border ${group.accent}`}>
-                                {group.price.toLocaleString()}원 / 1회
+                                {group.price === 0 ? '무료 (0원)' : `${group.price.toLocaleString()}원 / 1회`}
                             </span>
                         </div>
 
@@ -93,7 +104,7 @@ const PricingPage: React.FC<PricingPageProps> = () => {
                                             </div>
                                         </div>
                                         <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-black ${group.btnStyle}`}>
-                                            {group.price.toLocaleString()}원 &rarr;
+                                            {group.price === 0 ? '무료' : `${group.price.toLocaleString()}원`} &rarr;
                                         </span>
                                     </button>
                                 );

@@ -11,6 +11,7 @@ import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from '../components/KboShareCard';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
@@ -483,6 +484,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             >
                                                 다른 구단 궁합 분석하기
                                             </button>
+                                            <FunnelBottomCta from="kbo_result" />
                                         </footer>
                                     </main>
                                 </div>

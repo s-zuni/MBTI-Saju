@@ -57,7 +57,8 @@
 | **자미두수 (紫微斗數)** | 990원 | `JamidusuPage.tsx` (`/myluck?type=jamidusu`) / `api/analysis-special.ts` |
 | **연애·부부·결혼·재회·짝사랑 사주** | 990원 | `RelationshipPage.tsx` (`/relationship`) / `api/love-saju.ts` |
 | **재물·창업·취직·이직 사주** | 990원 | `GoldPage.tsx` (`/gold`) / `api/gold.ts` |
-| **오늘 / 내일의 운세** | 490원 | `TodayFortunePage.tsx` (`/myluck?type=today`) / `api/fortune` |
+| **오늘의 운세 / 만세력 프리뷰** | **무료(0원)** | `TodayFortunePage.tsx` (`/myluck?type=today`), `FreePreview.tsx`, `FreeSajuPreviewCard.tsx` / `api/fortune?scope=today` |
+| **내일의 운세** | 490원 | `TodayFortunePage.tsx` (`/myluck?type=today`) / `api/fortune?scope=tomorrow` |
 | **신비타로 3카드 리딩** | 490원 | `TarotPage.tsx` (`/myluck?type=tarot`) / `api/tarot.ts` |
 | **행운의 여행지 추천** | 490원 | `TripPage.tsx` (`/myluck?type=trip`) / `api/analysis-special.ts` |
 | **KBO 야구 팬 궁합** | 490원 | `KboPage.tsx` (`/myluck?type=kbo`) / `api/analysis-special.ts` |

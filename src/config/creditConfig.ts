@@ -46,11 +46,12 @@ export const CONSULTATION_PACKAGES = {
 
 /**
  * 서비스별 건당 이용 요금 (KRW 원)
+ * - 오늘의 운세: 0원 (무료)
  * - 사주, 자미두수 계열: 990원
- * - 나머지 운세 서비스(오늘/내일 운세, 타로, 여행, KBO 등): 490원
+ * - 나머지 운세 서비스(내일 운세, 타로, 여행, KBO, AI 채팅 5회권 등): 490원
  */
 export const SERVICE_COSTS = {
-  FORTUNE_TODAY: 490,
+  FORTUNE_TODAY: 0,
   FORTUNE_TOMORROW: 490,
   MBTI_SAJU: 990,
   COMPATIBILITY_TRIP: 490,
@@ -114,5 +115,7 @@ export function getServicePrice(serviceType: ServiceType | string): number {
 }
 
 export function formatServicePrice(serviceType: ServiceType | string): string {
-  return `${getServicePrice(serviceType).toLocaleString()}원`;
+  const price = getServicePrice(serviceType);
+  if (price === 0) return '무료';
+  return `${price.toLocaleString()}원`;
 }

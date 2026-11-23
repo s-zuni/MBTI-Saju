@@ -193,6 +193,7 @@ const PlanManagement: React.FC = () => {
     };
 
     const serviceEntries = Object.entries(SERVICE_COSTS) as Array<[ServiceType, number]>;
+    const freeServices = serviceEntries.filter(([, price]) => price === 0);
     const premiumServices = serviceEntries.filter(([, price]) => price === 990);
     const lightServices = serviceEntries.filter(([, price]) => price === 490);
 
@@ -228,11 +229,11 @@ const PlanManagement: React.FC = () => {
 
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black">
-                        <CreditCard size={12} /> 운세 · 타로 · 채팅 계열
+                        <CreditCard size={12} /> 무료 · 라이트 운세 계열
                     </span>
-                    <div className="text-2xl font-black text-slate-900">490원 <span className="text-xs font-bold text-slate-400">/ 1회(채팅 5회권)</span></div>
+                    <div className="text-2xl font-black text-slate-900">무료 / 490원 <span className="text-xs font-bold text-slate-400">/ 1회</span></div>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                        {lightServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')}
+                        <strong className="text-emerald-700">무료(0원):</strong> {freeServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')} / <strong className="text-slate-700">490원:</strong> {lightServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')}
                     </p>
                 </div>
 

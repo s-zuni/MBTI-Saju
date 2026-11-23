@@ -21,8 +21,10 @@
 2. **비회원 기본 이용(선택 로그인 유지) & 크레딧 폐지 (`SERVICE_COSTS` 원화 단건 과금)**:
    - 일반 운세·사주·타로·AI 채팅 서비스는 **회원가입/로그인 없이 즉시 이용** 가능하며, 입력 프로필과 결제 티켓은 `localStorage`(`useGuestProfile.ts`, `servicePayCheckout.ts`)로 관리된다.
    - 추후 확장을 위해 카카오·구글 소셜 로그인(`/auth/callback`, `/mypage` 저장 리포트·프로필 조회)은 선택 기능으로 유지하며, **이용후기 작성(`/reviews`)은 로그인 필수** 정책을 유지한다.
+   - **무료 서비스 (`0원`)**: 오늘의 운세(`FORTUNE_TODAY`), 정통 만세력 4주 8자 원국표 & 끊겨있는 사주 프리뷰(`FreePreview.tsx`, `FreeSajuPreviewCard.tsx`)
    - **사주·자미두수 계열 (`990원`)**: `MBTI_SAJU`, `REGENERATE_MBTI_SAJU`, `JAMIDUSU`, `COMPATIBILITY`, 재물/창업/취직/이직 사주(`GOLD_*` 4종), 연인/부부/결혼/재회/짝사랑 사주(`LOVE_*` 5종)
-   - **나머지 서비스 계열 (`490원`)**: 오늘/내일의 운세(`FORTUNE_TODAY`, `FORTUNE_TOMORROW`), 신비타로(`TAROT`), 여행 추천(`TRIP`, `COMPATIBILITY_TRIP`), KBO 팬궁합(`KBO`), AI 사주·타로 채팅 5회권(`AI_CHAT_5`)
+   - **나머지 서비스 계열 (`490원`)**: 내일의 운세(`FORTUNE_TOMORROW`), 신비타로(`TAROT`), 여행 추천(`TRIP`, `COMPATIBILITY_TRIP`), KBO 팬궁합(`KBO`), AI 사주·타로 채팅 5회권(`AI_CHAT_5`)
+   - **표준 5단계 퍼널 UX**: `무료분석 유도(HeroSection) -> 1. 회원정보 기입 유도(GuestProfileCard) -> 2. 무료 결과(만세력 4주 원국표 + 끊겨있는 분석 문장, FreeSajuPreviewCard) -> 3. 분석 더보기(토스 결제창 이동) -> 4. 전체 분석 -> 5. 하단에 3년 심층 리포트 받기(/premium) & 카카오톡 1:1 상담하기(FunnelBottomCta) 노출`
 3. **프리미엄 · 상담 일원화 · 굿즈 상점 · 인증 유지 영역**:
    - **3년 심층 사주 리포트 (`/premium`)**: 정가 49,000원 → 판매가 29,000원 (비회원 신청·결제 가능)
    - **카카오톡 채널 1:1 상담 (`/chat`, `/room` 일원화)**: 웹 내 상담 티켓 결제 없이 카카오톡 채널 1:1 상담으로 일원화 안내 (1문항 9,900원 / 3문항 19,900원, 비회원 가능, 평일 24시간 내 답변)

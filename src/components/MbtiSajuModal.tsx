@@ -11,6 +11,8 @@ import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../config/deepReportConfig';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
+import FreeSajuPreviewCard from './saju/FreeSajuPreviewCard';
+import FunnelBottomCta from './FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface MbtiSajuModalProps {
@@ -694,7 +696,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
           )}
         </div>
 
-        <div className="mt-16 pt-10 border-t border-slate-100 flex flex-col items-center">
+        <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center">
           <button onClick={handleDownloadReport} disabled={isDownloading} className="flex items-center gap-3 px-10 py-4 bg-slate-950 text-white rounded-full font-black shadow-2xl">
             {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
             리포트 PDF 다운로드
@@ -703,6 +705,12 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             {isRegenerating ? "결제 창 여는 중..." : `정밀 데이터 재생성 (${SERVICE_COSTS.REGENERATE_MBTI_SAJU.toLocaleString()}원)`}
           </button>
         </div>
+
+        {/* STEP 4 하단 퍼널: 3년 심층 리포트 받기 / 카카오톡 1:1 상담하기 노출 */}
+        <FunnelBottomCta
+          from="mbti_saju_full_report"
+          onOpenDeepReport={() => onOpenDeepReport?.()}
+        />
       </div>
     );
   };
@@ -758,26 +766,38 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-black">
-                  <CreditCard className="w-3.5 h-3.5" />
-                  건당 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원 · 회원가입 없이 바로 이용
+                  <Sparkles className="w-3.5 h-3.5" />
+                  STEP 1~3 · 무료 만세력 확인 후 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원으로 전체 분석 열람
                 </span>
                 <h4 className="text-xl font-black text-slate-950 tracking-tight">MBTI × 사주 통합 운명 리포트</h4>
-                <p className="text-xs text-slate-500 font-medium">내 사주와 MBTI를 입력하고 결제하면 즉시 리포트가 생성됩니다.</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  생년월일과 MBTI를 기입하면 만세력 4주 원국표와 프리뷰가 즉시 무료로 계산됩니다.
+                </p>
               </div>
               <GuestProfileCard
                 profile={profile}
                 onChange={updateProfile}
                 showName
-                title="나의 정보 입력"
+                title="STEP 1 · 나의 사주 · MBTI 정보 기입"
               />
-              <button
-                onClick={handlePayAndGenerate}
-                disabled={isPaying}
-                className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Sparkles className="w-5 h-5" />
-                {isPaying ? '결제 창 여는 중...' : `MBTI × 사주 분석 시작 (${SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원 결제)`}
-              </button>
+              {profile.birthDate ? (
+                <FreeSajuPreviewCard
+                  saju={calculateSaju(profile.birthDate, profile.birthTime || null, profile.gender)}
+                  mbti={profile.mbti || 'ISTJ'}
+                  userName={profile.name}
+                  isPaying={isPaying}
+                  onUnlockClick={handlePayAndGenerate}
+                />
+              ) : (
+                <button
+                  onClick={handlePayAndGenerate}
+                  disabled={isPaying}
+                  className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span>생년월일을 입력하면 무료 만세력과 분석 프리뷰가 표시됩니다</span>
+                </button>
+              )}
             </div>
           )}
         </div>

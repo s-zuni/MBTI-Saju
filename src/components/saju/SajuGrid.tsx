@@ -27,6 +27,9 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${style}`}>
         <div className="flex items-center gap-1">
           <span className="text-xl md:text-2xl font-black">{char}</span>
+          {!isUnknown && info?.hanja && info.hanja !== char && (
+            <span className="text-[10px] md:text-xs font-bold opacity-75">({info.hanja})</span>
+          )}
           {!isUnknown && info && (
              <span className="text-[8px] md:text-[10px] font-bold opacity-60">
                {info.element === 'wood' ? '목' : 

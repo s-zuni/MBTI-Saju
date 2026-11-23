@@ -61,9 +61,9 @@ const FeatureGrids: React.FC = () => {
     {
       img: '/assets/icons/3d_fortune.png',
       label: '오늘 / 내일의 운세',
-      sub: '가입 없이 바로 보는 하루 운세',
+      sub: '오늘의 운세 무료(0원) · 내일 490원',
       bgColor: 'bg-amber-50',
-      badge: '490원',
+      badge: '오늘 무료',
       wide: true,
       action: () => navigate('/myluck?type=today'),
     },
@@ -137,7 +137,7 @@ const FeatureGrids: React.FC = () => {
         </div>
 
         <div className="flex gap-2 mb-5">
-          {([['saju', '사주 990원'], ['fortune', '운세 · 타로 490원~']] as [ActiveTab, string][]).map(([key, label]) => (
+          {([['saju', '사주 990원'], ['fortune', '무료 운세 · 타로']] as [ActiveTab, string][]).map(([key, label]) => (
             <button
               key={key}
               onClick={() => switchTab(key)}
@@ -294,7 +294,7 @@ const FeatureGrids: React.FC = () => {
                         <p className="text-[15px] font-bold text-slate-900 leading-snug">{item.label}</p>
                         <p className="text-[12px] text-slate-400 font-medium mt-0.5">{item.sub}</p>
                       </div>
-                      <span className="text-[11px] bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg font-black flex-shrink-0 whitespace-nowrap">
+                      <span className="text-[11px] bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-black flex-shrink-0 whitespace-nowrap">
                         {item.badge}
                       </span>
                     </div>

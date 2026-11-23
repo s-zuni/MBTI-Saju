@@ -8,6 +8,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const MBTI_LIST = [
@@ -823,6 +824,8 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
                                             다시 분석하기
                                         </button>
                                     </div>
+
+                                    <FunnelBottomCta from={`relationship_${activeTab}_result`} />
                                 </div>
                             )}
                         </div>

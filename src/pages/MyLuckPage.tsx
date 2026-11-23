@@ -19,7 +19,7 @@ interface TabOption {
 }
 
 const TABS: TabOption[] = [
-  { id: 'today', label: '오늘/내일 운세', priceLabel: '490원', icon: Compass },
+  { id: 'today', label: '오늘/내일 운세', priceLabel: '오늘 무료 · 내일 490원', icon: Compass },
   { id: 'tarot', label: '타로', priceLabel: '490원', icon: Moon },
   { id: 'trip', label: '여행', priceLabel: '490원', icon: Plane },
   { id: 'jamidusu', label: '자미두수', priceLabel: '990원', icon: Star },

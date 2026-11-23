@@ -234,12 +234,14 @@ export default async function handler(req: Request) {
         });
     }
 
-    // 서비스별 단건 결제 티켓 검증 + Rate Limit 검증
+    // 서비스별 단건 결제 티켓 검증 + Rate Limit 검증 (오늘의 운세는 무료 제공)
     let serviceType: string | undefined = undefined;
     let allowedServiceTypes: string[] | undefined = undefined;
+    let requirePaymentReceipt = true;
     if (targetType === 'fortune_today') {
         serviceType = 'FORTUNE_TODAY';
         allowedServiceTypes = ['FORTUNE_TODAY'];
+        requirePaymentReceipt = false;
     } else if (targetType === 'fortune_tomorrow') {
         serviceType = 'FORTUNE_TOMORROW';
         allowedServiceTypes = ['FORTUNE_TOMORROW'];
@@ -255,6 +257,7 @@ export default async function handler(req: Request) {
     } else {
         serviceType = 'FORTUNE_TODAY';
         allowedServiceTypes = ['TRIP', 'COMPATIBILITY_TRIP', 'FORTUNE_TODAY', 'MBTI_SAJU', 'REGENERATE_MBTI_SAJU'];
+        requirePaymentReceipt = false;
     }
 
     const cacheKey = buildCacheKey(targetType, body);
@@ -263,7 +266,8 @@ export default async function handler(req: Request) {
     const authResult = await authenticateUser(req, {
         serviceType,
         allowedServiceTypes,
-        requirePaymentReceipt: true,
+        requirePaymentReceipt,
+        cost: requirePaymentReceipt ? undefined : 0,
         allowAnonymous: true,
     });
 

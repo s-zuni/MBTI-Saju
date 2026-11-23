@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { stripMarkdown } from '../utils/textUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { CreditCard, Loader2, Sparkles, Palette, Hash, Compass } from 'lucide-react';
+import { CreditCard, Loader2, Sparkles, Palette, Hash, Compass, ArrowRight } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { singleDayFortuneSchema } from '../config/schemas';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
+    const navigate = useNavigate();
     const { profile, updateProfile } = useGuestProfile();
 
     const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
@@ -24,7 +27,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
     const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
         api: '/api/fortune?scope=today',
         schema: singleDayFortuneSchema,
-        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
+        headers: () => buildServiceRequestHeaders(null),
         onError: (error) => {
             console.error('[TodayFortunePage] Today fortune generation failed:', error);
             alert('오늘의 운세를 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.');
@@ -78,26 +81,44 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
 
     const activeData = tab === 'today' ? fortune?.fortune : tomorrowFortune?.fortune;
     const activeDate = tab === 'today' ? fortune?.date : tomorrowFortune?.date;
-    const todayPrice = SERVICE_COSTS.FORTUNE_TODAY;
     const tomorrowPrice = SERVICE_COSTS.FORTUNE_TOMORROW;
 
-    const handlePayAndGenerate = async (targetTab: 'today' | 'tomorrow') => {
+    const handleGenerateTodayFree = () => {
+        if (!profile.birthDate) {
+            alert('생년월일을 입력해주세요.');
+            return;
+        }
+        const sajuData = calculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
+        setTodayUnlocked(true);
+        fetchFortune({
+            birthDate: profile.birthDate,
+            birthTime: profile.birthTime || null,
+            gender: profile.gender,
+            mbti: profile.mbti || 'ISTJ',
+            sajuData,
+            scope: 'today',
+        });
+    };
+
+    const handlePayTomorrow = async () => {
         if (!profile.birthDate) {
             alert('생년월일을 입력해주세요.');
             return;
         }
         setIsPaying(true);
         try {
-            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
+            const sajuData = calculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
             const res = await startServicePayment({
-                serviceType: targetTab === 'today' ? 'FORTUNE_TODAY' : 'FORTUNE_TOMORROW',
-                serviceName: targetTab === 'today' ? '오늘의 운세' : '내일의 운세',
+                serviceType: 'FORTUNE_TOMORROW',
+                serviceName: '내일의 운세',
                 returnPath: '/myluck?type=today',
                 payload: {
                     birthDate: profile.birthDate,
-                    mbti: profile.mbti,
+                    birthTime: profile.birthTime || null,
+                    gender: profile.gender,
+                    mbti: profile.mbti || 'ISTJ',
                     sajuData,
-                    scope: targetTab,
+                    scope: 'tomorrow',
                 },
                 customerName: profile.name,
             });
@@ -122,7 +143,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                     <div className="flex justify-between items-end mb-6">
                         <div>
                             <p className="text-amber-600 font-bold text-sm mb-1">
-                                {tab === 'today' ? '오늘의 행운 흐름' : '내일의 행운 예보'}
+                                {tab === 'today' ? '오늘의 행운 흐름 (무료 제공)' : '내일의 행운 예보'}
                             </p>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                                 {activeDate ? new Date(activeDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }) : 
@@ -135,16 +156,14 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                         <button
                             onClick={() => setTab('today')}
                             className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${tab === 'today'
-                                ? 'bg-white text-amber-600 shadow-md shadow-amber-100/50'
+                                ? 'bg-white text-emerald-700 shadow-md shadow-emerald-100/50'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             오늘의 운세
-                            {!todayUnlocked && !fortune && (
-                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-black">
-                                    {todayPrice}원
-                                </span>
-                            )}
+                            <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-black">
+                                무료
+                            </span>
                         </button>
                         <button
                             onClick={handleTomorrowTabClick}
@@ -162,7 +181,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                 <>
                                     내일의 운세
                                     <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-black">
-                                        {tomorrowPrice}원
+                                        {tomorrowPrice.toLocaleString()}원
                                     </span>
                                 </>
                             )}
@@ -189,32 +208,52 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                     ) : ((tab === 'today' && !todayUnlocked && !fortune) || (tab === 'tomorrow' && !tomorrowUnlocked && !tomorrowFortune)) ? (
                         <div className="bg-white border border-slate-100 rounded-[32px] p-6 sm:p-10 text-center shadow-xl shadow-slate-200/40 space-y-6">
                             <div>
-                                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <Sparkles className="w-8 h-8 text-amber-500" />
+                                <div className={`w-16 h-16 ${tab === 'today' ? 'bg-emerald-50' : 'bg-amber-50'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                                    <Sparkles className={`w-8 h-8 ${tab === 'today' ? 'text-emerald-600' : 'text-amber-500'}`} />
+                                </div>
+                                <div className="mb-2">
+                                    {tab === 'today' ? (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-black">
+                                            회원가입 없이 100% 무료 제공
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-black">
+                                            내일 하루를 앞서 준비하는 단건 예보 ({tomorrowPrice.toLocaleString()}원)
+                                        </span>
+                                    )}
                                 </div>
                                 <h3 className="text-2xl font-black text-slate-900 mb-2">
-                                    {tab === 'today' ? '오늘의 행운 흐름 확인하기' : '내일의 운세가 궁금하신가요?'}
+                                    {tab === 'today' ? '오늘의 행운 흐름 무료로 확인하기' : '내일의 운세가 궁금하신가요?'}
                                 </h3>
                                 <p className="text-sm text-slate-500 leading-relaxed">
                                     회원가입 없이 사주와 MBTI만 입력하면<br />
-                                    {tab === 'today' ? '오늘 하루 나에게 맞는 기운과 럭키 포인트를 바로 확인해요.' : '내일의 기운과 핵심 미션을 미리 준비할 수 있어요.'}
+                                    {tab === 'today' ? '오늘 하루 나에게 맞는 기운과 럭키 포인트를 결제 없이 즉시 확인해요.' : '내일의 기운과 핵심 미션을 미리 준비할 수 있어요.'}
                                 </p>
                             </div>
 
                             <GuestProfileCard profile={profile} onChange={updateProfile} />
 
-                            <button
-                                onClick={() => handlePayAndGenerate(tab)}
-                                disabled={isPaying}
-                                className="w-full py-5 bg-slate-950 text-white font-black rounded-2xl shadow-xl hover:bg-amber-600 transition-all flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-60"
-                            >
-                                {isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 text-amber-400" />}
-                                <span>
-                                    {tab === 'today'
-                                        ? `오늘의 운세 확인하기 (${todayPrice.toLocaleString()}원 결제)`
-                                        : `내일의 운세 확인하기 (${tomorrowPrice.toLocaleString()}원 결제)`}
-                                </span>
-                            </button>
+                            {tab === 'today' ? (
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateTodayFree}
+                                    disabled={isFortuneLoading}
+                                    className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-60"
+                                >
+                                    <Sparkles className="w-5 h-5 text-emerald-200" />
+                                    <span>오늘의 운세 무료로 확인하기 (0원)</span>
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handlePayTomorrow}
+                                    disabled={isPaying}
+                                    className="w-full py-5 bg-slate-950 text-white font-black rounded-2xl shadow-xl hover:bg-amber-600 transition-all flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-60"
+                                >
+                                    {isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 text-amber-400" />}
+                                    <span>내일의 운세 확인하기 ({tomorrowPrice.toLocaleString()}원 결제)</span>
+                                </button>
+                            )}
                         </div>
                     ) : activeData ? (
                         <div className="animate-fade-up">
@@ -293,7 +332,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
 
                             {/* LUCKY ITEMS */}
                             {activeData.lucky && (
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-3 gap-4 mb-8">
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
                                         <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 rotate-3">
                                             <Palette className="w-5 h-5 text-rose-500" />
@@ -317,6 +356,44 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                     </div>
                                 </div>
                             )}
+
+                            {/* 퍼널 전환 브릿지: 내일의 운세 & MBTI × 사주 전체 분석 유도 */}
+                            <div className="bg-white rounded-3xl border-2 border-violet-100 p-6 shadow-md space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-black">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        나의 사주 원국 · MBTI 종합 분석 이어보기
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-400">STEP 2 &rarr; 3</span>
+                                </div>
+                                <p className="text-sm font-bold text-slate-800 leading-relaxed">
+                                    오늘의 운세는 하루의 기운만 보여줍니다. 내 타고난 <strong>만세력 4주 8자 원국표</strong>와 <strong>2026년 재물·연애·커리어 종합 운명 리포트</strong>를 지금 확인해 보세요.
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/?openService=mbtiSaju')}
+                                        className="py-4 px-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                                    >
+                                        <Sparkles className="w-4 h-4 shrink-0" />
+                                        <span>무료 만세력 &amp; 사주 종합 분석 보기</span>
+                                        <ArrowRight className="w-4 h-4 shrink-0" />
+                                    </button>
+                                    {tab === 'today' && !tomorrowFortune && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setTab('tomorrow')}
+                                            className="py-4 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all"
+                                        >
+                                            <span>내일의 운세 미리 확인하기 ({tomorrowPrice.toLocaleString()}원)</span>
+                                            <ArrowRight className="w-4 h-4 shrink-0" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 하단 리포트 받기 / 1:1 상담하기 노출 */}
+                            <FunnelBottomCta from="today_fortune_result" />
                         </div>
                     ) : (
                         <div className="text-center py-20 bg-white rounded-[32px] border border-dashed border-slate-200">

@@ -8,6 +8,7 @@ import { SERVICE_COSTS } from '../config/creditConfig';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 type GoldType = 'wealth' | 'business' | 'job' | 'jobchange';
@@ -671,6 +672,8 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                                             다시 분석하기
                                         </button>
                                     </div>
+
+                                    <FunnelBottomCta from={`gold_${activeTab}_result`} />
                                 </div>
                             )}
                         </div>

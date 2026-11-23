@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { calculateSaju } from '../utils/sajuUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
@@ -336,6 +337,8 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 다시하기
                                             </button>
                                         </div>
+
+                                        <FunnelBottomCta from="jamidusu_result" />
                                     </div>
                                 ) : null}
                             </div>

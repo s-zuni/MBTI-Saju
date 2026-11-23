@@ -14,7 +14,13 @@ export type FunnelEvent =
     | 'checkout_start'
     | 'checkout_success'
     | 'checkout_resume_click'
-    | 'kakao_consult_click';
+    | 'kakao_consult_click'
+    | 'hero_free_preview_click'
+    | 'hero_today_fortune_free_click'
+    | 'free_preview_calculate'
+    | 'free_preview_more_analysis_pay_click'
+    | 'funnel_bottom_report_click'
+    | 'funnel_bottom_kakao_consult_click';
 
 const ANON_KEY = 'mbtiju_anon_id';
 

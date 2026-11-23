@@ -11,6 +11,7 @@ import { calculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const DOMESTIC_REGIONS = [
@@ -431,6 +432,8 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 새로운 계획으로 다시 분석하기
                                             </button>
                                         </div>
+
+                                        <FunnelBottomCta from="trip_result" />
                                     </div>
                                 ) : null}
                             </div>
