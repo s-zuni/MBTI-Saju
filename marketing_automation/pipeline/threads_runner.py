@@ -79,6 +79,9 @@ def main():
                         help="카테고리 (미지정 시 60/20/20 가중치 자동 선택)")
     parser.add_argument("--topic", type=str, default="", help="특정 주제 지정 (선택)")
     parser.add_argument("--with-cta", action="store_true", help="CTA 답글 강제 포함")
+    parser.add_argument("--mode", type=str, default="auto", choices=["auto", "sheet", "generate"],
+                        help="콘텐츠 소스 (auto: 시트 30일 계획 우선 -> 소진 시 AI 생성, sheet: 시트만, generate: AI 생성만)")
+    parser.add_argument("--sheet-id", type=str, default="", help="구글 시트 ID 덮어쓰기 (선택)")
     parser.add_argument("--no-publish", action="store_true", help="게시 건너뛰기 (테스트용)")
     args = parser.parse_args()
 
@@ -91,24 +94,63 @@ def main():
     category = args.category or None
 
     print("=" * 65)
-    print(f"🧵 [THREADS] 자동 포스팅 러너 가동 (슬롯: {slot}, 카테고리: {category or '자동'})")
+    print(f"🧵 [THREADS] 자동 포스팅 러너 가동 (슬롯: {slot}, 카테고리: {category or '자동'}, 모드: {args.mode})")
     print("=" * 65)
 
-    from pipeline.threads_content import generate_threads_thread
-    from pipeline.threads_publisher import publish_thread, refresh_long_lived_token
+    from pipeline.threads_content import GeneratedThread, build_cta, generate_threads_thread
+    from pipeline.threads_publisher import get_recent_threads, publish_thread, refresh_long_lived_token
+    from pipeline.threads_sheet import load_and_pick_scheduled_post, mark_sheet_row_published
 
-    # 1. 스레드 콘텐츠 생성
+    recent_items = get_recent_threads(limit=35)
+    recent_texts = [item.get("text", "") for item in recent_items if item.get("text")]
+    print(f"[0/2] 🔍 최근 발행 글 {len(recent_texts)}건 확인 (중복 방지)")
+
+    # 1. 스레드 콘텐츠 준비 (시트 30일 계획 우선 -> 없거나 --topic 지정 시 LLM 폴백)
     t0 = time.time()
+    selected_sheet_post = None
     try:
-        thread = generate_threads_thread(
-            category=category,
-            slot=slot,
-            with_cta=args.with_cta or (slot == "evening"),  # 저녁 글에는 기본적으로 CTA 답글 연결
-        )
-        print(f"[1/2] ✍️ 스레드 생성 완료 ({time.time() - t0:.1f}초) | 카테고리: {thread.category} | 총 {len(thread.posts)}개 글")
+        if args.mode != "generate" and not args.topic:
+            try:
+                selected_sheet_post = load_and_pick_scheduled_post(
+                    slot=slot,
+                    category=category,
+                    recent_published_texts=recent_texts,
+                    sheet_id=args.sheet_id or None,
+                )
+            except Exception as sheet_err:
+                print(f"[SHEET][WARN] 시트 조회 실패: {sheet_err}")
+                if args.mode == "sheet":
+                    raise
+
+        if selected_sheet_post is not None:
+            posts = list(selected_sheet_post.posts)
+            has_cta = selected_sheet_post.has_cta
+            if args.with_cta and not has_cta:
+                posts.append(build_cta(posts[0], selected_sheet_post.category))
+                has_cta = True
+            thread = GeneratedThread(
+                category=selected_sheet_post.category,
+                topic_tag=selected_sheet_post.topic_tag,
+                posts=posts,
+                has_cta=has_cta,
+            )
+            print(
+                f"[1/2] 📋 시트 계획 로드 완료 ({selected_sheet_post.day_label}, Row {selected_sheet_post.row_number}) "
+                f"| 카테고리: {thread.category} | 총 {len(thread.posts)}개 글"
+            )
+        else:
+            if args.mode == "sheet":
+                raise RuntimeError("시트(30일_게시계획)에 발행 가능한 대기 글이 없습니다.")
+            thread = generate_threads_thread(
+                category=category,
+                slot=slot,
+                with_cta=args.with_cta or (slot == "evening"),
+                recent_posts=recent_texts,
+            )
+            print(f"[1/2] ✍️ AI 스레드 생성 완료 ({time.time() - t0:.1f}초) | 카테고리: {thread.category} | 총 {len(thread.posts)}개 글")
     except Exception as e:
-        err_msg = f"❌ <b>[Threads 생성 실패]</b>\n<code>{html.escape(str(e))}</code>"
-        print(f"[ERROR] 스레드 생성 실패: {e}")
+        err_msg = f"❌ <b>[Threads 생성/로드 실패]</b>\n<code>{html.escape(str(e))}</code>"
+        print(f"[ERROR] 스레드 준비 실패: {e}")
         tg_notify(err_msg)
         sys.exit(1)
 
@@ -138,10 +180,19 @@ def main():
         sys.exit(1)
 
     permalink = result.get("permalink", "")
-    cta_badge = " (🔗 mbtiju.com CTA 포함)" if thread.has_cta else ""
+    if selected_sheet_post is not None:
+        mark_sheet_row_published(selected_sheet_post, permalink=permalink)
+
+    cta_badge = " (🔗 CTA 포함)" if thread.has_cta else ""
+    source_badge = (
+        f"📋 시트 계획 ({selected_sheet_post.day_label} · Row {selected_sheet_post.row_number})"
+        if selected_sheet_post is not None
+        else "✍️ AI 자동 생성 (중복 필터 적용)"
+    )
 
     success_msg = (
         f"🧵 <b>[Threads 자동 게시 완료]</b> [{thread.category}{cta_badge}]\n\n"
+        f"• <b>소스:</b> {source_badge}\n"
         f"• <b>슬롯:</b> {slot.upper()}\n"
         f"• <b>내용:</b>\n<i>\"{html.escape(preview_short)}\"</i>\n\n"
         f"🔗 <b>스레드 바로가기:</b> <a href=\"{permalink}\">{permalink or '스레드 열기'}</a>"
