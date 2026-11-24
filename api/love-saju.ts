@@ -7,6 +7,8 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildPairFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import { loveSajuSchema } from '../src/config/schemas';
@@ -155,7 +157,16 @@ ${reunionContext}
    - 내 MBTI 약점을 상대방 MBTI 성향과 긴밀히 직결시키고 실전 데이트/갈등 시나리오 예시와 함께 뼈 때리게 서술하십시오.
 
 7. specialSection (마음 포착 솔루션):
-   - "향후 N개월 안에 승부를 봐야 합니다" 또는 "사주명리학적으로 1년간은 서로 간의 흐름이 불리합니다" 등 사실적 타임라인 기운을 선제시하고 500자 이상으로 종합 제언 및 승부 행동 지침을 서술하십시오.`;
+   - "향후 N개월 안에 승부를 봐야 합니다" 또는 "사주명리학적으로 1년간은 서로 간의 흐름이 불리합니다" 등 사실적 타임라인 기운을 선제시하고 500자 이상으로 종합 제언 및 승부 행동 지침을 서술하십시오.
+
+${buildPairFactualLockBlock({
+    mySaju,
+    myMbti: mbti,
+    myName: name,
+    partnerSaju: targetSaju,
+    partnerMbti: targetMbti,
+    partnerName: targetName,
+})}`;
 
             let receiptReleased = false;
             const safeReleaseReceipt = async () => {
@@ -174,6 +185,7 @@ ${reunionContext}
                             schema: loveSajuSchema,
                             system: STATIC_LOVE_SAJU_SYSTEM_PROMPT,
                             prompt: userQuery,
+                            temperature: 0.4,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
                             onError: async () => { await safeReleaseReceipt(); },
@@ -181,7 +193,10 @@ ${reunionContext}
                                 if (!object || error) await safeReleaseReceipt();
                             },
                         });
-                        return result.toTextStreamResponse({ headers: responseHeaders });
+                        return wrapResponseWithFactualGuard(
+                            result.toTextStreamResponse({ headers: responseHeaders }),
+                            {}
+                        );
                     } catch (error) {
                         lastError = error;
                         if (!isRetryableAIError(error)) break;

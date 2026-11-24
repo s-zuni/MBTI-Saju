@@ -107,7 +107,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             setError('생년월일을 입력해주세요.');
             return;
         }
-        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime, profile.gender);
         if (!sajuData) {
             setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
@@ -456,7 +456,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             결과 이미지 저장
                                                         </button>
                                                         <button 
-                                                            onClick={() => setIsFormSubmitted(false)} 
+                                                            onClick={() => { setError(null); setIsFormSubmitted(false); }} 
                                                             className="flex-1 py-4 px-6 bg-stone-100 text-slate-800 rounded-xl font-bold text-sm hover:bg-stone-200 transition-colors"
                                                         >
                                                             새로운 계획으로 분석하기

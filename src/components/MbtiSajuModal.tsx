@@ -80,16 +80,17 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     return () => clearInterval(interval);
   }, [isAnalysisLoading, analysis]);
 
-  // Sync partial results
+  // Sync partial results (결제 시점 payload 우선 고정)
   useEffect(() => {
     if (fullObj) {
+      const p = lastPayloadRef.current;
       setAnalysis((prev: any) => ({
         ...(prev || {}),
         ...fullObj,
-        full_name: initialSession?.user?.user_metadata?.full_name || prev?.full_name || profile.name || '이용자',
-        mbti: initialSession?.user?.user_metadata?.mbti || prev?.mbti || profile.mbti,
-        birth_date: initialSession?.user?.user_metadata?.birth_date || prev?.birth_date || profile.birthDate,
-        gender: initialSession?.user?.user_metadata?.gender || prev?.gender || profile.gender,
+        full_name: p?.name || initialSession?.user?.user_metadata?.full_name || prev?.full_name || profile.name || '이용자',
+        mbti: p?.mbti || initialSession?.user?.user_metadata?.mbti || prev?.mbti || profile.mbti,
+        birth_date: p?.birthDate || initialSession?.user?.user_metadata?.birth_date || prev?.birth_date || profile.birthDate,
+        gender: p?.gender || initialSession?.user?.user_metadata?.gender || prev?.gender || profile.gender,
       }));
     }
   }, [fullObj, initialSession, profile]);
@@ -97,12 +98,13 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   // Loading state consolidation
   useEffect(() => {
     if (!isAnalysisLoading && fullObj) {
+      const p = lastPayloadRef.current;
       const merged = {
         ...fullObj,
-        full_name: initialSession?.user?.user_metadata?.full_name || profile.name || '이용자',
-        mbti: initialSession?.user?.user_metadata?.mbti || profile.mbti,
-        birth_date: initialSession?.user?.user_metadata?.birth_date || profile.birthDate,
-        gender: initialSession?.user?.user_metadata?.gender || profile.gender,
+        full_name: p?.name || initialSession?.user?.user_metadata?.full_name || profile.name || '이용자',
+        mbti: p?.mbti || initialSession?.user?.user_metadata?.mbti || profile.mbti,
+        birth_date: p?.birthDate || initialSession?.user?.user_metadata?.birth_date || profile.birthDate,
+        gender: p?.gender || initialSession?.user?.user_metadata?.gender || profile.gender,
       };
       try {
         localStorage.setItem(GUEST_MBTI_SAJU_RESULT_KEY, JSON.stringify(merged));
@@ -381,6 +383,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   >
                     <FullSajuReportContent
                       analysis={analysis}
+                      saju={analysisSaju}
                       isStreaming={isAnalysisLoading}
                       isDownloading={isDownloading}
                       isRegenerating={isRegenerating}

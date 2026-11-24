@@ -8,6 +8,9 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    wrapResponseWithFactualGuard,
+    sanitizeFactualText,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import {
@@ -111,6 +114,7 @@ async function startStreamWithFallback<T extends z.ZodType<any>>({
                 schema,
                 system,
                 prompt,
+                temperature: 0.4,
                 maxOutputTokens: 16384,
                 maxRetries: 0,
                 onError: async ({ error }) => {
@@ -316,12 +320,16 @@ export default async function handler(req: Request) {
     const mbtiLabel = formatMbtiForPrompt(mbti);
     const temporalBlock = getTemporalAnchorBlock();
 
+    const factualLockBlock = buildSingleFactualLockBlock({ saju: finalSaju, mbti, name });
+
     const userQuery = `${temporalBlock}
 
 [분석 대상자 정보]
 사용자 성함: ${name || '이용자'}, MBTI: ${mbtiLabel}, 생년월일시: ${birthDate} ${birthTime || '시간모름'}, 성별: ${gender === 'male' ? '남성' : gender === 'female' ? '여성' : (gender || '알수없음')}
 
-${sajuContextBlock}`;
+${sajuContextBlock}
+
+${factualLockBlock}`;
 
     let receiptReleased = false;
     const safeReleaseReceipt = async () => {
@@ -348,13 +356,14 @@ ${sajuContextBlock}`;
             ]);
 
             const mergedStream = mergeParallelAnalysisStreams(resA, resB, safeReleaseReceipt);
-            return new Response(mergedStream, {
+            const rawResponse = new Response(mergedStream, {
                 status: 200,
                 headers: {
                     ...reqCorsHeaders,
                     'Content-Type': 'text/plain; charset=utf-8',
                 },
             });
+            return wrapResponseWithFactualGuard(rawResponse, { expectedSingleMbti: mbti });
         } else if (part === 'core') {
             const result = await startStreamWithFallback({
                 schema: coreAnalysisSchema,
@@ -362,7 +371,9 @@ ${sajuContextBlock}`;
                 prompt: userQuery,
                 onError: safeReleaseReceipt,
             });
-            return result.toTextStreamResponse({ headers: reqCorsHeaders });
+            return wrapResponseWithFactualGuard(result.toTextStreamResponse({ headers: reqCorsHeaders }), {
+                expectedSingleMbti: mbti,
+            });
         } else {
             // Non-streaming for fortune, strategy
             const systemForPart =
@@ -378,9 +389,14 @@ ${sajuContextBlock}`;
                         schema: currentSchema,
                         system: systemForPart,
                         prompt: userQuery,
+                        temperature: 0.4,
                         maxRetries: 0,
                     });
-                    return new Response(JSON.stringify({ ...(result.object as any), saju: finalSaju }), { 
+                    const sanitizedJson = sanitizeFactualText(
+                        JSON.stringify({ ...(result.object as any), saju: finalSaju }),
+                        { expectedSingleMbti: mbti }
+                    );
+                    return new Response(sanitizedJson, { 
                         status: 200,
                         headers: { ...reqCorsHeaders, 'Content-Type': 'application/json' } 
                     });

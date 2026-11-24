@@ -193,6 +193,9 @@ const GoldPage: React.FC<{ session?: any }> = () => {
     };
 
     const handleTabChange = (tab: GoldType) => {
+        if (tab !== activeTab) {
+            setHasStarted(false);
+        }
         setActiveTab(tab);
         setSearchParams({ type: tab });
         setError(null);
@@ -201,25 +204,25 @@ const GoldPage: React.FC<{ session?: any }> = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!profile.birthDate) {
-            alert('생년월일을 입력해주세요.');
+            setError('생년월일을 입력해주세요.');
             return;
         }
 
         if (activeTab === 'business' && !businessField.trim()) {
-            alert('희망 창업/사업 분야를 입력해주세요.');
+            setError('희망 창업/사업 분야를 입력해주세요.');
             return;
         }
         if (activeTab === 'job' && (!desiredCompany.trim() || !desiredRole.trim())) {
-            alert('희망 회사와 직무를 입력해주세요.');
+            setError('희망 회사와 직무를 입력해주세요.');
             return;
         }
         if (activeTab === 'jobchange' && (!currentJob.trim() || !desiredJob.trim())) {
-            alert('현재 직무와 이직 희망 분야를 입력해주세요.');
+            setError('현재 직무와 이직 희망 분야를 입력해주세요.');
             return;
         }
 
         const serviceKey = getServiceKey(activeTab);
-        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime, profile.gender);
         if (!sajuData) {
             setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
@@ -325,7 +328,7 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                 </div>
 
                 <div>
-                    {!result && !isLoading && !hasStarted ? (
+                    {!hasStarted ? (
                         <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
                             <div className="p-8 border-b border-slate-100 text-center bg-[#FAF7F0]">
                                 <h1 className="text-2xl font-bold text-slate-900 mb-2">

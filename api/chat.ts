@@ -7,6 +7,8 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, getSupabaseAdmin, releaseServiceReceipt } from './_utils/auth';
 
@@ -123,15 +125,22 @@ export default async (req: Request) => {
         }
 
         // Calculate Saju deterministically
+        let sajuObj: any = null;
         let sajuInfo = "사주 정보를 불러올 수 없습니다.";
         if (birthDate) {
             try {
-                const saju = getPreciseSajuData({ birthDate, birthTime, gender });
-                sajuInfo = buildRichSajuContext(saju);
+                sajuObj = getPreciseSajuData({ birthDate, birthTime, gender });
+                sajuInfo = buildRichSajuContext(sajuObj);
             } catch (e) {
                 console.error("Saju Calculation Error", e);
             }
         }
+
+        const factualLockBlock = buildSingleFactualLockBlock({
+            saju: sajuObj,
+            mbti,
+            name,
+        });
 
         const userContextBlock = `${getTemporalAnchorBlock()}
 
@@ -142,6 +151,7 @@ export default async (req: Request) => {
 - 생년월일시: ${birthDate} ${birthTime || ''}
 
 ${sajuInfo}
+${factualLockBlock}
 ${pastContext ? `\n[이전 상담 요약]\n${pastContext}\n` : ''}`.trim();
 
         // Manual conversion to CoreMessage format to avoid 'parts' related TypeError in v6 SDK
@@ -160,6 +170,13 @@ ${pastContext ? `\n[이전 상담 요약]\n${pastContext}\n` : ''}`.trim();
             coreMessages[lastIdx].content = `${userContextBlock}\n\n[상담 질문]\n${coreMessages[lastIdx].content}`;
         }
 
+        let receiptReleased = false;
+        const safeReleaseReceipt = async () => {
+            if (receiptReleased) return;
+            receiptReleased = true;
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+        };
+
         try {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
@@ -169,10 +186,13 @@ ${pastContext ? `\n[이전 상담 요약]\n${pastContext}\n` : ''}`.trim();
                         model,
                         system: STATIC_CHAT_SYSTEM_PROMPT,
                         messages: coreMessages as any,
+                        temperature: 0.4,
+                        onError: async () => { await safeReleaseReceipt(); },
                     });
-                    return result.toTextStreamResponse({ 
-                        headers: reqCorsHeaders 
-                    });
+                    return wrapResponseWithFactualGuard(
+                        result.toTextStreamResponse({ headers: reqCorsHeaders }),
+                        { expectedSingleMbti: mbti }
+                    );
                 } catch (error) {
                     lastError = error;
                     console.warn(`Attempt ${attempt + 1} failed for chat:`, error);

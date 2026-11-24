@@ -98,7 +98,8 @@ const PaymentSuccess: React.FC = () => {
                     const ticket = promotePendingOrderToTicket(
                         orderId,
                         data?.data?.receiptToken,
-                        data?.data?.remainingUses
+                        data?.data?.remainingUses,
+                        data?.data?.serviceType
                     );
                     const nextPath = ticket?.returnPath || '/myluck?type=today';
                     setApprovedServiceName(ticket?.serviceName || '운세 서비스');

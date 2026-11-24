@@ -115,7 +115,12 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             lastPayloadRef.current = ticket.payload;
             if (ticket.payload.spreadType) setSelectedSpread(ticket.payload.spreadType);
             if (ticket.payload.question) setQuestion(ticket.payload.question);
-            if (Array.isArray(ticket.payload.selectedCards)) setSelectedCards(ticket.payload.selectedCards);
+            if (Array.isArray(ticket.payload.selectedCards)) {
+                const hydrated = ticket.payload.selectedCards.map(
+                    (c: any) => TAROT_DECK.find((deckCard) => deckCard.id === c?.id) || c
+                );
+                setSelectedCards(hydrated);
+            }
             setStep('result');
             submit(ticket.payload);
         }
@@ -174,18 +179,26 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const handleAnalyze = async (cards: TarotCard[]) => {
         setIsPaying(true);
         try {
+            const compactCards = cards.map(({ id, name, name_ko, keywords }) => ({
+                id,
+                name,
+                name_ko,
+                keywords,
+            }));
             const res = await startServicePayment({
                 serviceType: 'TAROT',
                 serviceName: '신비타로 해석',
                 returnPath: '/myluck?type=tarot',
                 payload: {
-                    question,
-                    selectedCards: cards,
+                    question: question.trim() || (selectedSpread === 'daily' ? '오늘 하루의 흐름과 조언' : ''),
+                    selectedCards: compactCards,
                     spreadType: selectedSpread,
                     userContext: {
                         name: profile.name,
-                        mbti: profile.mbti,
-                        birthDate: profile.birthDate
+                        mbti: profile.mbti || '미입력',
+                        birthDate: profile.birthDate,
+                        birthTime: profile.birthTime,
+                        gender: profile.gender,
                     }
                 },
                 customerName: profile.name,

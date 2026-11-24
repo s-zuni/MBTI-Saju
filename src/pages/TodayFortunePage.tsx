@@ -106,6 +106,15 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
     const activeUnlocked = tab === 'today' ? (todayUnlocked || !!fortune) : (tomorrowUnlocked || !!tomorrowFortune);
     const tomorrowPrice = SERVICE_COSTS.FORTUNE_TOMORROW;
     const currentYear = new Date().getFullYear();
+    const formattedHeaderDate = (() => {
+        if (activeDate && /^\d{4}-\d{2}-\d{2}$/.test(activeDate)) {
+            const parsed = new Date(activeDate);
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' });
+            }
+        }
+        return new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' });
+    })();
 
     const handleRetryCurrent = () => {
         if (tab === 'today') {
@@ -198,8 +207,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                 {tab === 'today' ? '오늘의 행운 흐름 (무료 제공)' : '내일의 행운 예보'}
                             </p>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                                {activeDate ? new Date(activeDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }) : 
-                                 new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}
+                                {formattedHeaderDate}
                             </h2>
                         </div>
                     </div>

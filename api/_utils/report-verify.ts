@@ -12,17 +12,28 @@ import { hanjaOfBranch, hanjaOfStem } from './report-relations';
 export interface AllowedFacts {
     ganji: Set<string>;
     years: Set<number>;
+    allowedMbtis?: Set<string>;
 }
 
 const GANJI_RE = /([甲乙丙丁戊己庚辛壬癸])([子丑寅卯辰巳午未申酉戌亥])/g;
 const YEAR_RE = /((?:19|20)\d{2})\s*[년年]/g;
+const MBTI_CODE_RE = /(?<![A-Za-z])(ISTJ|ISFJ|INFJ|INTJ|ISTP|ISFP|INFP|INTP|ESTP|ESFP|ENFP|ENTP|ESTJ|ESFJ|ENFJ|ENTJ)(?![A-Za-z])/g;
 const STEMS = '甲乙丙丁戊己庚辛壬癸';
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
 
 const isValidSexagenary = (stem: string, branch: string) => STEMS.indexOf(stem) % 2 === BRANCHES.indexOf(branch) % 2;
 
 export function createAllowedFacts(): AllowedFacts {
-    return { ganji: new Set(), years: new Set() };
+    return { ganji: new Set(), years: new Set(), allowedMbtis: new Set() };
+}
+
+export function addMbtiFacts(f: AllowedFacts, mbti?: string | null) {
+    if (!mbti || typeof mbti !== 'string') return;
+    const upper = mbti.trim().toUpperCase();
+    if (/^[EI][SN][TF][JP]$/.test(upper)) {
+        if (!f.allowedMbtis) f.allowedMbtis = new Set();
+        f.allowedMbtis.add(upper);
+    }
 }
 
 export function addSajuFacts(f: AllowedFacts, saju: PreciseSajuData, birthYear: number) {
@@ -64,6 +75,15 @@ export function findFactErrors(text: string, f: AllowedFacts): string[] {
         if (!f.years.has(y) && !seen.has(`y${y}`)) {
             seen.add(`y${y}`);
             errors.push(`${y}년은(는) 제공된 데이터에 없는 연도입니다`);
+        }
+    }
+    if (f.allowedMbtis && f.allowedMbtis.size > 0) {
+        for (const m of text.matchAll(MBTI_CODE_RE)) {
+            const code = m[1]!;
+            if (!f.allowedMbtis.has(code) && !seen.has(`mbti:${code}`)) {
+                seen.add(`mbti:${code}`);
+                errors.push(`${code}은(는) 입력된 MBTI(${Array.from(f.allowedMbtis).join(', ')})와 일치하지 않습니다`);
+            }
         }
     }
     return errors;

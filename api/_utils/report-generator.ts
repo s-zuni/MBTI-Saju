@@ -10,7 +10,7 @@ import {
 } from './report-fortune';
 import { buildFortuneCtx, computeYearFortune, computeRemainingScores, sumScores, EL_KO, type FortuneCtx, type YearFortune } from './report-score';
 import { buildMbtiCrossContext } from './report-mbti';
-import { addSajuFacts, addYearFacts, createAllowedFacts, findFactErrors, type AllowedFacts } from './report-verify';
+import { addSajuFacts, addYearFacts, addMbtiFacts, createAllowedFacts, findFactErrors, type AllowedFacts } from './report-verify';
 
 /**
  * 3개년 심층 리포트 생성기 (스토리형, A4 약 20장 분량)
@@ -403,7 +403,14 @@ async function runTask(task: Task, system: string, baseQuery: string, startedAt:
                 continue;
             }
 
-            const errors = findFactErrors(body, task.onlyYears ? { ganji: facts.ganji, years: new Set(task.onlyYears) } : facts);
+            const scopedFacts: AllowedFacts = task.onlyYears
+                ? {
+                    ganji: facts.ganji,
+                    years: new Set(task.onlyYears),
+                    ...(facts.allowedMbtis ? { allowedMbtis: facts.allowedMbtis } : {}),
+                }
+                : facts;
+            const errors = findFactErrors(body, scopedFacts);
             if (errors.length) {
                 console.warn(`[deep-report] ${task.key} attempt ${attempt}: fact check failed: ${errors.join('; ')}`);
                 lastError = new Error(`fact check failed: ${errors.join('; ')}`);
@@ -492,11 +499,15 @@ export async function generateDeepReport(input: DeepReportInput, now: Date = new
 
     const facts = createAllowedFacts();
     addSajuFacts(facts, saju, birthYear);
+    if (includeMbti && input.mbti) addMbtiFacts(facts, input.mbti);
     [...years, ...pastYears, currentYear].forEach(y => addYearFacts(facts, y.year));
     facts.years.add(now.getFullYear());
 
     const partner = input.partnerInfo && input.partnerInfo.name ? input.partnerInfo : null;
     let partnerOverlap: ReturnType<typeof buildPartnerOverlap> = [];
+    if (partner?.mbti) {
+        addMbtiFacts(facts, partner.mbti);
+    }
     if (partner?.birth_info) {
         try {
             const pb = parseBirthInfo(partner.birth_info);

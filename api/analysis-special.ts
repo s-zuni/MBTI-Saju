@@ -8,6 +8,8 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import {
@@ -247,10 +249,11 @@ export default async function handler(req: Request) {
         const jmBirthDate = targetBirthDate ?? birthDate;
         const jmBirthTime = targetBirthTime ?? birthTime;
         const jmGender = targetGender ?? body.gender;
-        let finalTargetSaju = targetSajuData;
-        if (!finalTargetSaju && jmBirthDate) {
-            finalTargetSaju = getPreciseSajuData({ birthDate: jmBirthDate, birthTime: jmBirthTime, gender: jmGender });
-        }
+        const finalTargetSaju = jmBirthDate
+            ? getPreciseSajuData({ birthDate: jmBirthDate, birthTime: jmBirthTime, gender: jmGender })
+            : saju;
+        saju = finalTargetSaju;
+        sajuContextBlock = buildRichSajuContext(finalTargetSaju);
         userQuery = `[정통 자미두수 12궁 명반 분석 요청]
 성별: ${jmGender === 'male' ? '남성' : '여성'}
 생년월일시: ${jmBirthDate} ${jmBirthTime || '시간모름'}
@@ -284,12 +287,13 @@ MBTI: ${mbtiPromptValue}
 1. concept: 이번 여행을 관통하는 핵심 테마 한 문장 (이모지 금지).
 2. places (3곳): 사용자의 사주(일간, 오행 부족/과다 보완)와 성향 기준으로, 왜 지금 이 시기에 이곳이 필요한지 냉정하게 짚어주는 reason(250~350자, 2문단)과 구체적 동선/활동 activity(180~250자), photoSpot, food를 모두 충실히 채우세요.
 3. itinerary: 요청한 여행 일수(${duration || 3}일 내외)에 맞춰 1일차~N일차별 오전/오후/저녁의 구체적이고 현실적인 일정을 구성하세요.
-4. companion & luckyItem: 함께 가면 시너지가 나는 동행 스타일/갈등 방지 포인트(180~250자)와 컨디션·기운 보완 아이템(100~150자)을 서술하세요.
+4. companion & luckyItem: 함께 가면 시너지가 나는 동행 스타일/갈등 방지 포인트(180~250자, 단 다른 MBTI 4글자 코드를 적지 말고 한국어 성향 표현으로 서술)와 컨디션·기운 보완 아이템(100~150자)을 서술하세요.
 5. summary(300~450자), bestTime(150~220자), tip(180~250자): 헛된 미사여구 대신 실제 일정 조율과 마음 환기에 도움이 되는 현실 조언과 따뜻한 응원을 담으세요.`;
     } else if (targetType === 'kbo') {
         const isNoTeam = requirements === '없음 (아직 없음)';
         const currentTeam = isNoTeam ? '없음' : (requirements || 'KIA');
         const kboDeterministic = getDeterministicKboResults(birthDate || '', mbti || '', currentTeam, 0);
+        const kboTomorrow = getDeterministicKboResults(birthDate || '', mbti || '', currentTeam, 1);
 
         const currentTeamScore = kboDeterministic.score;
         const winFairyScore = kboDeterministic.winFairyScore;
@@ -304,10 +308,12 @@ MBTI: ${mbtiPromptValue}
 현재 응원 구단: ${currentTeam} (추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'})
 
 [사전 계산된 데이터 (절대 준수)]
-- 해당 구단과의 궁합 점수: ${currentTeamScore}점
-- 오늘 직관 시 승리요정 지수: ${winFairyScore}점
-- 나에게 가장 운명적인 최고 궁합 구단: ${bestTeam}
-- 나와 상극인 주의해야 할 구단: ${worstTeam}
+- 해당 구단과의 궁합 점수(score): ${currentTeamScore}점
+- 오늘 직관 시 승리요정 지수(winFairyScore): ${winFairyScore}점
+- 내일 예정 궁합 점수(tomorrowScore): ${kboTomorrow.score}점
+- 내일 예정 승리요정 지수(tomorrowWinFairyScore): ${kboTomorrow.winFairyScore}점
+- 나에게 가장 운명적인 최고 궁합 구단(bestTeam): ${bestTeam}
+- 나와 상극인 주의해야 할 구단(worstTeam): ${worstTeam}
 - 5대 지표: ${JSON.stringify(kboDeterministic.dimensions)}
 
 [생성 지침 - 심층 분량 · 이모지 금지]
@@ -315,7 +321,7 @@ MBTI: ${mbtiPromptValue}
 2. dailyMessage: 오늘 이 구단과의 기운을 담은 담백하고 선명한 한 줄 (40~80자, 이모지 금지).
 3. recommendedSeat: 사주와 성향 기준 추천 구장 좌석 구역과 이유 (100~160자).
 4. luckyFood: 오늘 기운을 보완하는 구장 먹거리와 이유 (100~160자).
-5. 기존 팬인 경우에도 bestTeam/worstTeam 필드는 사전 계산 데이터 그대로 채우되, 본문 분석은 현재 응원 구단 위주로 서술하세요.`;
+5. 숫자/점수 필드(score, winFairyScore, tomorrowScore, tomorrowWinFairyScore, bestTeam, worstTeam, dimensions, date)는 위 사전 계산된 데이터 그대로 채우고, 본문 분석은 현재 응원 구단 위주로 서술하세요.`;
     } else if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow' || targetType === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
@@ -328,7 +334,8 @@ MBTI: ${mbtiPromptValue}
 - mission은 오늘 바로 해볼 수 있는 현실적 미션과 따뜻한 한마디(80~140자)로 작성하세요. 이모지와 ** 기호는 절대 사용하지 마세요.`;
     }
 
-    const finalUserQuery = `${temporalBlock}\n\n${sajuContextBlock}\n\n${userQuery}`;
+    const factualLockBlock = buildSingleFactualLockBlock({ saju, mbti, name });
+    const finalUserQuery = `${temporalBlock}\n\n${sajuContextBlock}\n\n${userQuery}\n\n${factualLockBlock}`;
 
     let receiptReleased = false;
     const safeReleaseReceipt = async () => {
@@ -347,6 +354,7 @@ MBTI: ${mbtiPromptValue}
                     schema: currentSchema,
                     system: STATIC_SPECIAL_SYSTEM_PROMPT,
                     prompt: finalUserQuery,
+                    temperature: 0.4,
                     maxOutputTokens: 16384,
                     maxRetries: 0,
                     onError: async ({ error }) => {
@@ -372,7 +380,10 @@ MBTI: ${mbtiPromptValue}
                         }
                     },
                 });
-                return result.toTextStreamResponse({ headers: reqCorsHeaders });
+                return wrapResponseWithFactualGuard(
+                    result.toTextStreamResponse({ headers: reqCorsHeaders }),
+                    { expectedSingleMbti: mbti }
+                );
             } catch (error) {
                 lastError = error;
                 console.warn(`Attempt ${attempt + 1} failed for type ${targetType}:`, error);

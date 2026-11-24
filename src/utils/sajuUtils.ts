@@ -331,10 +331,10 @@ const SIJIN_TO_TIME: Record<string, string> = {
 
 export function parseBirthInfo(birthInfo: string): { birthDate: string; birthTime: string | undefined } {
     const trimmed = (birthInfo || '').trim();
-    const spaceIdx = trimmed.search(/s/);
+    const spaceIdx = trimmed.search(/\s/);
     const birthDate = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
     const rest = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx).trim();
-    const hhmm = rest.match(/^(d{1,2}):(d{2})/);
+    const hhmm = rest.match(/^(\d{1,2}):(\d{2})/);
     if (hhmm) return { birthDate, birthTime: `${hhmm[1]!.padStart(2, '0')}:${hhmm[2]}` };
     const sijin = rest.match(/^([자축인묘진사오미신유술해])시/);
     if (sijin) return { birthDate, birthTime: SIJIN_TO_TIME[sijin[1]!] };

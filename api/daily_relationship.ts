@@ -2,7 +2,14 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+    wrapResponseWithFactualGuard,
+} from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
@@ -17,7 +24,7 @@ ${BASE_SYSTEM_PROMPT}
 [분석 지침]
 1. 각 파트너별로 오늘 하루의 궁합 점수(0~100)와 실용적인 한 줄 행동 솔루션을 제공하세요.
 2. 뻔한 감성적 위로나 추상적 칭찬은 배제하고, 사주의 오늘 기운 팩트와 파트너/사용자의 MBTI 성향이 맞물린 매우 구체적인 대처법/행동 가이드를 제시하세요.
-3. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요. 강조가 필요하면 글머리표(-), 이모지 등을 활용하세요.`;
+3. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**), __, # 및 이모지/이모티콘을 절대 사용하지 말고 글머리표(-)와 담백한 문장만 사용하세요.`;
 
 export default async (req: Request) => {
     const corsResponse = handleCors(req);
@@ -64,17 +71,23 @@ export default async (req: Request) => {
                 id: p.id,
                 name: p.name,
                 relation: p.relation,
-                mbti: p.mbti,
+                mbti: formatMbtiForPrompt(p.mbti),
                 saju: {
-                    dayMaster: pSaju.dayMaster.korean,
-                    elements: pSaju.elementRatio
+                    dayMaster: `${pSaju.dayMaster.korean}(${pSaju.dayMaster.chinese})`,
+                    elements: pSaju.elementRatio,
+                    elementCounts: pSaju.elements,
                 }
             };
         });
 
-        const userQuery = `사용자(A) MBTI: ${myProfile.mbti}, 일간: ${mySaju.dayMaster.korean}
-        일자: ${new Date().toLocaleDateString('ko-KR')}
-        파트너 리스트: ${JSON.stringify(partnersData)}`;
+        const userQuery = `${getTemporalAnchorBlock()}
+
+사용자(A) MBTI: ${formatMbtiForPrompt(myProfile.mbti)}, 일간: ${mySaju.dayMaster.korean}(${mySaju.dayMaster.chinese}), 오행개수: ${JSON.stringify(mySaju.elements)}
+일자: ${new Date().toLocaleDateString('ko-KR')}
+파트너 리스트: ${JSON.stringify(partnersData)}
+
+[사실 데이터 고정 주의]
+- 사용자(A)와 각 파트너(B, C...)의 MBTI와 일간/오행 데이터를 절대 뒤바꾸지 말고 제공된 값 그대로 해석하십시오.`;
 
         let receiptReleased = false;
         const safeReleaseReceipt = async () => {
@@ -87,7 +100,7 @@ export default async (req: Request) => {
             let lastError;
             for (let attempt = 0; attempt < 4; attempt++) {
                 try {
-                    const { model, name } = getAIProvider(attempt);
+                    const { model } = getAIProvider(attempt);
                     const result = await streamObject({
                         model,
                         schema: z.object({
@@ -99,6 +112,7 @@ export default async (req: Request) => {
                         }),
                         system: STATIC_DAILY_RELATIONSHIP_SYSTEM_PROMPT,
                         prompt: userQuery,
+                        temperature: 0.4,
                         maxOutputTokens: 16384,
                         maxRetries: 0,
                         onError: async () => { await safeReleaseReceipt(); },
@@ -106,7 +120,10 @@ export default async (req: Request) => {
                             if (!object || error) await safeReleaseReceipt();
                         },
                     });
-                    return result.toTextStreamResponse({ headers: responseHeaders });
+                    return wrapResponseWithFactualGuard(
+                        result.toTextStreamResponse({ headers: responseHeaders }),
+                        {}
+                    );
                 } catch (error) {
                     lastError = error;
                     console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for daily relationship:`, error);

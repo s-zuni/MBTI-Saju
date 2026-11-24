@@ -103,7 +103,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
 
         const cleanBirthTime = targetBirthTime === 'unknown' ? '' : targetBirthTime;
-        const sajuData = safeCalculateSaju(targetBirthDate, cleanBirthTime);
+        const sajuData = safeCalculateSaju(targetBirthDate, cleanBirthTime, targetGender);
         if (!sajuData) {
             setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
@@ -190,7 +190,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                     </div>
 
                     <div className="p-6 sm:p-8">
-                        {!result && !isLoading && !hasStarted ? (
+                        {!hasStarted ? (
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-4">
                                     <label className="block text-sm font-bold text-slate-800">성별</label>

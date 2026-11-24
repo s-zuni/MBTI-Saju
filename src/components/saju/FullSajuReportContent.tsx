@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2, Download, CheckCircle2 } from 'lucide-react';
 import { SERVICE_COSTS } from '../../config/creditConfig';
+import { SajuResult } from '../../utils/sajuUtils';
 import { stripMarkdown } from '../../utils/textUtils';
 import FunnelBottomCta from '../FunnelBottomCta';
 
@@ -28,8 +29,19 @@ const getElementColor = (element: unknown): ElementColor => {
   return DEFAULT_COLOR;
 };
 
+const getElementKey = (element: unknown): keyof SajuResult['elements'] | null => {
+  if (typeof element !== 'string') return null;
+  if (element.includes('목') || element.includes('木')) return 'wood';
+  if (element.includes('화') || element.includes('火')) return 'fire';
+  if (element.includes('토') || element.includes('土')) return 'earth';
+  if (element.includes('금') || element.includes('金')) return 'metal';
+  if (element.includes('수') || element.includes('水')) return 'water';
+  return null;
+};
+
 interface FullSajuReportContentProps {
   analysis: any;
+  saju?: SajuResult | null;
   isStreaming?: boolean;
   isDownloading?: boolean;
   isRegenerating?: boolean;
@@ -41,6 +53,7 @@ interface FullSajuReportContentProps {
 
 const FullSajuReportContent: React.FC<FullSajuReportContentProps> = ({
   analysis,
+  saju,
   isStreaming = false,
   isDownloading = false,
   isRegenerating = false,
@@ -54,9 +67,17 @@ const FullSajuReportContent: React.FC<FullSajuReportContentProps> = ({
   const currentYear = new Date().getFullYear();
   const displayMbti = analysis.mbti && analysis.mbti !== '미입력' ? `${analysis.mbti} · ` : '';
 
-  const safeElements = Array.isArray(analysis.fiveElements?.elements)
+  const rawElements = Array.isArray(analysis.fiveElements?.elements)
     ? analysis.fiveElements.elements.filter((el: any) => el && typeof el === 'object')
     : [];
+  const safeElements = rawElements.map((el: any) => {
+    const elKey = getElementKey(el.element);
+    const deterministicCount = elKey && saju?.elements ? saju.elements[elKey] : undefined;
+    return {
+      ...el,
+      count: typeof deterministicCount === 'number' ? deterministicCount : el.count,
+    };
+  });
   const maxElementCount =
     safeElements.length > 0
       ? Math.max(...safeElements.map((e: any) => (typeof e?.count === 'number' ? e.count : 0)), 1)

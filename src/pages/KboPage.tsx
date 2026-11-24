@@ -203,7 +203,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             return;
         }
 
-        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime, profile.gender);
         if (!sajuData) {
             setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
@@ -220,6 +220,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                 payload: {
                     type: 'kbo',
                     name: userName,
+                    gender: profile.gender,
                     mbti: profile.mbti || '미입력',
                     birthDate: profile.birthDate,
                     birthTime: profile.birthTime,

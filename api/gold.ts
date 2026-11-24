@@ -7,6 +7,8 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import { goldSchema } from '../src/config/schemas';
@@ -192,6 +194,8 @@ ${richSajuContext}
 (뇌리에 박힐 강렬하고 단호한 통찰 한 줄)`;
             }
 
+            userQuery += `\n\n${buildSingleFactualLockBlock({ saju, mbti, name })}`;
+
             let receiptReleased = false;
             const safeReleaseReceipt = async () => {
                 if (receiptReleased) return;
@@ -209,6 +213,7 @@ ${richSajuContext}
                             schema: goldSchema,
                             system: STATIC_GOLD_SYSTEM_PROMPT,
                             prompt: userQuery,
+                            temperature: 0.4,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
                             onError: async () => { await safeReleaseReceipt(); },
@@ -216,7 +221,10 @@ ${richSajuContext}
                                 if (!object || error) await safeReleaseReceipt();
                             },
                         });
-                        return result.toTextStreamResponse({ headers: responseHeaders });
+                        return wrapResponseWithFactualGuard(
+                            result.toTextStreamResponse({ headers: responseHeaders }),
+                            { expectedSingleMbti: mbti }
+                        );
                     } catch (error) {
                         lastError = error;
                         if (!isRetryableAIError(error)) break;

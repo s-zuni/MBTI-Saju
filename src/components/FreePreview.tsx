@@ -107,16 +107,17 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
     return () => clearInterval(interval);
   }, [isAnalysisLoading, fullAnalysis]);
 
-  // 스트리밍 부분 객체 동기화
+  // 스트리밍 부분 객체 동기화 (결제 시점 payload 우선 고정)
   useEffect(() => {
     if (fullObj) {
+      const p = lastPayloadRef.current;
       setFullAnalysis((prev: any) => ({
         ...(prev || {}),
         ...fullObj,
-        full_name: prev?.full_name || profile.name || '이용자',
-        mbti: prev?.mbti || profile.mbti || '미입력',
-        birth_date: prev?.birth_date || profile.birthDate,
-        gender: prev?.gender || profile.gender,
+        full_name: p?.name || prev?.full_name || profile.name || '이용자',
+        mbti: p?.mbti || prev?.mbti || profile.mbti || '미입력',
+        birth_date: p?.birthDate || prev?.birth_date || profile.birthDate,
+        gender: p?.gender || prev?.gender || profile.gender,
       }));
     }
   }, [fullObj, profile.birthDate, profile.gender, profile.mbti, profile.name]);
@@ -124,12 +125,13 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
   // 완성 시 localStorage 캐시 저장
   useEffect(() => {
     if (!isAnalysisLoading && fullObj) {
+      const p = lastPayloadRef.current;
       const merged = {
         ...fullObj,
-        full_name: profile.name || '이용자',
-        mbti: profile.mbti || '미입력',
-        birth_date: profile.birthDate,
-        gender: profile.gender,
+        full_name: p?.name || profile.name || '이용자',
+        mbti: p?.mbti || profile.mbti || '미입력',
+        birth_date: p?.birthDate || profile.birthDate,
+        gender: p?.gender || profile.gender,
       };
       try {
         localStorage.setItem(GUEST_MBTI_SAJU_RESULT_KEY, JSON.stringify(merged));
@@ -420,6 +422,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
               <ReportErrorBoundary onRetry={handleRetryGeneration}>
                 <FullSajuReportContent
                   analysis={fullAnalysis}
+                  saju={sajuResult}
                   isStreaming={isAnalysisLoading}
                   isDownloading={isDownloading}
                   isRegenerating={isRegenerating}

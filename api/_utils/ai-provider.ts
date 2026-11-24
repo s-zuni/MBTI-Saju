@@ -97,4 +97,5 @@ export function isRetryableAIError(error: any): boolean {
 }
 
 export * from './prompts';
+export * from './factual-guard';
 

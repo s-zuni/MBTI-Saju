@@ -5,6 +5,30 @@ import { supabase } from '../supabaseClient';
 const PENDING_ORDER_KEY = 'mbtiju_pending_service_order';
 const PAID_TICKETS_KEY = 'mbtiju_paid_service_tickets';
 
+const DEFAULT_RETURN_PATHS: Partial<Record<ServiceType, string>> = {
+  FORTUNE_TODAY: '/myluck?type=today',
+  FORTUNE_TOMORROW: '/myluck?type=today',
+  MBTI_SAJU: '/?openService=freePreview',
+  REGENERATE_MBTI_SAJU: '/?openService=freePreview',
+  COMPATIBILITY: '/?openService=compatibility',
+  COMPATIBILITY_TRIP: '/myluck?type=trip',
+  TRIP: '/myluck?type=trip',
+  JAMIDUSU: '/myluck?type=jamidusu',
+  KBO: '/myluck?type=kbo',
+  TAROT: '/myluck?type=tarot',
+  AI_CHAT_5: '/saju',
+  RELATIONSHIP_ADD: '/relationship',
+  GOLD_WEALTH: '/gold?type=wealth',
+  GOLD_BUSINESS: '/gold?type=business',
+  GOLD_JOB: '/gold?type=job',
+  GOLD_JOBCHANGE: '/gold?type=jobchange',
+  LOVE_COUPLE: '/relationship?type=couple',
+  LOVE_MARRIED: '/relationship?type=married',
+  LOVE_MARRIAGE: '/relationship?type=marriage',
+  LOVE_REUNION: '/relationship?type=reunion',
+  LOVE_CRUSH: '/relationship?type=crush',
+};
+
 export interface PendingServiceOrder<T = any> {
   orderId: string;
   serviceType: ServiceType;
@@ -56,25 +80,60 @@ export function getPendingServiceOrder(): PendingServiceOrder | null {
 export function promotePendingOrderToTicket(
   approvedOrderId: string,
   receiptToken?: string,
-  remainingUses?: number
+  remainingUses?: number,
+  fallbackServiceType?: string
 ): PendingServiceOrder | null {
-  const pending = getPendingServiceOrder();
-  if (!pending || pending.orderId !== approvedOrderId) return null;
-  const enriched: PendingServiceOrder = {
-    ...pending,
-    ...(receiptToken ? { receiptToken } : {}),
-    ...(typeof remainingUses === 'number' ? { remainingUses } : {}),
-  };
   try {
     const rawTickets = localStorage.getItem(PAID_TICKETS_KEY);
     const tickets: Record<string, PendingServiceOrder> = rawTickets ? JSON.parse(rawTickets) : {};
-    tickets[enriched.serviceType] = enriched;
-    localStorage.setItem(PAID_TICKETS_KEY, JSON.stringify(tickets));
-    localStorage.removeItem(PENDING_ORDER_KEY);
+
+    // StrictMode 이중 실행 또는 새로고침 시 멱등성 보장
+    const existing = Object.values(tickets).find((t) => t?.orderId === approvedOrderId);
+    if (existing) {
+      const updatedExisting: PendingServiceOrder = {
+        ...existing,
+        ...(receiptToken ? { receiptToken } : {}),
+        ...(typeof remainingUses === 'number' ? { remainingUses } : {}),
+      };
+      tickets[updatedExisting.serviceType] = updatedExisting;
+      localStorage.setItem(PAID_TICKETS_KEY, JSON.stringify(tickets));
+      return updatedExisting;
+    }
+
+    const pending = getPendingServiceOrder();
+    if (pending && pending.orderId === approvedOrderId) {
+      const enriched: PendingServiceOrder = {
+        ...pending,
+        ...(receiptToken ? { receiptToken } : {}),
+        ...(typeof remainingUses === 'number' ? { remainingUses } : {}),
+      };
+      tickets[enriched.serviceType] = enriched;
+      localStorage.setItem(PAID_TICKETS_KEY, JSON.stringify(tickets));
+      localStorage.removeItem(PENDING_ORDER_KEY);
+      return enriched;
+    }
+
+    if (fallbackServiceType && fallbackServiceType in SERVICE_NAMES) {
+      const svcType = fallbackServiceType as ServiceType;
+      const recovered: PendingServiceOrder = {
+        orderId: approvedOrderId,
+        serviceType: svcType,
+        serviceName: SERVICE_NAMES[svcType] || '운세 분석 서비스',
+        price: getServicePrice(svcType),
+        returnPath: DEFAULT_RETURN_PATHS[svcType] || '/myluck?type=today',
+        payload: null,
+        ...(receiptToken ? { receiptToken } : {}),
+        ...(typeof remainingUses === 'number' ? { remainingUses } : {}),
+        createdAt: Date.now(),
+      };
+      tickets[svcType] = recovered;
+      localStorage.setItem(PAID_TICKETS_KEY, JSON.stringify(tickets));
+      return recovered;
+    }
   } catch {
-    // ignore
+    // ignore storage errors
   }
-  return enriched;
+  return null;
 }
 
 export function consumePaidServiceTicket(

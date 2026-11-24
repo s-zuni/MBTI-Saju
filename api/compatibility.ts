@@ -7,6 +7,9 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    buildPairFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import { compatibilitySchema } from '../src/config/schemas';
@@ -153,9 +156,24 @@ MBTI: ${formatMbtiForPrompt(partnerProfile.mbti)}
 [대상 B (상대방) 사주 데이터]
 ${partnerSajuContext}
 
-위 정보를 바탕으로 두 사람의 '${relationshipStr}' 관점에서의 심층 궁합 분석을 수행해 주세요.`;
+위 정보를 바탕으로 두 사람의 '${relationshipStr}' 관점에서의 심층 궁합 분석을 수행해 주세요.
+
+${buildPairFactualLockBlock({
+    mySaju,
+    myMbti: myProfile.mbti,
+    myName: myProfile.name,
+    partnerSaju,
+    partnerMbti: partnerProfile.mbti,
+    partnerName: partnerProfile.name,
+})}`;
         } else {
-            userQuery += `위 정보를 바탕으로 본인의 '이상형(궁합)'과 관계 조언을 수행해 주세요. 특히 ${relationshipStr} 관점에서 어떤 스타일의 사람을 만나야 성공적인지 분석해 주세요.`;
+            userQuery += `위 정보를 바탕으로 본인의 '이상형(궁합)'과 관계 조언을 수행해 주세요. 특히 ${relationshipStr} 관점에서 어떤 스타일의 사람을 만나야 성공적인지 분석해 주세요.
+
+${buildSingleFactualLockBlock({
+    saju: mySaju,
+    mbti: myProfile.mbti,
+    name: myProfile.name,
+})}`;
         }
 
         let receiptReleased = false;
@@ -175,6 +193,7 @@ ${partnerSajuContext}
                         schema: compatibilitySchema,
                         system: STATIC_COMPATIBILITY_SYSTEM_PROMPT,
                         prompt: userQuery,
+                        temperature: 0.4,
                         maxOutputTokens: 16384,
                         maxRetries: 0,
                         onError: async () => { await safeReleaseReceipt(); },
@@ -182,7 +201,10 @@ ${partnerSajuContext}
                             if (!object || error) await safeReleaseReceipt();
                         },
                     });
-                    return result.toTextStreamResponse({ headers: reqCorsHeaders });
+                    return wrapResponseWithFactualGuard(
+                        result.toTextStreamResponse({ headers: reqCorsHeaders }),
+                        { expectedSingleMbti: isPartnerMode ? null : myProfile.mbti }
+                    );
                 } catch (error) {
                     lastError = error;
                     if (!isRetryableAIError(error)) break;

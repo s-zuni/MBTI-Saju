@@ -286,6 +286,9 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
     };
 
     const handleTabChange = (tab: LoveSajuType) => {
+        if (tab !== activeTab) {
+            setHasStarted(false);
+        }
         setActiveTab(tab);
         setSearchParams({ type: tab });
         setError(null);
@@ -313,8 +316,8 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
             return;
         }
 
-        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
-        const targetSajuData = safeCalculateSaju(targetBirthDate, targetBirthTime);
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime, profile.gender);
+        const targetSajuData = safeCalculateSaju(targetBirthDate, targetBirthTime, targetGender);
         if (!sajuData || !targetSajuData) {
             setError('본인과 상대방의 유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
@@ -426,7 +429,7 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
                 </div>
 
                 <div>
-                    {!result && !isLoading && !hasStarted ? (
+                    {!hasStarted ? (
                         <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
                             <div className="p-8 border-b border-slate-100 text-center bg-[#FAF7F0]">
                                 <h1 className="text-2xl font-bold text-slate-900 mb-1.5">

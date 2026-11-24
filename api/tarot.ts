@@ -1,4 +1,5 @@
 import { streamObject } from 'ai';
+import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
 import {
     getAIProvider,
@@ -6,6 +7,8 @@ import {
     BASE_SYSTEM_PROMPT,
     getTemporalAnchorBlock,
     formatMbtiForPrompt,
+    buildSingleFactualLockBlock,
+    wrapResponseWithFactualGuard,
 } from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
 import { tarotSchema } from '../src/config/schemas';
@@ -56,6 +59,9 @@ export default async (req: Request) => {
     try {
         const body = await req.json();
         const { question, selectedCards, spreadType, userContext } = body;
+        const safeQuestion = typeof question === 'string' && question.trim()
+            ? question.trim()
+            : '오늘 하루의 흐름과 조언';
         // AI Key checking is now handled centrally in ai-provider.ts
 
         let spreadContext = "";
@@ -88,10 +94,26 @@ export default async (req: Request) => {
         }
 
         let personalization = "";
+        let userSaju: ReturnType<typeof getPreciseSajuData> | null = null;
+        let sajuContextText = "";
         if (userContext) {
             if (userContext.name) personalization += `내담자 이름: ${userContext.name}님. `;
             personalization += `MBTI: ${formatMbtiForPrompt(userContext.mbti)}. `;
-            if (userContext.birthDate) personalization += `생년월일: ${userContext.birthDate}. `;
+            if (userContext.birthDate) {
+                personalization += `생년월일: ${userContext.birthDate}. `;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(String(userContext.birthDate))) {
+                    try {
+                        userSaju = getPreciseSajuData({
+                            birthDate: String(userContext.birthDate),
+                            birthTime: userContext.birthTime || null,
+                            gender: userContext.gender,
+                        });
+                        sajuContextText = `\n${buildRichSajuContext(userSaju)}\n`;
+                    } catch (e) {
+                        console.warn('[tarot] saju calc skipped:', e);
+                    }
+                }
+            }
         }
 
         let cardsList = "";
@@ -100,15 +122,23 @@ export default async (req: Request) => {
             cardsList += `${idx + 1}. [${position}]: ${card.name} (${card.name_ko})\n`;
         });
 
+        const factualLockBlock = buildSingleFactualLockBlock({
+            saju: userSaju,
+            mbti: userContext?.mbti,
+            name: userContext?.name,
+        });
+
         const userQuery = `
         ${getTemporalAnchorBlock()}
 
         Spread Mode: ${spreadContext}
         Personalization Context: ${personalization}
-        Question: "${question}"
+        Question: "${safeQuestion}"
         Spread Type: ${spreadType}
         Selected Cards:
         ${cardsList}
+        ${sajuContextText}
+        ${factualLockBlock}
         `;
 
         let receiptReleased = false;
@@ -128,6 +158,7 @@ export default async (req: Request) => {
                         schema: tarotSchema,
                         system: STATIC_TAROT_SYSTEM_PROMPT,
                         prompt: userQuery,
+                        temperature: 0.4,
                         maxOutputTokens: 16384,
                         maxRetries: 0, // Faster switching
                         onError: async () => { await safeReleaseReceipt(); },
@@ -135,7 +166,10 @@ export default async (req: Request) => {
                             if (!object || error) await safeReleaseReceipt();
                         },
                     });
-                    return result.toTextStreamResponse({ headers: reqCorsHeaders });
+                    return wrapResponseWithFactualGuard(
+                        result.toTextStreamResponse({ headers: reqCorsHeaders }),
+                        { expectedSingleMbti: userContext?.mbti }
+                    );
                 } catch (error) {
                     lastError = error;
                     console.warn(`Attempt ${attempt + 1} (${getAIProvider(attempt).name}) failed for tarot:`, error);

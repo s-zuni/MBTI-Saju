@@ -159,7 +159,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             return;
         }
 
-        const userSajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        const userSajuData = safeCalculateSaju(profile.birthDate, profile.birthTime, profile.gender);
         if (!userSajuData) {
             setLocalError('본인의 유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
