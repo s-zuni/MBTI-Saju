@@ -586,9 +586,9 @@ const MyPage: React.FC<MyPageProps> = ({
                       <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">오행 분포 (Five Elements)</h4>
                       <div className="grid grid-cols-3 md:grid-cols-5 gap-2 text-center">
                         {[
-                          { label: '목(木)', count: analysis.saju.elements.wood, color: 'bg-green-100 text-green-700 border-green-200' },
-                          { label: '화(火)', count: analysis.saju.elements.fire, color: 'bg-red-100 text-red-700 border-red-200' },
-                          { label: '토(土)', count: analysis.saju.elements.earth, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                          { label: '목(木)', count: analysis.saju.elements.wood, color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+                          { label: '화(火)', count: analysis.saju.elements.fire, color: 'bg-rose-100 text-rose-700 border-rose-200' },
+                          { label: '토(土)', count: analysis.saju.elements.earth, color: 'bg-amber-100 text-amber-700 border-amber-200' },
                           { label: '금(金)', count: analysis.saju.elements.metal, color: 'bg-slate-100 text-slate-700 border-slate-200' },
                           { label: '수(水)', count: analysis.saju.elements.water, color: 'bg-blue-100 text-blue-700 border-blue-200' }
                         ].map((el) => (
@@ -624,9 +624,9 @@ const MyPage: React.FC<MyPageProps> = ({
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <span className="inline-block bg-violet-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">1단계</span>
-                        <h4 className="text-sm font-bold text-slate-850">타고난 운명적 본질 (사주 풀이)</h4>
+                        <h4 className="text-sm font-bold text-slate-900">타고난 운명적 본질 (사주 풀이)</h4>
                       </div>
-                      <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium">
+                      <p className="text-slate-700 leading-relaxed text-sm whitespace-pre-line font-medium">
                         {analysis.deepIntegration.sajuBaseAnalysis}
                       </p>
                     </div>
@@ -637,9 +637,9 @@ const MyPage: React.FC<MyPageProps> = ({
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <span className="inline-block bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">2단계</span>
-                        <h4 className="text-sm font-bold text-slate-850">현실적 성격의 역동 (사주 × MBTI 융합)</h4>
+                        <h4 className="text-sm font-bold text-slate-900">현실적 성격의 역동 (사주 × MBTI 융합)</h4>
                       </div>
-                      <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium">
+                      <p className="text-slate-700 leading-relaxed text-sm whitespace-pre-line font-medium">
                         {analysis.deepIntegration.mbtiIntegration}
                       </p>
                     </div>
@@ -652,7 +652,7 @@ const MyPage: React.FC<MyPageProps> = ({
                     <h4 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">핵심 융합 시너지 포인트</h4>
                     <div className="grid md:grid-cols-3 gap-4">
                       {analysis.deepIntegration.synergyPoints.filter(Boolean).map((point: any, idx: number) => (
-                        <div key={idx} className="bg-white border border-slate-150 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div key={idx} className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                           <div className="absolute top-0 left-0 w-1 h-full bg-violet-500"></div>
                           <h5 className="font-bold text-slate-800 mb-2 flex items-center gap-1.5 text-xs">
                             <span className="text-violet-500 font-extrabold text-xs">#{idx + 1}</span>
@@ -697,9 +697,9 @@ const MyPage: React.FC<MyPageProps> = ({
                       <span className="bg-amber-100 text-amber-800 p-1.5 rounded-lg">
                         <Sun className="w-4 h-4" />
                       </span>
-                      <h4 className="text-sm font-bold text-slate-850">내가 가진 성향적 빛 (강점)</h4>
+                      <h4 className="text-sm font-bold text-slate-900">내가 가진 성향적 빛 (강점)</h4>
                     </div>
-                    <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
+                    <p className="text-slate-700 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
                       {analysis.lifeGuideline.lightAndShadow?.light}
                     </p>
                   </div>
@@ -713,9 +713,9 @@ const MyPage: React.FC<MyPageProps> = ({
                       <span className="bg-slate-200 text-slate-700 p-1.5 rounded-lg">
                         <Moon className="w-4 h-4" />
                       </span>
-                      <h4 className="text-sm font-bold text-slate-850">무의식적인 어둠의 그림자 (팩폭)</h4>
+                      <h4 className="text-sm font-bold text-slate-900">무의식적인 어둠의 그림자 (팩폭)</h4>
                     </div>
-                    <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
+                    <p className="text-slate-700 leading-relaxed text-sm whitespace-pre-line font-medium relative z-10">
                       {analysis.lifeGuideline.lightAndShadow?.shadow}
                     </p>
                   </div>
@@ -728,7 +728,7 @@ const MyPage: React.FC<MyPageProps> = ({
                   </span>
                   <div>
                     <h5 className="font-bold text-slate-800 text-xs mb-1">그림자를 극복하기 위한 라이프 솔루션</h5>
-                    <p className="text-xs text-slate-650 leading-relaxed font-medium">
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
                       {analysis.lifeGuideline.lightAndShadow?.solution}
                     </p>
                   </div>

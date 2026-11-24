@@ -42,6 +42,7 @@ export const SHISHEN_MAP: Record<string, string> = {
 };
 
 export const SHISHEN_COLORS: Record<string, string> = {
+  '일간': 'text-violet-700 bg-violet-100',
   '비견': 'text-rose-600 bg-rose-50',
   '겁재': 'text-rose-500 bg-rose-50/50',
   '식신': 'text-orange-600 bg-orange-50',

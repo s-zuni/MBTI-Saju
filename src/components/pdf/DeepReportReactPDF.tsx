@@ -31,38 +31,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.62,
     color: '#1E293B',
   },
-  coverPage: {
-    padding: 0,
-    backgroundColor: '#0F172A',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#ffffff',
-    fontFamily: 'NotoSansKR',
-  },
-  coverTitle: {
-    fontFamily: 'NotoSansKR',
-    fontSize: 48,
-    marginBottom: 30,
-    textAlign: 'center',
-    letterSpacing: -1,
-    lineHeight: 1.3,
-    paddingHorizontal: 40,
-  },
-  coverSubtitle: {
-    fontSize: 15,
-    letterSpacing: 6,
-    color: '#FBBF24',
-    marginBottom: 60,
-    fontWeight: 'bold',
-  },
-  clientName: {
-    fontSize: 36,
-    fontFamily: 'NotoSansKR',
-    marginTop: 30,
-    color: '#F8FAFC',
-  },
   sectionTitle: {
     fontFamily: 'NotoSansKR',
     fontSize: 18,
@@ -123,19 +91,6 @@ const styles = StyleSheet.create({
     marginBottom: 9,
     fontFamily: 'NotoSansKR',
   },
-  footer: {
-    position: 'absolute',
-    bottom: '10mm',
-    left: '20mm',
-    right: '20mm',
-    borderTop: '0.75pt solid #E2E8F0',
-    paddingTop: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    fontSize: 12,
-    color: '#94A3B8',
-    fontFamily: 'NotoSansKR',
-  },
   sajuTable: {
     flexDirection: 'row',
     marginBottom: 10,
@@ -166,13 +121,6 @@ const styles = StyleSheet.create({
   sajuValue: {
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  decorativeLine: {
-    height: 1.5,
-    width: 60,
-    backgroundColor: '#FBBF24',
-    marginTop: 5,
-    marginBottom: 20,
   },
   premiumBox: {
     marginTop: 14,
@@ -776,10 +724,10 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
             {c.currentYear ? '올해 남은 기간 + ' : ''}{range ? `${range} 3개년` : '3개년'} 프리미엄 사주 리포트
           </Text>
           <View style={{ width: 34, height: 3, backgroundColor: '#7C3AED', marginTop: 12, marginBottom: 28 }} />
-          <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 40, lineHeight: 1.28, letterSpacing: -1, color: '#0F172A' }}>
+          <Text style={{ fontFamily: 'NotoSansKR', fontWeight: 'bold', fontSize: 40, lineHeight: 1.28, letterSpacing: -1, color: '#0F172A' }}>
             {c.cover?.mainTitle || `${clientName} 님의 3년 리포트`}
           </Text>
-          <Text style={{ fontFamily: 'NanumGothic', fontSize: 14, lineHeight: 1.7, color: '#475569', marginTop: 22, width: '88%' }}>
+          <Text style={{ fontFamily: 'NotoSansKR', fontSize: 14, lineHeight: 1.7, color: '#475569', marginTop: 22, width: '88%' }}>
             {c.cover?.subTitle || '명리학과 심리학의 융합을 통한 인생 설계'}
           </Text>
         </View>
@@ -788,7 +736,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
           <View style={{ flexDirection: 'row' }}>
             <View style={{ flex: 0.9, paddingRight: 10 }}>
               <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PREPARED FOR</Text>
-              <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{clientName} 님</Text>
+              <Text style={{ fontFamily: 'NotoSansKR', fontWeight: 'bold', fontSize: 13 }}>{clientName} 님</Text>
             </View>
             <View style={{ flex: 1.7, paddingRight: 10 }}>
               <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PERIOD</Text>

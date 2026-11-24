@@ -18,14 +18,14 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
     { label: '생년', key: 'year' },
   ];
 
-  const renderCell = (char: string, type: 'gan' | 'zhi', shishen: string = '') => {
+  const renderCell = (char: string, type: 'gan' | 'zhi') => {
     const isUnknown = char === '?' || char === '모름';
     const info = type === 'gan' ? GAN_INFO[char] : ZHI_INFO[char];
     const style = info ? ELEMENT_STYLES[info.element] : ELEMENT_STYLES.default;
     
     return (
       <div className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${style}`}>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center flex-wrap gap-x-1 gap-y-0.5">
           <span className="text-xl md:text-2xl font-black">{char}</span>
           {!isUnknown && info?.hanja && info.hanja !== char && (
             <span className="text-[10px] md:text-xs font-bold opacity-75">({info.hanja})</span>
@@ -48,7 +48,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-100 bg-slate-50/50">
         <div className="p-3 border-r border-slate-100"></div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-950 text-white' : ''}`}>
+          <div key={p.key} className={`p-3 text-center border-r last:border-r-0 border-slate-100 text-[10px] md:text-xs font-bold ${p.key === 'day' ? 'bg-slate-950 text-white' : 'text-slate-500'}`}>
             {p.label}
           </div>
         ))}
@@ -69,7 +69,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">십성</div>
         {pillars.map((p) => {
           const raw = saju.pillars[p.key].ganShiShen;
-          const ko = p.key === 'day' ? '비견' : translateShiShen(raw);
+          const ko = p.key === 'day' ? '일간' : translateShiShen(raw);
           const style = getShiShenStyle(ko);
           return (
             <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center flex items-center justify-center ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
@@ -122,7 +122,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5 border-b border-slate-50">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12운성</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-700 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-700 break-keep ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
             {saju.pillars[p.key].twelveStages}
           </div>
         ))}
@@ -132,7 +132,7 @@ const SajuGrid: React.FC<{ saju: any }> = ({ saju }) => {
       <div className="grid grid-cols-5">
         <div className="p-2 border-r border-slate-100 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-400 bg-slate-50/30">12신살</div>
         {pillars.map((p) => (
-          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
+          <div key={p.key} className={`p-2 border-r last:border-r-0 border-slate-50 text-center text-[10px] md:text-xs font-bold text-slate-500 break-keep ${p.key === 'day' ? 'bg-slate-50' : ''}`}>
             {saju.pillars[p.key].twelveSpirits}
           </div>
         ))}

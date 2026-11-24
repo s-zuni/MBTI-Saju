@@ -228,8 +228,13 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-center z-[1000] p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white rounded-[32px] overflow-hidden flex flex-col my-auto shadow-2xl">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-end sm:items-center z-[1000] p-0 sm:p-6 overflow-y-auto"
+    >
+      <div className="relative w-full max-w-3xl max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden flex flex-col sm:my-auto shadow-2xl">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors z-10">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
@@ -276,6 +281,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                     
                     return (
                       <button
+                        type="button"
                         key={date}
                         disabled={!isAvailable}
                         onClick={() => setFormData({...formData, reservationDate: date})}
@@ -431,6 +437,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                <label className="text-sm font-black text-slate-800">리포트 상품 선택 <span className="text-rose-500">*</span></label>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button 
+                    type="button"
                     onClick={() => setFormData({...formData, reportType: 'mbti_saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'mbti_saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
@@ -444,6 +451,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                      <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">내년부터 3년 세부 로드맵 & 성향</p>
                   </button>
                   <button 
+                    type="button"
                     onClick={() => setFormData({...formData, reportType: 'saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
@@ -463,6 +471,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                  <div className="flex items-center justify-between">
                    <label className="text-sm font-black text-slate-800">상대방 정보 포함 (궁합 분석)</label>
                    <button 
+                     type="button"
                      onClick={() => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, includePartner: !prev.partnerInfo.includePartner}}))}
                      className={`w-12 h-6 rounded-full transition-all relative ${formData.partnerInfo.includePartner ? 'bg-violet-600' : 'bg-slate-200'}`}
                    >
