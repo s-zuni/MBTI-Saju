@@ -117,6 +117,23 @@ class KaraokeBlocksTest(unittest.TestCase):
         blocks = build_karaoke_blocks("안녕하세요 반갑습니다", [], 0.0, 2.0, font, 900, time_shift=0.5)
         self.assertTrue(all(s >= 0 and e >= 0 for s, e, _ in blocks))
 
+    def test_static_caption_chunks_have_no_karaoke_or_color_tags(self):
+        from pipeline.text_utils import build_caption_chunks
+        font_path = Path("assets/fonts/Pretendard-Bold.otf")
+        font = ImageFont.truetype(str(font_path), 80) if font_path.is_file() else ImageFont.load_default()
+        chunks = build_caption_chunks(
+            "솔직히 요즘 이직을 해야 할지 그냥 버텨야 할지, 막막할 때 있잖아요.",
+            0.0,
+            6.0,
+            font,
+            940,
+        )
+        self.assertGreaterEqual(len(chunks), 2)
+        for s, e, txt in chunks:
+            self.assertLess(s, e)
+            self.assertNotIn("\\kf", txt)
+            self.assertNotIn("\\c&H", txt)
+
 
 class MakeTitleInclusiveTest(unittest.TestCase):
     def test_replaces_specific_mbti_with_broad_terms(self):

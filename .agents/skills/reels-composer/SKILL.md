@@ -32,25 +32,31 @@ description: insta_auto 저장소의 MBTI×사주 릴스/숏츠 파이프라인�
 
 ## 3. 자막 (`pipeline/composer.py`, `pipeline/text_utils.py`)
 
-- 단어 개수 기반으로 대충 반으로 자르는 방식은 폐기됨. 현재 로직:
-  1. `split_into_clauses()` — 문장부호(`. ! ? ,`)와 한국어 어미(`~요/~죠/~다` 뒤) 기준으로
-     나레이션을 자연스러운 구(clause) 단위로 분할. 6자 미만 조각은 앞 구절에 병합.
-  2. `wrap_by_pixel_width()` — 각 구절을 ASS 스타일과 동일한 폰트/크기(Pretendard 96px)로
-     실측하여 픽셀 폭(900px, `SUBTITLE_MAX_WIDTH`) 기준 줄바꿈.
-  3. 한 자막 블록 최대 2줄(`max_lines`). 줄바꿈은 ASS `\N`.
-  4. 각 블록의 재생 구간은 전체 씬 duration을 글자 수 비례로 배분 (`build_caption_chunks`).
+- **정적 자막 원칙 (카라오케/단어색상 변경 금지)**:
+  - ASS 하드번인 시 음성 타이밍에 따라 단어 색이나 채우기가 변하는 카라오케 효과(`\kf`) 및 단어별 색상 강조(`_colorize_token`)는 사용하지 않는다.
+  - 모든 자막은 깔끔한 정적 흰 글씨(`&H00FFFFFF`) + 검정 박스(`BorderStyle=3`), 80px(`Pretendard-Bold`), 상단 Y=1430(`Alignment=8`), 가운데 정렬로 표시한다.
+- **자연스러운 한국어 줄바꿈 & 줄넘김 (`split_into_clauses`, `wrap_balanced_subtitle_lines`)**:
+  1. `split_into_clauses()` — 문장부호(`. ! ? ,`)와 한국어 어미(`~요/~죠/~다/~는데/~지만/~거든/~니까` 뒤) 기준으로 자연스러운 구(clause) 단위로 분할. 단, `아니면/화면/내면/반면` 등 `면`으로 끝나는 접속사·명사는 분리하지 않으며, 쉼표 뒤의 짧은 접속/수식 어절은 앞 구절이 아닌 뒤 구절(forward merge)로 병합하고 의존 서술어 꼬리(`거예요./있어요./있잖아요./있거든요.`)만 앞 구절과 함께 유지한다.
+  2. `wrap_balanced_subtitle_lines()` — 각 구절을 ASS 스타일과 동일한 폰트/크기(`Pretendard` 80px)로 실측하여 픽셀 폭(940px, `SUBTITLE_MAX_WIDTH`) 기준 균형 2줄 분할($\min |W_1 - W_2| + \text{GrammarPenalty}$)을 적용한다. 의존명사·보조용언(`해야 할지`, `막막할 때`, `짚어준다는 거예요`, `볼 수도 있거든요`, `알고 싶은 분들은`, `실천 체크리스트까지`) 사이가 찢어지거나 3번째 줄 외톨이 블록(2+1 스필오버)이 생기지 않도록 2줄 초과 구절은 중간 의미 경계에서 균등 재분할한다.
+  3. 각 자막 블록은 `align_word_times()`(TTS `word_timings` 기반, 미제공 시 글자 수 비례 배분)로 실제 발화 구간과 정확히 동기화된다 (`build_caption_chunks`).
 
 ## 4. 씬 전환 & 하이브리드 비디오/모션 (`pipeline/composer.py`, `pipeline/flow_automation.py`)
 
+- **절제된 모션 그래픽스 표준 (`remotion-dev/skills` · `video-agent-skills` 적용)**:
+  - 과도하거나 산만한 효과는 지양하고, 핵심 정보 전달을 돕는 절제된 모션만 사용한다.
+  - **큐빅 베지어(Cubic-Bezier) Ease-Out 등장 & 미세 부유**: 첫 `0.38s` 동안 부드러운 스케일/슬라이드 등장(`scale 0.95 -> 1.0`, `y +16px -> 0px`) 후 미세한 연속 부유(`1.00 -> 1.035`).
+  - **스태거(Stagger) & 팬아웃(Fan-out)**: 복수 카드 씬은 주 카드 `0.0s` 등장 후 보조 카드를 `0.18s` 지연 등장시키며, 3장 펼침 씬은 좌우 카드가 중앙 뒤에서 부채꼴(`1.5° -> 7.5°`)로 펼쳐진다.
+  - **좌→우 형광펜 스윕(Highlighter Sweep)**: `0.45s ~ 1.05s` 구간에 핵심 문구/수치 하이라이트 박스가 왼쪽에서 오른쪽으로 스윕(`0% -> 100%`)되며 시선을 집중시킨다.
+  - **상단 진행 바**: 영상 최상단(`Y=0..6`)에 얇은 골드-바이올렛 진행 바가 전체 진행률을 표시한다.
 - **하이브리드 비디오 오버레이 (`render_video_scene_clip`)**:
   - 초반 1~2씬(`VIDEO_HOOK_SCENES=2` 기본) 또는 `scene.media_type == "video"`인 씬은 `pipeline/flow_automation.py`를 통해
     (1) Google Gemini Flow 브라우저 자동화(`USE_GOOGLE_FLOW=true`), (2) Pexels/Pixabay 무료 HD 스톡 영상 API(`PEXELS_API_KEY`),
-    (3) Veo API(`USE_VEO_API=true`) 순으로 실제 MP4 영상을 확보하여 y=656(1080x608) 영역에 오버레이한다.
+    (3) Veo API(`USE_VEO_API=true`) 순으로 실제 MP4 영상을 확보하여 9:16(1080x1920) 프레임에 오버레이한다.
 - **다이내믹 카메라 모션 (`render_scene_clip`)**:
-  - 이미지 씬의 경우 씬 1(훅)은 빠른 22% 펀치인 줌, 홀수 씬은 사인 이즈인아웃 줌인(18%), 짝수 씬은 줌아웃(18%).
+  - 이미지 씬의 경우 씬 1(훅)은 빠른 22% 펀치인 줌, 홀수 씬은 사인 이즈인아웃 줌인(15%), 짝수 씬은 줌아웃(15%).
 - **트랜지션 & SFX (`pipeline/sfx_gen.py`)**:
   - 씬 간 `TRANSITION_DUR = 0.24`초 디졸브(`xfade`+`acrossfade`)로 병합. 실패 시 하드컷 폴백(`_concat_copy_merge`).
-  - `sfx_gen.py`가 순수 Python 파형 합성으로 씬 1 `hook_pop.wav` 및 반전 씬 `ding_reveal.wav`를 자동 생성·믹스(`ENABLE_SFX=true`).
+  - `sfx_gen.py`가 순수 Python 파형 합성으로 씬 1 `hook_pop.wav`, 전환 씬 `whoosh_soft.wav`, 반전/핵심 씬 `ding_reveal.wav`를 자동 생성·믹스(`ENABLE_SFX=true`).
 
 ## 5. 100만 바이럴 투트랙 주제 기획 (`pipeline/topic_planner.py`)
 

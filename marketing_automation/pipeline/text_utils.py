@@ -6,7 +6,7 @@
 - 픽셀 폭 기반 자연스러운 줄바꿈: 구분 기호 인식 + 시각적 폭 균형(외톨이 단어 방지)
 """
 import re
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from PIL import ImageFont
@@ -124,20 +124,34 @@ def make_title_inclusive(title: str) -> str:
 
 
 # 문장부호/구어체 어미/연결 어미 뒤에서 자연스럽게 끊어 자막/음성 호흡 단위를 만들기 위한 경계
+# 주의: '아니면/화면/내면/반면/돌아서면' 등 명사·접속사성 '면'을 잘못 쪼개지 않도록 검증된 활용 어미만 명시한다.
 _CLAUSE_BOUNDARY_RE = re.compile(
-    r"(?<=[.!?,])\s+"          # 마침표/느낌표/물음표/쉼표 뒤
-    r"|(?<=요)\s+(?=[가-힣])"   # '~해요' 뒤 다음 어절
-    r"|(?<=죠)\s+(?=[가-힣])"   # '~하죠' 뒤 다음 어절
-    r"|(?<=다)\s+(?=[가-힣])"   # '~합니다/했다' 뒤 다음 어절
-    r"|(?<=는데)\s+(?=[가-힣])" # '~보이는데' 뒤 다음 어절
-    r"|(?<=지만)\s+(?=[가-힣])" # '~하지만' 뒤 다음 어절
-    r"|(?<=거든)\s+(?=[가-힣])" # '~하거든/거든요' 뒤 다음 어절
-    r"|(?<=니까)\s+(?=[가-힣])" # '~하니까' 뒤 다음 어절
-    r"|(?<=으면)\s+(?=[가-힣])" # '~있으면' 뒤 다음 어절
-    r"|(?<=[가-힣]면)\s+(?=[가-힣])" # '~하면/되면' 뒤 다음 어절
-    r"|(?<=아서)\s+(?=[가-힣])" # '~좋아서' 뒤 다음 어절
-    r"|(?<=어서)\s+(?=[가-힣])" # '~강해서' 뒤 다음 어절
-    r"|(?<=하고)\s+(?=[가-힣])" # '~하고' 뒤 다음 어절
+    r"(?<=[.!?,])\s+"                  # 마침표/느낌표/물음표/쉼표 뒤
+    r"|(?<=요)\s+(?=[가-힣0-9A-Za-z])"   # '~해요' 뒤
+    r"|(?<=죠)\s+(?=[가-힣0-9A-Za-z])"   # '~하죠' 뒤
+    r"|(?<=(?:습니다|입니다|됩니다|합니다|줍니다|집니다))\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=(?:한다|했다|였다|됐다|봤다|났다|졌다|겠다|있다|없다))\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=는데)\s+(?=[가-힣0-9A-Za-z])" # '~보이는데' 뒤
+    r"|(?<=지만)\s+(?=[가-힣0-9A-Za-z])" # '~하지만' 뒤
+    r"|(?<=거든)\s+(?=[가-힣0-9A-Za-z])" # '~하거든' 뒤
+    r"|(?<=거든요)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=니까)\s+(?=[가-힣0-9A-Za-z])" # '~하니까' 뒤
+    r"|(?<=으면)\s+(?=[가-힣0-9A-Za-z])" # '~있으면/넣으면' 뒤
+    r"|(?<=하면)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=되면)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=보면)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=가면)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=오면)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=해서)\s+(?=[가-힣0-9A-Za-z])"
+    r"|(?<=아서)\s+(?=[가-힣0-9A-Za-z])" # '~좋아서' 뒤
+    r"|(?<=어서)\s+(?=[가-힣0-9A-Za-z])" # '~강해서' 뒤
+    r"|(?<=(?:하고|오고|가고|보고|되고|있고|없고))\s+(?=[가-힣0-9A-Za-z])" # '~하고/오고/있고' 뒤
+)
+
+# 쉼표 뒤 짧은 접속어·도입부는 앞 구절이 아니라 뒤 구절로 합쳐야 자연스럽다.
+_FORWARD_MERGE_PREFIXES = (
+    "아니면", "하지만", "그런데", "그래서", "그리고", "심지어",
+    "보통", "솔직히", "당장", "결국", "물론", "게다가", "특히", "네,", "예,"
 )
 
 
@@ -162,22 +176,217 @@ def sanitize_title(text: str) -> str:
 
 
 def split_into_clauses(text: str) -> List[str]:
-    """문장부호/어미를 기준으로 나레이션을 자연스러운 구(clause) 단위로 분할합니다."""
+    """문장부호/어미를 기준으로 나레이션을 자연스러운 구(clause) 단위로 분할합니다.
+    명시적 블록 구분자('|' 또는 빈 줄 '\\n\\n')가 있으면 그 단위를 우선 존중합니다."""
     text = text.strip()
     if not text:
         return []
+
+    if "|" in text or "\n\n" in text:
+        explicit = [p.strip() for p in re.split(r"\s*\|\s*|\n{2,}", text) if p and p.strip()]
+        if explicit:
+            return explicit
+
     parts = [p.strip() for p in _CLAUSE_BOUNDARY_RE.split(text) if p and p.strip()]
     if not parts:
         return [text]
 
-    # 너무 짧은 조각(6자 미만)은 앞 조각에 합쳐 캡션이 지나치게 잘게 쪼개지는 것을 방지
+    # 너무 짧은 조각(6자 미만) 병합:
+    # - 문장부호 직후거나 도입부 접속어('네,', '아니면')면 뒤 구절로 forward merge
+    # - 용언 어미나 서술어 꼬리('손절해요', '거예요.')는 앞 구절로 backward merge
     merged: List[str] = []
-    for part in parts:
-        if merged and len(part) < 6:
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+        is_short = len(part) < 6
+        prev_ended_punct = bool(merged and merged[-1][-1] in ".!?,")
+        is_intro = any(part.startswith(px) for px in _FORWARD_MERGE_PREFIXES)
+        if is_short and (not merged or prev_ended_punct or is_intro) and i + 1 < len(parts):
+            parts[i + 1] = f"{part} {parts[i + 1]}"
+        elif is_short and merged:
             merged[-1] = f"{merged[-1]} {part}"
         else:
             merged.append(part)
+        i += 1
     return merged
+
+
+# 한국어 자막 줄바꿈/줄넘김 시 절대로 찢어지면 안 되는 통사 결속 패턴
+_BOUND_NOUN_OR_AUX_RE = re.compile(
+    r"^(때|수|수도|수는|수가|것|것이|것은|것을|게|거|거야|거예요|겁니다|건|걸|줄|"
+    r"분|분은|분들|분들은|해|해인지|치|동안|듯|듯이|채|쪽|바|뿐|만큼|대로|밖에|"
+    r"대해|통해|위해|관해|따라|처럼|까지|부터|"
+    r"할지|하는지|있는지|없는지|되는지|인지|볼지|갈지|"
+    r"있잖아요|있어요|있거든요|있고|있을|있음|없어요|없다|"
+    r"되는데|되네요|됩니다|돼요|싶은|싶은지|싶다|싶어|"
+    r"보러|가면|적혀|알고|모르고|넣어서|넣으면|"
+    r"시작해야|움직여야|조심해야|버텨야|유지할지|이직할지|흘러갈지|"
+    r"짚어준다는|정리해주더라고요|비교해줍니다|구매하실|확인하실|체크리스트까지)"
+)
+_SHORT_MODIFIER_WORDS = {
+    "내", "네", "제", "이", "그", "저", "한", "두", "세", "몇", "뭘", "뭐",
+    "다", "딱", "싹", "더", "잘", "안", "못", "꼭", "좀", "막", "왜", "늘",
+    "곧", "참", "큰", "새", "지금", "앞으로", "당장", "같이", "실천", "프로필",
+    "심층", "사주", "신청", "현실", "한눈에", "무료로", "미리", "바로",
+    "그냥", "스무", "3년", "20장짜리",
+}
+_ADNOMINAL_MODIFIER_RE = re.compile(r"(해야|여야|아야|어야|할|갈|볼|올|될|줄|던|았던|었던|였던)$")
+_CLAUSE_TAIL_BONUS_RE = re.compile(r"(할지|는지|인지|해서|으면|하면|되면|보면|가면|오면|고|게|데)$")
+_UNIT_MODIFIER_RE = re.compile(r"^[0-9]+(년|개월|달|주|일|시|분|장|개|번|가지|살|명|원|%|배)$")
+
+
+def _korean_split_penalty(prev_word: str, next_word: str) -> float:
+    """
+    두 어절 사이를 줄바꿈 또는 자막 블록 경계로 삼을 때의 부자연스러움 점수.
+    점수가 작을수록 자연스러운 끊김, 클수록 피해야 할 찢김(의존명사·보조용언·수식어 분리)을 뜻한다.
+    """
+    p_clean = re.sub(r"[,?!.]+$", "", prev_word).strip()
+    n_clean = re.sub(r"[,?!.]+$", "", next_word).strip()
+
+    penalty = 0.0
+
+    # 1. 쉼표/마침표 뒤는 가장 자연스러운 분절점
+    if prev_word.endswith((",", ".", "!", "?")):
+        return -450.0
+
+    # 2. 연결어미 뒤는 좋은 분절점 (단, 바로 뒤 어절이 보조용언/의존명사면 제외)
+    if _BOUND_NOUN_OR_AUX_RE.match(n_clean):
+        penalty += 850.0
+    elif _CLAUSE_TAIL_BONUS_RE.search(p_clean):
+        penalty -= 240.0
+
+    # 3. 관형형/필수어미(-해야, -할, -던) 뒤에서 명사·보조용언과 찢어지는 것 방지
+    if _ADNOMINAL_MODIFIER_RE.search(p_clean):
+        penalty += 720.0
+
+    # 4. 단음절/짧은 수식어('내', '다', '딱', '싹', '몇', '뭘', '실천', '프로필', '사주', '3년') 뒤 분리 방지
+    if p_clean in _SHORT_MODIFIER_WORDS or _UNIT_MODIFIER_RE.match(p_clean):
+        penalty += 650.0
+
+    # 5. 줄 끝이나 줄 시작에 1음절 단어만 덩그러니 남는 현상 방지
+    if len(p_clean) <= 1 or len(n_clean) <= 1:
+        penalty += 550.0
+
+    # 6. 목적격/부사격 조사로 끝난 어절 뒤는 서술어/다음 구와 나누기 무난함
+    if p_clean.endswith(("을", "를", "은", "는", "에", "에서", "까지", "부터", "으로", "로", "와", "과")) and len(p_clean) >= 3:
+        penalty -= 90.0
+
+    return penalty
+
+
+def _best_two_line_split(
+    words: List[str],
+    font: "ImageFont.FreeTypeFont",
+    max_width: int,
+) -> Tuple[Optional[List[str]], float]:
+    """2줄 분할 가능 여부와 최적 분할(및 문법 페널티)을 반환합니다."""
+    best_split = None
+    best_score = float("inf")
+    best_penalty = float("inf")
+    for i in range(1, len(words)):
+        p1 = " ".join(words[:i])
+        p2 = " ".join(words[i:])
+        w1 = font.getlength(p1)
+        w2 = font.getlength(p2)
+        if w1 <= max_width and w2 <= max_width:
+            pen = _korean_split_penalty(words[i - 1], words[i])
+            score = abs(w1 - w2) + pen
+            if score < best_score:
+                best_score = score
+                best_penalty = pen
+                best_split = [p1, p2]
+    return best_split, best_penalty
+
+
+def wrap_balanced_subtitle_lines(
+    text: str,
+    font: "ImageFont.FreeTypeFont",
+    max_width: int,
+) -> List[str]:
+    """
+    단일 자막 블록을 1줄 또는 균형 잡힌 2줄로 래핑합니다.
+    - 한 줄 폭이 여유 있으면 1줄 유지
+    - 2줄로 들어오면 실측 폭 균형(|W1 - W2|) + 한국어 통사 결속 페널티가 최소인 지점에서 분할
+    """
+    clean = " ".join(text.split())
+    if not clean:
+        return []
+
+    total_w = font.getlength(clean)
+    if total_w <= min(max_width * 0.86, 820):
+        return [clean]
+
+    words = clean.split()
+    if len(words) <= 1:
+        return [clean]
+
+    best_split, _ = _best_two_line_split(words, font, max_width)
+    if best_split:
+        return best_split
+    if total_w <= max_width:
+        return [clean]
+    return wrap_by_pixel_width(clean, font, max_width)
+
+
+def _split_clause_into_balanced_blocks(
+    clause: str,
+    font: "ImageFont.FreeTypeFont",
+    max_width: int,
+    max_lines: int = 2,
+) -> List[List[str]]:
+    """
+    한 구절이 최대 줄 수(2줄)를 넘거나 문법적으로 부자연스러운 2줄 분할('몇 / 월에' 등)만 가능할 때,
+    의미 경계에서 균등하게 재분할해 각 블록을 1~2줄로 반환합니다.
+    """
+    if "\n" in clause:
+        explicit_lines = [ln.strip() for ln in clause.splitlines() if ln.strip()]
+        if explicit_lines:
+            return [explicit_lines[i:i + max_lines] for i in range(0, len(explicit_lines), max_lines)]
+
+    words = clause.split()
+    if not words:
+        return []
+
+    # 1. 1줄 이내에 여유롭게 들어오면 1블록 1줄 유지
+    if len(words) == 1 or font.getlength(clause) <= min(max_width * 0.86, 820):
+        return [[clause]]
+
+    # 2. 문법적으로 자연스러운 2줄 분할이 가능한지 검사 (페널티가 350 초과인 찢어짐만 있는 경우 재분할)
+    best_split, best_pen = _best_two_line_split(words, font, max_width)
+    if best_split and best_pen <= 350:
+        return [best_split]
+
+    # 3. 2줄을 초과하거나 부자연스러운 분할만 가능하면, 중간 부근의 가장 자연스러운 문법 경계에서 2분할 후 재귀 처리
+    if len(words) >= 3:
+        best_k = None
+        best_score = float("inf")
+        for k in range(1, len(words)):
+            left = " ".join(words[:k])
+            right = " ".join(words[k:])
+            w1 = font.getlength(left)
+            w2 = font.getlength(right)
+            ratio = w1 / (w1 + w2) if (w1 + w2) > 0 else 0.5
+            balance_penalty = 0.0 if 0.28 <= ratio <= 0.72 else 450.0
+            score = abs(w1 - w2) * 0.35 + balance_penalty + _korean_split_penalty(words[k - 1], words[k])
+            if score < best_score:
+                best_score = score
+                best_k = k
+
+        if best_k is not None:
+            left_s = " ".join(words[:best_k])
+            right_s = " ".join(words[best_k:])
+            if left_s != clause and right_s != clause:
+                # 2분할한 쪽이 1줄짜리보다 더 안 좋은 쪼개짐을 만들면 기존 2줄 분할을 유지
+                if not (best_split and best_score >= 450):
+                    return (
+                        _split_clause_into_balanced_blocks(left_s, font, max_width, max_lines)
+                        + _split_clause_into_balanced_blocks(right_s, font, max_width, max_lines)
+                    )
+
+    if best_split:
+        return [best_split]
+    wrapped = wrap_by_pixel_width(clause, font, max_width)
+    return [wrapped[i:i + max_lines] for i in range(0, len(wrapped), max_lines)]
 
 
 def wrap_by_pixel_width(text: str, font: "ImageFont.FreeTypeFont", max_width: int) -> List[str]:
@@ -438,44 +647,84 @@ def build_caption_chunks(
     font: "ImageFont.FreeTypeFont",
     max_width: int,
     max_lines: int = 2,
+    word_timings: Optional[list] = None,
+    time_shift: float = 0.0,
 ) -> List[Tuple[float, float, str]]:
     """
-    나레이션을 자연스러운 구 단위로 자막 블록(최대 max_lines줄)들로 나누고,
-    각 블록 재생 구간을 글자 수 비례로 배분합니다. (ASS 줄바꿈은 '\\N' 사용)
+    나레이션을 자연스러운 한국어 구/의미 단위로 분할하고 균형 잡힌 1~2줄 정적 자막 블록을 만듭니다.
+    - 카라오케(\\kf) 및 단어별 색상 변경 태그를 붙이지 않는 깔끔한 정적 자막을 출력합니다.
+    - word_timings가 주어지면 실제 발화 시각(align_word_times)에 맞춰 각 블록 시작/종료를 동기화합니다.
     """
     duration = max(end_time - start_time, 0.01)
     clauses = split_into_clauses(narration)
     if not clauses:
-        return [(start_time, end_time, narration)]
+        clean_single = " ".join(narration.split())
+        return [(max(start_time - time_shift, 0.0), max(end_time - time_shift, 0.0), clean_single)]
 
-    blocks: List[str] = []
+    block_lines_list: List[List[str]] = []
     for clause in clauses:
-        wrapped = wrap_by_pixel_width(clause, font, max_width)
-        for i in range(0, len(wrapped), max_lines):
-            group = wrapped[i:i + max_lines]
-            blocks.append("\\N".join(group))
+        block_lines_list.extend(_split_clause_into_balanced_blocks(clause, font, max_width, max_lines))
 
-    if not blocks:
-        return [(start_time, end_time, narration)]
+    # 인접한 짧은 1줄 블록이 쉼표/마침표로 끝나지 않은 경우 하나의 균형 잡힌 2줄 블록으로 병합 (자막 깜빡임 완화)
+    if max_lines >= 2 and "|" not in narration and "\n\n" not in narration:
+        paired: List[List[str]] = []
+        idx_b = 0
+        while idx_b < len(block_lines_list):
+            cur = block_lines_list[idx_b]
+            if (
+                idx_b + 1 < len(block_lines_list)
+                and len(cur) == 1
+                and len(block_lines_list[idx_b + 1]) == 1
+                and not cur[0].endswith((".", "!", "?", ","))
+                and font.getlength(cur[0]) <= max_width
+                and font.getlength(block_lines_list[idx_b + 1][0]) <= max_width
+                and len(cur[0]) <= 13
+                and len(block_lines_list[idx_b + 1][0]) <= 14
+            ):
+                paired.append([cur[0], block_lines_list[idx_b + 1][0]])
+                idx_b += 2
+            else:
+                paired.append(cur)
+                idx_b += 1
+        block_lines_list = paired
 
+    if not block_lines_list:
+        clean_single = " ".join(narration.split())
+        return [(max(start_time - time_shift, 0.0), max(end_time - time_shift, 0.0), clean_single)]
+
+    # word_timings가 존재하고 어절 수가 일치하면 실제 발화 타이밍을 사용
+    words_all = " ".join(" ".join(lines) for lines in block_lines_list).split()
+    if word_timings and words_all:
+        times = align_word_times(words_all, word_timings, start_time, end_time)
+        out: List[Tuple[float, float, str]] = []
+        wi = 0
+        for lines in block_lines_list:
+            block_words = sum(len(ln.split()) for ln in lines)
+            if block_words == 0:
+                continue
+            idxs = list(range(wi, wi + block_words))
+            wi += block_words
+            b_start = times[idxs[0]][0]
+            next_start = times[wi][0] if wi < len(times) else end_time
+            b_end = max(next_start, times[idxs[-1]][1])
+            c_text = "\\N".join(lines)
+            out.append((max(b_start - time_shift, 0.0), max(b_end - time_shift, 0.0), c_text))
+
+        for i in range(len(out) - 1):
+            s, e, t = out[i]
+            out[i] = (s, max(min(e, out[i + 1][0]), s + 0.05), t)
+        if out:
+            return out
+
+    # word_timings가 없는 경우 글자 수 비례 배분
+    blocks = ["\\N".join(lines) for lines in block_lines_list]
     weights = [max(len(b.replace("\\N", "")), 1) for b in blocks]
     total_weight = sum(weights)
 
     chunks: List[Tuple[float, float, str]] = []
     cursor = start_time
     for idx, (block, w) in enumerate(zip(blocks, weights)):
-        if idx == len(blocks) - 1:
-            c_end = end_time
-        else:
-            c_end = cursor + duration * (w / total_weight)
-
-        # 각 줄별 단어 단위로 하이라이트 색상 적용
-        colored_lines = []
-        for line in block.split("\\N"):
-            words = line.split()
-            colored_lines.append(" ".join(_colorize_token(wd) for wd in words))
-        c_text = "\\N".join(colored_lines)
-
-        chunks.append((cursor, c_end, c_text))
+        c_end = end_time if idx == len(blocks) - 1 else cursor + duration * (w / total_weight)
+        chunks.append((max(cursor - time_shift, 0.0), max(c_end - time_shift, 0.0), block))
         cursor = c_end
     return chunks
