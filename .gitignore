@@ -79,6 +79,11 @@ Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
+# Stray & Legacy Directories
+Microsoft/
+/assets/
+shorts_generator/
+
 # Marketing Automation (insta_auto migrated) Secrets & Runtime Artifacts
 marketing_automation/.env
 marketing_automation/.env*.local
@@ -95,9 +100,12 @@ marketing_automation/service_account*.json
 marketing_automation/token.json
 marketing_automation/state.db
 marketing_automation/bot_output.txt
+marketing_automation/test_out.mp4
 marketing_automation/test_*.mp4
 marketing_automation/test_*.jpg
 marketing_automation/scratch/
+marketing_automation/assets/test_*/
+marketing_automation/assets/test_*.*
 marketing_automation/assets/chrome_flow_profile/
 marketing_automation/assets/audio/*
 !marketing_automation/assets/audio/.gitkeep
@@ -108,6 +116,7 @@ marketing_automation/assets/output/*
 marketing_automation/assets/subtitles/*
 !marketing_automation/assets/subtitles/.gitkeep
 marketing_automation/assets/videos/*
+marketing_automation/assets/videos/*.mp4
 !marketing_automation/assets/videos/.gitkeep
 !marketing_automation/assets/fonts/**
 !marketing_automation/assets/bgm/**
