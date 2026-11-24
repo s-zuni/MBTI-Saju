@@ -116,7 +116,7 @@ const MyPage: React.FC<MyPageProps> = ({
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Core Streaming Hook
-  const { object: coreObj, submit: submitCore } = useObject({
+  const { object: coreObj } = useObject({
     api: '/api/analyze?part=core',
     schema: analysisSchema,
     headers: async () => {

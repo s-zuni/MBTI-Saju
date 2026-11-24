@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, Download, ChevronLeft, CreditCard, Calendar, AlertCircle } from 'lucide-react';
+import { Download, ChevronLeft, CreditCard, Calendar, AlertCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { loveSajuSchema } from '../config/schemas';
@@ -375,7 +375,6 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
         }
     };
 
-    const userName = profile.name || '이용자';
     const myMbti = profile.mbti?.trim() && profile.mbti !== '미입력' ? profile.mbti.trim() : '';
     const partnerMbti = targetMbti?.trim() && targetMbti !== '미입력' ? targetMbti.trim() : '';
     const targetDisplayName = targetName.trim() || '상대방';
