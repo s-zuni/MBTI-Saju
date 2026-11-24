@@ -8,8 +8,13 @@ import {
     Loader2,
     Coins,
     CreditCard,
-    Trash2
+    Trash2,
+    AlertTriangle,
+    Sparkles
 } from 'lucide-react';
+import { SERVICE_COSTS, SERVICE_NAMES, ServiceType } from '../../config/creditConfig';
+import { DEEP_REPORT_ORIGINAL_PRICE, DEEP_REPORT_SALE_PRICE } from '../../config/deepReportConfig';
+import { KAKAO_CONSULT_PRODUCTS } from '../../config/kakaoConsult';
 
 interface PricingPlan {
     id: string;
@@ -187,25 +192,94 @@ const PlanManagement: React.FC = () => {
         }
     };
 
+    const serviceEntries = Object.entries(SERVICE_COSTS) as Array<[ServiceType, number]>;
+    const freeServices = serviceEntries.filter(([, price]) => price === 0);
+    const premiumServices = serviceEntries.filter(([, price]) => price === 990);
+    const lightServices = serviceEntries.filter(([, price]) => price === 490);
+
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-end">
                 <div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">요금제 관리</h2>
-                    <p className="text-slate-500 font-medium">사용자에게 노출될 크레딧 상품을 구성합니다.</p>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">단가 · 운영 정책 현황</h2>
+                    <p className="text-slate-500 font-medium">현재 서비스에 실제 적용 중인 건별 요금제와 운영 상태를 확인합니다.</p>
+                </div>
+            </div>
+
+            {/* 운영 주의 배너 */}
+            <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex items-start gap-3">
+                <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={20} />
+                <div className="text-xs text-amber-900 leading-relaxed space-y-1">
+                    <p className="font-black text-sm">크레딧 충전 제도가 폐지되고 100% 건별 원화 결제로 전환되었습니다.</p>
+                    <p>실제 결제·검증 단가는 코드 단일 소스(<code className="font-mono bg-amber-100 px-1 rounded">creditConfig.ts</code> / <code className="font-mono bg-amber-100 px-1 rounded">api/_utils/auth.ts</code>)로 관리되며, 하단의 <code className="font-mono bg-amber-100 px-1 rounded">pricing_plans</code> 목록은 개편 이전 레거시 데이터 보관용입니다.</p>
+                </div>
+            </div>
+
+            {/* 현재 적용 중인 v2 요금 & 운영 정책 */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 text-[11px] font-black">
+                        <Sparkles size={12} /> 사주 · 자미두수 계열
+                    </span>
+                    <div className="text-2xl font-black text-slate-900">990원 <span className="text-xs font-bold text-slate-400">/ 1회</span></div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        {premiumServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')}
+                    </p>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black">
+                        <CreditCard size={12} /> 무료 · 라이트 운세 계열
+                    </span>
+                    <div className="text-2xl font-black text-slate-900">무료 / 490원 <span className="text-xs font-bold text-slate-400">/ 1회</span></div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        <strong className="text-emerald-700">무료(0원):</strong> {freeServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')} / <strong className="text-slate-700">490원:</strong> {lightServices.map(([k]) => SERVICE_NAMES[k]).join(' · ')}
+                    </p>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[11px] font-black">
+                        프리미엄 심층 리포트 (/premium)
+                    </span>
+                    <div className="text-2xl font-black text-slate-900">
+                        {DEEP_REPORT_SALE_PRICE.toLocaleString()}원
+                        <span className="text-xs font-bold text-slate-300 line-through ml-2">{DEEP_REPORT_ORIGINAL_PRICE.toLocaleString()}원</span>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        비회원 신청·결제 가능 · A4 약 20장 PDF/DOCX · 관리자 검수 후 발송
+                    </p>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FEE500] text-[#191919] text-[11px] font-black">
+                        카톡 1:1 상담 & 기타 정책
+                    </span>
+                    <div className="text-lg font-black text-slate-900">
+                        {KAKAO_CONSULT_PRODUCTS.single.price.toLocaleString()}원 / {KAKAO_CONSULT_PRODUCTS.triple.price.toLocaleString()}원
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        /chat·/room 카톡 채널 일원화 · 이용후기(/reviews) 로그인 필수 · 굿즈(/shop) 준비 중 유지
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-end pt-4 border-t border-slate-200">
+                <div>
+                    <h3 className="text-lg font-black text-slate-700 tracking-tight">레거시 크레딧 패키지 (`pricing_plans`)</h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">개편 이전 사용되던 DB 테이블입니다. 신규 서비스 가격에는 반영되지 않습니다.</p>
                 </div>
                 <button
                     onClick={() => {
                         setFormData({
                             id: '', name: '', credits: 100, price: 10000,
                             original_price: 15000, description: '',
-                            is_popular: false, is_active: true, sort_order: plans.length
+                            is_popular: false, is_active: false, sort_order: plans.length
                         });
                         setIsAdding(true);
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-slate-950 text-white font-black rounded-2xl hover:bg-black transition-all shadow-lg shadow-slate-200"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-300 transition-all"
                 >
-                    <Plus size={20} /> 새 요금제 추가
+                    <Plus size={16} /> 레거시 항목 추가
                 </button>
             </div>
 

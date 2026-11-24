@@ -1,9 +1,15 @@
 import { streamObject } from 'ai';
-import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+} from './_utils/ai-provider';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
+import { loveSajuSchema } from '../src/config/schemas';
 
 export const config = {
     runtime: 'edge',
@@ -12,48 +18,16 @@ export const config = {
 const STATIC_LOVE_SAJU_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
-당신은 사주 합충과 MBTI 심리를 정밀 융합하여 인연의 기운과 실전 대처 전략을 도출하는 냉철한 연애 명리학 전문가입니다.
-
-[시간적 기준 정보]
-현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
+당신은 사주 합충과 성향 심리를 정밀 융합하여 인연의 기운과 실전 대처 전략을 도출하는 냉철하고도 사려 깊은 연애 명리학 전문가입니다.
 
 [핵심 원칙]
-1. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 및 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 객관적 팩트로 정밀 분석하세요.
-2. 도화살, 홍염살, 원진살 등 특수 신살이 있으면 과도한 겁주기 없이 건조하고 담담하게 풀이하세요.
-3. 연애운/인연의 기운은 '사주 진단(날씨)'으로 전달하고, 실질적 만남이나 관계 개선 조언은 'MBTI에 최적화된 행동 지침(행동, 장소, 대화법)'으로 제시하세요.
-4. 재회/짝사랑 사주: 헛된 위로나 공포 조장 없이, 냉정하게 기운의 흐름을 짚어주고 MBTI 기반 구체적 공략 및 대응 행동을 제시하세요.
-5. 마크다운 강조 기호(**) 절대 사용 금지. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
-6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (핵심 명리학 용어는 한자 병기)`;
-
-const loveSajuSchema = z.object({
-    analysisType: z.string(),
-    overallScore: z.number(),
-    summary: z.string().describe("두 사람의 궁합 핵심을 총평하는 350자 이상의 정밀 요약 서술"),
-    sajuCompatibility: z.object({
-        dayMasterRelation: z.string().describe("일간 합충 정밀 분석: 잘 맞는 부분과 안 맞는 부분을 명리학적 이유를 들어 냉철하게 500자 이상(3단락 구조)으로 정밀 진단"),
-        fiveElementHarmony: z.string().describe("오행 조화 분석: 오행의 과다/부족 및 상생 시너지와 상극 마찰 요인을 500자 이상(3단락 구조)으로 정밀 진단"),
-        specialStars: z.string().describe("특수 신살 및 기운: 도화, 홍염, 원진, 귀문 등 신살의 영향과 액땜 실천법을 500자 이상(3단락 구조)으로 정밀 분석"),
-        hiddenConflicts: z.string().describe("내재된 잠재 갈등: 겉으로 드러나지 않는 사주/성격적 마찰과 위기 발생 모멘트를 500자 이상(3단락 구조)으로 뼈 때리게 분석"),
-    }),
-    dimensions: z.array(z.object({
-        label: z.string(),
-        value: z.number(),
-        description: z.string(),
-    })),
-    timingForecast: z.object({
-        sixMonths: z.string().describe("6개월 후: 사주 운세 흐름 정보(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
-        oneYear: z.string().describe("1년 후: 사주 운세 흐름 정보(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
-        threeYears: z.string().describe("3년 후: 장기적 사주 운세 흐름(200자) + 구체적 행동강령(200자)을 결합하여 총 400자 이상 서술"),
-    }),
-    mbtiStrategy: z.object({
-        myApproach: z.string().describe("나의 관계 지향적 접근법: 내 MBTI 약점/주의점을 상대방 MBTI와 긴밀히 연계하여 400자 이상으로 뼈 때리게 서술"),
-        partnerApproach: z.string().describe("상대를 끌어당기는 공략법: 상대방 MBTI 성향과 사주 기운을 고려해 실전 데이트/소통 냉철한 조언을 400자 이상 서술"),
-        conflictResolution: z.string().describe("갈등 임계점 해소법: 사주와 MBTI 궁합을 종합 분석한 갈등 극복 및 즉각 적용 가능한 실전 솔루션을 400자 이상 서술"),
-    }),
-    specialSection: z.string().describe("마음 포착 및 승부 솔루션: '향후 N개월 안에 승부를 봐야 합니다' 등 사주 기운과 사실적 타임라인을 선제시한 후 500자 이상으로 종합 제언 및 승부 지침 서술"),
-    verdict: z.string(),
-    keywords: z.array(z.string()),
-});
+1. 사용자 입력의 [시간적 기준 정보](올해 2026년 병오년, 내년 2027년 정미년)를 기준으로 예측하고, 2023년/2024년/2025년을 올해로 언급하지 마십시오.
+2. 일간 합(갑기합토, 을경합금, 병신합수, 정임합목, 무계합화) 및 지지 합충(삼합, 방합, 육합, 충, 형, 파, 해)을 객관적 팩트로 정밀 분석하세요.
+3. 도화살, 홍염살, 원진살 등 특수 신살이 있으면 과도한 겁주기 없이 건조하고 담담하게 풀이하세요.
+4. 연애운/인연의 기운과 관계 리스크는 현실적이고 냉정하게 예측하고, 행동 지침과 마무리는 내담자의 마음을 헤아리는 따뜻하고 현실적인 조언으로 제시하세요.
+5. 마크다운 강조 기호(**)와 이모티콘/이모지는 절대 사용 금지입니다. 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요.
+6. MBTI가 미입력인 경우 억지로 특정 MBTI 유형을 가정하지 말고 사주 원국의 기질 중심으로 관계 소통 전략을 서술하세요.
+7. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. (핵심 명리학 용어는 한자 병기)`;
 
 export default async (req: Request) => {
     const corsResponse = handleCors(req);
@@ -68,6 +42,9 @@ export default async (req: Request) => {
         });
     }
 
+    let receiptToRelease: string | null = null;
+    let supabaseForRelease: any = null;
+
     try {
         const body = await req.json();
         const url = new URL(req.url);
@@ -79,11 +56,18 @@ export default async (req: Request) => {
         else if (type === 'reunion') serviceType = 'LOVE_REUNION';
         else if (type === 'crush') serviceType = 'LOVE_CRUSH';
 
-        // 연애 사주 인증 및 5 크레딧 차감
-        const authResult = await authenticateUser(req, { serviceType, cost: 5 });
+        // 단건 결제 티켓 검증 + Rate Limit
+        const authResult = await authenticateUser(req, {
+            serviceType,
+            allowedServiceTypes: ['LOVE_COUPLE', 'LOVE_MARRIED', 'LOVE_MARRIAGE', 'LOVE_REUNION', 'LOVE_CRUSH'],
+            requirePaymentReceipt: true,
+            allowAnonymous: true,
+        });
         if (authResult.errorResponse) {
             return authResult.errorResponse;
         }
+        receiptToRelease = authResult.receiptToken ?? null;
+        supabaseForRelease = authResult.supabaseAdmin;
 
         const {
             birthDate, birthTime, mbti, name, gender,
@@ -92,6 +76,7 @@ export default async (req: Request) => {
         } = body;
 
         if (!birthDate) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '본인 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -105,6 +90,7 @@ export default async (req: Request) => {
         }
 
         if (type !== 'crush' && !targetSaju && targetBirthDate) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '상대방 생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -114,20 +100,26 @@ export default async (req: Request) => {
         const myRichSaju = buildRichSajuContext(mySaju);
         const targetRichSaju = targetSaju ? buildRichSajuContext(targetSaju) : '상대방 정보 없음';
 
-            let userQuery = `[본인 정보]
+            const reunionContext = type === 'reunion' && (separationDate || separationReason)
+                ? `\n[재회 전용 맥락]\n이별 시기: ${separationDate || '미입력'}\n이별 사유: ${separationReason || '미입력'}\n위 이별 원인과 두 사람 원국 충돌 지점을 반드시 연결해 재회 가능성과 현실 전략을 냉정히 짚으세요.\n`
+                : '';
+
+            let userQuery = `${getTemporalAnchorBlock()}
+
+[본인 정보]
 이름: ${name || '본인'}
 성별: ${gender === 'male' ? '남성' : '여성'}
-MBTI: ${mbti}
+MBTI: ${formatMbtiForPrompt(mbti)}
 [본인 사주]
 ${myRichSaju}
 
 [상대방 정보]
 이름: ${targetName || '상대방'}
 성별: ${targetGender === 'male' ? '남성' : '여성'}
-MBTI: ${targetMbti || '알수없음'}
+MBTI: ${formatMbtiForPrompt(targetMbti)}
 [상대방 사주]
 ${targetRichSaju}
-
+${reunionContext}
 [요청 서비스 유형]: ${type}
 [필수 출력 필드별 작성 템플릿 - 단문 작성 절대 금지, 모든 필드 3단락 작성]
 1. sajuCompatibility.dayMasterRelation (일간 합충):
@@ -165,6 +157,13 @@ ${targetRichSaju}
 7. specialSection (마음 포착 솔루션):
    - "향후 N개월 안에 승부를 봐야 합니다" 또는 "사주명리학적으로 1년간은 서로 간의 흐름이 불리합니다" 등 사실적 타임라인 기운을 선제시하고 500자 이상으로 종합 제언 및 승부 행동 지침을 서술하십시오.`;
 
+            let receiptReleased = false;
+            const safeReleaseReceipt = async () => {
+                if (receiptReleased) return;
+                receiptReleased = true;
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+            };
+
             try {
                 let lastError;
                 for (let attempt = 0; attempt < 4; attempt++) {
@@ -177,6 +176,10 @@ ${targetRichSaju}
                             prompt: userQuery,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
+                            onError: async () => { await safeReleaseReceipt(); },
+                            onFinish: async ({ object, error }) => {
+                                if (!object || error) await safeReleaseReceipt();
+                            },
                         });
                         return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {
@@ -189,8 +192,9 @@ ${targetRichSaju}
                 throw err;
             }
     } catch (error: any) {
+        await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
         console.error('Love Saju API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: '연애 사주 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: responseHeaders 
         });

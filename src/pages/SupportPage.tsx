@@ -12,7 +12,6 @@ import {
     User,
     CheckCircle2
 } from 'lucide-react';
-import { useModalStore } from '../hooks/useModalStore';
 import { formatSafariDate } from '../utils/textUtils';
 import KakaoConsultCard from '../components/KakaoConsultCard';
 
@@ -46,7 +45,6 @@ interface SupportPageProps {
 }
 
 const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) => {
-    const { openModal } = useModalStore();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'menu' | 'form' | 'list' | 'detail'>('menu');
@@ -202,17 +200,53 @@ const SupportPage: React.FC<SupportPageProps> = ({ session: initialSession }) =>
 
     if (!userId) {
         return (
-            <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center">
-                    <Inbox className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-                    <h2 className="text-xl font-black text-slate-900 mb-2">로그인이 필요합니다</h2>
-                    <p className="text-slate-500 text-sm mb-6 font-medium">문의 내역을 확인하고 상담하려면 먼저 로그인해 주세요.</p>
-                    <button 
-                        onClick={() => openModal('analysis', 'login')}
-                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black"
-                    >
-                        로그인하러 가기
-                    </button>
+            <div className="min-h-screen bg-slate-50 px-4 py-20 flex items-center justify-center">
+                <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-lg w-full space-y-6">
+                    <div className="text-center space-y-2">
+                        <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Inbox className="w-7 h-7 text-violet-600" />
+                        </div>
+                        <h1 className="text-2xl font-black text-slate-900">비회원 고객센터 · 환불 안내</h1>
+                        <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed">
+                            회원가입 없이 이용하신 단건 결제·심층 리포트 오류 및 기존 유료 크레딧 잔액 문의는 카카오톡 채널 또는 전화 고객센터로 신속히 도와드립니다.
+                        </p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                        <p className="font-black text-slate-800 flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                            환불 및 오류 접수 기준 안내
+                        </p>
+                        <ul className="list-disc pl-4 space-y-1">
+                            <li>단건 AI 분석(490원/990원)은 결제와 동시에 생성이 개시되므로 단순 변심·정보 오기재·브라우저 삭제로 인한 환불은 제한됩니다.</li>
+                            <li><strong>서버·결제 오류로 결과가 전혀 생성되지 않은 경우</strong> 결제일로부터 7일 이내 아래 필수 정보와 함께 접수해 주시면 확인 후 환불해 드립니다.</li>
+                            <li><strong>필수 제출 정보</strong>: 주문번호(`SVC_...`), 결제 일시, 오류 화면 캡처 (기존 크레딧 회원은 가입 이메일 포함)</li>
+                        </ul>
+                    </div>
+
+                    <div className="space-y-2.5">
+                        <a
+                            href="https://pf.kakao.com/_xcdXJX/chat"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            카카오톡 채널 1:1 문의하기
+                        </a>
+                        <a
+                            href="tel:070-8095-3075"
+                            className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                        >
+                            고객센터 전화 문의 (070-8095-3075)
+                        </a>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex justify-center gap-5 text-xs font-bold text-slate-500">
+                        <a href="/pricing" className="hover:text-violet-600 underline">이용요금 안내</a>
+                        <a href="/terms" className="hover:text-violet-600 underline">이용약관</a>
+                        <a href="/privacy" className="hover:text-violet-600 underline">개인정보처리방침</a>
+                    </div>
                 </div>
             </div>
         );

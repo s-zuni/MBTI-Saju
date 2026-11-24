@@ -19,7 +19,6 @@ import DeepReportLandingPage from './pages/DeepReportLandingPage';
 import { useSubscription } from './hooks/useSubscription';
 import { useCredits } from './hooks/useCredits';
 
-import PremiumBanner from './components/PremiumBanner';
 import PricingPage from './pages/PricingPage';
 import UsageHistoryPage from './pages/UsageHistoryPage';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -39,9 +38,8 @@ import { useInactivityLogout } from './hooks/useInactivityLogout';
 import AuthCallback from './components/auth/AuthCallback';
 // Lazy load modals for better initial performance
 import FreePreview from './components/FreePreview';
-import ResumeCheckoutBanner from './components/ResumeCheckoutBanner';
 import KakaoConsultCard from './components/KakaoConsultCard';
-import { track, trackOnce } from './utils/analytics';
+import { trackOnce } from './utils/analytics';
 const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
 const MbtiSajuModal = lazy(() => import('./components/MbtiSajuModal'));
 const DeepReportModal = lazy(() => import('./components/DeepReportModal'));
@@ -51,7 +49,6 @@ const CreditPurchaseModal = lazy(() => import('./components/CreditPurchaseModal'
 const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
 const AdminConsultations = lazy(() => import('./pages/admin/AdminConsultations'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
-const DeepReportEventModal = lazy(() => import('./components/DeepReportEventModal'));
 
 const ReviewsSection = lazy(() => import('./components/ReviewsSection'));
 const PopupModal = lazy(() => import('./components/PopupModal'));
@@ -68,46 +65,7 @@ const CartPage = lazy(() => import('./pages/CartPage'));
 const AdminShopProducts = lazy(() => import('./pages/admin/AdminShopProducts'));
 const AdminShopOrders = lazy(() => import('./pages/admin/AdminShopOrders'));
 
-const IS_MAINTENANCE_MODE: boolean = true;
-
-function MaintenanceScreen() {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-6">
-      <div className="max-w-lg w-full bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-10 text-center shadow-2xl space-y-6">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-black tracking-wide">
-          SYSTEM MAINTENANCE · 서비스 개편 점검 안내
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-snug">
-            더 나은 서비스를 위해<br />시스템 점검 중입니다
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            현재 MBTIJU(엠비티아이주) 서비스 전면 개편 및 시스템 안정화 점검이 진행 중입니다.
-            점검 시간 동안 모든 사주·운세·타로 분석 및 결제 서비스가 일시 중단됩니다.
-            더 간편하고 새로운 서비스로 곧 다시 찾아뵙겠습니다.
-          </p>
-        </div>
-        <div className="pt-4 border-t border-white/10 text-xs text-slate-400 space-y-3">
-          <p>이용에 불편을 드려 죄송합니다. 긴급 문의는 공식 카카오톡 채널을 이용해 주세요.</p>
-          <a
-            href="https://pf.kakao.com/_xcdXJX/chat"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors"
-          >
-            카카오톡 채널 문의하기
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function App() {
-  return IS_MAINTENANCE_MODE ? <MaintenanceScreen /> : <ActiveApp />;
-}
-
-function ActiveApp() {
   const [showSplash, setShowSplash] = useState(false); // Disable splash screen by default for faster access
   const { session, loading: isAuthLoading } = useAuth();
   
@@ -129,45 +87,7 @@ function ActiveApp() {
   // Unified loading state for Safari (Session + Credits initial fetch)
   const isAppInitializing = isAuthLoading || (isCreditsLoading && !!session);
 
-  // Check if profile needs completion (Korean service only)
-  useEffect(() => {
-    const isChineseRoute = typeof window !== 'undefined' && (
-      window.location.hostname.startsWith('zh.') ||
-      window.location.hostname.startsWith('tw.') ||
-      window.location.hostname.startsWith('global.') ||
-      window.location.pathname.startsWith('/zh')
-    );
-    if (session?.user && !isAuthLoading && !isChineseRoute) {
-      const meta = session.user.user_metadata;
-      // 가입 마찰을 줄이기 위해 필수는 생년월일·성별만. MBTI/출생시간은 이후 선택 입력.
-      const needsProfile = !meta?.birth_date || !meta?.gender;
-
-      if (needsProfile) {
-        // Prevent infinite loop by checking if the modal is already open in the correct mode
-        if (modals?.analysis?.mode !== 'complete_profile' || !modals?.analysis?.isOpen) {
-          openModal('analysis', 'complete_profile');
-        }
-      }
-      // 온보딩 모달은 더 이상 자동으로 띄우지 않는다. 첫 결과 화면(MyLuckPage)의 웰컴 배너가 대체.
-    }
-  }, [session, isAuthLoading, openModal, modals?.analysis?.mode, modals?.analysis?.isOpen]);
-
-  // Handle login trigger from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'true' && !session && !isAuthLoading) {
-      openModal('analysis', 'login');
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    // 심층 리포트 구매 후 비회원이 가입하고 돌아왔을 때 이벤트 모달 자동 노출
-    if (params.get('event_trigger') === 'true' && session && !isAuthLoading) {
-        openModal('deepReportEvent');
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [session, isAuthLoading, openModal]);
+  // 비회원 즉시 이용 모드: 자동 프로필 완성 강제 모달을 띄우지 않는다.
 
 
   if (showSplash) {
@@ -212,8 +132,7 @@ function AppContent({
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const handleStart = () => {
-    if (session) navigate('/myluck?type=today');
-    else openModal('analysis', 'signup');
+    navigate('/myluck?type=today');
   };
 
   // Handle automatic modal opening from share link
@@ -231,6 +150,23 @@ function AppContent({
   useEffect(() => {
     closeAllModals();
   }, [location.pathname, closeAllModals]);
+
+  // 결제 완료 후 홈 복귀 시 처리 (freePreview는 FreePreview 컴포넌트가 직접 티켓 소비·스크롤·URL 정리)
+  useEffect(() => {
+    if (location.pathname !== '/') return;
+    const params = new URLSearchParams(location.search);
+    const openService = params.get('openService');
+    if (openService === 'freePreview') {
+      return;
+    }
+    if (openService === 'mbtiSaju') {
+      openModal('mbtiSaju');
+      window.history.replaceState({}, document.title, '/');
+    } else if (openService === 'compatibility') {
+      openModal('compatibility');
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, [location.pathname, location.search, openModal]);
 
   const handleCloseOnboarding = () => {
     if (session?.user) {
@@ -297,21 +233,11 @@ function AppContent({
             <div className="selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden pb-20 md:pb-0">
               <Navbar />
 
-              {isAuthLoading && !session && location.pathname !== '/premium' ? (
-                <div className="min-h-[70vh] flex flex-col items-center justify-center animate-fade-in p-6 text-center">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
-                  </div>
-                  <p className="text-slate-500 font-bold tracking-tight mb-4">당신의 운명을 불러오는 중...</p>
-                  
-                </div>
-              ) : (
-                <Routes>
+              <Routes>
                   <Route path="/" element={
                     <>
                       <HeroSection onStart={handleStart} user={session?.user} onOpenDeepReport={() => navigate('/premium')} />
-                      {!session && <FreePreview onSignup={() => { track('signup_cta_click', { from: 'preview' }); openModal('analysis', 'signup'); }} />}
+                      <FreePreview onSignup={() => navigate('/myluck?type=today')} />
                       <FeatureGrids />
 
 
@@ -462,7 +388,6 @@ function AppContent({
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
-              )}
 
               {!isChatPage && <Footer />}
               {!isAdminPage && <BottomNav />}
@@ -533,22 +458,6 @@ function AppContent({
                 userName={session?.user?.user_metadata?.full_name}
               />
 
-              <DeepReportEventModal
-                isOpen={modals?.deepReportEvent?.isOpen || false}
-                onClose={() => closeModal('deepReportEvent')}
-                session={session}
-              />
-
-              <PremiumBanner
-                isVisible={showPremiumBanner}
-                onClose={() => setShowPremiumBanner(false)}
-                onCheckPlans={() => openModal('creditPurchase')}
-                currentCredits={credits}
-              />
-              <ResumeCheckoutBanner
-                enabled={!!session && !modals?.creditPurchase?.isOpen}
-                onResume={(p) => openModal('creditPurchase', undefined, { resumePlanId: p.planId })}
-              />
               <PopupModal />
             </div>
           } />

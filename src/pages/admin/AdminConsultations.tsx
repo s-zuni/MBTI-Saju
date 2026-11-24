@@ -36,7 +36,7 @@ interface ConsultationQuestion {
 const AdminConsultations: React.FC = () => {
     const [questions, setQuestions] = useState<ConsultationQuestion[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'pending' | 'answered' | 'kakao'>('pending');
+    const [activeTab, setActiveTab] = useState<'kakao' | 'pending' | 'answered'>('kakao');
     const [selectedQuestion, setSelectedQuestion] = useState<ConsultationQuestion | null>(null);
     
     const [answerText, setAnswerText] = useState('');
@@ -263,19 +263,27 @@ const AdminConsultations: React.FC = () => {
                 <div>
                     <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
                         <MessageSquare className="w-6 h-6 text-violet-600" />
-                        운명 상담 관리
+                        카톡 1:1 상담 관리
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1">유료 비동기 전문가 상담(3회권/1회권) 질문 접수 및 답변 관리</p>
+                    <p className="text-xs text-slate-500 mt-1">카카오톡 채널 1:1 상담 일원화 운영 관리 및 기존 웹 상담(레거시) 내역 조회</p>
                 </div>
 
                 <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                    <button
+                        onClick={() => { setActiveTab('kakao'); setSelectedQuestion(null); }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            activeTab === 'kakao' ? 'bg-[#FEE500] text-[#191919] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        카톡 1:1 접수 (현재)
+                    </button>
                     <button
                         onClick={() => { setActiveTab('pending'); setSelectedQuestion(null); }}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                             activeTab === 'pending' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        미답변 질문
+                        기존 웹 미답변 ({questions.filter(q => q.status === 'pending').length})
                     </button>
                     <button
                         onClick={() => { setActiveTab('answered'); setSelectedQuestion(null); }}
@@ -283,15 +291,7 @@ const AdminConsultations: React.FC = () => {
                             activeTab === 'answered' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        답변 완료
-                    </button>
-                    <button
-                        onClick={() => { setActiveTab('kakao'); setSelectedQuestion(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                            activeTab === 'kakao' ? 'bg-[#FEE500] text-[#191919] shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                        카톡 접수
+                        기존 웹 완료 ({questions.filter(q => q.status === 'answered').length})
                     </button>
                 </div>
             </div>

@@ -4,26 +4,26 @@ import { checkRateLimit, createRateLimitEdgeResponse, getClientIp } from './rate
 
 export const SERVICE_COSTS = {
     FORTUNE_TODAY: 0,
-    FORTUNE_TOMORROW: 3,
-    MBTI_SAJU: 20,
-    COMPATIBILITY_TRIP: 5,
-    COMPATIBILITY: 5,
-    TRIP: 5,
-    JAMIDUSU: 15,
-    KBO: 5,
-    RELATIONSHIP_ADD: 5,
-    AI_CHAT_5: 20,
-    TAROT: 2,
-    REGENERATE_MBTI_SAJU: 10,
-    GOLD_WEALTH: 5,
-    GOLD_BUSINESS: 5,
-    GOLD_JOB: 5,
-    GOLD_JOBCHANGE: 5,
-    LOVE_COUPLE: 5,
-    LOVE_MARRIED: 5,
-    LOVE_MARRIAGE: 5,
-    LOVE_REUNION: 5,
-    LOVE_CRUSH: 5
+    FORTUNE_TOMORROW: 490,
+    MBTI_SAJU: 990,
+    COMPATIBILITY_TRIP: 490,
+    COMPATIBILITY: 990,
+    TRIP: 490,
+    JAMIDUSU: 990,
+    KBO: 490,
+    RELATIONSHIP_ADD: 490,
+    AI_CHAT_5: 490,
+    TAROT: 490,
+    REGENERATE_MBTI_SAJU: 990,
+    GOLD_WEALTH: 990,
+    GOLD_BUSINESS: 990,
+    GOLD_JOB: 990,
+    GOLD_JOBCHANGE: 990,
+    LOVE_COUPLE: 990,
+    LOVE_MARRIED: 990,
+    LOVE_MARRIAGE: 990,
+    LOVE_REUNION: 990,
+    LOVE_CRUSH: 990
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
@@ -82,10 +82,32 @@ export function extractBearerToken(req: Request | any): string | null {
     return authHeader.substring(7).trim();
 }
 
+export function extractServiceReceipt(req: Request | any): string | null {
+    let receipt: string | null = null;
+    if (typeof (req as Request).headers?.get === 'function') {
+        receipt = (req as Request).headers.get('x-service-receipt');
+    } else if (req.headers) {
+        receipt = req.headers['x-service-receipt'] || req.headers['X-Service-Receipt'] || null;
+    }
+    return receipt && typeof receipt === 'string' && receipt.trim() ? receipt.trim() : null;
+}
+
+export async function releaseServiceReceipt(supabaseAdmin: SupabaseClient | null | undefined, receiptToken: string | null | undefined): Promise<void> {
+    if (!supabaseAdmin || !receiptToken) return;
+    try {
+        await supabaseAdmin.rpc('release_service_receipt_use', { p_receipt_token: receiptToken });
+    } catch (err) {
+        console.warn('[auth] releaseServiceReceipt error:', err);
+    }
+}
+
 export interface AuthOptions {
     serviceType?: ServiceType | string | undefined;
     cost?: number | undefined;
     allowAnonymous?: boolean | undefined;
+    /** 유료 AI 엔드포인트의 경우 서버 발급 1회(또는 N회) 결제 티켓(`X-Service-Receipt`) 검증 필수 */
+    requirePaymentReceipt?: boolean | undefined;
+    allowedServiceTypes?: string[] | undefined;
     /**
      * JWT 검증으로 user가 확보된 뒤, 실제 청구할 serviceType/cost를 서버가 직접 계산하도록 위임한다.
      * "첫 사용 무료" 같은 정책은 요청 body의 클라이언트 입력(boolean/문자열)을 신뢰하면 반복 호출로
@@ -106,37 +128,75 @@ export interface AuthResult {
     supabaseAdmin: SupabaseClient;
     errorResponse: Response | null;
     deductedCredits?: number | undefined;
+    receiptToken?: string | null | undefined;
+    remainingUses?: number | null | undefined;
 }
 
 /**
- * AI 엔드포인트 공통 인증 및 크레딧 차감 미들웨어 (Edge / Node 공용)
+ * AI 엔드포인트 공통 인증, 결제 티켓 검증 및 Rate Limit 미들웨어 (Edge / Node 공용)
  */
-const IS_MAINTENANCE_MODE: boolean = true;
-
 export async function authenticateUser(req: Request | any, options: AuthOptions = {}): Promise<AuthResult> {
     const corsHeaders = getCorsHeaders(req);
-    if (IS_MAINTENANCE_MODE) {
-        return {
-            user: null as any,
-            supabaseAdmin: null as any,
-            errorResponse: new Response(
-                JSON.stringify({
-                    success: false,
-                    error: '현재 서비스 개편 및 시스템 점검 중입니다. 잠시 후 다시 이용해 주세요.',
-                    code: 'SERVICE_MAINTENANCE'
-                }),
-                {
-                    status: 503,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                }
-            )
-        };
-    }
     const supabaseAdmin = getSupabaseAdmin();
     const token = extractBearerToken(req);
+    const receiptToken = extractServiceReceipt(req);
+    const requireAuth = options.allowAnonymous === false;
+    let authedUser: User | null = null;
 
     if (!token) {
-        if (options.allowAnonymous && (options.cost === 0 || !options.cost)) {
+        if (requireAuth) {
+            return {
+                user: null,
+                supabaseAdmin,
+                errorResponse: new Response(
+                    JSON.stringify({ 
+                        success: false, 
+                        error: '로그인이 필요한 서비스입니다.', 
+                        code: 'UNAUTHORIZED' 
+                    }),
+                    { 
+                        status: 401, 
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                    }
+                )
+            };
+        }
+        if (!options.skipRateLimit) {
+            const rl = await checkRateLimit(supabaseAdmin, {
+                key: `ai:ip:${getClientIp(req)}`,
+                limit: options.rateLimitMax ?? 20,
+                windowSeconds: options.rateLimitWindowSeconds ?? 60,
+            });
+            if (!rl.allowed) {
+                return {
+                    user: null,
+                    supabaseAdmin,
+                    errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+                };
+            }
+        }
+    } else {
+        // Supabase JWT 검증
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !user) {
+            if (requireAuth) {
+                return {
+                    user: null,
+                    supabaseAdmin,
+                    errorResponse: new Response(
+                        JSON.stringify({ 
+                            success: false, 
+                            error: '인증 토큰이 유효하지 않거나 만료되었습니다. 다시 로그인해주세요.', 
+                            code: 'INVALID_TOKEN' 
+                        }),
+                        { 
+                            status: 401, 
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                        }
+                    )
+                };
+            }
             if (!options.skipRateLimit) {
                 const rl = await checkRateLimit(supabaseAdmin, {
                     key: `ai:ip:${getClientIp(req)}`,
@@ -151,150 +211,104 @@ export async function authenticateUser(req: Request | any, options: AuthOptions 
                     };
                 }
             }
-            return { user: null, supabaseAdmin, errorResponse: null };
-        }
-        return {
-            user: null,
-            supabaseAdmin,
-            errorResponse: new Response(
-                JSON.stringify({ 
-                    success: false, 
-                    error: '로그인이 필요한 서비스입니다.', 
-                    code: 'UNAUTHORIZED' 
-                }),
-                { 
-                    status: 401, 
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        } else {
+            authedUser = user;
+            if (!options.skipRateLimit) {
+                const rl = await checkRateLimit(supabaseAdmin, {
+                    key: `ai:user:${user.id}`,
+                    limit: options.rateLimitMax ?? 20,
+                    windowSeconds: options.rateLimitWindowSeconds ?? 60,
+                });
+                if (!rl.allowed) {
+                    return {
+                        user: null,
+                        supabaseAdmin,
+                        errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+                    };
                 }
-            )
-        };
+            }
+        }
     }
 
-    // Supabase JWT 검증
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (options.requirePaymentReceipt) {
+        let isAdminBypass = false;
+        if (authedUser) {
+            const { data: profileRow } = await supabaseAdmin
+                .from('profiles')
+                .select('role')
+                .eq('id', authedUser.id)
+                .maybeSingle();
+            if (profileRow?.role === 'admin') {
+                isAdminBypass = true;
+            }
+        }
 
-    if (authError || !user) {
-        return {
-            user: null,
-            supabaseAdmin,
-            errorResponse: new Response(
-                JSON.stringify({ 
-                    success: false, 
-                    error: '인증 토큰이 유효하지 않거나 만료되었습니다. 다시 로그인해주세요.', 
-                    code: 'INVALID_TOKEN' 
-                }),
-                { 
-                    status: 401, 
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        if (!isAdminBypass) {
+            if (!receiptToken) {
+                return {
+                    user: authedUser,
+                    supabaseAdmin,
+                    errorResponse: new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: '결제 확인 티켓이 없습니다. 결제를 먼저 진행해 주세요.',
+                            code: 'PAYMENT_REQUIRED',
+                        }),
+                        {
+                            status: 402,
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        }
+                    ),
+                };
+            }
+
+            const allowedTypes = options.allowedServiceTypes
+                ?? (options.serviceType ? [String(options.serviceType)] : null);
+
+            const { data: consumedRows, error: consumeError } = await supabaseAdmin.rpc('consume_service_receipt', {
+                p_receipt_token: receiptToken,
+                p_allowed_types: allowedTypes,
+            });
+
+            const consumed = Array.isArray(consumedRows) ? consumedRows[0] : consumedRows;
+            if (consumeError || !consumed) {
+                if (consumeError) {
+                    console.error('[auth] consume_service_receipt error:', consumeError);
                 }
-            )
-        };
-    }
+                return {
+                    user: authedUser,
+                    supabaseAdmin,
+                    errorResponse: new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: '유효하지 않거나 이미 사용된 결제 티켓입니다. 다시 결제해 주세요.',
+                            code: 'INVALID_OR_USED_RECEIPT',
+                        }),
+                        {
+                            status: 402,
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        }
+                    ),
+                };
+            }
 
-    // 사용자 단위 AI/API Rate Limit (크레딧 차감 및 무료 슬롯 소비 전에 검사)
-    if (!options.skipRateLimit) {
-        const rl = await checkRateLimit(supabaseAdmin, {
-            key: `ai:user:${user.id}`,
-            limit: options.rateLimitMax ?? 20,
-            windowSeconds: options.rateLimitWindowSeconds ?? 60,
-        });
-        if (!rl.allowed) {
             return {
-                user,
+                user: authedUser,
                 supabaseAdmin,
-                errorResponse: createRateLimitEdgeResponse(req, rl.retryAfter),
+                errorResponse: null,
+                deductedCredits: 0,
+                receiptToken,
+                remainingUses: Number(consumed.remaining_uses ?? 0),
             };
         }
     }
 
-    // 실제 청구 대상(serviceType/cost) 결정: resolveCost가 있으면 그 결과가 우선한다.
-    let effectiveServiceType = options.serviceType;
-    let effectiveCost = options.cost;
-
-    if (options.resolveCost) {
-        try {
-            const resolved = await options.resolveCost({ user, supabaseAdmin });
-            effectiveServiceType = resolved.serviceType;
-            effectiveCost = resolved.cost;
-        } catch (resolveError) {
-            console.error('[auth] resolveCost error:', resolveError);
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: '요청 처리 중 오류가 발생했습니다.',
-                        code: 'RESOLVE_COST_ERROR'
-                    }),
-                    {
-                        status: 500,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                    }
-                )
-            };
-        }
-    }
-
-    // 크레딧 차감 결정
-    let costToDeduct = 0;
-    if (typeof effectiveCost === 'number') {
-        costToDeduct = effectiveCost;
-    } else if (effectiveServiceType && effectiveServiceType in SERVICE_COSTS) {
-        costToDeduct = SERVICE_COSTS[effectiveServiceType as ServiceType];
-    }
-
-    if (costToDeduct > 0) {
-        const { data: deductResult, error: deductError } = await supabaseAdmin.rpc('deduct_credits', {
-            p_user_id: user.id,
-            p_service_type: effectiveServiceType || 'AI_SERVICE',
-            p_cost: costToDeduct
-        });
-
-        if (deductError) {
-            console.error('[auth] Credit deduction RPC error:', deductError);
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({ 
-                        success: false, 
-                        error: '크레딧 처리 중 오류가 발생했습니다.', 
-                        code: 'CREDIT_ERROR' 
-                    }),
-                    { 
-                        status: 500, 
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-                    }
-                )
-            };
-        }
-
-        if (deductResult && deductResult.success === false) {
-            return {
-                user,
-                supabaseAdmin,
-                errorResponse: new Response(
-                    JSON.stringify({ 
-                        success: false, 
-                        error: `크레딧이 부족합니다. (필요: ${costToDeduct}C, 보유: ${deductResult.current_credits ?? 0}C)`, 
-                        code: 'INSUFFICIENT_CREDITS',
-                        requiredCredits: costToDeduct,
-                        currentCredits: deductResult.current_credits ?? 0
-                    }),
-                    { 
-                        status: 402, 
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-                    }
-                )
-            };
-        }
-    }
-
-    return { 
-        user, 
-        supabaseAdmin, 
-        errorResponse: null, 
-        deductedCredits: costToDeduct 
+    return {
+        user: authedUser,
+        supabaseAdmin,
+        errorResponse: null,
+        deductedCredits: 0,
+        receiptToken: null,
+        remainingUses: null,
     };
 }

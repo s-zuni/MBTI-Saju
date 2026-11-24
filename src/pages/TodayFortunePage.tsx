@@ -1,146 +1,188 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stripMarkdown } from '../utils/textUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
-import { Coins, Lock, Loader2, Sparkles, Palette, Hash, Compass } from 'lucide-react';
+import { CreditCard, Loader2, ArrowRight } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { singleDayFortuneSchema } from '../config/schemas';
-import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
+import { safeCalculateSaju } from '../utils/sajuUtils';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import GuestProfileCard from '../components/GuestProfileCard';
+import FunnelBottomCta from '../components/FunnelBottomCta';
+import ReportErrorBoundary from '../components/common/ReportErrorBoundary';
+import StreamingStatusBanner from '../components/common/StreamingStatusBanner';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const navigate = useNavigate();
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal, closeAllModals } = useModalStore();
+    const { profile, updateProfile } = useGuestProfile();
 
     const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
+    const [todayUnlocked, setTodayUnlocked] = useState(false);
     const [tomorrowUnlocked, setTomorrowUnlocked] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
+    const [todayError, setTodayError] = useState<string | null>(null);
+    const [tomorrowError, setTomorrowError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState('');
+    const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
+    const lastTodayPayloadRef = useRef<any>(null);
+    const lastTomorrowPayloadRef = useRef<any>(null);
 
-    const authHeaders = async () => {
-        const activeSession = await ensureValidSession();
-        return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-    };
-
-    // Streaming today's fortune
     const { object: fortune, submit: fetchFortune, isLoading: isFortuneLoading } = useObject({
         api: '/api/fortune?scope=today',
         schema: singleDayFortuneSchema,
-        headers: authHeaders,
+        headers: () => buildServiceRequestHeaders(null),
+        onFinish: ({ object }) => {
+            if (!object) {
+                setTodayError('오늘의 운세를 생성하지 못했습니다. 다시 시도해 주세요.');
+            } else {
+                setTodayError(null);
+            }
+        },
         onError: (error) => {
             console.error('[TodayFortunePage] Today fortune generation failed:', error);
+            setTodayError('오늘의 운세를 불러오는 중 일시적인 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
 
-    // Streaming tomorrow's fortune
     const { object: tomorrowFortune, submit: fetchTomorrow, isLoading: isTomorrowLoading } = useObject({
         api: '/api/fortune?scope=tomorrow',
         schema: singleDayFortuneSchema,
-        headers: authHeaders,
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: async ({ object }) => {
-            if (object) {
-                await refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[TodayFortunePage] Tomorrow fortune result validation failed');
-                alert('내일 운세를 만들지 못했습니다. 크레딧은 차감되지 않았습니다. 다시 시도해 주세요.');
+                setTomorrowError('내일 운세를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
+            } else {
+                setTomorrowError(null);
             }
         },
         onError: (error) => {
             console.error('[TodayFortunePage] Tomorrow fortune generation failed:', error);
-            alert('내일 운세를 불러오는 중 오류가 발생했습니다. 크레딧은 차감되지 않았습니다.');
+            setTomorrowError('내일 운세를 불러오는 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
 
     useEffect(() => {
-        closeAllModals();
-        if (session?.user && !isFortuneLoading && !fortune) {
-            const sajuData = calculateSaju(session.user.user_metadata.birth_date, session.user.user_metadata.birth_time);
-            fetchFortune({
-                birthDate: session.user.user_metadata.birth_date,
-                mbti: session.user.user_metadata.mbti,
-                sajuData,
-                scope: 'today'
-            });
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket(['FORTUNE_TODAY', 'FORTUNE_TOMORROW']);
+        if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
+            if (ticket.serviceType === 'FORTUNE_TOMORROW') {
+                lastTomorrowPayloadRef.current = ticket.payload;
+                setTab('tomorrow');
+                setTomorrowUnlocked(true);
+                setTomorrowError(null);
+                fetchTomorrow(ticket.payload);
+            } else {
+                lastTodayPayloadRef.current = ticket.payload;
+                setTab('today');
+                setTodayUnlocked(true);
+                setTodayError(null);
+                fetchFortune(ticket.payload);
+            }
         }
-    }, [session, fetchFortune, closeAllModals, fortune, isFortuneLoading]);
+    }, [fetchFortune, fetchTomorrow]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (isFortuneLoading && !fortune) {
+        if ((isFortuneLoading && !fortune) || (isTomorrowLoading && !tomorrowFortune)) {
             setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
             interval = setInterval(() => {
                 setCurrentLoadingMessage(getRandomLoadingMessage('fortune'));
             }, 3000);
         }
         return () => clearInterval(interval);
-    }, [isFortuneLoading, fortune]);
-
-    if (isAuthLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
-            </div>
-        );
-    }
-
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-amber-600" />
-                </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8">운세를 확인하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-amber-600 transition-all active:scale-95"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
+    }, [isFortuneLoading, fortune, isTomorrowLoading, tomorrowFortune]);
 
     const activeData = tab === 'today' ? fortune?.fortune : tomorrowFortune?.fortune;
     const activeDate = tab === 'today' ? fortune?.date : tomorrowFortune?.date;
-    const tomorrowCost = SERVICE_COSTS.FORTUNE_TOMORROW;
+    const activeLoading = tab === 'today' ? isFortuneLoading : isTomorrowLoading;
+    const activeError = tab === 'today' ? todayError : tomorrowError;
+    const activeUnlocked = tab === 'today' ? (todayUnlocked || !!fortune) : (tomorrowUnlocked || !!tomorrowFortune);
+    const tomorrowPrice = SERVICE_COSTS.FORTUNE_TOMORROW;
+    const currentYear = new Date().getFullYear();
 
-    const handleTomorrowClick = () => {
-        if (tomorrowUnlocked || tomorrowFortune) {
-            setTab('tomorrow');
+    const handleRetryCurrent = () => {
+        if (tab === 'today') {
+            setTodayError(null);
+            if (lastTodayPayloadRef.current) {
+                fetchFortune(lastTodayPayloadRef.current);
+            } else {
+                handleGenerateTodayFree();
+            }
+        } else if (lastTomorrowPayloadRef.current) {
+            setTomorrowError(null);
+            fetchTomorrow(lastTomorrowPayloadRef.current);
+        }
+    };
+
+    const handleGenerateTodayFree = () => {
+        if (!profile.birthDate) {
+            setFormError('생년월일을 입력해주세요.');
             return;
         }
-
-        if (!session?.user) {
-            openModal('analysis', 'login');
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
+        if (!sajuData) {
+            setFormError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
         }
-
-        if (credits < tomorrowCost) {
-            openModal('creditPurchase', undefined, { requiredCredits: tomorrowCost });
-            return;
-        }
-
-        if (!window.confirm(`내일의 운세를 확인하시겠습니까? ${tomorrowCost}크레딧이 사용됩니다.`)) {
-            return;
-        }
-
-        const sajuData = calculateSaju(session.user.user_metadata.birth_date, session.user.user_metadata.birth_time);
-        fetchTomorrow({
-            birthDate: session.user.user_metadata.birth_date,
-            mbti: session.user.user_metadata.mbti,
+        setFormError(null);
+        setTodayError(null);
+        const payload = {
+            birthDate: profile.birthDate,
+            birthTime: profile.birthTime || null,
+            gender: profile.gender,
+            mbti: profile.mbti || '미입력',
             sajuData,
-            scope: 'tomorrow'
-        });
-        setTomorrowUnlocked(true);
+            scope: 'today',
+        };
+        lastTodayPayloadRef.current = payload;
+        setTodayUnlocked(true);
+        fetchFortune(payload);
+    };
+
+    const handlePayTomorrow = async () => {
+        if (!profile.birthDate) {
+            setFormError('생년월일을 입력해주세요.');
+            return;
+        }
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);
+        if (!sajuData) {
+            setFormError('유효한 생년월일(1900~2050년)을 입력해주세요.');
+            return;
+        }
+        setFormError(null);
+        setIsPaying(true);
+        try {
+            const res = await startServicePayment({
+                serviceType: 'FORTUNE_TOMORROW',
+                serviceName: '내일의 운세',
+                returnPath: '/myluck?type=today',
+                payload: {
+                    birthDate: profile.birthDate,
+                    birthTime: profile.birthTime || null,
+                    gender: profile.gender,
+                    mbti: profile.mbti || '미입력',
+                    sajuData,
+                    scope: 'tomorrow',
+                },
+                customerName: profile.name,
+            });
+            if (!res.success && res.error_msg) {
+                setFormError(res.error_msg);
+            }
+        } finally {
+            setIsPaying(false);
+        }
+    };
+
+    const handleTomorrowTabClick = () => {
+        setFormError(null);
         setTab('tomorrow');
     };
 
@@ -153,7 +195,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                     <div className="flex justify-between items-end mb-6">
                         <div>
                             <p className="text-amber-600 font-bold text-sm mb-1">
-                                {tab === 'today' ? '오늘의 행운 흐름' : '내일의 행운 예보'}
+                                {tab === 'today' ? '오늘의 행운 흐름 (무료 제공)' : '내일의 행운 예보'}
                             </p>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                                 {activeDate ? new Date(activeDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }) : 
@@ -165,15 +207,18 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                     <div className="flex p-1 bg-slate-100 rounded-2xl">
                         <button
                             onClick={() => setTab('today')}
-                            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab === 'today'
-                                ? 'bg-white text-amber-600 shadow-md shadow-amber-100/50'
+                            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${tab === 'today'
+                                ? 'bg-white text-emerald-700 shadow-md shadow-emerald-100/50'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             오늘의 운세
+                            <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[10px] font-black">
+                                무료
+                            </span>
                         </button>
                         <button
-                            onClick={handleTomorrowClick}
+                            onClick={handleTomorrowTabClick}
                             disabled={isTomorrowLoading}
                             className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${tab === 'tomorrow'
                                 ? 'bg-white text-amber-600 shadow-md shadow-amber-100/50'
@@ -182,14 +227,13 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                         >
                             {isTomorrowLoading && !tomorrowFortune ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : tomorrowUnlocked ? (
+                            ) : tomorrowUnlocked || tomorrowFortune ? (
                                 '내일의 운세'
                             ) : (
                                 <>
                                     내일의 운세
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[10px]">
-                                        <Coins className="w-3 h-3" />
-                                        {tomorrowCost}
+                                    <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-black">
+                                        {tomorrowPrice.toLocaleString()}원
                                     </span>
                                 </>
                             )}
@@ -199,149 +243,209 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
 
                 {/* Content */}
                 <div className="space-y-6">
-                    {((tab === 'today' && isFortuneLoading && !fortune) || (tab === 'tomorrow' && isTomorrowLoading && !tomorrowFortune)) ? (
-                        <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-                            <div className="relative mb-8">
-                                <div className="w-20 h-20 border-4 border-amber-100 rounded-full"></div>
-                                <div className="absolute top-0 left-0 w-20 h-20 border-4 border-t-amber-500 rounded-full animate-spin"></div>
-                                <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-amber-500 animate-pulse" />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 mb-2">
-                                {currentLoadingMessage || '운명의 흐름을 읽는 중...'}
-                            </h3>
-                            <p className="text-slate-400 font-bold text-xs tracking-widest uppercase">
-                                Please wait a moment
-                            </p>
-                        </div>
-                    ) : tab === 'tomorrow' && !tomorrowUnlocked ? (
-                        <div className="bg-white border border-slate-100 rounded-[32px] p-12 text-center shadow-xl shadow-slate-200/50">
-                            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Lock className="w-12 h-12 text-slate-300" />
-                            </div>
-                            <h3 className="text-2xl font-black text-slate-900 mb-3">내일의 운세가 궁금하신가요?</h3>
-                            <p className="text-slate-500 mb-8 leading-relaxed">
-                                잠들기 전 미리 내일의 기운을 확인하고<br />
-                                완벽한 하루를 준비해 보세요.
-                            </p>
-                            <button
-                                onClick={handleTomorrowClick}
-                                className="w-full py-5 bg-slate-950 text-white font-bold rounded-2xl shadow-xl hover:bg-amber-600 transition-all flex items-center justify-center gap-3 active:scale-95"
-                            >
-                                <Coins className="w-6 h-6 text-amber-400" />
-                                {credits >= tomorrowCost ? `${tomorrowCost}크레딧으로 확인하기` : '크레딧 충전하러 가기'}
-                            </button>
-                        </div>
-                    ) : activeData ? (
-                        <div className="animate-fade-up">
-                            {/* MISSION CARD */}
-                            {activeData.mission && (
-                                <div className="bg-slate-950 p-6 rounded-[32px] shadow-2xl mb-8 text-white relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-6 opacity-20 transform translate-x-4 -translate-y-4 text-amber-500 scale-150">
-                                        <Sparkles className="w-24 h-24" />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
-                                            <h4 className="text-amber-500 text-xs font-black uppercase tracking-[0.2em]">Daily Mission</h4>
-                                        </div>
-                                        <p className="text-xl font-bold leading-tight">
-                                            {stripMarkdown(activeData.mission)}
-                                        </p>
-                                    </div>
+                    {!activeUnlocked ? (
+                        <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-9 text-center space-y-6">
+                            <div className="space-y-2">
+                                <div>
+                                    {tab === 'today' ? (
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                                            회원가입 없이 100% 무료 제공
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold">
+                                            내일 하루를 앞서 준비하는 단건 예보 ({tomorrowPrice.toLocaleString()}원)
+                                        </span>
+                                    )}
                                 </div>
-                            )}
-
-                            {/* MAIN FORTUNE */}
-                            <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 mb-8 relative">
-                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-100/30 rotate-[-12deg]">
-                                    <Sparkles className="w-5 h-5 text-white" />
-                                </div>
-                                <p className="text-slate-800 leading-relaxed font-semibold whitespace-pre-wrap text-lg">
-                                    {stripMarkdown(activeData.fortune)}
+                                <h3 className="text-2xl font-bold text-slate-900">
+                                    {tab === 'today' ? '오늘의 행운 흐름 무료로 확인하기' : '내일의 운세가 궁금하신가요?'}
+                                </h3>
+                                <p className="text-sm sm:text-[15px] text-slate-600 leading-relaxed">
+                                    회원가입 없이 생년월일만 입력해도<br />
+                                    {tab === 'today' ? '오늘 하루 나에게 맞는 기운과 행동 포인트를 결제 없이 즉시 확인해요.' : '내일의 기운과 현실적인 대처 포인트를 미리 준비할 수 있어요.'}
                                 </p>
                             </div>
 
-                            {/* CHARM STATS */}
-                            {activeData.charm_stats && (
-                                <div className="mb-8 bg-white border border-slate-100 p-8 rounded-[32px] shadow-sm">
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                        오늘의 에너지 스탯
-                                    </h4>
-                                    <div className="grid grid-cols-1 gap-6">
-                                        {activeData.charm_stats.map((stat: any, idx: number) => {
-                                            if (!stat || !stat.label || stat.value === undefined) return null;
-                                            return (
-                                            <div key={idx} className="space-y-2">
-                                                <div className="flex justify-between items-end">
-                                                    <span className="text-sm font-black text-slate-700">{stat.label}</span>
-                                                    <span className="text-xl font-black text-amber-500 italic">{stat.value}%</span>
-                                                </div>
-                                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden p-0.5">
-                                                    <div 
-                                                        className="h-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-600 rounded-full shadow-inner transition-all duration-1000 ease-out"
-                                                        style={{ width: `${stat.value}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                            );
-                                        })}
-                                    </div>
+                            <GuestProfileCard profile={profile} onChange={(patch) => { updateProfile(patch); setFormError(null); }} />
+
+                            {formError && (
+                                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold">
+                                    {formError}
                                 </div>
                             )}
 
-                            {/* OOTD RECOMMENDATION */}
-                            {activeData.lucky_ootd && (
-                                <div className="mb-8 bg-amber-50 border border-amber-100 p-8 rounded-[32px] relative overflow-hidden group hover:bg-white transition-all duration-500">
-                                    <div className="absolute top-0 right-0 p-6 opacity-10 text-amber-600 group-hover:scale-125 transition-transform duration-700">
-                                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20 12V8H16V12H20Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                            <path d="M4 12V8H8V12H4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                            <path d="M12 21C16.9706 21 21 16.9706 21 12H3C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                    </div>
-                                    <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-3">Lucky Outfit of the Day</h4>
-                                    <p className="text-slate-900 font-bold text-2xl leading-snug relative z-10">
-                                        {activeData.lucky_ootd}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* LUCKY ITEMS */}
-                            {activeData.lucky && (
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 rotate-3">
-                                            <Palette className="w-5 h-5 text-rose-500" />
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Color</div>
-                                        <div className="text-slate-900 font-black text-sm">{activeData.lucky.color}</div>
-                                    </div>
-                                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3 -rotate-3">
-                                            <Hash className="w-5 h-5 text-blue-500" />
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Number</div>
-                                        <div className="text-slate-900 font-black text-sm">{activeData.lucky.number}</div>
-                                    </div>
-                                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 text-center shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-3 rotate-6">
-                                            <Compass className="w-5 h-5 text-emerald-500" />
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 font-black mb-1 uppercase tracking-wider">Direction</div>
-                                        <div className="text-slate-900 font-black text-sm">{activeData.lucky.direction}</div>
-                                    </div>
-                                </div>
+                            {tab === 'today' ? (
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateTodayFree}
+                                    disabled={isFortuneLoading}
+                                    className="w-full py-4.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-base rounded-2xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                                >
+                                    <span>오늘의 운세 무료로 확인하기 (0원)</span>
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handlePayTomorrow}
+                                    disabled={isPaying}
+                                    className="w-full py-4.5 bg-slate-950 text-white font-bold text-base rounded-2xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60"
+                                >
+                                    {isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 text-amber-300" />}
+                                    <span>내일의 운세 확인하기 ({tomorrowPrice.toLocaleString()}원 결제)</span>
+                                </button>
                             )}
                         </div>
                     ) : (
-                        <div className="text-center py-20 bg-white rounded-[32px] border border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold">운세 정보를 가져올 수 없습니다.</p>
-                            <button 
-                                onClick={() => window.location.reload()}
-                                className="mt-4 text-amber-600 font-bold underline"
-                            >
-                                다시 시도하기
-                            </button>
+                        <div className="space-y-6">
+                            <StreamingStatusBanner
+                                isStreaming={activeLoading}
+                                hasData={!!activeData}
+                                error={!activeData ? (activeError || (!activeLoading ? '운세 정보를 불러올 수 없습니다.' : null)) : null}
+                                onRetry={handleRetryCurrent}
+                                isFree={tab === 'today'}
+                                streamingTitle={
+                                    tab === 'today'
+                                        ? (currentLoadingMessage || '오늘의 운세를 실시간으로 작성하고 있습니다')
+                                        : '결제가 완료되어 내일의 운세를 실시간으로 작성하고 있습니다'
+                                }
+                                streamingSubtitle="완성되는 문단부터 아래에 바로 표시됩니다."
+                                completedText={tab === 'today' ? '오늘의 운세 풀이가 완료되었습니다.' : '내일의 운세 풀이가 완료되었습니다.'}
+                            />
+
+                            {activeData && (
+                                <ReportErrorBoundary onRetry={handleRetryCurrent}>
+                                    <div className="animate-fade-up space-y-6">
+                                        {/* MISSION CARD */}
+                                        {activeData.mission && (
+                                            <div className="bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-800 text-white space-y-2.5">
+                                                <h4 className="text-sm font-bold text-amber-300">
+                                                    {tab === 'today' ? '오늘의 핵심 미션' : '내일의 핵심 미션'}
+                                                </h4>
+                                                <p className="text-lg sm:text-xl font-bold leading-relaxed break-keep">
+                                                    {stripMarkdown(activeData.mission)}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* MAIN FORTUNE */}
+                                        {activeData.fortune && (
+                                            <div className="bg-white p-6 sm:p-9 rounded-2xl border border-stone-200 space-y-3">
+                                                <h4 className="text-xl sm:text-2xl font-bold text-slate-950 pb-2 border-b border-stone-200">
+                                                    {tab === 'today' ? '오늘의 기운과 현실 조언' : '내일의 기운과 현실 조언'}
+                                                </h4>
+                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                    {stripMarkdown(activeData.fortune)}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* CHARM STATS */}
+                                        {Array.isArray(activeData.charm_stats) && activeData.charm_stats.length > 0 && (
+                                            <div className="bg-white border border-stone-200 p-6 sm:p-8 rounded-2xl space-y-5">
+                                                <h4 className="text-lg sm:text-xl font-bold text-slate-950 pb-2 border-b border-stone-200">
+                                                    {tab === 'today' ? '오늘의 에너지 지표' : '내일의 에너지 지표'}
+                                                </h4>
+                                                <div className="space-y-4">
+                                                    {activeData.charm_stats.map((stat: any, idx: number) => {
+                                                        if (!stat || !stat.label || typeof stat.value !== 'number') return null;
+                                                        const pct = Math.min(100, Math.max(0, stat.value));
+                                                        return (
+                                                            <div key={idx} className="space-y-1.5">
+                                                                <div className="flex justify-between items-baseline">
+                                                                    <span className="text-base font-bold text-slate-800">{stat.label}</span>
+                                                                    <span className="text-base font-bold text-amber-700">{pct}%</span>
+                                                                </div>
+                                                                <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-amber-600 rounded-full transition-all duration-700"
+                                                                        style={{ width: `${pct}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* OOTD RECOMMENDATION */}
+                                        {activeData.lucky_ootd && (
+                                            <div className="bg-[#FAF7F0] border border-[#E6DFD1] p-6 sm:p-7 rounded-2xl space-y-2">
+                                                <h4 className="text-base font-bold text-stone-600">추천 옷차림</h4>
+                                                <p className="text-lg sm:text-xl font-bold text-slate-950 leading-relaxed break-keep">
+                                                    {stripMarkdown(activeData.lucky_ootd)}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* LUCKY ITEMS (그리드 제거 -> 정갈한 정의 목록) */}
+                                        {activeData.lucky && (
+                                            <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-7 divide-y divide-stone-200">
+                                                {activeData.lucky.color && (
+                                                    <div className="py-3.5 first:pt-0 space-y-1">
+                                                        <h5 className="text-base font-bold text-slate-900">어울리는 색상</h5>
+                                                        <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                            {stripMarkdown(activeData.lucky.color)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {activeData.lucky.number && (
+                                                    <div className="py-3.5 space-y-1">
+                                                        <h5 className="text-base font-bold text-slate-900">행운의 숫자</h5>
+                                                        <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                            {stripMarkdown(activeData.lucky.number)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {activeData.lucky.direction && (
+                                                    <div className="py-3.5 last:pb-0 space-y-1">
+                                                        <h5 className="text-base font-bold text-slate-900">좋은 방향</h5>
+                                                        <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                            {stripMarkdown(activeData.lucky.direction)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {!activeLoading && (
+                                            <>
+                                                {/* 퍼널 전환 브릿지 */}
+                                                <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-7 space-y-4">
+                                                    <p className="text-sm font-bold text-indigo-800">
+                                                        나의 사주 원국 · 종합 운명 리포트 이어보기
+                                                    </p>
+                                                    <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85]">
+                                                        하루 운세만으로는 긴 흐름을 다 읽기 어렵습니다. 내 타고난 <strong>만세력 4주 8자 원국표</strong>와 <strong>{currentYear}년 재물·연애·커리어 종합 리포트</strong>를 지금 이어서 확인해 보세요.
+                                                    </p>
+                                                    <div className="space-y-3 pt-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate('/?openService=freePreview')}
+                                                            className="w-full py-4 px-5 rounded-xl bg-slate-950 hover:bg-indigo-950 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors"
+                                                        >
+                                                            <span>무료 만세력 &amp; 사주 종합 분석 보기</span>
+                                                            <ArrowRight className="w-4 h-4 shrink-0" />
+                                                        </button>
+                                                        {tab === 'today' && !tomorrowFortune && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setTab('tomorrow')}
+                                                                className="w-full py-4 px-5 rounded-xl bg-[#FAF7F0] hover:bg-stone-200/70 text-slate-900 border border-[#E6DFD1] font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors"
+                                                            >
+                                                                <span>내일의 운세 미리 확인하기 ({tomorrowPrice.toLocaleString()}원)</span>
+                                                                <ArrowRight className="w-4 h-4 shrink-0" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <FunnelBottomCta from="today_fortune_result" />
+                                            </>
+                                        )}
+                                    </div>
+                                </ReportErrorBoundary>
+                            )}
                         </div>
                     )}
                 </div>

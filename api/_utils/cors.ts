@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 export function getAllowedOrigin(originHeader: string | null | undefined): string {
-    if (!originHeader) return '*';
+    if (!originHeader) return 'https://www.mbtiju.com';
     if (ALLOWED_ORIGINS.includes(originHeader)) {
         return originHeader;
     }
@@ -22,8 +22,8 @@ export function getAllowedOrigin(originHeader: string | null | undefined): strin
 }
 
 export const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Origin': 'https://www.mbtiju.com',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-service-receipt',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Max-Age': '86400',
 };
@@ -68,7 +68,7 @@ export const setNodeCorsHeaders = (res: any, req?: any) => {
     const origin = req?.headers?.origin;
     const effectiveOrigin = getAllowedOrigin(origin);
     res.setHeader('Access-Control-Allow-Origin', effectiveOrigin);
-    res.setHeader('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    res.setHeader('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type, x-service-receipt');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Max-Age', '86400');
 };

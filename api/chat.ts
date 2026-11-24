@@ -1,8 +1,14 @@
 import { streamText } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser, getSupabaseAdmin } from './_utils/auth';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+} from './_utils/ai-provider';
+import { authenticateUser, getSupabaseAdmin, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
     runtime: 'edge',
@@ -12,31 +18,26 @@ export const config = {
 const STATIC_CHAT_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
-오직 데이터(사주+MBTI)에 기반해 날카롭고 간결하게 핵심만 짚는 상담을 제공하세요.
+오직 데이터(사주+성향)에 기반해 현실적이고 냉정한 진단과 따뜻한 조언을 함께 전하는 심층 상담을 제공하세요.
 
 [AI 사주 직접 계산 엄금]
 ★ 중요: 사주 원국이나 오행을 절대 스스로 재계산하지 말고, 사용자 메시지에 제공된 사주 데이터만을 100% 진실로 적용하세요.
 
 [어투]
-- ~해요 체, 단호하고 직설적
+- ~해요 체, 현실적이고 직설적이되 말 끝은 따뜻하게 감싸는 태도
 - 서론 없이 바로 핵심부터 시작할 것
-- 감성적 위로나 헛된 칭찬 금지 (데이터에 기반한 팩트와 솔루션 중심)
+- 빈말 칭찬 금지, 데이터 기반 팩트와 구체적 대처법 + 담백한 위로 중심
 
 [분석 원칙]
-- MBTI 성향과 사주 오행/일간/운의 기운을 반드시 3단계 융합 공식(사주 진단 -> MBTI 결합 -> 행동 교정 솔루션)으로 분석
-- 한계와 약점을 가감 없이 지적하고, MBTI가 즉시 실행 가능한 현실적 행동 지침으로 마무리
-- 핵심 2~3가지로 압축. 군더더기 없이 임팩트 있게
+- 제공된 [시간적 기준 정보](올해 2026년 병오년, 내년 2027년 정미년)를 기준으로 시기를 판단하세요. 2023/2024/2025년을 올해로 언급 금지.
+- 사주 진단 -> 성향/행동 패턴 결합 -> 현실 해결책 + 따뜻한 당부 순으로 답변하세요.
 
-[언어 규칙 - 중요]
-- 모든 분석 내용은 반드시 한국어만 사용하세요.
+[언어 및 형식 규칙 - 중요]
+- 모든 분석 내용은 반드시 한국어만 사용하세요. (MBTI 용어 제외)
 - 오행(목, 화, 토, 금, 수)을 언급할 때 영어(Wood, Fire 등)를 절대 사용하지 마세요.
 - 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-
-[형식 규칙]
-- 별표 두 개(**) 및 마크다운 특수문자(__, # 등) 절대 사용 금지
-- 강조가 필요한 경우 이모지(🌿 🔥 💧 ✨)와 글머리 기호(• 1. 2.)만 사용할 것
-- 모든 대답은 마크다운 기호 없는 깔끔한 일반 텍스트로 전달
-- 한국어만 사용
+- 별표 두 개(**) 및 마크다운 특수문자(__, # 등)와 이모티콘/이모지 사용 절대 금지
+- 나열이 필요하면 글머리 기호(-)와 숫자(1. 2.)만 사용하고 문단 사이를 \\n\\n로 넉넉히 띄우세요.
 `.trim();
 
 export default async (req: Request) => {
@@ -52,19 +53,31 @@ export default async (req: Request) => {
         });
     }
 
+    let receiptToRelease: string | null = null;
+    let supabaseForRelease: any = null;
+
     try {
         const body = await req.json().catch(() => ({}));
         const { sessionId, message, mbti, birthDate, birthTime, name, gender, messages, pastContext } = body;
 
-        // 1. 호출자 인증 (세션 유효성 우선 검증)
-        const authCheck = await authenticateUser(req, { allowAnonymous: false, cost: 0 });
+        // 1. 호출자 인증 및 AI_CHAT_5 결제 티켓(5회권) 검증
+        const authCheck = await authenticateUser(req, {
+            allowAnonymous: true,
+            serviceType: 'AI_CHAT_5',
+            allowedServiceTypes: ['AI_CHAT_5'],
+            requirePaymentReceipt: true,
+        });
         if (authCheck.errorResponse) {
             return authCheck.errorResponse;
         }
-        const userId = authCheck.user!.id;
+        receiptToRelease = authCheck.receiptToken ?? null;
+        supabaseForRelease = authCheck.supabaseAdmin;
 
-        // 2. sessionId 검증 (소유권 확인)
+        const userId = authCheck.user?.id || null;
+        const isGuestSession = !userId || !sessionId || String(sessionId).startsWith('guest_');
+
         if (!sessionId) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '유효한 채팅 세션(sessionId)이 필요합니다.' }), { 
                 status: 400, 
                 headers: reqCorsHeaders 
@@ -72,73 +85,42 @@ export default async (req: Request) => {
         }
 
         const supabaseAdmin = getSupabaseAdmin();
-        const { data: sessionData, error: sessionError } = await supabaseAdmin
-            .from('chat_sessions')
-            .select('id')
-            .eq('id', sessionId)
-            .eq('user_id', userId)
-            .single();
 
-        if (!sessionData || sessionError) {
-            return new Response(JSON.stringify({ error: '유효한 채팅 세션을 찾을 수 없습니다.' }), { 
-                status: 404, 
-                headers: reqCorsHeaders 
-            });
-        }
+        if (!isGuestSession) {
+            const { data: sessionData, error: sessionError } = await supabaseAdmin
+                .from('chat_sessions')
+                .select('id')
+                .eq('id', sessionId)
+                .eq('user_id', userId)
+                .single();
 
-        // 3. 서버 권위 데이터(chat_messages 실제 저장 수)로 과금 턴 엄격 판정
-        // 클라이언트의 body.shouldDeductCredit이나 messages 배열 길이는 완전히 무시함
-        const { count: dbMsgCount, error: countError } = await supabaseAdmin
-            .from('chat_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('session_id', sessionId)
-            .eq('role', 'user');
-
-        if (countError) {
-            console.error('Failed to query chat_messages count:', countError);
-            return new Response(JSON.stringify({ error: '채팅 기록 조회에 실패했습니다.' }), { 
-                status: 500, 
-                headers: reqCorsHeaders 
-            });
-        }
-
-        const userTurnCount = dbMsgCount || 0;
-        // 5회 단위 과금: 0, 5, 10, 15... 번째 메시지 전송 시 20 크레딧 차감
-        const isChargeTurn = userTurnCount % 5 === 0;
-
-        // 4. 과금 턴인 경우 크레딧 차감 (원자적 DB RPC 호출, 부족 시 402 즉시 반환)
-        if (isChargeTurn) {
-            const deductResult = await authenticateUser(req, {
-                serviceType: 'AI_CHAT_5',
-                cost: 20,
-                skipRateLimit: true
-            });
-
-            if (deductResult.errorResponse) {
-                return deductResult.errorResponse;
-            }
-        }
-
-        // 5. 크레딧 검증 성공 후 서버에서 권위적으로 사용자 메시지 저장 (턴 수 카운트 확정)
-        if (message && typeof message === 'string') {
-            const { error: insertError } = await supabaseAdmin
-                .from('chat_messages')
-                .insert({
-                    session_id: sessionId,
-                    role: 'user',
-                    content: message.trim()
+            if (!sessionData || sessionError) {
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+                return new Response(JSON.stringify({ error: '유효한 채팅 세션을 찾을 수 없습니다.' }), { 
+                    status: 404, 
+                    headers: reqCorsHeaders 
                 });
-
-            if (insertError) {
-                console.error('Failed to save user message in chat_messages:', insertError);
             }
-        }
 
-        // 세션 갱신 시간 업데이트
-        await supabaseAdmin
-            .from('chat_sessions')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('id', sessionId);
+            if (message && typeof message === 'string') {
+                const { error: insertError } = await supabaseAdmin
+                    .from('chat_messages')
+                    .insert({
+                        session_id: sessionId,
+                        role: 'user',
+                        content: message.trim()
+                    });
+
+                if (insertError) {
+                    console.error('Failed to save user message in chat_messages:', insertError);
+                }
+            }
+
+            await supabaseAdmin
+                .from('chat_sessions')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', sessionId);
+        }
 
         // Calculate Saju deterministically
         let sajuInfo = "사주 정보를 불러올 수 없습니다.";
@@ -151,9 +133,11 @@ export default async (req: Request) => {
             }
         }
 
-        const userContextBlock = `[상담자 프로필 및 사주 데이터]
+        const userContextBlock = `${getTemporalAnchorBlock()}
+
+[상담자 프로필 및 사주 데이터]
 - 성함: ${name || '사용자'}
-- MBTI: ${mbti || '알 수 없음'}
+- MBTI: ${formatMbtiForPrompt(mbti)}
 - 성별: ${gender || '알 수 없음'}
 - 생년월일시: ${birthDate} ${birthTime || ''}
 
@@ -200,8 +184,9 @@ ${pastContext ? `\n[이전 상담 요약]\n${pastContext}\n` : ''}`.trim();
             throw error;
         }
     } catch (error: any) {
+        await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
         console.error('ChatServer Error:', error);
-        return new Response(JSON.stringify({ error: error.message || "채팅 분석 중 오류가 발생했습니다." }), { 
+        return new Response(JSON.stringify({ error: '채팅 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: reqCorsHeaders 
         });

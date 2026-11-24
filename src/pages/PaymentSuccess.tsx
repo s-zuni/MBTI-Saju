@@ -1,33 +1,44 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Loader2, Home, Receipt } from 'lucide-react';
+import { CheckCircle2, Loader2, Home, Receipt, Copy, Check } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { clearPendingCheckout } from '../utils/pendingCheckout';
+import { getPendingServiceOrder, promotePendingOrderToTicket } from '../utils/servicePayCheckout';
 import { track } from '../utils/analytics';
 
-const DeepReportEventModal = lazy(() => import('../components/DeepReportEventModal'));
 const PaymentSuccess: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [showEventModal, setShowEventModal] = useState(false);
-    const [session, setSession] = useState<any>(null);
+    const [approvedServiceName, setApprovedServiceName] = useState<string>('');
+    const [returnTargetPath, setReturnTargetPath] = useState<string>('/');
+    const [copiedOrderId, setCopiedOrderId] = useState(false);
 
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
     const amount = searchParams.get('amount');
+    const retryPath = getPendingServiceOrder()?.returnPath || '/pricing';
+
+    const handleCopyOrderId = async () => {
+        if (!orderId) return;
+        try {
+            await navigator.clipboard.writeText(orderId);
+            setCopiedOrderId(true);
+            setTimeout(() => setCopiedOrderId(false), 2000);
+        } catch {
+            // ignore clipboard errors
+        }
+    };
 
     useEffect(() => {
         const confirmAndSync = async () => {
-            // 1. 사용자 식별자를 여러 경로에서 시도 (URL -> LocalStorage -> Current Session)
             const userIdFromUrl = searchParams.get('userId');
             const userIdFromStorage = localStorage.getItem('pending_payment_user_id');
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
             const { data: { session: currentSession } } = await supabase.auth.getSession();
-            
-            const finalUserId = currentUser?.id || userIdFromUrl || userIdFromStorage;
+
+            const finalUserId = currentSession?.user?.id || userIdFromUrl || userIdFromStorage;
 
             if (!paymentKey || !orderId || !amount) {
                 setError('결제 정보가 누락되었습니다.');
@@ -36,7 +47,6 @@ const PaymentSuccess: React.FC = () => {
             }
 
             try {
-                // 2. 서버리스 함수 호출하여 결제 승인 및 DB 반영
                 const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                 if (currentSession?.access_token) {
                     headers['Authorization'] = `Bearer ${currentSession.access_token}`;
@@ -49,40 +59,55 @@ const PaymentSuccess: React.FC = () => {
                         paymentKey,
                         orderId,
                         amount: Number(amount),
-                        userId: finalUserId, 
+                        userId: finalUserId,
                     }),
                 });
 
-                // 승인 요청 후 임시 데이터 삭제 (성공/실패 여부와 상관없이 시도했으므로 정리)
                 localStorage.removeItem('pending_payment_user_id');
                 if (orderId && orderId.startsWith('SHOP')) {
                     localStorage.removeItem('pending_shop_order');
                 }
 
-                const data = await response.json();
+                const rawBody = await response.text();
+                let data: any = null;
+                try {
+                    data = rawBody ? JSON.parse(rawBody) : null;
+                } catch {
+                    throw new Error(
+                        response.ok
+                            ? '결제 승인 응답 형식이 올바르지 않습니다.'
+                            : `서버 오류가 발생했습니다 (HTTP ${response.status}). 잠시 후 다시 시도해 주세요.`
+                    );
+                }
 
-                if (!response.ok || data.success === false) {
-                    console.error('Failed API Response:', data);
-                    const errorMessage = data.error || data.message || '결제 승인 중 오류가 발생했습니다.';
+                if (!response.ok || !data || data.success === false) {
+                    console.error('Failed API Response:', data || rawBody);
+                    const errorMessage = data?.error || data?.message || `결제 승인 중 오류가 발생했습니다 (HTTP ${response.status}).`;
                     throw new Error(errorMessage);
                 }
 
-                // 결제 완료: 이어서 결제 배너용 임시 데이터 정리 + 퍼널 기록
                 if (orderId.startsWith('ord_')) clearPendingCheckout();
                 track('checkout_success', { amount: Number(amount), kind: orderId.split('_')[0] ?? 'unknown' });
 
-                // 3. 세션 및 프로필 데이터 강제 동기화 (크레딧 즉시 반영 핵심)
-                await supabase.auth.refreshSession();
-                const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-                setSession(refreshedSession);
-                
-                // 추가적으로 프로필 데이터를 다시 불러와서 UI 상태를 확실히 함
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                   await supabase.from('profiles').select('*').eq('id', user.id).single();
+                if (currentSession?.user) {
+                    await supabase.auth.refreshSession();
+                    await supabase.from('profiles').select('id').eq('id', currentSession.user.id).maybeSingle();
                 }
 
-                // 4. 심층 리포트인 경우 자동 생성 트리거 + 이벤트 팝업
+                if (orderId?.startsWith('SVC_')) {
+                    const ticket = promotePendingOrderToTicket(
+                        orderId,
+                        data?.data?.receiptToken,
+                        data?.data?.remainingUses
+                    );
+                    const nextPath = ticket?.returnPath || '/myluck?type=today';
+                    setApprovedServiceName(ticket?.serviceName || '운세 서비스');
+                    setReturnTargetPath(nextPath);
+                    setLoading(false);
+                    setTimeout(() => navigate(nextPath, { replace: true }), 400);
+                    return;
+                }
+
                 if (orderId?.startsWith('DEEPREPORT')) {
                     setIsGenerating(true);
                     fetch('/api/generate-and-save-report', {
@@ -91,25 +116,15 @@ const PaymentSuccess: React.FC = () => {
                         body: JSON.stringify({ orderId }),
                     }).catch(err => console.error('Auto-generation trigger failed:', err))
                       .finally(() => setIsGenerating(false));
-
-
-                    // 이벤트 팝업 노출 (심층 리포트 구매 시)
-                    setTimeout(() => setShowEventModal(true), 1500);
                 }
 
                 setLoading(false);
-                
-                // 이벤트 팝업이 없는 경우에만 자동 이동
+
                 if (orderId?.startsWith('DEEPREPORT')) {
-                    // DEEPREPORT handles its own modal
-                } else if (orderId?.startsWith('EVT500')) {
-                    setTimeout(() => navigate('/'), 3000);
-                } else if (orderId?.startsWith('CONSULTATION')) {
-                    setTimeout(() => navigate('/chat'), 3000);
+                    // DEEPREPORT keeps the confirmation screen visible
                 } else {
                     setTimeout(() => navigate('/myluck?type=today'), 3000);
                 }
-
             } catch (err: any) {
                 console.error('Payment Confirmation Error:', err);
                 setError(err.message || '결제 승인 중 오류가 발생했습니다.');
@@ -140,8 +155,21 @@ const PaymentSuccess: React.FC = () => {
                         </svg>
                     </div>
                     <h2 className="text-2xl font-black text-slate-900 mb-2">결제 처리 실패</h2>
-                    <p className="text-slate-500 mb-8 font-medium">{error}</p>
-                    <button onClick={() => navigate('/store')} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all">다시 시도하기</button>
+                    <p className="text-slate-500 mb-4 font-medium">{error}</p>
+                    {orderId && (
+                        <div className="bg-slate-50 rounded-xl p-3 mb-6 text-xs text-slate-600 flex items-center justify-between gap-2">
+                            <span className="font-mono truncate">주문번호: {orderId}</span>
+                            <button
+                                type="button"
+                                onClick={handleCopyOrderId}
+                                className="shrink-0 inline-flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-700 hover:bg-slate-100"
+                            >
+                                {copiedOrderId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copiedOrderId ? '복사됨' : '복사'}
+                            </button>
+                        </div>
+                    )}
+                    <button onClick={() => navigate(retryPath)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all">다시 시도하기</button>
                 </div>
             </div>
         );
@@ -188,50 +216,56 @@ const PaymentSuccess: React.FC = () => {
                             </div>
                         )}
                     </div>
-                ) : orderId?.startsWith('EVT500') ? (
+                ) : orderId?.startsWith('SVC_') ? (
                     <div className="space-y-3 mb-6">
-                        <p className="text-slate-900 font-black text-lg">🎉 500크레딧이 지급되었습니다!</p>
+                        <p className="text-slate-900 font-black text-lg">{approvedServiceName || '운세 분석'} 결제 완료!</p>
                         <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                            이벤트 크레딧으로 다양한 운세 서비스를 마음껏 이용하세요.
-                        </p>
-                    </div>
-                ) : orderId?.startsWith('CONSULTATION') ? (
-                    <div className="space-y-3 mb-6">
-                        <p className="text-slate-900 font-black text-lg">상담권 결제 완료!</p>
-                        <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                            운명 심층 상담권이 성공적으로 지급되었습니다. 잠시 후 상담 화면으로 이동합니다.
+                            결제가 정상 승인되었습니다.<br />
+                            지금 바로 결과 화면으로 이동하여 풀이를 시작합니다.
                         </p>
                     </div>
                 ) : (
-                    <p className="text-slate-500 mb-6 font-medium">크레딧이 성공적으로 반영되었습니다.</p>
+                    <p className="text-slate-500 mb-6 font-medium">결제가 성공적으로 반영되었습니다.</p>
                 )}
-                
-                <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2">
+
+                <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left space-y-2.5">
                     <div className="flex justify-between text-sm font-bold">
                         <span className="text-slate-400">결제 금액</span>
                         <span className="text-slate-950">₩{Number(amount).toLocaleString()}</span>
                     </div>
+                    {orderId && (
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/70 text-xs">
+                            <span className="text-slate-400 font-bold shrink-0">주문번호</span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-mono text-slate-700 truncate">{orderId}</span>
+                                <button
+                                    type="button"
+                                    onClick={handleCopyOrderId}
+                                    className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-slate-200 rounded-md font-bold text-slate-600 hover:text-slate-900"
+                                >
+                                    {copiedOrderId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                    {copiedOrderId ? '복사됨' : '복사'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => navigate('/')} className="flex items-center justify-center gap-2 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm">
                         <Home size={18} /> 홈으로
                     </button>
-                    <button onClick={() => navigate('/usage-history')} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
-                        <Receipt size={18} /> 내역 확인
-                    </button>
+                    {orderId?.startsWith('SVC_') ? (
+                        <button onClick={() => navigate(returnTargetPath)} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
+                            <Receipt size={18} /> 결과 바로 보기
+                        </button>
+                    ) : (
+                        <button onClick={() => navigate('/myluck?type=today')} className="flex items-center justify-center gap-2 bg-slate-950 text-white py-4 rounded-2xl font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all text-sm">
+                            <Receipt size={18} /> 운세 보러가기
+                        </button>
+                    )}
                 </div>
             </div>
-
-
-            {/* 심층 리포트 구매 고객 이벤트 팝업 */}
-            <Suspense fallback={null}>
-                <DeepReportEventModal
-                    isOpen={showEventModal}
-                    onClose={() => setShowEventModal(false)}
-                    session={session}
-                />
-            </Suspense>
         </div>
     );
 };

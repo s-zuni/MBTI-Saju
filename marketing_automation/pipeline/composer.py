@@ -39,10 +39,10 @@ _PRETENDARD = PROJECT_ROOT / "assets" / "fonts" / "Pretendard-Bold.otf"
 SUBTITLE_FONT_FILE = _PRETENDARD if _PRETENDARD.is_file() else PROJECT_ROOT / "assets" / "fonts" / "NanumGothic-Bold.ttf"
 SUBTITLE_FONT_NAME = "Pretendard" if _PRETENDARD.is_file() else "NanumGothic"
 
-SUBTITLE_FONT_SIZE = 88
-SUBTITLE_Y = 1423  # 자막 박스 상단 Y 좌표(기획안)
-# PlayResX(1080) 기준 좌우 마진(80*2) + 안전 여백을 제외한 자막 최대 표시 폭 (한 줄 11~13자 수용)
-SUBTITLE_MAX_WIDTH = 920
+SUBTITLE_FONT_SIZE = 80
+SUBTITLE_Y = 1430  # 자막 박스 상단 Y 좌표(기획안)
+# PlayResX(1080) 기준 좌우 마진(70*2)을 제외한 자막 최대 표시 폭 (자연스러운 한국어 어구 수용)
+SUBTITLE_MAX_WIDTH = 940
 
 
 def format_ass_timestamp(seconds: float) -> str:
@@ -128,18 +128,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         word_timings = _get_field(sc, "word_timings", []) or []
         shift = scene_idx * transition_shift
 
-        try:
-            chunks = build_karaoke_blocks(
-                narration, word_timings, start_t, end_t, measure_font, SUBTITLE_MAX_WIDTH, time_shift=shift
-            )
-        except Exception as e:
-            print(f"  [WARN] 단어 단위 자막 생성 실패 ({e}). 구 단위 자막으로 대체합니다.")
-            chunks = []
-        if not chunks:
-            chunks = [
-                (a - shift, b - shift, t)
-                for a, b, t in build_caption_chunks(narration, start_t, end_t, measure_font, SUBTITLE_MAX_WIDTH)
-            ]
+        # 정적 자막 원칙: 음성에 따른 카라오케(\kf) 및 단어별 색상 변경 없이 깔끔한 정적 자막 블록만 렌더링
+        chunks = build_caption_chunks(
+            narration,
+            start_t,
+            end_t,
+            measure_font,
+            SUBTITLE_MAX_WIDTH,
+            word_timings=word_timings,
+            time_shift=shift,
+        )
 
         for c_start, c_end, c_text in chunks:
             ass_start = format_ass_timestamp(c_start)
@@ -184,6 +182,9 @@ def _prepare_scene_audio_with_sfx(
         if scene_id == 1:
             sfx_file = sfx_map.get("hook_pop")
             sfx_vol = 0.30
+        elif total_scenes >= 5 and scene_id == 3:
+            sfx_file = sfx_map.get("whoosh_soft")
+            sfx_vol = 0.20
         elif total_scenes >= 5 and scene_id == total_scenes - 2:
             sfx_file = sfx_map.get("ding_reveal")
             sfx_vol = 0.22

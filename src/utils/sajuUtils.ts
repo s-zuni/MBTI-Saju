@@ -309,6 +309,17 @@ export function calculateSaju(birthDate: string, birthTime: string | null, gende
     };
 }
 
+export function safeCalculateSaju(birthDate: string, birthTime: string | null, gender?: string): SajuResult | null {
+    if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return null;
+    const year = Number(birthDate.slice(0, 4));
+    if (!Number.isFinite(year) || year < 1900 || year > 2050) return null;
+    try {
+        return calculateSaju(birthDate, birthTime, gender);
+    } catch {
+        return null;
+    }
+}
+
 /**
  * 신청 폼의 birth_info("YYYY-MM-DD HH:MM" | "YYYY-MM-DD 사시 (09:30 ~ 11:30)" | "… 모름 / 입력안함")를 만세력 입력값으로 변환.
  * 서버 api/_utils/saju.ts 의 parseBirthInfo 와 동일 규칙 (시진 라벨 → 대표 시각, 모름 → undefined).

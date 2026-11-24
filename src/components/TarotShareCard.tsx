@@ -16,7 +16,7 @@ interface TarotShareCardProps {
 }
 
 const TarotShareCard = forwardRef<HTMLDivElement, TarotShareCardProps>(({ reading, question, userName, cardImages = [] }, ref) => {
-    const cardReadings = reading?.cardReadings || [];
+    const cardReadings = Array.isArray(reading?.cardReadings) ? reading.cardReadings.filter(Boolean) : [];
     const advice = reading?.advice || '';
 
     return (

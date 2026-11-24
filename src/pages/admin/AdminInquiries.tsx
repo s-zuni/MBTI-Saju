@@ -191,11 +191,16 @@ const AdminInquiries: React.FC = () => {
 
         try {
             setRefundProcessing(true);
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch('/api/payment?action=cancel', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                },
                 body: JSON.stringify({
                     purchaseId: selectedInquiry.linked_purchase_id,
+                    type: 'credit',
                     cancelReason: '관리자 페이지 통합 고객지원 환불 검증 승인'
                 })
             });
@@ -473,8 +478,8 @@ const AdminInquiries: React.FC = () => {
                     <div>
                         <h4 className="text-amber-900 font-black tracking-tight mb-1">통합 환불 검토 정책 안내</h4>
                         <p className="text-xs text-amber-700/80 font-medium leading-relaxed">
-                            환불 요청 건의 [상세보기]를 클릭하면 결제일 기준 7일 초과 여부와 충전 크레딧의 사용 여부를 정책 기준에 따라 자동으로 분석해 줍니다. 
-                            **환불 승인** 시 토스페이먼츠 API 취소와 회원의 크레딧 차감이 동시에 실행됩니다. 정책을 철저하게 확인한 후 작업을 실행해 주세요.
+                            기존 크레딧 환불 요청 건은 [상세보기]에서 7일 이내·미사용 여부를 검토한 뒤 **환불 승인** 시 토스페이먼츠 취소와 잔여 크레딧 차감이 동시에 실행됩니다.<br />
+                            비회원 단건 결제(490원/990원) 장애 환불 문의는 고객이 제출한 주문번호(`SVC_...`)를 확인한 뒤 <strong>결제 / 단건주문 관리</strong> 메뉴에서 상세조회 및 환불 처리하세요.
                         </p>
                     </div>
                 </div>

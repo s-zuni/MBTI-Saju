@@ -106,7 +106,7 @@ const UserManagement: React.FC = () => {
             <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-2xl font-black text-slate-800 tracking-tight">회원 관리</h2>
-                    <p className="text-slate-500 font-medium">사용자 목록을 조회하고 정보를 수정합니다.</p>
+                    <p className="text-slate-500 font-medium">선택적 소셜 로그인 회원(/mypage · /reviews) 및 관리자 권한을 관리합니다. (단건 서비스는 비회원 결제 운영)</p>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -126,7 +126,7 @@ const UserManagement: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">사용자</th>
-                                <th className="px-6 py-4 text-sm font-bold text-slate-400">보유 크레딧</th>
+                                <th className="px-6 py-4 text-sm font-bold text-slate-400">잔여 크레딧 (레거시)</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">권한</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">가입일</th>
                                 <th className="px-6 py-4 text-sm font-bold text-slate-400">관리</th>
@@ -227,7 +227,7 @@ const UserManagement: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-400 ml-1">보유 크레딧</label>
+                                <label className="text-sm font-bold text-slate-400 ml-1">잔여 크레딧 (레거시 CS 정산용)</label>
                                 <div className="relative">
                                     <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                     <input

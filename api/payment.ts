@@ -1,9 +1,45 @@
+import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { setNodeCorsHeaders } from './_utils/cors';
-import { extractBearerToken, getSupabaseAdmin } from './_utils/auth';
-import { enforceNodeRateLimit } from './_utils/rate-limit';
+import { extractBearerToken, getSupabaseAdmin, SERVICE_COSTS } from './_utils/auth';
+import { enforceNodeRateLimit, getClientIp } from './_utils/rate-limit';
 import { DEEP_REPORT_SALE_PRICE } from '../src/config/deepReportConfig';
-import { REFUND_PERIOD_DAYS } from '../src/config/creditConfig';
+import { REFUND_PERIOD_DAYS, SERVICE_NAMES } from '../src/config/creditConfig';
+
+const SORTED_SERVICE_KEYS = (Object.keys(SERVICE_COSTS) as Array<keyof typeof SERVICE_COSTS>).sort(
+    (a, b) => b.length - a.length
+);
+
+function parseSingleServiceType(
+    orderId: string,
+    metadataServiceType?: string | null
+): keyof typeof SERVICE_COSTS | null {
+    if (metadataServiceType && metadataServiceType in SERVICE_COSTS) {
+        return metadataServiceType as keyof typeof SERVICE_COSTS;
+    }
+    const upper = String(orderId || '').toUpperCase();
+    for (const key of SORTED_SERVICE_KEYS) {
+        if (upper.startsWith(`SVC_${key}_`) || upper.includes(key)) {
+            return key;
+        }
+    }
+    return null;
+}
+
+async function compensateTossCancel(encryptedSecretKey: string, paymentKey: string, reason: string) {
+    try {
+        await fetch(new URL(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}/cancel`), {
+            method: 'POST',
+            body: JSON.stringify({ cancelReason: reason }),
+            headers: {
+                Authorization: encryptedSecretKey,
+                'Content-Type': 'application/json',
+            },
+        });
+    } catch (cancelErr) {
+        console.error('[compensateTossCancel] failed:', cancelErr);
+    }
+}
 
 type VercelRequest = any;
 type VercelResponse = any;
@@ -92,7 +128,55 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ success: false, message: '필수 파라미터가 누락되었습니다.' });
     }
 
+    const isSingleServiceOrder = String(orderId).startsWith('SVC_');
+    const isDeepReportOrder = String(orderId).startsWith('DEEPREPORT');
+
     try {
+        // 0. 승인 전 선검증 및 멱등 조회 (불일치 금액을 Toss에 승인 요청하지 않도록 차단)
+        if (isSingleServiceOrder) {
+            const { data: existingServiceOrder } = await supabaseAdmin
+                .from('service_orders')
+                .select('order_id, payment_key, service_type, amount, receipt_token, remaining_uses, status')
+                .eq('order_id', String(orderId))
+                .maybeSingle();
+
+            if (existingServiceOrder) {
+                if (existingServiceOrder.payment_key === String(paymentKey) && existingServiceOrder.status !== 'refunded') {
+                    return res.status(200).json({
+                        success: true,
+                        message: '서비스 단품 결제 승인 완료',
+                        data: {
+                            orderId: existingServiceOrder.order_id,
+                            serviceType: existingServiceOrder.service_type,
+                            approvedAmount: existingServiceOrder.amount,
+                            receiptToken: existingServiceOrder.receipt_token,
+                            remainingUses: existingServiceOrder.remaining_uses,
+                        },
+                    });
+                }
+                return res.status(409).json({ success: false, message: '이미 처리되었거나 취소된 주문입니다.' });
+            }
+
+            const preServiceType = parseSingleServiceType(String(orderId), null);
+            if (!preServiceType) {
+                return res.status(400).json({ success: false, message: '유효하지 않은 서비스 주문번호입니다.' });
+            }
+            const preExpectedAmount = SERVICE_COSTS[preServiceType];
+            if (Number(amount) !== preExpectedAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `결제 요청 금액이 서비스 이용 요금과 일치하지 않습니다. (기대: ${preExpectedAmount.toLocaleString()}원)`,
+                });
+            }
+        } else if (isDeepReportOrder) {
+            if (Number(amount) !== DEEP_REPORT_SALE_PRICE) {
+                return res.status(400).json({
+                    success: false,
+                    message: `결제 요청 금액이 심층 리포트 판매가와 일치하지 않습니다. (기대: ${DEEP_REPORT_SALE_PRICE.toLocaleString()}원)`,
+                });
+            }
+        }
+
         // 1. TossPayments 승인 API 호출
         const tossResponse = await fetch(new URL('https://api.tosspayments.com/v1/payments/confirm'), {
             method: 'POST',
@@ -115,9 +199,90 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
         }
 
         const approvedAmount = Number(tossData.totalAmount || amount);
-        const productId = tossData.metadata?.productId || 'credit_custom';
+        const productId = tossData.metadata?.productId || (isSingleServiceOrder ? 'single_service' : 'credit_custom');
         const metadataUserId = tossData.metadata?.userId || tossData.customerKey || tossData.metadata?.customerKey;
         const isNamedUser = (val?: string | null) => Boolean(val && val !== 'ANONYMOUS' && !val.startsWith('GUEST_'));
+
+        if (productId === 'single_service' || isSingleServiceOrder) {
+            const serviceType = parseSingleServiceType(String(orderId), tossData.metadata?.serviceType);
+            if (!serviceType) {
+                await compensateTossCancel(encryptedSecretKey, String(paymentKey), '유효하지 않은 서비스 상품 자동 취소');
+                return res.status(400).json({
+                    success: false,
+                    message: '유효하지 않은 서비스 유형으로 결제가 취소되었습니다.'
+                });
+            }
+
+            const expectedAmount = SERVICE_COSTS[serviceType];
+            if (approvedAmount !== expectedAmount) {
+                console.error(`[Security] Suspicious single_service amount: ${approvedAmount}, expected: ${expectedAmount}, orderId: ${orderId}`);
+                await compensateTossCancel(encryptedSecretKey, String(paymentKey), '결제 금액 불일치 자동 취소');
+                return res.status(400).json({
+                    success: false,
+                    message: `결제 승인 금액이 서비스 이용 요금과 일치하지 않아 자동 취소되었습니다. (기대: ${expectedAmount.toLocaleString()}원)`
+                });
+            }
+
+            const totalUses = serviceType === 'AI_CHAT_5' ? 5 : 1;
+            const receiptToken = crypto.randomBytes(24).toString('hex');
+            const serviceName = SERVICE_NAMES[serviceType] || tossData.orderName || '운세 분석 서비스';
+
+            const { error: insertOrderError } = await supabaseAdmin
+                .from('service_orders')
+                .insert({
+                    order_id: String(orderId),
+                    payment_key: String(paymentKey),
+                    service_type: serviceType,
+                    service_name: serviceName,
+                    amount: approvedAmount,
+                    status: 'paid',
+                    receipt_token: receiptToken,
+                    total_uses: totalUses,
+                    remaining_uses: totalUses,
+                    user_id: authedUser?.id || null,
+                    customer_name: tossData.customerName || null,
+                    client_ip: getClientIp(req),
+                });
+
+            if (insertOrderError) {
+                const { data: racedOrder } = await supabaseAdmin
+                    .from('service_orders')
+                    .select('order_id, payment_key, service_type, amount, receipt_token, remaining_uses, status')
+                    .eq('order_id', String(orderId))
+                    .maybeSingle();
+
+                if (racedOrder && racedOrder.payment_key === String(paymentKey)) {
+                    return res.status(200).json({
+                        success: true,
+                        message: '서비스 단품 결제 승인 완료',
+                        data: {
+                            orderId: racedOrder.order_id,
+                            serviceType: racedOrder.service_type,
+                            approvedAmount: racedOrder.amount,
+                            receiptToken: racedOrder.receipt_token,
+                            remainingUses: racedOrder.remaining_uses,
+                            toss: tossData,
+                        },
+                    });
+                }
+
+                await compensateTossCancel(encryptedSecretKey, String(paymentKey), '주문 저장 실패로 인한 자동 취소');
+                throw insertOrderError;
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: '서비스 단품 결제 승인 완료',
+                data: {
+                    orderId: String(orderId),
+                    serviceType,
+                    approvedAmount,
+                    receiptToken,
+                    remainingUses: totalUses,
+                    toss: tossData,
+                },
+            });
+        }
 
         let userId: string | undefined;
         if (productId === 'deep_report') {
@@ -163,6 +328,7 @@ async function confirmPayment(req: VercelRequest, res: VercelResponse) {
             // 심층 리포트 판매가 검증: 서버 상수와 정확히 일치해야 한다 (클라이언트가 보낸 금액/DB 행의 amount 는 신뢰하지 않음)
             if (approvedAmount !== DEEP_REPORT_SALE_PRICE) {
                 console.error(`[Security] Suspicious deep_report amount: ${approvedAmount} for orderId: ${orderId}`);
+                await compensateTossCancel(encryptedSecretKey, String(paymentKey), '심층 리포트 금액 불일치 자동 취소');
                 return res.status(400).json({
                     success: false,
                     message: `결제 승인 금액이 심층 리포트 판매가와 일치하지 않습니다. (기대: ${DEEP_REPORT_SALE_PRICE.toLocaleString()}원)`
@@ -547,6 +713,58 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
             await supabaseAdmin.from('credit_purchases').update({ status: 'refunded', refunded_at: new Date().toISOString() }).eq('payment_id', request.payment_id);
 
             return res.status(200).json({ success: true, message: 'Refund successful', data: { toss: tossData } });
+        } else if (type === 'single_service') {
+            if (!isAdmin) {
+                return res.status(403).json({ success: false, message: '관리자만 단건 결제를 취소할 수 있습니다.' });
+            }
+
+            const { data: serviceOrder, error: fetchError } = await supabaseAdmin
+                .from('service_orders')
+                .select('*')
+                .eq('id', purchaseId)
+                .maybeSingle();
+
+            if (fetchError || !serviceOrder) {
+                return res.status(404).json({ success: false, message: '단건 결제 주문을 찾을 수 없습니다.' });
+            }
+
+            if (serviceOrder.status === 'refunded') {
+                return res.status(400).json({ success: false, message: '이미 환불 처리된 주문입니다.' });
+            }
+
+            if (!serviceOrder.payment_key) {
+                return res.status(400).json({ success: false, message: '결제 키(payment_key)가 없는 주문입니다.' });
+            }
+
+            const tossResponse = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(serviceOrder.payment_key)}/cancel`), {
+                method: 'POST',
+                body: JSON.stringify({ cancelReason: cancelReason || '관리자에 의한 단건 결제 환불' }),
+                headers: {
+                    Authorization: encryptedSecretKey,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const tossData = await tossResponse.json();
+
+            if (!tossResponse.ok) {
+                return res.status(tossResponse.status).json({
+                    success: false,
+                    message: tossData.message || 'Toss cancel failed',
+                    code: tossData.code
+                });
+            }
+
+            await supabaseAdmin
+                .from('service_orders')
+                .update({
+                    status: 'refunded',
+                    remaining_uses: 0,
+                    refunded_at: new Date().toISOString(),
+                })
+                .eq('id', serviceOrder.id);
+
+            return res.status(200).json({ success: true, message: 'Refund successful', data: { toss: tossData } });
         } else {
             const { data: purchase, error: fetchError } = await supabaseAdmin
                 .from('credit_purchases')
@@ -604,13 +822,35 @@ async function cancelPayment(req: VercelRequest, res: VercelResponse) {
 }
 
 async function getPaymentInfo(req: VercelRequest, res: VercelResponse) {
+    let supabaseAdmin: SupabaseClient;
     let encryptedSecretKey: string;
 
     try {
+        supabaseAdmin = getSupabaseAdmin();
         encryptedSecretKey = getTossAuthHeader();
     } catch (envError: any) {
         console.error('[getPaymentInfo] Configuration Error:', envError.message);
         return res.status(500).json({ success: false, message: envError.message });
+    }
+
+    const token = extractBearerToken(req);
+    if (!token) {
+        return res.status(401).json({ success: false, message: '인증 토큰이 필요합니다.' });
+    }
+
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+        return res.status(401).json({ success: false, message: '유효하지 않은 인증 토큰입니다.' });
+    }
+
+    const { data: profileRow } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (profileRow?.role !== 'admin') {
+        return res.status(403).json({ success: false, message: '관리자만 결제 상세를 조회할 수 있습니다.' });
     }
 
     const paymentKey = req.query.paymentKey || req.body?.paymentKey;

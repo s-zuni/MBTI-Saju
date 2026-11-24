@@ -25,14 +25,15 @@ const Footer = () => {
         </div>
 
         <div className="flex flex-col items-start md:items-end gap-4 text-sm text-slate-500">
-          <div className="flex gap-6 font-medium">
+          <div className="flex flex-wrap gap-6 font-medium">
+            <a href="/pricing" className="hover:text-indigo-600 transition-colors">이용요금 안내</a>
             <a href="/support" className="hover:text-indigo-600 transition-colors">고객센터</a>
             <a href="/terms" className="hover:text-indigo-600 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-indigo-600 transition-colors">개인정보처리방침</a>
           </div>
-          <p className="text-slate-500 text-sm leading-relaxed">
-            © 2026 MBTIJU. All rights reserved.<br />
-            당신의 성향과 운명을 잇는 특별한 여정.
+          <p className="text-slate-500 text-xs md:text-right leading-relaxed max-w-md">
+            본 서비스의 모든 분석 결과는 만세력·MBTI·AI 기반 참고용 콘텐츠이며, 결제와 동시에 생성이 개시되는 디지털 콘텐츠 특성상 생성 개시 후 청약철회가 제한됩니다.<br />
+            © 2026 MBTIJU. All rights reserved.
           </p>
         </div>
       </div>

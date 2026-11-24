@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ChevronLeft, Coins, Lock, Sparkles, Star, Briefcase, Heart, User } from 'lucide-react';
+import { Download, ChevronLeft, CreditCard } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { calculateSaju } from '../utils/sajuUtils';
-import { ensureValidSession } from '../supabaseClient';
-import { useAuth } from '../hooks/useAuth';
-import { useCredits } from '../hooks/useCredits';
-import { useModalStore } from '../hooks/useModalStore';
+import FunnelBottomCta from '../components/FunnelBottomCta';
+import ReportErrorBoundary from '../components/common/ReportErrorBoundary';
+import StreamingStatusBanner from '../components/common/StreamingStatusBanner';
+import { safeCalculateSaju } from '../utils/sajuUtils';
+import { stripMarkdown } from '../utils/textUtils';
+import { useGuestProfile } from '../hooks/useGuestProfile';
+import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BIRTH_TIME_SLOTS = [
     { value: 'unknown', label: '모름' },
@@ -40,77 +42,103 @@ const toBirthTimeSlot = (time?: string | null): string => {
 };
 
 const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
-    const { session, loading: isAuthLoading } = useAuth();
-    const { credits, refreshCredits } = useCredits(session);
-    const { openModal } = useModalStore();
+    const { profile, updateProfile } = useGuestProfile();
     const navigate = useNavigate();
     const resultCardRef = useRef<HTMLDivElement>(null);
+    const ticketCheckedRef = useRef(false);
+    const receiptTokenRef = useRef<string | null>(null);
+    const lastPayloadRef = useRef<any>(null);
+    const [hasStarted, setHasStarted] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
-    const [targetBirthDate, setTargetBirthDate] = useState('');
-    const [targetBirthTime, setTargetBirthTime] = useState('');
-    const [targetGender, setTargetGender] = useState<'male' | 'female'>('female');
-    const [birthTimeAutoFilled, setBirthTimeAutoFilled] = useState(false);
-
-    useEffect(() => {
-        if (session?.user?.user_metadata) {
-            const metadata = session.user.user_metadata;
-            if (metadata.birth_date) setTargetBirthDate(metadata.birth_date);
-            if (metadata.birth_time) {
-                const slot = toBirthTimeSlot(metadata.birth_time);
-                setTargetBirthTime(slot);
-                setBirthTimeAutoFilled(!!slot);
-            }
-            if (metadata.gender === 'male' || metadata.gender === 'female') setTargetGender(metadata.gender);
-        }
-    }, [session]);
+    const [targetBirthDate, setTargetBirthDate] = useState(profile.birthDate || '');
+    const [targetBirthTime, setTargetBirthTime] = useState(profile.birthTime ? toBirthTimeSlot(profile.birthTime) : '');
+    const [targetGender, setTargetGender] = useState<'male' | 'female'>(profile.gender || 'female');
+    const [isPaying, setIsPaying] = useState(false);
 
     const { object: result, submit, isLoading } = useObject({
         api: '/api/analysis-special',
         schema: jamidusuSchema,
-        headers: async () => {
-            const activeSession = await ensureValidSession();
-            return { 'Authorization': `Bearer ${activeSession?.access_token || session?.access_token || ''}` };
-        },
+        headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
-            if (object) {
-                refreshCredits();
-            } else {
+            if (!object) {
                 console.error('[JamidusuPage] Result validation failed:', validationError);
-                setError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+                setError('분석 결과를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
+            } else {
+                setError(null);
             }
         },
         onError: (err) => {
             console.error('[JamidusuPage] Analysis failed:', err);
-            setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            setError('분석 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
+
+    useEffect(() => {
+        if (ticketCheckedRef.current) return;
+        ticketCheckedRef.current = true;
+        const ticket = consumePaidServiceTicket('JAMIDUSU');
+        if (ticket?.payload) {
+            receiptTokenRef.current = ticket.receiptToken || null;
+            lastPayloadRef.current = ticket.payload;
+            setHasStarted(true);
+            if (ticket.payload.birthDate) setTargetBirthDate(ticket.payload.birthDate);
+            if (ticket.payload.birthTime !== undefined) setTargetBirthTime(ticket.payload.birthTime);
+            if (ticket.payload.gender) setTargetGender(ticket.payload.gender);
+            submit(ticket.payload);
+        }
+    }, [submit]);
+
+    const handleRetry = () => {
+        if (!lastPayloadRef.current) return;
+        setError(null);
+        submit(lastPayloadRef.current);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!targetBirthDate) {
-            alert('생년월일을 입력해주세요.');
+            setError('생년월일을 입력해주세요.');
             return;
         }
 
-        const cost = SERVICE_COSTS.JAMIDUSU;
-        if (credits !== undefined && credits < cost) {
-            openModal('creditPurchase', undefined, { requiredCredits: cost });
+        const cleanBirthTime = targetBirthTime === 'unknown' ? '' : targetBirthTime;
+        const sajuData = safeCalculateSaju(targetBirthDate, cleanBirthTime);
+        if (!sajuData) {
+            setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
             return;
         }
 
+        updateProfile({
+            birthDate: targetBirthDate,
+            birthTime: cleanBirthTime,
+            gender: targetGender,
+        });
+
+        setIsPaying(true);
         try {
             setError(null);
-            const sajuData = calculateSaju(targetBirthDate, targetBirthTime === 'unknown' ? '' : targetBirthTime);
-            submit({
-                type: 'jamidusu',
-                gender: targetGender,
-                birthDate: targetBirthDate,
-                birthTime: targetBirthTime === 'unknown' ? '' : targetBirthTime,
-                sajuData
+            const res = await startServicePayment({
+                serviceType: 'JAMIDUSU',
+                serviceName: '자미두수 수호별 찾기',
+                returnPath: '/myluck?type=jamidusu',
+                payload: {
+                    type: 'jamidusu',
+                    gender: targetGender,
+                    birthDate: targetBirthDate,
+                    birthTime: cleanBirthTime,
+                    mbti: profile.mbti || '미입력',
+                    sajuData,
+                },
+                customerName: profile.name,
             });
+            if (!res.success && res.error_msg) {
+                setError(res.error_msg);
+            }
         } catch (e: any) {
             setError(e.message);
+        } finally {
+            setIsPaying(false);
         }
     };
 
@@ -118,7 +146,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         if (!resultCardRef.current || !result) return;
         try {
             const canvas = await html2canvas(resultCardRef.current, {
-                scale: 2, // High resolution for Instagram
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             });
@@ -132,32 +160,9 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         }
     };
 
-    if (isAuthLoading) return null;
-    if (!session) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-                    <Lock className="w-10 h-10 text-indigo-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">로그인이 필요합니다</h2>
-                <p className="text-slate-500 mb-8">나의 수호별 찾기 서비스를 이용하시려면 로그인이 필요합니다.</p>
-                <button
-                    onClick={() => {
-                        navigate('/');
-                        setTimeout(() => openModal('analysis', 'login'), 100);
-                    }}
-                    className="px-8 py-4 bg-slate-900 text-white rounded-xl shadow hover:bg-indigo-600 transition-colors"
-                >
-                    로그인하고 시작하기
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className={isEmbedded ? "pb-12" : "min-h-screen bg-slate-50 pb-32 pt-20"}>
             <div className="max-w-xl mx-auto px-4">
-                {/* Header Navigation */}
                 {!isEmbedded && (
                     <div className="flex items-center justify-between mb-8 px-2">
                         <button 
@@ -166,60 +171,62 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                         >
                             <ChevronLeft className="w-6 h-6 text-slate-600" />
                         </button>
-                        <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
-                            <Coins className="w-4 h-4" />
-                            {credits}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
+                            <CreditCard className="w-4 h-4" />
+                            {SERVICE_COSTS.JAMIDUSU.toLocaleString()}원
                         </div>
                     </div>
                 )}
 
-                <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-                    <div className="p-8 border-b border-slate-100 text-center bg-gradient-to-br from-indigo-50 to-purple-50">
-                        <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-sm mb-4">
-                            <Star className="w-6 h-6 text-indigo-500" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-slate-900 mb-2">나의 수호별 찾기</h1>
-                        <p className="text-slate-500 text-sm">자미두수 기반 별자리 심리테스트</p>
+                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div className="p-8 border-b border-stone-200 text-center bg-[#FAF7F0]">
+                        <h1
+                            className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2"
+                            style={{ fontFamily: "'NanumMyungjo', 'Noto Serif KR', serif" }}
+                        >
+                            자미두수 명반 · 수호별 풀이
+                        </h1>
+                        <p className="text-stone-600 text-sm">고대 동양 별자리 명반으로 보는 본성·관록·재백·부처궁</p>
                     </div>
 
-                    <div className="p-8">
-                        {!result && !isLoading ? (
+                    <div className="p-6 sm:p-8">
+                        {!result && !isLoading && !hasStarted ? (
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-4">
-                                    <label className="block text-sm font-medium text-slate-700">성별</label>
+                                    <label className="block text-sm font-bold text-slate-800">성별</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button 
                                             type="button" 
                                             onClick={() => setTargetGender('female')} 
-                                            className={`py-4 rounded-xl text-base transition-colors ${targetGender === 'female' ? 'bg-indigo-600 text-white font-bold shadow' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'}`}
+                                            className={`py-4 rounded-xl text-base transition-colors ${targetGender === 'female' ? 'bg-indigo-700 text-white font-bold shadow' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
                                         >
                                             여성
                                         </button>
                                         <button 
                                             type="button" 
                                             onClick={() => setTargetGender('male')} 
-                                            className={`py-4 rounded-xl text-base transition-colors ${targetGender === 'male' ? 'bg-indigo-600 text-white font-bold shadow' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'}`}
+                                            className={`py-4 rounded-xl text-base transition-colors ${targetGender === 'male' ? 'bg-indigo-700 text-white font-bold shadow' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
                                         >
                                             남성
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <label className="block text-sm font-medium text-slate-700">생년월일</label>
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-slate-800">생년월일</label>
                                     <input 
                                         type="date" 
                                         value={targetBirthDate} 
-                                        onChange={(e) => setTargetBirthDate(e.target.value)} 
+                                        onChange={(e) => { setTargetBirthDate(e.target.value); setError(null); }} 
                                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                                     />
                                 </div>
 
-                                <div className="space-y-4">
-                                    <label className="block text-sm font-medium text-slate-700">태어난 시간 (선택사항)</label>
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-slate-800">태어난 시간 (선택사항)</label>
                                     <select 
                                         value={targetBirthTime} 
-                                        onChange={(e) => { setTargetBirthTime(e.target.value); setBirthTimeAutoFilled(false); }}
+                                        onChange={(e) => setTargetBirthTime(e.target.value)} 
                                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                                     >
                                         <option value="">시간을 선택해주세요 (모르면 선택 안함)</option>
@@ -227,105 +234,103 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             <option key={slot.value} value={slot.value}>{slot.label}</option>
                                         ))}
                                     </select>
-                                    {birthTimeAutoFilled && (
-                                        <p className="text-xs text-indigo-500">내 프로필의 태어난 시간으로 자동 입력했어요.</p>
-                                    )}
                                 </div>
+
+                                {error && (
+                                    <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <button 
                                     type="submit" 
-                                    className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-lg shadow hover:bg-indigo-600 transition-colors flex flex-col items-center justify-center gap-1"
+                                    disabled={isPaying}
+                                    className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-lg shadow hover:bg-indigo-800 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-60"
                                 >
-                                    <span>결과 확인하기</span>
-                                    <span className="text-xs text-indigo-300 font-normal">{SERVICE_COSTS.JAMIDUSU} 크레딧 차감</span>
+                                    <span>{isPaying ? '결제 창 여는 중...' : `결과 확인하기 (${SERVICE_COSTS.JAMIDUSU.toLocaleString()}원 결제)`}</span>
+                                    <span className="text-xs text-stone-300 font-normal">회원가입 없이 1회 단품 결제 · 즉시 분석</span>
                                 </button>
                             </form>
                         ) : (
-                            <div>
-                                {isLoading && !result ? (
-                                    <div className="flex flex-col justify-center items-center py-20 text-center">
-                                        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-                                        <p className="text-slate-800 font-medium text-lg">나의 운명의 수호별을 찾는 중...</p>
-                                    </div>
-                                ) : error ? (
-                                    <div className="text-center py-16">
-                                        <p className="text-red-500 mb-6 font-medium">분석 중 오류가 발생했습니다.</p>
-                                        <button 
-                                            onClick={() => window.location.reload()} 
-                                            className="px-8 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
-                                        >
-                                            다시 시도하기
-                                        </button>
-                                    </div>
-                                ) : result ? (
-                                    <div className="space-y-8">
-                                        {/* Result Card for Instagram Sharing */}
-                                        <div 
-                                            ref={resultCardRef} 
-                                            className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm relative overflow-hidden"
-                                        >
-                                            {/* Decorative Background Element */}
-                                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-                                            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 bg-purple-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-                                            
-                                            <div className="relative z-10">
-                                                <div className="text-center mb-8">
-                                                    <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold mb-4">나의 수호별 찾기 결과</span>
-                                                    <h2 className="text-2xl font-bold text-slate-900 leading-tight">
-                                                        {result.main_character || '분석 중...'}
+                            <div className="space-y-6">
+                                <StreamingStatusBanner
+                                    isStreaming={isLoading}
+                                    hasData={!!result}
+                                    error={!result ? error : null}
+                                    onRetry={handleRetry}
+                                    streamingTitle="결제가 완료되어 자미두수 12궁을 실시간으로 풀이하고 있습니다"
+                                    streamingSubtitle="완성되는 궁부터 아래에 바로 표시됩니다."
+                                    completedText="자미두수 명반 풀이가 완료되었습니다."
+                                />
+
+                                {result && (
+                                    <ReportErrorBoundary onRetry={handleRetry}>
+                                        <div className="space-y-8">
+                                            <div 
+                                                ref={resultCardRef} 
+                                                className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 space-y-8 text-left"
+                                            >
+                                                <div className="text-center pb-6 border-b border-stone-200 space-y-2">
+                                                    <p className="text-sm font-bold text-indigo-800">나의 메인 수호별</p>
+                                                    <h2
+                                                        className="text-2xl sm:text-3xl font-bold text-slate-950 leading-snug break-keep"
+                                                        style={{ fontFamily: "'NanumMyungjo', 'Noto Serif KR', serif" }}
+                                                    >
+                                                        {stripMarkdown(result.main_character || '명반을 읽는 중...')}
                                                     </h2>
                                                 </div>
 
                                                 <div className="space-y-6">
                                                     {result.destiny_palace && (
-                                                        <div className="bg-slate-50 p-5 rounded-2xl">
-                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <User className="w-4 h-4 text-indigo-500" /> 타고난 본성 (명궁)
-                                                            </h3>
-                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.destiny_palace}</p>
+                                                        <div className="bg-stone-50/70 border border-stone-200/80 p-6 rounded-2xl space-y-2">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">타고난 본성 (명궁 · 命宮)</h3>
+                                                            <p className="text-slate-800 text-[15px] sm:text-base leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.destiny_palace)}
+                                                            </p>
                                                         </div>
                                                     )}
 
                                                     {result.career_palace && (
-                                                        <div className="bg-slate-50 p-5 rounded-2xl">
-                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <Briefcase className="w-4 h-4 text-blue-500" /> 나의 재능과 성공 (관록궁)
-                                                            </h3>
-                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.career_palace}</p>
+                                                        <div className="bg-stone-50/70 border border-stone-200/80 p-6 rounded-2xl space-y-2">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">나의 재능과 성공 (관록궁 · 官祿宮)</h3>
+                                                            <p className="text-slate-800 text-[15px] sm:text-base leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.career_palace)}
+                                                            </p>
                                                         </div>
                                                     )}
                                                     
                                                     {result.wealth_style && (
-                                                        <div className="bg-slate-50 p-5 rounded-2xl">
-                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <Coins className="w-4 h-4 text-amber-500" /> 재물운 (재백궁)
-                                                            </h3>
-                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.wealth_style}</p>
+                                                        <div className="bg-stone-50/70 border border-stone-200/80 p-6 rounded-2xl space-y-2">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">재물운 (재백궁 · 財帛宮)</h3>
+                                                            <p className="text-slate-800 text-[15px] sm:text-base leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.wealth_style)}
+                                                            </p>
                                                         </div>
                                                     )}
 
                                                     {result.love_style && (
-                                                        <div className="bg-slate-50 p-5 rounded-2xl">
-                                                            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                                                                <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" /> 연애 스타일 (부처궁)
-                                                            </h3>
-                                                            <p className="text-slate-600 text-sm leading-relaxed break-keep">{result.love_style}</p>
+                                                        <div className="bg-stone-50/70 border border-stone-200/80 p-6 rounded-2xl space-y-2">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">연애 스타일 (부처궁 · 夫妻宮)</h3>
+                                                            <p className="text-slate-800 text-[15px] sm:text-base leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.love_style)}
+                                                            </p>
                                                         </div>
                                                     )}
 
-                                                    {result.lucky_items && result.lucky_items.length > 0 && (
-                                                        <div className="bg-slate-50 p-5 rounded-2xl">
-                                                            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                                                <Sparkles className="w-4 h-4 text-purple-500" /> 나를 돕는 길성 & 행운 요소
-                                                            </h3>
-                                                            <ul className="space-y-2">
+                                                    {Array.isArray(result.lucky_items) && result.lucky_items.length > 0 && (
+                                                        <div className="bg-[#FAF7F0] border border-[#E6DFD1] p-6 rounded-2xl space-y-4">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">나를 돕는 길성 및 보완 요소</h3>
+                                                            <ul className="space-y-4">
                                                                 {result.lucky_items.map((item: any, idx: number) => (
-                                                                    <li key={idx} className="text-slate-600 text-sm flex items-start gap-2">
-                                                                        <span className="text-purple-500 font-bold mt-0.5">•</span>
-                                                                        <span className="break-keep">
-                                                                            <span className="font-bold text-slate-800">{item?.name}</span>
-                                                                            {item?.meaning && <span className="text-slate-500"> — {item.meaning}</span>}
-                                                                        </span>
+                                                                    <li key={idx} className="space-y-1">
+                                                                        <p className="font-bold text-base text-slate-950">
+                                                                            {idx + 1}. {stripMarkdown(item?.name || '')}
+                                                                        </p>
+                                                                        {item?.meaning && (
+                                                                            <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                                                {stripMarkdown(item.meaning)}
+                                                                            </p>
+                                                                        )}
                                                                     </li>
                                                                 ))}
                                                             </ul>
@@ -333,30 +338,42 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                     )}
 
                                                     {result.summary && (
-                                                        <div className="text-center pt-4 border-t border-slate-100">
-                                                            <p className="text-indigo-600 font-medium text-sm break-keep">"{result.summary}"</p>
+                                                        <div className="pt-6 border-t border-stone-200 space-y-2">
+                                                            <h3 className="text-lg sm:text-xl font-bold text-slate-950">명반 종합 총평 및 조언</h3>
+                                                            <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.summary)}
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex flex-col gap-3">
-                                            <button 
-                                                onClick={handleSaveImage} 
-                                                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Download className="w-5 h-5" /> 결과 이미지 저장
-                                            </button>
-                                            <button 
-                                                onClick={() => window.location.reload()} 
-                                                className="w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-                                            >
-                                                다시하기
-                                            </button>
+                                            {!isLoading && (
+                                                <>
+                                                    <div className="flex flex-col sm:flex-row gap-3">
+                                                        <button 
+                                                            onClick={handleSaveImage} 
+                                                            className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-900 transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <Download className="w-5 h-5" /> 결과 이미지 저장
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setError(null);
+                                                                setHasStarted(false);
+                                                            }} 
+                                                            className="flex-1 py-4 bg-stone-100 text-slate-800 rounded-xl font-bold text-sm hover:bg-stone-200 transition-colors"
+                                                        >
+                                                            다른 생년월일로 다시 보기
+                                                        </button>
+                                                    </div>
+
+                                                    <FunnelBottomCta from="jamidusu_result" />
+                                                </>
+                                            )}
                                         </div>
-                                    </div>
-                                ) : null}
+                                    </ReportErrorBoundary>
+                                )}
                             </div>
                         )}
                     </div>

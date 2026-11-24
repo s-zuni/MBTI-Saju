@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import {
     Users,
@@ -12,7 +13,18 @@ import {
     BarChart2,
     RefreshCw,
     Clock,
+    AlertTriangle,
+    Sparkles,
 } from 'lucide-react';
+
+interface RecentServiceOrder {
+    id: string;
+    order_id: string;
+    service_name: string;
+    amount: number;
+    status: string;
+    created_at: string;
+}
 
 interface DashboardStats {
     totalUsers: number;
@@ -30,9 +42,19 @@ interface DashboardStats {
         total: number;
     };
     dailyUserTrend: Array<{ date: string; count: number }>;
+    singleService: {
+        ready: boolean;
+        totalSales: number;
+        todayCount: number;
+        paidCount: number;
+        consumedCount: number;
+        refundedCount: number;
+        recentOrders: RecentServiceOrder[];
+    };
 }
 
 const AdminDashboard: React.FC = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState<DashboardStats>({
         totalUsers: 0,
         totalSales: 0,
@@ -44,6 +66,15 @@ const AdminDashboard: React.FC = () => {
         recentUsers: [],
         serviceUsage: { mbtiSaju: 0, compatibility: 0, fortune: 0, total: 0 },
         dailyUserTrend: [],
+        singleService: {
+            ready: true,
+            totalSales: 0,
+            todayCount: 0,
+            paidCount: 0,
+            consumedCount: 0,
+            refundedCount: 0,
+            recentOrders: [],
+        },
     });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -74,6 +105,7 @@ const AdminDashboard: React.FC = () => {
                 weekUsersResult,
                 recentUsersResult,
                 creditUsageResult,
+                serviceOrdersResult,
             ] = await Promise.allSettled([
                 // 1. 기존 통합 통계
                 supabase.rpc('get_admin_dashboard_stats'),
@@ -85,9 +117,33 @@ const AdminDashboard: React.FC = () => {
                 supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekISO),
                 // 5. 최근 가입자 5명 (이름 + 이메일 + 가입일)
                 supabase.from('profiles').select('email, created_at, name').order('created_at', { ascending: false }).limit(5),
-                // 6. 서비스별 크레딧 사용 내역
+                // 6. 서비스별 크레딧 사용 내역 (레거시)
                 supabase.from('credit_usages').select('service_type').gte('used_at', weekISO),
+                // 7. 단건 결제 내역 (migration 18 적용 전에도 graceful 처리)
+                supabase.from('service_orders').select('id, order_id, service_type, service_name, amount, status, created_at').order('created_at', { ascending: false }),
             ]);
+
+            const singleServiceReady =
+                serviceOrdersResult.status === 'fulfilled' &&
+                !serviceOrdersResult.value.error &&
+                Array.isArray(serviceOrdersResult.value.data);
+
+            const svcRows: any[] = singleServiceReady ? (serviceOrdersResult.value as any).data : [];
+            const singleServiceSales = svcRows
+                .filter((row: any) => row.status !== 'refunded' && row.status !== 'cancelled')
+                .reduce((sum: number, row: any) => sum + (Number(row.amount) || 0), 0);
+            const singleServiceTodayCount = svcRows.filter((row: any) => row.created_at && row.created_at >= todayISO && row.status !== 'refunded').length;
+            const singleServicePaidCount = svcRows.filter((row: any) => row.status === 'paid').length;
+            const singleServiceConsumedCount = svcRows.filter((row: any) => row.status === 'consumed').length;
+            const singleServiceRefundedCount = svcRows.filter((row: any) => row.status === 'refunded').length;
+            const recentServiceOrders: RecentServiceOrder[] = svcRows.slice(0, 5).map((row: any) => ({
+                id: row.id,
+                order_id: row.order_id,
+                service_name: row.service_name || row.service_type || '단건 서비스',
+                amount: Number(row.amount) || 0,
+                status: row.status || 'paid',
+                created_at: row.created_at,
+            }));
 
             // 기본 통계
             if (rpcResult.status === 'fulfilled' && !rpcResult.value.error && rpcResult.value.data) {
@@ -95,9 +151,32 @@ const AdminDashboard: React.FC = () => {
                 setStats(prev => ({
                     ...prev,
                     totalUsers: d.user_count || 0,
-                    totalSales: d.total_sales || 0,
+                    totalSales: (d.total_sales || 0) + singleServiceSales,
                     pendingRefunds: d.pending_refunds || 0,
                     pendingInquiries: d.pending_inquiries || 0,
+                    singleService: {
+                        ready: singleServiceReady,
+                        totalSales: singleServiceSales,
+                        todayCount: singleServiceTodayCount,
+                        paidCount: singleServicePaidCount,
+                        consumedCount: singleServiceConsumedCount,
+                        refundedCount: singleServiceRefundedCount,
+                        recentOrders: recentServiceOrders,
+                    },
+                }));
+            } else {
+                setStats(prev => ({
+                    ...prev,
+                    totalSales: singleServiceSales,
+                    singleService: {
+                        ready: singleServiceReady,
+                        totalSales: singleServiceSales,
+                        todayCount: singleServiceTodayCount,
+                        paidCount: singleServicePaidCount,
+                        consumedCount: singleServiceConsumedCount,
+                        refundedCount: singleServiceRefundedCount,
+                        recentOrders: recentServiceOrders,
+                    },
                 }));
             }
 
@@ -134,13 +213,27 @@ const AdminDashboard: React.FC = () => {
                 randomVariance
             );
 
-            // 서비스 사용 집계
+            // 서비스 사용 집계 (레거시 credit_usages + 단건 결제 service_orders 주간 집계)
             let mbtiCount = 0, compatCount = 0, fortuneCount = 0;
             if (creditUsageResult.status === 'fulfilled' && Array.isArray(creditUsageResult.value.data)) {
                 creditUsageResult.value.data.forEach((row: any) => {
                     if (row.service_type?.includes('mbti')) mbtiCount++;
                     else if (row.service_type?.includes('compat')) compatCount++;
                     else if (row.service_type?.includes('fortune')) fortuneCount++;
+                });
+            }
+            if (
+                serviceOrdersResult.status === 'fulfilled' &&
+                !serviceOrdersResult.value.error &&
+                Array.isArray(serviceOrdersResult.value.data)
+            ) {
+                serviceOrdersResult.value.data.forEach((row: any) => {
+                    if (row.status === 'refunded' || row.status === 'cancelled') return;
+                    if (row.created_at && row.created_at < weekISO) return;
+                    const svc = String(row.service_type || '');
+                    if (svc.startsWith('COMPATIBILITY') || svc.startsWith('LOVE_')) compatCount++;
+                    else if (svc.startsWith('FORTUNE_') || svc === 'TAROT' || svc === 'TRIP' || svc === 'KBO' || svc === 'AI_CHAT_5') fortuneCount++;
+                    else mbtiCount++;
                 });
             }
 
@@ -219,28 +312,14 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleProcessRefunds = async () => {
-        if (!window.confirm("대기 중인 환불 건을 일괄 처리하시겠습니까?")) return;
-        try {
-            const { error } = await supabase.from('credit_purchases')
-                .update({ status: 'refunded' })
-                .eq('status', 'pending_refund');
-            if (error) throw error;
-            alert("환불 처리가 완료되었습니다.");
-            fetchStats();
-        } catch (e: any) {
-            alert("환불 처리 오류: " + e.message);
+    const handleProcessRefunds = () => {
+        if (window.confirm('실제 토스페이먼츠 환불 취소가 안전하게 실행되도록 [고객 문의 / 환불] 또는 [결제 / 단건주문 관리] 페이지에서 개별 승인하세요. 결제 관리로 이동할까요?')) {
+            navigate('/admin/payments');
         }
     };
 
-    const handleVerifyPayments = async () => {
-        alert("결제 누락 검증 시스템 실행 중...");
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            alert("모든 결제 내역이 DB와 정상적으로 일치합니다. (누락 0건)");
-        } catch (e: any) {
-            alert("검증 시스템 오류: " + e.message);
-        }
+    const handleVerifyPayments = () => {
+        navigate('/admin/payments');
     };
 
     if (loading) {
@@ -255,10 +334,10 @@ const AdminDashboard: React.FC = () => {
     const maxTrendCount = Math.max(...stats.dailyUserTrend.map(t => t.count), 1);
 
     const mainStatCards = [
-        { name: '오늘 접속자 수', value: stats.todayActiveUsers.toLocaleString() + '명', icon: <Activity size={22} />, color: 'bg-violet-600 shadow-violet-200/50', trend: `실시간 접속 현황 (가입 ${stats.todayNewUsers}명)` },
-        { name: '전체 회원', value: stats.totalUsers.toLocaleString() + '명', icon: <Users size={22} />, color: 'bg-blue-500 shadow-blue-200/50', trend: `이번 주 ${stats.weekNewUsers}명 신규 가입` },
-        { name: '총 매출액', value: stats.totalSales.toLocaleString() + '원', icon: <CreditCard size={22} />, color: 'bg-emerald-500 shadow-emerald-200/50', trend: '' },
-        { name: '환불 대기', value: stats.pendingRefunds.toLocaleString() + '건', icon: <RotateCcw size={22} />, color: 'bg-amber-500 shadow-amber-200/50', trend: '집중 관리 필요' },
+        { name: '오늘 단건 결제', value: stats.singleService.todayCount.toLocaleString() + '건', icon: <Sparkles size={22} />, color: 'bg-violet-600 shadow-violet-200/50', trend: `사용완료 ${stats.singleService.consumedCount} · 미사용 ${stats.singleService.paidCount}` },
+        { name: '단건 결제 매출', value: stats.singleService.totalSales.toLocaleString() + '원', icon: <CreditCard size={22} />, color: 'bg-emerald-500 shadow-emerald-200/50', trend: `전체 누적 ${stats.totalSales.toLocaleString()}원` },
+        { name: '소셜 회원 (선택)', value: stats.totalUsers.toLocaleString() + '명', icon: <Users size={22} />, color: 'bg-blue-500 shadow-blue-200/50', trend: `이번 주 ${stats.weekNewUsers}명 신규` },
+        { name: '환불 대기 / 단건 환불', value: `${stats.pendingRefunds} / ${stats.singleService.refundedCount}건`, icon: <RotateCcw size={22} />, color: 'bg-amber-500 shadow-amber-200/50', trend: `문의 대기 ${stats.pendingInquiries}건` },
     ];
 
     const activityCards = [
@@ -289,6 +368,16 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium -mt-4">
                     <Clock size={11} />
                     마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR')}
+                </div>
+            )}
+
+            {!stats.singleService.ready && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-xs text-amber-900">
+                    <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                        <span className="font-black">단건 결제 테이블(service_orders) 미생성:</span>{' '}
+                        Supabase SQL Editor에서 <code className="font-mono bg-amber-100 px-1 rounded">supabase/migrations/18_service_orders.sql</code>을 실행해야 비회원 단건 결제(`SVC_*`) 승인과 영수증 검증이 작동합니다.
+                    </div>
                 </div>
             )}
 
@@ -444,6 +533,47 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
+                    {/* 최근 비회원 단건 결제 */}
+                    <div className="bg-white p-6 rounded-3xl border border-slate-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-black text-slate-800 tracking-tight">최근 단건 결제 (SVC_*)</h3>
+                            <button
+                                onClick={() => navigate('/admin/payments')}
+                                className="text-[11px] font-bold text-slate-500 hover:text-slate-900"
+                            >
+                                전체보기 →
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {stats.singleService.recentOrders.length > 0 ? (
+                                stats.singleService.recentOrders.map((ord) => (
+                                    <div key={ord.id} className="flex items-center justify-between gap-2 py-2 border-b border-slate-50 last:border-0">
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-slate-800 truncate">{ord.service_name}</p>
+                                            <p className="text-[10px] text-slate-400 font-mono truncate">{ord.order_id}</p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className="text-xs font-black text-slate-900">{ord.amount.toLocaleString()}원</p>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                                ord.status === 'consumed'
+                                                    ? 'bg-slate-100 text-slate-600'
+                                                    : ord.status === 'refunded'
+                                                        ? 'bg-rose-50 text-rose-600'
+                                                        : 'bg-emerald-50 text-emerald-700'
+                                            }`}>
+                                                {ord.status === 'consumed' ? '사용됨' : ord.status === 'refunded' ? '환불됨' : '미사용'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-xs text-slate-400 text-center py-6 italic font-medium">
+                                    {stats.singleService.ready ? '아직 단건 결제 내역이 없습니다.' : 'service_orders 마이그레이션 대기 중'}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     {/* 최근 가입자 */}
                     <div className="bg-white p-6 rounded-3xl border border-slate-100">
                         <h3 className="text-base font-black text-slate-800 mb-5 tracking-tight">최근 가입자</h3>
@@ -475,11 +605,11 @@ const AdminDashboard: React.FC = () => {
                         <div className="space-y-3">
                             <button onClick={handleProcessRefunds} className="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
                                 <RotateCcw size={16} />
-                                환불 일괄 처리 ({stats.pendingRefunds}건)
+                                환불 건 결제 관리에서 처리 ({stats.pendingRefunds}건)
                             </button>
                             <button onClick={handleVerifyPayments} className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
                                 <CreditCard size={16} />
-                                결제 누락 검증 (Toss 대사)
+                                단건 결제 / Toss 상세조회
                             </button>
                         </div>
                     </div>

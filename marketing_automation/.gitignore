@@ -58,12 +58,15 @@ assets/chrome_flow_profile/
 assets/flow_storage_state.json
 assets/flow_storage_state.b64.txt
 assets/videos/*
+assets/videos/*.mp4
 !assets/videos/.gitkeep
-assets/test_flux/
+assets/test_*/
+assets/test_*.*
 scratch/
 
 # Test & runtime artifacts
 bot_output.txt
+test_out.mp4
 test_*.jpg
 test_*.mp4
 state.db

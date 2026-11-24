@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Info, Clock } from 'lucide-react';
 import { requestPayment } from '../payment';
+import { readGuestProfile } from '../hooks/useGuestProfile';
 import {
   DEEP_REPORT_ORIGINAL_PRICE,
   DEEP_REPORT_SALE_PRICE,
@@ -82,16 +83,17 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   }, [isOpen, availableDates]);
 
   useEffect(() => {
-    if (isOpen && session?.user?.user_metadata) {
-      const meta = session.user.user_metadata;
-      setFormData(prev => ({
-        ...prev,
-        email: session.user.email || prev.email,
-        birthDate: meta.birth_date || prev.birthDate,
-        birthTime: meta.birth_time || prev.birthTime,
-        mbti: meta.mbti || prev.mbti,
-      }));
-    }
+    if (!isOpen) return;
+    const guest = readGuestProfile();
+    const meta = session?.user?.user_metadata;
+    setFormData(prev => ({
+      ...prev,
+      email: session?.user?.email || prev.email,
+      birthDate: prev.birthDate || meta?.birth_date || guest.birthDate || '',
+      birthTime: prev.birthTime || meta?.birth_time || '',
+      mbti: prev.mbti || meta?.mbti || guest.mbti || '',
+      gender: prev.gender || meta?.gender || guest.gender || '',
+    }));
   }, [isOpen, session]);
 
   useEffect(() => {
@@ -226,8 +228,13 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-center z-[1000] p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white rounded-[32px] overflow-hidden flex flex-col my-auto shadow-2xl">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-end sm:items-center z-[1000] p-0 sm:p-6 overflow-y-auto"
+    >
+      <div className="relative w-full max-w-3xl max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden flex flex-col sm:my-auto shadow-2xl">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors z-10">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
@@ -240,7 +247,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
           </div>
           <h2 className="text-3xl md:text-4xl font-newsreader font-light tracking-tight mb-4">운명 심층 분석 리포트 신청</h2>
           <p className="text-slate-400 text-base md:text-lg font-manrope font-light leading-relaxed max-w-2xl">
-            <strong className="text-white font-medium">1,000만 건 이상의 방대한 사주 데이터 및 최신의 MBTI 심리 모델 융합 통계</strong>를 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
+            <strong className="text-white font-medium">정밀 만세력 연산과 최신 MBTI 심리 모델의 교차 분석</strong>을 바탕으로, 전문가가 직접 당신만의 특별한 <span className="text-white italic underline underline-offset-4 decoration-white/30 font-medium">A4 20장 내외</span> 분량의 정밀 리포트를 작성해 드립니다.
           </p>
         </div>
 
@@ -274,6 +281,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                     
                     return (
                       <button
+                        type="button"
                         key={date}
                         disabled={!isAvailable}
                         onClick={() => setFormData({...formData, reservationDate: date})}
@@ -429,6 +437,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                <label className="text-sm font-black text-slate-800">리포트 상품 선택 <span className="text-rose-500">*</span></label>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button 
+                    type="button"
                     onClick={() => setFormData({...formData, reportType: 'mbti_saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'mbti_saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
@@ -442,6 +451,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                      <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">내년부터 3년 세부 로드맵 & 성향</p>
                   </button>
                   <button 
+                    type="button"
                     onClick={() => setFormData({...formData, reportType: 'saju'})}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.reportType === 'saju' ? 'border-violet-600 bg-violet-50/50 text-violet-700 font-bold' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
                   >
@@ -461,6 +471,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
                  <div className="flex items-center justify-between">
                    <label className="text-sm font-black text-slate-800">상대방 정보 포함 (궁합 분석)</label>
                    <button 
+                     type="button"
                      onClick={() => setFormData(prev => ({...prev, partnerInfo: {...prev.partnerInfo, includePartner: !prev.partnerInfo.includePartner}}))}
                      className={`w-12 h-6 rounded-full transition-all relative ${formData.partnerInfo.includePartner ? 'bg-violet-600' : 'bg-slate-200'}`}
                    >
@@ -599,8 +610,18 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="material-symbols-outlined">auto_awesome</span>}
              {amount.toLocaleString()}원 결제하고 리포트 신청하기
            </button>
-           <p className="text-center text-xs text-slate-400 mt-4 font-bold flex items-center justify-center gap-1">
-             <Info className="w-4 h-4" /> 주문 제작 상품이므로 작성 착수 후에는 환불이 불가능합니다.
+           <p className="text-center text-xs text-slate-500 mt-4 font-bold leading-relaxed flex flex-col items-center gap-1">
+             <span className="inline-flex items-center gap-1">
+               <Info className="w-4 h-4 shrink-0" />
+               개별 주문 제작 상품으로 작성 착수 후 전자상거래법 제17조 제2항에 따라 환불(청약철회)이 불가합니다.
+             </span>
+             <span className="font-medium text-slate-400">
+               결제 시{' '}
+               <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-slate-600 hover:text-violet-600">이용약관</a>
+               {' '}및{' '}
+               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-slate-600 hover:text-violet-600">개인정보처리방침</a>
+               에 동의하게 됩니다.
+             </span>
            </p>
         </div>
       </div>

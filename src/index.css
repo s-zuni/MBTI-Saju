@@ -140,15 +140,15 @@
   }
 
   .report-section {
-    @apply mb-16 last:mb-0;
+    @apply mb-14 last:mb-0;
   }
 
   .report-section-title {
-    @apply text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ml-1;
+    @apply text-base sm:text-lg font-extrabold text-slate-900 tracking-tight mb-4 flex items-center gap-2.5;
   }
 
   .report-card {
-    @apply bg-white rounded-[32px] p-8 border border-slate-100 mb-6 transition-all duration-300;
+    @apply bg-white rounded-2xl p-6 sm:p-8 border border-stone-200/90 mb-5 transition-colors duration-200;
   }
 
   .report-badge {

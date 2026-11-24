@@ -14,10 +14,12 @@ import { DEEP_REPORT_SALE_PRICE } from '../../config/deepReportConfig';
 
 interface Payment {
     id: string;
-    type: 'credit' | 'deep_report';
+    type: 'credit' | 'deep_report' | 'single_service';
     user_id: string | null;
     price_paid: number;
     purchased_credits: number | null;
+    remaining_uses?: number | null;
+    total_uses?: number | null;
     product_name: string;
     status: string;
     purchased_at: string;
@@ -31,25 +33,12 @@ interface Payment {
     email?: string;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const PaymentManagement: React.FC = () => {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'single_service' | 'deep_report' | 'credit'>('all');
+    const [serviceOrdersMissing, setServiceOrdersMissing] = useState(false);
     const [refundingId, setRefundingId] = useState<string | null>(null);
     const [selectedPaymentInfo, setSelectedPaymentInfo] = useState<any>(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -82,7 +71,27 @@ const PaymentManagement: React.FC = () => {
 
             if (reportError) throw reportError;
 
-            // 3. Map credit purchases
+            // 3. Fetch single service orders (graceful until migration 18 is applied)
+            let svcData: any[] = [];
+            try {
+                const { data: serviceOrderData, error: svcError } = await supabase
+                    .from('service_orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!svcError && serviceOrderData) {
+                    svcData = serviceOrderData;
+                    setServiceOrdersMissing(false);
+                } else if (svcError) {
+                    console.warn('[PaymentManagement] service_orders query skipped:', svcError.message);
+                    if (svcError.code === 'PGRST205' || svcError.message?.includes('service_orders')) {
+                        setServiceOrdersMissing(true);
+                    }
+                }
+            } catch (svcErr) {
+                console.warn('[PaymentManagement] service_orders fetch exception:', svcErr);
+            }
+
+            // 4. Map credit purchases
             const mappedCredits: Payment[] = (creditData || []).map(p => ({
                 id: p.id,
                 type: 'credit',
@@ -99,7 +108,7 @@ const PaymentManagement: React.FC = () => {
             }));
 
 
-            // 4. Map deep report requests
+            // 5. Map deep report requests
             const mappedReports: Payment[] = (reportData || []).map(p => {
                 const displayName = p.profiles?.name || p.generated_data?.clientName || (p.email ? p.email.split('@')[0] : '비회원');
                 const displayEmail = p.profiles?.email || p.email || '-';
@@ -120,9 +129,30 @@ const PaymentManagement: React.FC = () => {
                 };
             });
 
+            // 6. Map single service orders
+            const mappedServices: Payment[] = (svcData || []).map(s => ({
+                id: s.id,
+                type: 'single_service',
+                user_id: s.user_id || '',
+                price_paid: s.amount,
+                purchased_credits: null,
+                remaining_uses: s.remaining_uses ?? null,
+                total_uses: s.total_uses ?? null,
+                product_name: s.service_name || s.service_type || '단건 이용권',
+                status: s.status || 'paid',
+                purchased_at: s.created_at,
+                payment_id: s.payment_key || '-',
+                order_id: s.order_id,
+                payment_method: s.payment_method || '카드',
+                profiles: {
+                    name: s.customer_name || (s.user_id ? '회원' : '비회원'),
+                    email: s.service_type || '-'
+                },
+            }));
 
-            // 5. Merge and sort by purchased_at descending
-            const merged = [...mappedCredits, ...mappedReports].sort((a, b) => {
+
+            // 7. Merge and sort by purchased_at descending
+            const merged = [...mappedCredits, ...mappedReports, ...mappedServices].sort((a, b) => {
                 return new Date(formatSafariDate(b.purchased_at)).getTime() - new Date(formatSafariDate(a.purchased_at)).getTime();
             });
 
@@ -139,15 +169,21 @@ const PaymentManagement: React.FC = () => {
     }, [fetchPayments]);
 
     const handleRefund = async (payment: Payment) => {
-        const productName = payment.type === 'deep_report' ? payment.product_name : `${payment.purchased_credits} 크레딧`;
+        const productName = payment.type === 'credit'
+            ? `${payment.purchased_credits} 크레딧`
+            : payment.product_name;
         const confirmRefund = window.confirm(`[${payment.profiles?.name}]님의 ${productName} 결제를 환불하시겠습니까? 토스페이먼츠 승인이 취소됩니다.`);
         if (!confirmRefund) return;
 
         setRefundingId(payment.id);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch('/api/payment?action=cancel', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                },
                 body: JSON.stringify({ 
                     purchaseId: payment.id,
                     type: payment.type,
@@ -183,8 +219,12 @@ const PaymentManagement: React.FC = () => {
 
         setInfoLoadingId(payment.id);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`/api/payment?action=info&${queryParam}`, {
                 method: 'GET',
+                headers: {
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+                },
             });
             const result = await response.json();
             
@@ -203,22 +243,69 @@ const PaymentManagement: React.FC = () => {
 
 
 
-    const filteredPayments = payments.filter(p =>
-        p.profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.payment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.product_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredPayments = payments.filter(p => {
+        if (typeFilter !== 'all' && p.type !== typeFilter) return false;
+        const q = searchTerm.toLowerCase().trim();
+        if (!q) return true;
+        return (
+            p.profiles?.name?.toLowerCase().includes(q) ||
+            p.profiles?.email?.toLowerCase().includes(q) ||
+            p.payment_id?.toLowerCase().includes(q) ||
+            p.order_id?.toLowerCase().includes(q) ||
+            p.product_name?.toLowerCase().includes(q)
+        );
+    });
+
+    const handleExportCsv = () => {
+        const headers = ['구분', '고객명', '식별/서비스코드', '상품명', '금액', '상태', '주문번호', '결제키', '결제일시'];
+        const rows = filteredPayments.map(p => [
+            p.type === 'single_service' ? '단건결제' : p.type === 'deep_report' ? '심층리포트' : '크레딧충전',
+            p.profiles?.name || '비회원',
+            p.profiles?.email || '-',
+            p.product_name,
+            String(p.price_paid ?? 0),
+            p.status,
+            p.order_id || '',
+            p.payment_id || '',
+            p.purchased_at || '',
+        ]);
+        const csvContent = '\uFEFF' + [headers, ...rows]
+            .map(row => row.map(col => `"${String(col).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `mbtiju-payments-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     const getStatusBadge = (p: Payment) => {
         const isActive = p.status === 'active' || p.status === 'paid';
+        const isConsumed = p.type === 'single_service' && p.status === 'consumed';
         const isPendingRefund = p.status === 'pending_refund' || p.status === 'refund_pending';
         const isRefunded = p.status === 'refunded';
 
-        if (isActive) {
+        if (isActive || isConsumed) {
             return (
-                <div className="flex flex-col gap-2">
-                    <span className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 결제완료</span>
+                <div className="flex flex-col gap-1.5">
+                    {p.type === 'single_service' ? (
+                        <>
+                            {isConsumed ? (
+                                <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 사용완료</span>
+                            ) : (
+                                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 결제완료 · 미사용</span>
+                            )}
+                            {typeof p.total_uses === 'number' && (
+                                <span className="text-[10px] text-slate-400 font-bold">
+                                    잔여 {p.remaining_uses ?? 0} / {p.total_uses}회
+                                </span>
+                            )}
+                        </>
+                    ) : (
+                        <span className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> 결제완료</span>
+                    )}
                     <button 
                         onClick={() => handleRefund(p)}
                         disabled={refundingId === p.id}
@@ -289,27 +376,58 @@ const PaymentManagement: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-end">
+        <div className="space-y-6">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">결제 관리</h2>
-                    <p className="text-slate-500 font-medium">전체 결제 내역 및 매출 현황을 확인합니다.</p>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">결제 / 단건주문 관리</h2>
+                    <p className="text-slate-500 font-medium text-sm">비회원 단건 결제(490·990원), 심층 리포트 및 기존 크레딧 내역을 통합 조회·환불합니다.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             type="text"
-                            placeholder="이름, 이메일, 주문번호 검색"
+                            placeholder="이름, 서비스, 주문번호(SVC_...), 결제키 검색"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-slate-950 focus:border-transparent outline-none transition-all w-80 font-medium"
+                            className="pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-slate-950 focus:border-transparent outline-none transition-all w-80 font-medium text-sm"
                         />
                     </div>
-                    <button className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors text-slate-500">
+                    <button
+                        onClick={handleExportCsv}
+                        title="CSV 내보내기"
+                        className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors text-slate-600"
+                    >
                         <Download size={20} />
                     </button>
                 </div>
+            </div>
+
+            {serviceOrdersMissing && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 font-medium">
+                    ⚠️ <code className="font-mono bg-amber-100 px-1 rounded">public.service_orders</code> 테이블이 아직 Supabase DB에 생성되지 않았습니다. <code className="font-mono bg-amber-100 px-1 rounded">supabase/migrations/18_service_orders.sql</code> 실행 후 단건 주문 내역이 표시됩니다.
+                </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+                {([
+                    { id: 'all', label: '전체', count: payments.length },
+                    { id: 'single_service', label: '단건결제 (490/990원)', count: payments.filter(p => p.type === 'single_service').length },
+                    { id: 'deep_report', label: '심층리포트', count: payments.filter(p => p.type === 'deep_report').length },
+                    { id: 'credit', label: '기존 크레딧 (레거시)', count: payments.filter(p => p.type === 'credit').length },
+                ] as const).map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setTypeFilter(tab.id)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                            typeFilter === tab.id
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                    >
+                        {tab.label} ({tab.count})
+                    </button>
+                ))}
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
@@ -343,13 +461,22 @@ const PaymentManagement: React.FC = () => {
                                             <div className="flex items-start gap-2.5">
                                                 {p.type === 'deep_report' ? (
                                                     <span className="bg-violet-50 text-violet-600 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">심층리포트</span>
+                                                ) : p.type === 'single_service' ? (
+                                                    <span className="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">단건결제</span>
                                                 ) : (
                                                     <span className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-md font-black whitespace-nowrap mt-0.5">크레딧충전</span>
                                                 )}
                                                 <div>
                                                     <div className="text-slate-800 font-bold">{p.profiles?.name || '비회원'}</div>
                                                     <div className="text-xs text-slate-400">{p.profiles?.email || '-'}</div>
-                                                    <div className="text-[10px] text-slate-300 mt-1 font-mono">{p.payment_id}</div>
+                                                    {p.order_id && (
+                                                        <div className="text-[10px] text-slate-400 mt-0.5 font-mono truncate max-w-[230px]" title={p.order_id}>
+                                                            {p.order_id}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-[10px] text-slate-300 mt-0.5 font-mono truncate max-w-[230px]" title={p.payment_id}>
+                                                        {p.payment_id}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -360,7 +487,7 @@ const PaymentManagement: React.FC = () => {
                                             {p.price_paid?.toLocaleString()}원
                                         </td>
                                         <td className="px-6 py-4 text-slate-950 font-black">
-                                            {p.type === 'deep_report' ? (
+                                            {p.type === 'deep_report' || p.type === 'single_service' ? (
                                                 <span className="text-slate-800 font-bold">{p.product_name}</span>
                                             ) : (
                                                 <span>{p.purchased_credits?.toLocaleString()} C</span>

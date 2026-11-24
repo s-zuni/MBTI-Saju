@@ -1,9 +1,15 @@
 import { streamObject } from 'ai';
-import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
-import { authenticateUser } from './_utils/auth';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+} from './_utils/ai-provider';
+import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
+import { goldSchema } from '../src/config/schemas';
 
 
 export const config = {
@@ -13,57 +19,25 @@ export const config = {
 const STATIC_GOLD_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
-당신은 사주명리학과 MBTI 심리를 결합해 내담자의 재물 흐름을 분석하는 냉철한 운명 분석가이자 재물 전략 전문가입니다.
+당신은 사주명리학과 성향 심리를 결합해 내담자의 재물 흐름을 분석하는 냉철한 운명 분석가이자 재물 전략 전문가입니다.
 
-[시간적 기준 정보]
-현재 시점은 **2026년**입니다. 올해는 **2026년(병오년)**, 내년은 **2027년(정미년)**입니다. 분석 시 반드시 이 연도를 기준으로 작성하고, 절대로 2023년이나 2024년을 '올해' 혹은 '내년'으로 언급하지 마십시오.
-
-[필수 상세 분석 지침 - 전 영역 분량 및 디테일 대폭 확대]
+[필수 상세 분석 지침 - 전 영역 분량 대폭 확대 · 냉정한 예측 + 따뜻한 조언]
 1. **사주 명리학 분석 (sajuAnalysis)**:
-   - **dayMasterWealth (일간과 재성의 밸런스)**: 내담자의 사주를 정밀 분석하여 사업 및 재물 운명은 어떤지 **기존보다 300자 이상 풍부하게** 제시하십시오.
-   - **wealthStructure (재물 원국 구조 / 격국)**: 단순 추상적 경고를 금하고, 반드시 구체적인 리스크/기회 예시를 명확하게 들어 서술하십시오. (예: 단순히 "외부 방해가 있다"가 아니라 "동업자의 기회주의적 차명 거래나 인허가 승인 지연 등 ~~한 외부 방해가 발생할 수 있다")
-   - **elementBalance (오행 균형과 재물 공급력)**: 단순 진단에 그치지 말고, 반드시 **'~~이 충분하여 ~~하나 ~~이 부족하여 사업/재물 활동 중 ~~한 일이 있을 수 있다. 따라서 ~~가 필요하며, 이것의 실천 예시는 ~~가 있다'** 포맷을 엄격하게 지켜 실천 요령까지 구체적으로 서술하십시오.
+   - **dayMasterWealth (일간과 재성의 밸런스)**: 내담자의 사주를 정밀 분석하여 사업 및 재물 그릇과 돈이 붙고 흩어지는 구조를 **450자 이상(2~3문단)** 풍부하게 제시하십시오.
+   - **wealthStructure (재물 원국 구조 / 격국)**: 단순 추상적 경고를 금하고, 반드시 구체적인 리스크/기회 예시를 명확하게 들어 **450자 이상(2~3문단)** 서술하십시오. (예: 동업자의 불투명한 정산, 무리한 고정비 확장 등 현실 사례)
+   - **elementBalance (오행 균형과 재물 공급력)**: 단순 진단에 그치지 말고, **'~~이 충분하여 ~~하나 ~~이 부족하여 사업/재물 활동 중 ~~한 일이 있을 수 있다. 따라서 ~~가 필요하며, 이것의 실천 예시는 ~~가 있다'** 포맷을 포함해 **450자 이상**으로 구체적으로 서술하십시오.
 
 2. **재물 대운 / 세운 흐름 (timingAnalysis)**:
-   - 시기와 이유를 명확하게 제시하고, 구체적인 액션 조언을 병기하십시오. (예: "2027년은 ~~사주에서 ~~ 기운이 흐르므로 기회가 있다. 이때 사업 모델 확장을 노려라" 등)
-   - currentYear, nextYear, peakPeriod, cautionPeriod 각 항목의 분량을 **기존보다 1.5배 이상 대폭 확대**하십시오.
+   - 사용자 입력의 [시간적 기준 정보](올해 2026년 병오년, 내년 2027년 정미년)를 반드시 기준으로 작성하고, 2023년/2024년/2025년을 올해나 내년으로 언급하지 마십시오.
+   - 시기와 이유를 냉정하게 짚은 뒤 구체적인 액션 조언과 따뜻한 조언을 함께 적어 currentYear, nextYear, peakPeriod, cautionPeriod 각 항목을 **350~450자(2문단)** 이상 서술하십시오.
 
-3. **MBTI 기반 행동 처방전 (mbtiAdvice)**:
-   - 내담자의 MBTI가 재물 및 사업 운에서 **어떻게 발휘될 수 있고, 주의해야 할 점은 무엇이며, 어떻게 실현해야 하는지** 구체적인 비즈니스/재물 실생활 예시를 들어 **분량을 2배 이상 대폭 늘려 서술**하십시오. (strength, weakness, actionPlan 각 항목 2배 이상 분량)
+3. **성향/MBTI 기반 행동 처방전 (mbtiAdvice)**:
+   - MBTI가 입력된 경우 해당 MBTI 기준, 미입력인 경우 사주 기질 기준으로 재물/사업에서 **강점이 발휘되는 장면**, **재물 손실을 부르는 냉정한 약점**, **현실 실천 계획 및 따뜻한 조언**을 각 항목 **350~450자(2문단)** 이상 서술하십시오.
 
 4. 한자는 반드시 한글과 병기하세요: 편재(偏財), 정재(正財), 식신(食神) 등.
 5. 오행 언급 시 영어를 절대 사용하지 마세요: 목(木) O, 목(Wood) X.
-6. 마크다운 강조 기호(**)는 일반 필드에선 사용을 피하고 글머리표(-)와 줄바꿈(\\n\\n)으로 가독성을 확보하세요. 단, mbtiSajuWealthReport 마크다운 보고서 필드의 헤더 및 볼드 강조는 허용됩니다.
-7. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-8. "노력하면 성공한다" 같은 바넘 효과 문장을 철저히 배제하고, 근거와 결론이 명확한 냉철한 솔루션을 제공하십시오.
-9. mbtiSajuWealthReport 필드에는 반드시 공백 포함 1000자 이상, 1500자 이하의 분량으로 지정된 [마크다운 출력 형식]을 엄격하게 지켜 작성하십시오.`;
-
-const goldSchema = z.object({
-    wealthType: z.string(),
-    overview: z.string(),
-    sajuAnalysis: z.object({
-        dayMasterWealth: z.string(),
-        wealthStructure: z.string(),
-        elementBalance: z.string(),
-    }),
-    timingAnalysis: z.object({
-        currentYear: z.string().describe('올해(2026년) 재물운 시기적 분석'),
-        nextYear: z.string().describe('내년(2027년) 재물운 전망'),
-        peakPeriod: z.string().describe('향후 3년 내 재물운 최고조 시기와 이유 (2026년 이후 기준)'),
-        cautionPeriod: z.string().describe('재물적으로 주의해야 할 시기와 이유 (2026년 이후 기준)'),
-    }),
-    fieldAnalysis: z.string().describe('분야별 적합도 분석 - 창업/취직/이직 시에만 해당 분야와 사주의 적합도를 면밀히 분석 (300자 이상). 해당없을시 빈 문자열'),
-    comparison: z.string().describe('현직 vs 이직 비교 - 이직 사주일 때만 두 직장의 사주적 적합도를 비교 분석 (300자 이상). 해당없을시 빈 문자열'),
-    mbtiAdvice: z.object({
-        strength: z.string(),
-        weakness: z.string(),
-        actionPlan: z.string(),
-    }),
-    score: z.number(),
-    luckyElements: z.array(z.string()),
-    verdict: z.string(),
-    mbtiSajuWealthReport: z.string().describe('MBTI-사주 뼈 때리는 재물 보고서 (마크다운)'),
-});
+6. 마크다운 강조 기호(**)와 이모티콘/이모지는 **모든 필드에서 사용 금지**입니다. 단, mbtiSajuWealthReport 필드는 ### 1. ~ ### 4. 소제목 구분만 허용하며 본문 안에는 **나 이모지 없이 줄바꿈(\\n\\n)과 글머리표(-)로 1,500~2,200자 분량으로 작성하십시오.
+7. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.`;
 
 export default async (req: Request) => {
     const corsResponse = handleCors(req);
@@ -78,6 +52,9 @@ export default async (req: Request) => {
         });
     }
 
+    let receiptToRelease: string | null = null;
+    let supabaseForRelease: any = null;
+
     try {
         const body = await req.json();
         const url = new URL(req.url);
@@ -88,11 +65,18 @@ export default async (req: Request) => {
         else if (type === 'job') serviceType = 'GOLD_JOB';
         else if (type === 'jobchange') serviceType = 'GOLD_JOBCHANGE';
 
-        // 인증 및 5 크레딧 차감
-        const authResult = await authenticateUser(req, { serviceType, cost: 5 });
+        // 단건 결제 티켓 검증 + Rate Limit
+        const authResult = await authenticateUser(req, {
+            serviceType,
+            allowedServiceTypes: ['GOLD_WEALTH', 'GOLD_BUSINESS', 'GOLD_JOB', 'GOLD_JOBCHANGE'],
+            requirePaymentReceipt: true,
+            allowAnonymous: true,
+        });
         if (authResult.errorResponse) {
             return authResult.errorResponse;
         }
+        receiptToRelease = authResult.receiptToken ?? null;
+        supabaseForRelease = authResult.supabaseAdmin;
 
         const {
             birthDate,
@@ -108,6 +92,7 @@ export default async (req: Request) => {
         } = body;
 
         if (!birthDate) {
+            await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
             return new Response(JSON.stringify({ error: '생년월일 정보가 필요합니다.' }), { 
                 status: 400, 
                 headers: responseHeaders 
@@ -117,10 +102,12 @@ export default async (req: Request) => {
         const saju = getPreciseSajuData({ birthDate, birthTime, gender });
         const richSajuContext = buildRichSajuContext(saju);
 
-            let userQuery = `[이용자 정보]
+            let userQuery = `${getTemporalAnchorBlock()}
+
+[이용자 정보]
 이름: ${name || '이용자'}
 성별: ${gender === 'male' ? '남성' : '여성'}
-MBTI: ${mbti}
+MBTI: ${formatMbtiForPrompt(mbti)}
 
 [사주 정보]
 ${richSajuContext}
@@ -205,6 +192,13 @@ ${richSajuContext}
 (뇌리에 박힐 강렬하고 단호한 통찰 한 줄)`;
             }
 
+            let receiptReleased = false;
+            const safeReleaseReceipt = async () => {
+                if (receiptReleased) return;
+                receiptReleased = true;
+                await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
+            };
+
             try {
                 let lastError;
                 for (let attempt = 0; attempt < 4; attempt++) {
@@ -217,6 +211,10 @@ ${richSajuContext}
                             prompt: userQuery,
                             maxOutputTokens: 16384,
                             maxRetries: 0,
+                            onError: async () => { await safeReleaseReceipt(); },
+                            onFinish: async ({ object, error }) => {
+                                if (!object || error) await safeReleaseReceipt();
+                            },
                         });
                         return result.toTextStreamResponse({ headers: responseHeaders });
                     } catch (error) {
@@ -229,8 +227,9 @@ ${richSajuContext}
                 throw err;
             }
     } catch (error: any) {
+        await releaseServiceReceipt(supabaseForRelease, receiptToRelease);
         console.error('Gold API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: '재물 사주 분석 중 오류가 발생했습니다.' }), { 
             status: 500, 
             headers: responseHeaders 
         });
