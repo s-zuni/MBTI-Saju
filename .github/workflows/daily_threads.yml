@@ -16,23 +16,31 @@ on:
         required: false
         default: 'auto'
       category:
-        description: '카테고리 선택 (비워두면 사주60%/MBTI20%/운세20% 가중 자동)'
+        description: '카테고리 필터 (선택)'
         required: false
         default: ''
       with_cta:
-        description: 'v2 전환 CTA 답글 강제 포함 여부'
+        description: 'CTA 답글 강제 포함 여부'
         type: boolean
         default: false
       mode:
-        description: '실행 모드 (auto: 시트 30일 계획 우선 / sheet: 시트만 / generate: AI 생성만)'
+        description: '실행 모드 (sheet: 시트 전용·소진 시 30일 자동 보충·AI 폴백 금지 / refill: 새 30일치만 시트에 보충)'
         required: false
-        default: 'auto'
+        default: 'sheet'
+      force_refill:
+        description: 'refill 모드에서 남은 글이 있어도 새 30일 계획 강제 추가'
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-threads-publish
+  cancel-in-progress: false
 
 jobs:
   publish_thread:
-    name: Generate & Publish Threads Post
+    name: Publish Threads Post from Sheet
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: marketing_automation
@@ -67,7 +75,7 @@ jobs:
           THREADS_SHEET_ID: ${{ vars.THREADS_SHEET_ID || '1Ty-mQNQYD0lS6xFXx66Jn3ML54V583tDHURoX5VXWnc' }}
           THREADS_SHEET_TAB: ${{ vars.THREADS_SHEET_TAB || '30일_게시계획' }}
         run: |
-          ARGS=""
+          ARGS="--mode ${{ github.event.inputs.mode || 'sheet' }}"
           if [ -n "${{ github.event.inputs.slot }}" ] && [ "${{ github.event.inputs.slot }}" != "auto" ]; then
             ARGS="$ARGS --slot ${{ github.event.inputs.slot }}"
           fi
@@ -77,8 +85,7 @@ jobs:
           if [ "${{ github.event.inputs.with_cta }}" = "true" ]; then
             ARGS="$ARGS --with-cta"
           fi
-          if [ -n "${{ github.event.inputs.mode }}" ] && [ "${{ github.event.inputs.mode }}" != "auto" ]; then
-            ARGS="$ARGS --mode ${{ github.event.inputs.mode }}"
+          if [ "${{ github.event.inputs.force_refill }}" = "true" ]; then
+            ARGS="$ARGS --force-refill"
           fi
           python -m pipeline.threads_runner $ARGS
-

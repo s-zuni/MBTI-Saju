@@ -131,7 +131,7 @@ def fetch_sheet_values(
             svc = build("sheets", "v4", credentials=creds, cache_discovery=False)
             resp = svc.spreadsheets().values().get(
                 spreadsheetId=sid,
-                range=f"'{tab}'!A1:M300",
+                range=f"'{tab}'!A:M",
             ).execute()
             values = resp.get("values", [])
             if values:
@@ -347,6 +347,37 @@ def mark_sheet_row_published(
         return False
 
 
+def count_pending_posts(
+    rows: List[ScheduledSheetPost],
+    recent_published_texts: Optional[List[str]] = None,
+    slot: Optional[str] = None,
+    category: Optional[str] = None,
+) -> int:
+    """아직 발행되지 않은(상태 대기/미완료 + 최근 발행 중복 제외) 글 개수를 반환합니다."""
+    recent = recent_published_texts or []
+    count = 0
+    for row in rows:
+        st = (row.status or "").strip().lower()
+        if st in _DONE_STATUSES or st in _SKIP_STATUSES:
+            continue
+        if slot and row.slot != slot:
+            continue
+        if category and row.category != category:
+            continue
+        if _is_already_published(row, recent):
+            continue
+        count += 1
+    return count
+
+
+def load_sheet_rows(
+    sheet_id: Optional[str] = None,
+    tab_name: Optional[str] = None,
+) -> List[ScheduledSheetPost]:
+    values = fetch_sheet_values(sheet_id=sheet_id, tab_name=tab_name)
+    return parse_scheduled_posts(values)
+
+
 def load_and_pick_scheduled_post(
     slot: str,
     category: Optional[str] = None,
@@ -355,8 +386,7 @@ def load_and_pick_scheduled_post(
     tab_name: Optional[str] = None,
     today_kst: Optional[str] = None,
 ) -> Optional[ScheduledSheetPost]:
-    values = fetch_sheet_values(sheet_id=sheet_id, tab_name=tab_name)
-    rows = parse_scheduled_posts(values)
+    rows = load_sheet_rows(sheet_id=sheet_id, tab_name=tab_name)
     return select_post_from_sheet(
         rows=rows,
         slot=slot,
