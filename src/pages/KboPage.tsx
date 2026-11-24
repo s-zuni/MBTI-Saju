@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, X, Instagram, ChevronLeft, CreditCard } from 'lucide-react';
+import { Loader2, Instagram, ChevronLeft, CreditCard } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { kboSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { calculateSaju } from '../utils/sajuUtils';
+import { safeCalculateSaju } from '../utils/sajuUtils';
+import { stripMarkdown } from '../utils/textUtils';
 import { getTeamInfo } from '../config/teamConfig';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import KboShareCard from '../components/KboShareCard';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
 import FunnelBottomCta from '../components/FunnelBottomCta';
+import ReportErrorBoundary from '../components/common/ReportErrorBoundary';
+import StreamingStatusBanner from '../components/common/StreamingStatusBanner';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const BaseballIcon = ({ className }: { className?: string }) => (
@@ -23,16 +26,19 @@ const BaseballIcon = ({ className }: { className?: string }) => (
 );
 
 const RadarChart = ({ data }: { data: any[] }) => {
+    const valid = Array.isArray(data) ? data.filter(d => d && typeof d.label === 'string' && typeof d.value === 'number' && !Number.isNaN(d.value)) : [];
+    if (valid.length < 3) return null;
     const cx = 150;
     const cy = 150;
     const radius = 100;
-    const total = 5;
+    const total = valid.length;
 
     const getPoint = (index: number, val: number, r: number) => {
+        const clamped = Math.min(100, Math.max(0, Number(val) || 0));
         const angle = (index * (360 / total) - 90) * (Math.PI / 180);
         return {
-            x: cx + r * (val / 100) * Math.cos(angle),
-            y: cy + r * (val / 100) * Math.sin(angle)
+            x: cx + r * (clamped / 100) * Math.cos(angle),
+            y: cy + r * (clamped / 100) * Math.sin(angle)
         };
     };
 
@@ -41,7 +47,7 @@ const RadarChart = ({ data }: { data: any[] }) => {
     });
 
     const outerGrid = gridPoints[gridPoints.length - 1] || [];
-    const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, data[i]?.value || 0, radius));
+    const dataPoints = Array.from({ length: total }).map((_, i) => getPoint(i, valid[i]?.value || 0, radius));
     const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
 
     return (
@@ -85,16 +91,16 @@ const RadarChart = ({ data }: { data: any[] }) => {
                                 textAnchor={textAnchor}
                                 className="text-[11px] font-bold fill-slate-500"
                             >
-                                {data[i]?.label || ''}
+                                {valid[i]?.label || ''}
                             </text>
-                            {data[i]?.value !== undefined && (
+                            {valid[i]?.value !== undefined && (
                                 <text
                                     x={labelX}
                                     y={labelY + 14}
                                     textAnchor={textAnchor}
                                     className="text-[10px] font-black fill-[#000666]"
                                 >
-                                    {data[i].value}%
+                                    {valid[i].value}%
                                 </text>
                             )}
                         </g>
@@ -127,6 +133,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const shareRef = useRef<HTMLDivElement>(null);
     const ticketCheckedRef = useRef(false);
     const receiptTokenRef = useRef<string | null>(null);
+    const lastPayloadRef = useRef<any>(null);
     const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
@@ -144,12 +151,14 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         onFinish: ({ object }) => {
             if (!object) {
                 console.error('[KboPage] Result validation failed');
-                setGenError('분석 결과를 생성하지 못했습니다. 다시 시도해주세요.');
+                setGenError('분석 결과를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
+            } else {
+                setGenError(null);
             }
         },
         onError: (err) => {
             console.error('KBO Analysis Error:', err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setGenError('분석 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
 
@@ -159,11 +168,19 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         const ticket = consumePaidServiceTicket('KBO');
         if (ticket?.payload) {
             receiptTokenRef.current = ticket.receiptToken || null;
+            lastPayloadRef.current = ticket.payload;
             if (ticket.payload.requirements) setSelectedTeam(ticket.payload.requirements);
             setHasStarted(true);
             submit(ticket.payload);
         }
     }, [submit]);
+
+    const handleRetry = () => {
+        if (!lastPayloadRef.current) return;
+        setGenError(null);
+        setError(null);
+        submit(lastPayloadRef.current);
+    };
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -186,11 +203,16 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             return;
         }
 
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        if (!sajuData) {
+            setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
+            return;
+        }
+
         setIsPaying(true);
         setError(null);
         setGenError(null);
         try {
-            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
             const res = await startServicePayment({
                 serviceType: 'KBO',
                 serviceName: 'KBO 팬 궁합 분석',
@@ -315,179 +337,169 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                             )}
                         </div>
 
-                        <div ref={reportRef} className="animate-fade-in">
-                            {(aiError || genError) && !result ? (
-                                <div className="py-20 text-center bg-white rounded-[48px] px-8">
-                                    <X className="w-16 h-16 text-red-500 mx-auto mb-6" />
-                                    <h3 className="text-2xl font-black text-slate-900 mb-4">분석이 중단되었습니다</h3>
-                                    <p className="text-slate-500 mb-12 font-medium">{genError || '네트워크 상태를 확인하고 다시 시도해주세요.'}</p>
-                                    <button
-                                        onClick={() => setHasStarted(false)}
-                                        className="px-12 py-5 bg-[#000666] text-white font-black rounded-2xl active:scale-95 transition-all"
-                                    >
-                                        다시 시도하기
-                                    </button>
-                                </div>
-                            ) : (isLoading || !result || typeof result.score !== 'number') ? (
-                                <div className="py-32 flex flex-col items-center justify-center bg-white rounded-[48px]">
-                                    <div className="relative mb-24">
-                                        <div className="w-24 h-24 border-4 border-slate-100 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="w-16 h-16 border-4 border-t-[#000666] border-slate-100 rounded-full animate-spin" />
-                                        </div>
-                                    </div>
-                                    <div className="text-center space-y-6">
-                                        <p className="text-xs font-black text-[#000666] uppercase tracking-[0.4em] animate-pulse">
-                                            {result ? '데이터 정밀 분석 중...' : '데이터 연결 중...'}
-                                        </p>
-                                        <p className="text-2xl font-black text-slate-900 tracking-tight italic break-keep px-10">
-                                            "{currentLoadingMessage || '당신과 구단의 운명을 읽는 중입니다'}"
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-10">
-                                    <header className="text-center py-6">
-                                        <h1 className="text-3xl font-black text-[#000666] tracking-tight">승리 요정 분석 결과</h1>
-                                        <div className="mt-4 w-12 h-1 bg-[#775a19]/30 mx-auto rounded-full"></div>
-                                    </header>
+                        <div ref={reportRef} className="animate-fade-in p-4 sm:p-6 space-y-6">
+                            <StreamingStatusBanner
+                                isStreaming={isLoading}
+                                hasData={!!result}
+                                error={!result ? (genError || aiError?.message || null) : null}
+                                onRetry={handleRetry}
+                                streamingTitle={currentLoadingMessage || '결제가 완료되어 구단 궁합을 실시간으로 작성하고 있습니다'}
+                                streamingSubtitle="완성되는 항목부터 아래에 바로 표시됩니다."
+                                completedText="KBO 구단 궁합 분석이 완료되었습니다."
+                            />
 
-                                    <main className="space-y-8">
-                                        <section className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl flex flex-col items-center">
-                                            <div className="flex items-center justify-between w-full mb-12">
-                                                <div className="flex flex-col items-center gap-4">
-                                                    <div className="w-24 h-24 rounded-full bg-[#000666]/5 flex items-center justify-center border-2 border-white shadow-lg overflow-hidden">
-                                                        <span className="text-[#000666] font-black text-3xl">{userName.slice(0, 1)}</span>
-                                                    </div>
-                                                    <span className="text-sm font-black text-slate-600">{userName}</span>
-                                                </div>
-
-                                                <div className="relative flex flex-col items-center">
-                                                    <div className="w-14 h-14 rounded-full bg-[#775a19]/10 flex items-center justify-center animate-pulse">
-                                                        <svg viewBox="0 0 24 24" fill="#775a19" className="w-8 h-8">
-                                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-col items-center gap-4">
-                                                    <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center border-2 border-white shadow-lg p-4 overflow-hidden">
-                                                        {getTeamInfo(selectedTeam || '')?.logo ? (
-                                                            <img 
-                                                                alt={selectedTeam || ''} 
-                                                                className="w-full h-full object-contain" 
-                                                                src={getTeamInfo(selectedTeam || '')?.logo} 
-                                                            />
-                                                        ) : (
-                                                            <BaseballIcon className="w-12 h-12 text-slate-200" />
-                                                        )}
-                                                    </div>
-                                                    <span className="text-sm font-black text-slate-600">{selectedTeam === '없음 (아직 없음)' ? '추천 구단' : selectedTeam}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="text-center">
-                                                <p className="text-[#775a19] text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-60">궁합 지수</p>
-                                                <div className="flex items-baseline justify-center gap-1">
-                                                    <p className="text-9xl font-black text-[#000666] tracking-tighter leading-none">
-                                                        {result.score}
-                                                    </p>
-                                                    <span className="text-2xl font-black text-[#000666]/30">%</span>
-                                                </div>
-                                            </div>
-                                        </section>
-
-                                        <section className="space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">승리 요정 리포트</span>
-                                                <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                            </div>
-                                            
-                                            <div className="bg-white p-10 rounded-[40px] border border-slate-50 shadow-sm text-center">
-                                                <p className="text-2xl font-black text-[#000666] mb-6">
-                                                    오늘의 승요 지수: <span className="text-[#775a19]">{result.winFairyScore}점</span>
-                                                </p>
-                                                <div className="text-lg text-slate-600 leading-relaxed font-medium break-keep">
-                                                    {result.supportedTeamAnalysis}
-                                                </div>
-                                            </div>
-                                        </section>
-
-                                        <section className="space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">행운의 가이드</span>
-                                                <div className="h-[2px] flex-1 bg-[#775a19]/10"></div>
-                                            </div>
-
-                                            <div className="grid gap-6">
-                                                {selectedTeam === '없음 (아직 없음)' ? (
-                                                    <>
-                                                        <div className="bg-white p-8 rounded-[32px] border border-slate-50 flex items-center justify-between shadow-sm">
-                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">가장 잘 맞는 구단</span>
-                                                            <span className="text-2xl font-black text-[#000666]">{result.bestTeam}</span>
-                                                        </div>
-                                                        <div className="bg-white p-8 rounded-[32px] border border-slate-50 flex items-center justify-between shadow-sm opacity-60">
-                                                            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">주의가 필요한 구단</span>
-                                                            <span className="text-2xl font-black text-slate-600">{result.worstTeam}</span>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="bg-white p-8 rounded-[40px] border border-slate-50 space-y-4 shadow-sm">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-2 h-2 rounded-full bg-[#775a19]"></div>
-                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">추천 좌석</span>
-                                                            </div>
-                                                            <p className="text-xl text-slate-800 font-black leading-tight break-keep">
-                                                                {result.recommendedSeat}
-                                                            </p>
-                                                        </div>
-                                                        <div className="bg-white p-8 rounded-[40px] border border-slate-50 space-y-4 shadow-sm">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-2 h-2 rounded-full bg-[#775a19]"></div>
-                                                                <span className="text-xs font-black text-[#775a19] uppercase tracking-widest">오늘의 추천 푸드</span>
-                                                            </div>
-                                                            <p className="text-xl text-slate-800 font-black leading-tight break-keep">
-                                                                {result.luckyFood}
-                                                            </p>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </section>
-
-                                        <section className="pt-8">
-                                            <div className="flex items-center gap-4 mb-10">
-                                                <div className="h-[2px] flex-1 bg-slate-200"></div>
-                                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">역량 분석</span>
-                                                <div className="h-[2px] flex-1 bg-slate-200"></div>
-                                            </div>
-                                            <div className="bg-white rounded-[48px] p-8 border border-slate-50 shadow-sm">
-                                                <RadarChart data={result.dimensions || []} />
-                                            </div>
-                                        </section>
-
-                                        <footer className="pt-10 flex flex-col gap-4">
-                                            <button 
-                                                onClick={handleShareInstagram}
-                                                disabled={isSharing}
-                                                className="w-full bg-[#000666] text-white py-6 rounded-[32px] font-black text-xl shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+                            {result && (
+                                <ReportErrorBoundary onRetry={handleRetry}>
+                                    <div className="space-y-8 text-left">
+                                        <header className="text-center py-4">
+                                            <h1
+                                                className="text-2xl sm:text-3xl font-bold text-[#000666] tracking-tight"
+                                                style={{ fontFamily: "'NanumMyungjo', 'Noto Serif KR', serif" }}
                                             >
-                                                {isSharing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Instagram className="w-6 h-6" />}
-                                                인스타그램 스토리 공유하기
-                                            </button>
-                                            <button 
-                                                onClick={() => { setHasStarted(false); setSelectedTeam(null); }}
-                                                className="w-full text-slate-400 font-black py-4 text-xs tracking-widest hover:text-[#000666] transition-colors uppercase underline underline-offset-8"
-                                            >
-                                                다른 구단 궁합 분석하기
-                                            </button>
-                                            <FunnelBottomCta from="kbo_result" />
-                                        </footer>
-                                    </main>
-                                </div>
+                                                승리 요정 분석 결과
+                                            </h1>
+                                        </header>
+
+                                        <main className="space-y-8">
+                                            <section className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 flex flex-col items-center space-y-6">
+                                                <div className="flex items-center justify-between w-full max-w-sm">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-16 h-16 rounded-full bg-[#000666]/5 flex items-center justify-center border border-stone-200">
+                                                            <span className="text-[#000666] font-bold text-2xl">{userName.slice(0, 1)}</span>
+                                                        </div>
+                                                        <span className="text-sm font-bold text-slate-700">{userName}</span>
+                                                    </div>
+
+                                                    <span className="text-lg font-bold text-stone-400">×</span>
+
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border border-stone-200 p-2.5 overflow-hidden">
+                                                            {getTeamInfo(selectedTeam || '')?.logo ? (
+                                                                <img 
+                                                                    alt={selectedTeam || ''} 
+                                                                    className="w-full h-full object-contain" 
+                                                                    src={getTeamInfo(selectedTeam || '')?.logo} 
+                                                                />
+                                                            ) : (
+                                                                <BaseballIcon className="w-8 h-8 text-slate-300" />
+                                                            )}
+                                                        </div>
+                                                        <span className="text-sm font-bold text-slate-700">
+                                                            {selectedTeam === '없음 (아직 없음)' ? '추천 구단' : selectedTeam}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-center space-y-1">
+                                                    <p className="text-sm font-bold text-[#775a19]">구단 궁합 지수</p>
+                                                    <div className="flex items-baseline justify-center gap-1">
+                                                        <p className="text-6xl sm:text-7xl font-bold text-[#000666] tracking-tight leading-none">
+                                                            {typeof result.score === 'number' ? result.score : '-'}
+                                                        </p>
+                                                        <span className="text-xl font-bold text-[#000666]/50">%</span>
+                                                    </div>
+                                                    {result.dailyMessage && (
+                                                        <p className="text-base font-semibold text-slate-800 pt-2 break-keep">
+                                                            {stripMarkdown(result.dailyMessage)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </section>
+
+                                            <section className="space-y-4">
+                                                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 pb-2 border-b border-stone-200">
+                                                    승리 요정 리포트
+                                                </h3>
+                                                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 space-y-4">
+                                                    {typeof result.winFairyScore === 'number' && (
+                                                        <p className="text-lg sm:text-xl font-bold text-[#000666]">
+                                                            오늘의 승요 지수: <span className="text-[#775a19]">{result.winFairyScore}점</span>
+                                                        </p>
+                                                    )}
+                                                    {result.supportedTeamAnalysis && (
+                                                        <div className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                            {stripMarkdown(result.supportedTeamAnalysis)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </section>
+
+                                            <section className="space-y-4">
+                                                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 pb-2 border-b border-stone-200">
+                                                    직관 맞춤 가이드
+                                                </h3>
+                                                <div className="space-y-4">
+                                                    {selectedTeam === '없음 (아직 없음)' ? (
+                                                        <>
+                                                            {result.bestTeam && (
+                                                                <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-1">
+                                                                    <p className="text-sm font-bold text-stone-500">가장 잘 맞는 구단</p>
+                                                                    <p className="text-xl font-bold text-[#000666]">{result.bestTeam}</p>
+                                                                </div>
+                                                            )}
+                                                            {result.worstTeam && (
+                                                                <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-1">
+                                                                    <p className="text-sm font-bold text-stone-500">기운이 부딪히는 구단</p>
+                                                                    <p className="text-xl font-bold text-slate-700">{result.worstTeam}</p>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {result.recommendedSeat && (
+                                                                <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-2">
+                                                                    <h4 className="text-lg font-bold text-[#775a19]">추천 직관 좌석</h4>
+                                                                    <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                                        {stripMarkdown(result.recommendedSeat)}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {result.luckyFood && (
+                                                                <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-2">
+                                                                    <h4 className="text-lg font-bold text-[#775a19]">오늘의 추천 직관 음식</h4>
+                                                                    <p className="text-[15px] sm:text-base text-slate-800 leading-[1.85] break-keep">
+                                                                        {stripMarkdown(result.luckyFood)}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </section>
+
+                                            {Array.isArray(result.dimensions) && result.dimensions.length >= 3 && (
+                                                <section className="space-y-4">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 pb-2 border-b border-stone-200">
+                                                        응원 기운 역량 분석
+                                                    </h3>
+                                                    <div className="bg-white rounded-2xl p-6 border border-stone-200">
+                                                        <RadarChart data={result.dimensions} />
+                                                    </div>
+                                                </section>
+                                            )}
+
+                                            {!isLoading && (
+                                                <footer className="pt-4 flex flex-col gap-3">
+                                                    <button 
+                                                        onClick={handleShareInstagram}
+                                                        disabled={isSharing}
+                                                        className="w-full bg-[#000666] text-white py-4 rounded-2xl font-bold text-base active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                                                    >
+                                                        {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                                        인스타그램 스토리 이미지 저장
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { setHasStarted(false); setSelectedTeam(null); setGenError(null); }}
+                                                        className="w-full text-stone-600 font-bold py-3 text-sm hover:text-[#000666] transition-colors underline underline-offset-4"
+                                                    >
+                                                        다른 구단 궁합 분석하기
+                                                    </button>
+                                                    <FunnelBottomCta from="kbo_result" />
+                                                </footer>
+                                            )}
+                                        </main>
+                                    </div>
+                                </ReportErrorBoundary>
                             )}
                         </div>
                     </div>

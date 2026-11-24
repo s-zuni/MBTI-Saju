@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Compass, Sun, Instagram } from 'lucide-react';
+import { Loader2, Sparkles, Shuffle, ArrowRight, Moon, Instagram } from 'lucide-react';
 import { generateImage } from '../utils/exportUtils';
 import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
@@ -12,6 +12,8 @@ import { TIERS } from '../hooks/useSubscription';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
 import FunnelBottomCta from '../components/FunnelBottomCta';
+import ReportErrorBoundary from '../components/common/ReportErrorBoundary';
+import StreamingStatusBanner from '../components/common/StreamingStatusBanner';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 const TarotCardBack = ({ className = "" }: { className?: string }) => (
@@ -80,8 +82,10 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const shareRef = useRef<HTMLDivElement>(null);
     const [isSharing, setIsSharing] = useState(false);
     const [isPaying, setIsPaying] = useState(false);
+    const [tarotError, setTarotError] = useState<string | null>(null);
     const ticketCheckedRef = useRef(false);
     const receiptTokenRef = useRef<string | null>(null);
+    const lastPayloadRef = useRef<any>(null);
 
     // Streaming Hook
     const { object: reading, submit, isLoading, error: analysisError } = useObject({
@@ -91,12 +95,14 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         onFinish: async ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[TarotPage] Result validation failed:', validationError);
-                alert('타로 해석 결과를 만드는 데 실패했습니다. 다시 시도해 주세요.');
+                setTarotError('타로 해석 결과를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
+            } else {
+                setTarotError(null);
             }
         },
         onError: (error) => {
             console.error('[TarotPage] Analysis failed:', error);
-            alert('타로 해석을 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            setTarotError('타로 해석을 불러오는 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
 
@@ -106,6 +112,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         const ticket = consumePaidServiceTicket('TAROT');
         if (ticket?.payload) {
             receiptTokenRef.current = ticket.receiptToken || null;
+            lastPayloadRef.current = ticket.payload;
             if (ticket.payload.spreadType) setSelectedSpread(ticket.payload.spreadType);
             if (ticket.payload.question) setQuestion(ticket.payload.question);
             if (Array.isArray(ticket.payload.selectedCards)) setSelectedCards(ticket.payload.selectedCards);
@@ -113,6 +120,12 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
             submit(ticket.payload);
         }
     }, [submit]);
+
+    const handleRetryReading = () => {
+        if (!lastPayloadRef.current) return;
+        setTarotError(null);
+        submit(lastPayloadRef.current);
+    };
 
     const handleSpreadSelect = (spread: SpreadType) => {
         setSelectedSpread(spread);
@@ -316,89 +329,72 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                             )}
 
                             {step === 'result' && (
-                                <div className="w-full h-full animate-fade-in px-4">
-                                    {analysisError && !reading ? (
-                                        <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
-                                            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-8">
-                                                <Sparkles className="w-10 h-10 text-red-400 opacity-50" />
-                                            </div>
-                                            <h3 className="text-2xl font-black text-slate-900 mb-4">운명의 연결이 불안정합니다</h3>
-                                            <p className="text-slate-500 mb-10 leading-relaxed font-medium">
-                                                {analysisError.message || "별들의 메시지를 읽어오는 데 실패했습니다."}
-                                                <br /><br />
-                                                <span className="text-purple-600 font-black underline underline-offset-4 decoration-purple-200">다시 한 번 시도해 주세요.</span>
-                                                <br />잠시 후 다시 카드를 뽑아주세요.
-                                            </p>
-                                            <button
-                                                onClick={() => setStep('spread')}
-                                                className="w-full bg-slate-950 py-5 rounded-[1.5rem] text-white font-black text-lg shadow-xl active:scale-95 transition-all"
-                                            >
-                                                처음으로 돌아가기
-                                            </button>
-                                        </div>
-                                    ) : isLoading && !reading ? (
-                                        <div className="flex flex-col items-center justify-center py-20">
-                                            <Loader2 className="w-16 h-16 text-purple-600 animate-spin mb-6" />
-                                            <h3 className="text-2xl font-black text-slate-900 mb-3">메시지를 해석하는 중입니다</h3>
-                                        </div>
-                                    ) : analysisError ? (
-                                        <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-up">
-                                            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-8">
-                                                <Compass className="w-10 h-10 text-red-500 animate-bounce" />
-                                            </div>
-                                            <h3 className="text-3xl font-black text-slate-900 mb-4">해석의 맥이 끊겼습니다</h3>
-                                            <p className="text-red-500 text-lg mb-6 leading-relaxed font-bold break-keep">
-                                                {analysisError.message || "원인을 알 수 없는 오류가 발생했습니다."}
-                                            </p>
-                                            <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 w-full max-w-lg border-2 border-slate-100 italic">
-                                                <p className="text-sm text-slate-500 font-bold leading-relaxed">
-                                                    💡 별의 기운이 약해져 일시적인 통신 오류가 발생했습니다. <br/>
-                                                    <span className="text-purple-600 block mt-2 text-base">잠시 후 아래 버튼으로 다시 시도해 주세요.</span>
-                                                </p>
-                                            </div>
-                                            <button onClick={() => handleAnalyze(selectedCards)} className="px-12 py-5 bg-slate-950 text-white rounded-[1.5rem] font-black text-lg shadow-2xl hover:scale-[1.05] transition-transform">
-                                                다시 읽어보기
-                                            </button>
-                                        </div>
-                                    ) : reading && (
-                                        <div className="max-w-4xl mx-auto py-4">
-                                            <div className="text-center mb-16 px-4">
-                                                <h2 className="text-3xl font-black text-slate-900 mb-6 leading-tight break-keep">"{question}"</h2>
-                                                <div className="flex items-center justify-center gap-2 text-slate-300">
-                                                    <Compass className="w-5 h-5 animate-spin-slow" />
-                                                </div>
-                                            </div>
-                                            <div className={`grid gap-8 mb-20 px-4 ${selectedSpread === 'daily' ? 'grid-cols-1 max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-3'}`}>
-                                                {reading.cardReadings?.map((card: any, idx: number) => {
-                                                    if (!card) return null;
-                                                    return (
-                                                    <div key={idx} className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-white shadow-sm hover:shadow-xl transition-all h-full">
-                                                        <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-6">Position {idx + 1}</div>
-                                                        <div className="w-full aspect-[2/3] bg-white rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden shadow-xl border border-purple-100/50">
-                                                            {(() => {
-                                                                const face = resolveTarotCard(card.cardName, idx, selectedCards);
-                                                                return face ? <TarotCardFace card={face} className="border-none" /> : <TarotCardBack className="border-none" />;
-                                                            })()}
-                                                        </div>
-                                                        <h4 className="text-xl font-black text-slate-900 mb-4">{card.cardName || ''}</h4>
-                                                        <p className="text-sm text-slate-500 leading-relaxed font-medium break-keep">{stripMarkdown(card.interpretation ?? '')}</p>
+                                <div className="w-full h-full animate-fade-in px-4 max-w-2xl mx-auto space-y-6">
+                                    <StreamingStatusBanner
+                                        isStreaming={isLoading}
+                                        hasData={!!reading}
+                                        error={!reading ? (tarotError || analysisError?.message || null) : null}
+                                        onRetry={lastPayloadRef.current ? handleRetryReading : () => setStep('spread')}
+                                        streamingTitle="결제가 완료되어 뽑으신 타로 카드를 해석하고 있습니다"
+                                        streamingSubtitle="카드별 해석이 나오는 대로 아래에 바로 표시됩니다."
+                                        completedText="타로 카드 해석이 완료되었습니다."
+                                    />
+
+                                    {reading && (
+                                        <ReportErrorBoundary onRetry={handleRetryReading}>
+                                            <div className="space-y-10 py-2 text-left">
+                                                {question && (
+                                                    <div className="text-center pb-6 border-b border-stone-200 space-y-1.5">
+                                                        <p className="text-sm font-semibold text-purple-800">질문</p>
+                                                        <h2
+                                                            className="text-2xl sm:text-3xl font-bold text-slate-950 leading-snug break-keep"
+                                                            style={{ fontFamily: "'NanumMyungjo', 'Noto Serif KR', serif" }}
+                                                        >
+                                                            {question}
+                                                        </h2>
                                                     </div>
-                                                    );
-                                                })}
-                                            </div>
-                                            <div className="space-y-10 mb-20 px-4">
-                                                <div className="bg-slate-950 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 p-8 opacity-10 text-purple-400 rotate-12 scale-150">
-                                                        <Sparkles className="w-32 h-32" />
+                                                )}
+
+                                                {/* 1단 수직 카드 해석 (넓은 가독성) */}
+                                                {Array.isArray(reading.cardReadings) && reading.cardReadings.length > 0 && (
+                                                    <div className="space-y-6">
+                                                        {reading.cardReadings.map((card: any, idx: number) => {
+                                                            if (!card) return null;
+                                                            const face = resolveTarotCard(card.cardName, idx, selectedCards);
+                                                            return (
+                                                                <div key={idx} className="bg-stone-50/70 rounded-2xl p-6 sm:p-7 border border-stone-200 flex flex-col sm:flex-row gap-6 items-start">
+                                                                    <div className="w-36 sm:w-40 aspect-[2/3] bg-white rounded-xl flex items-center justify-center relative overflow-hidden shadow-md border border-stone-200 shrink-0 mx-auto sm:mx-0">
+                                                                        {face ? <TarotCardFace card={face} className="border-none" /> : <TarotCardBack className="border-none" />}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 space-y-2.5">
+                                                                        <p className="text-sm font-bold text-purple-800">
+                                                                            카드 {idx + 1}
+                                                                        </p>
+                                                                        <h4 className="text-xl font-bold text-slate-950 leading-snug">
+                                                                            {stripMarkdown(card.cardName || '')}
+                                                                        </h4>
+                                                                        {card.interpretation && (
+                                                                            <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                                {stripMarkdown(card.interpretation)}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-                                                    <h4 className="text-2xl font-black mb-8 flex items-center gap-4 relative z-10">
-                                                        <Sparkles className="w-6 h-6 text-purple-300" /> 
-                                                        별들의 종합 조언
-                                                    </h4>
-                                                    <p className="text-lg leading-9 text-slate-200 whitespace-pre-wrap font-medium relative z-10">
-                                                        {stripMarkdown(reading.overallReading ?? '')}
-                                                    </p>
-                                                </div>
+                                                )}
+
+                                                {reading.overallReading && (
+                                                    <div className="bg-slate-900 p-6 sm:p-8 rounded-2xl text-white border border-slate-800 space-y-3">
+                                                        <h4 className="text-xl sm:text-2xl font-bold text-amber-200">
+                                                            카드 흐름 종합 리딩
+                                                        </h4>
+                                                        <p className="text-[15px] sm:text-base leading-[1.9] text-slate-100 whitespace-pre-wrap break-keep">
+                                                            {stripMarkdown(reading.overallReading)}
+                                                        </p>
+                                                    </div>
+                                                )}
                                                 
                                                 {/* Hidden Instagram sharing card */}
                                                 <div className="fixed left-[-9999px] top-[-9999px]">
@@ -413,32 +409,40 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                     )}
                                                 </div>
 
-                                                <div className="bg-white p-10 rounded-[3rem] border-4 border-purple-50 shadow-inner">
-                                                    <h4 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-4">
-                                                        <Sun className="w-6 h-6 text-purple-500" /> 
-                                                        실천 가이드
-                                                    </h4>
-                                                    <p className="text-xl leading-9 text-slate-700 font-bold italic break-keep">
-                                                        "{stripMarkdown(reading.advice ?? '')}"
-                                                    </p>
-                                                </div>
+                                                {reading.advice && (
+                                                    <div className="bg-[#FAF7F0] p-6 sm:p-8 rounded-2xl border border-[#E6DFD1] space-y-3">
+                                                        <h4 className="text-xl sm:text-2xl font-bold text-slate-950">
+                                                            현실 조언 및 실천 가이드
+                                                        </h4>
+                                                        <p className="text-[15px] sm:text-base leading-[1.9] text-slate-800 whitespace-pre-wrap break-keep">
+                                                            {stripMarkdown(reading.advice)}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {!isLoading && (
+                                                    <>
+                                                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                            <button 
+                                                                onClick={handleShareInstagram}
+                                                                disabled={isSharing}
+                                                                className="flex-1 py-4 px-6 rounded-xl bg-purple-700 text-white font-bold text-sm hover:bg-purple-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-75"
+                                                            >
+                                                                {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+                                                                결과 이미지 저장
+                                                            </button>
+                                                            <button onClick={() => setStep('spread')} className="flex-1 py-4 px-6 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">
+                                                                다른 주제 선택
+                                                            </button>
+                                                            <button onClick={() => { setStep('question'); setQuestion(""); }} className="py-4 px-6 rounded-xl bg-stone-100 text-slate-700 font-bold text-sm hover:bg-stone-200 transition-colors">
+                                                                다시 물어보기
+                                                            </button>
+                                                        </div>
+                                                        <FunnelBottomCta from="tarot_result" />
+                                                    </>
+                                                )}
                                             </div>
-                                            <div className="flex flex-col sm:flex-row gap-4 justify-center pb-20 px-4">
-                                                <button onClick={() => { setStep('question'); setQuestion(""); }} className="px-10 py-5 rounded-[1.8rem] bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all border border-slate-100 order-3">다시 물어보기</button>
-                                                <button 
-                                                    onClick={handleShareInstagram}
-                                                    disabled={isSharing}
-                                                    className="px-10 py-5 rounded-[1.8rem] bg-purple-600 text-white font-black hover:bg-purple-700 shadow-xl transition-all order-1 flex items-center justify-center gap-2 disabled:opacity-75"
-                                                >
-                                                    {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
-                                                    결과 이미지 저장 (인스타 공유)
-                                                </button>
-                                                <button onClick={() => setStep('spread')} className="px-10 py-5 rounded-[1.8rem] bg-slate-900 text-white font-black hover:bg-slate-800 shadow-xl transition-all order-2">다른 주제 선택</button>
-                                            </div>
-                                            <div className="px-4 pb-12">
-                                                <FunnelBottomCta from="tarot_result" />
-                                            </div>
-                                        </div>
+                                        </ReportErrorBoundary>
                                     )}
                                 </div>
                             )}

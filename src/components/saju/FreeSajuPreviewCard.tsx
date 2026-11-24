@@ -65,8 +65,8 @@ const ELEMENT_COPY: Record<
   water: {
     label: '수',
     hanja: '水',
-    barColor: 'bg-sky-600',
-    pillClass: 'bg-sky-50 text-sky-800 border-sky-200',
+    barColor: 'bg-blue-600',
+    pillClass: 'bg-blue-50 text-blue-800 border-blue-200',
     naturePhrase: '상황의 이면까지 먼저 읽어내는 깊은 생각과 유연함',
     excessPattern: '머릿속 시뮬레이션이 길어져 정작 손발이 움직여야 할 때 망설임이 남습니다',
     missingCue: '밤늦게까지 생각이 끊기지 않는 시기',
@@ -245,11 +245,11 @@ const FreeSajuPreviewCard: React.FC<FreeSajuPreviewCardProps> = ({
       {/* 4. 상담 노트 형식의 도입 풀이 + 자연스럽게 끊기는 지점 */}
       <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
         <div className="p-6 pb-2 relative">
-          <h5 className="text-sm font-bold text-stone-900 mb-3">
+          <h5 className="text-base sm:text-lg font-bold text-stone-900 mb-3">
             명식으로 먼저 짚어보는 기본 성향
           </h5>
 
-          <div className="space-y-3.5 text-sm text-stone-700 leading-[1.75]">
+          <div className="space-y-3.5 text-[15px] text-stone-700 leading-[1.8]">
             <p>
               전체 사주에서 {dominantMeta.label}({dominantMeta.hanja}) 기운이 {saju.elementRatio[dominantKey]}%로 가장 먼저 힘을 씁니다. 평소 {dominantMeta.naturePhrase}이 잘 드러나는 편이지만, {dominantMeta.excessPattern}.
             </p>
@@ -274,10 +274,10 @@ const FreeSajuPreviewCard: React.FC<FreeSajuPreviewCardProps> = ({
         </div>
 
         {/* 분석 더보기 결제 이동 */}
-        <div className="px-6 pb-6 pt-2 border-t border-stone-100 bg-[#FAF7F0]/50 text-center space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600">
+        <div className="px-6 pb-6 pt-3 border-t border-stone-100 bg-[#FAF7F0]/50 text-center space-y-3">
+          <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-700">
             <Lock className="w-3.5 h-3.5 text-stone-500" />
-            <span>이어지는 2026년 월별 흐름, 재물, 연애, 주의할 점 전체 풀이</span>
+            <span>이어지는 {new Date().getFullYear()}년 월별 흐름, 재물, 연애, 주의할 점 전체 풀이</span>
           </div>
 
           <button

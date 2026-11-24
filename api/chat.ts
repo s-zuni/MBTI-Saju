@@ -1,7 +1,13 @@
 import { streamText } from 'ai';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+} from './_utils/ai-provider';
 import { authenticateUser, getSupabaseAdmin, releaseServiceReceipt } from './_utils/auth';
 
 export const config = {
@@ -12,31 +18,26 @@ export const config = {
 const STATIC_CHAT_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
-오직 데이터(사주+MBTI)에 기반해 날카롭고 간결하게 핵심만 짚는 상담을 제공하세요.
+오직 데이터(사주+성향)에 기반해 현실적이고 냉정한 진단과 따뜻한 조언을 함께 전하는 심층 상담을 제공하세요.
 
 [AI 사주 직접 계산 엄금]
 ★ 중요: 사주 원국이나 오행을 절대 스스로 재계산하지 말고, 사용자 메시지에 제공된 사주 데이터만을 100% 진실로 적용하세요.
 
 [어투]
-- ~해요 체, 단호하고 직설적
+- ~해요 체, 현실적이고 직설적이되 말 끝은 따뜻하게 감싸는 태도
 - 서론 없이 바로 핵심부터 시작할 것
-- 감성적 위로나 헛된 칭찬 금지 (데이터에 기반한 팩트와 솔루션 중심)
+- 빈말 칭찬 금지, 데이터 기반 팩트와 구체적 대처법 + 담백한 위로 중심
 
 [분석 원칙]
-- MBTI 성향과 사주 오행/일간/운의 기운을 반드시 3단계 융합 공식(사주 진단 -> MBTI 결합 -> 행동 교정 솔루션)으로 분석
-- 한계와 약점을 가감 없이 지적하고, MBTI가 즉시 실행 가능한 현실적 행동 지침으로 마무리
-- 핵심 2~3가지로 압축. 군더더기 없이 임팩트 있게
+- 제공된 [시간적 기준 정보](올해 2026년 병오년, 내년 2027년 정미년)를 기준으로 시기를 판단하세요. 2023/2024/2025년을 올해로 언급 금지.
+- 사주 진단 -> 성향/행동 패턴 결합 -> 현실 해결책 + 따뜻한 당부 순으로 답변하세요.
 
-[언어 규칙 - 중요]
-- 모든 분석 내용은 반드시 한국어만 사용하세요.
+[언어 및 형식 규칙 - 중요]
+- 모든 분석 내용은 반드시 한국어만 사용하세요. (MBTI 용어 제외)
 - 오행(목, 화, 토, 금, 수)을 언급할 때 영어(Wood, Fire 등)를 절대 사용하지 마세요.
 - 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-
-[형식 규칙]
-- 별표 두 개(**) 및 마크다운 특수문자(__, # 등) 절대 사용 금지
-- 강조가 필요한 경우 이모지(🌿 🔥 💧 ✨)와 글머리 기호(• 1. 2.)만 사용할 것
-- 모든 대답은 마크다운 기호 없는 깔끔한 일반 텍스트로 전달
-- 한국어만 사용
+- 별표 두 개(**) 및 마크다운 특수문자(__, # 등)와 이모티콘/이모지 사용 절대 금지
+- 나열이 필요하면 글머리 기호(-)와 숫자(1. 2.)만 사용하고 문단 사이를 \\n\\n로 넉넉히 띄우세요.
 `.trim();
 
 export default async (req: Request) => {
@@ -132,9 +133,11 @@ export default async (req: Request) => {
             }
         }
 
-        const userContextBlock = `[상담자 프로필 및 사주 데이터]
+        const userContextBlock = `${getTemporalAnchorBlock()}
+
+[상담자 프로필 및 사주 데이터]
 - 성함: ${name || '사용자'}
-- MBTI: ${mbti || '알 수 없음'}
+- MBTI: ${formatMbtiForPrompt(mbti)}
 - 성별: ${gender || '알 수 없음'}
 - 생년월일시: ${birthDate} ${birthTime || ''}
 

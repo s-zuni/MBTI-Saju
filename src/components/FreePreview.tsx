@@ -9,6 +9,7 @@ import GuestProfileCard from './GuestProfileCard';
 import FreeSajuPreviewCard from './saju/FreeSajuPreviewCard';
 import FullSajuReportContent from './saju/FullSajuReportContent';
 import SajuGrid from './saju/SajuGrid';
+import ReportErrorBoundary from './common/ReportErrorBoundary';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -17,42 +18,6 @@ import { track } from '../utils/analytics';
 interface FreePreviewProps {
   onSignup?: () => void;
   onOpenMbtiSaju?: () => void;
-}
-
-class ReportErrorBoundary extends React.Component<
-  { children: React.ReactNode; onRetry: () => void },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode; onRetry: () => void }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  componentDidCatch(error: Error) {
-    console.error('[ReportErrorBoundary] render error:', error);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center py-10 px-6 text-center bg-rose-50/40 rounded-2xl border border-rose-200">
-          <p className="text-sm font-bold text-slate-900 mb-3">화면 표시 중 일시적인 오류가 발생했습니다.</p>
-          <button
-            type="button"
-            onClick={() => {
-              this.setState({ hasError: false });
-              this.props.onRetry();
-            }}
-            className="px-6 py-3 bg-slate-950 text-white rounded-full text-xs font-bold"
-          >
-            다시 불러오기
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
 }
 
 const GUEST_MBTI_SAJU_RESULT_KEY = 'mbtiju_guest_mbti_saju_result';
@@ -403,7 +368,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
 
         {/* STEP 4: 결제 완료 후 별도 팝업 없이 그 자리에서 바로 이어지는 전체 분석 */}
         {isInlinePaidActive && (
-          <div className="space-y-6">
+          <div ref={reportRef} className="space-y-6">
             {sajuResult && (
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between px-0.5">
@@ -419,7 +384,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
             )}
 
             {isAnalysisLoading && !fullAnalysis ? (
-              <div className="flex flex-col justify-center items-center py-14 px-6 text-center bg-[#FAF7F0] rounded-2xl border border-[#E6DFD1] space-y-3">
+              <div data-pdf-ignore="true" className="flex flex-col justify-center items-center py-14 px-6 text-center bg-[#FAF7F0] rounded-2xl border border-[#E6DFD1] space-y-3">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   결제가 정상 완료되었습니다
@@ -433,7 +398,7 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
                 </p>
               </div>
             ) : (analysisError || generationError) && !fullAnalysis ? (
-              <div className="flex flex-col justify-center items-center py-12 px-6 text-center bg-rose-50/40 rounded-2xl border border-rose-200">
+              <div data-pdf-ignore="true" className="flex flex-col justify-center items-center py-12 px-6 text-center bg-rose-50/40 rounded-2xl border border-rose-200">
                 <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mb-4">
                   <AlertTriangle className="w-7 h-7 text-rose-600" />
                 </div>
@@ -452,20 +417,18 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
                 </button>
               </div>
             ) : fullAnalysis ? (
-              <div ref={reportRef}>
-                <ReportErrorBoundary onRetry={handleRetryGeneration}>
-                  <FullSajuReportContent
-                    analysis={fullAnalysis}
-                    isStreaming={isAnalysisLoading}
-                    isDownloading={isDownloading}
-                    isRegenerating={isRegenerating}
-                    onDownloadReport={handleDownloadReport}
-                    onRegenerate={handleRegenerate}
-                    onOpenDeepReport={() => navigate('/premium')}
-                    fromContext="home_free_preview_full_report"
-                  />
-                </ReportErrorBoundary>
-              </div>
+              <ReportErrorBoundary onRetry={handleRetryGeneration}>
+                <FullSajuReportContent
+                  analysis={fullAnalysis}
+                  isStreaming={isAnalysisLoading}
+                  isDownloading={isDownloading}
+                  isRegenerating={isRegenerating}
+                  onDownloadReport={handleDownloadReport}
+                  onRegenerate={handleRegenerate}
+                  onOpenDeepReport={() => navigate('/premium')}
+                  fromContext="home_free_preview_full_report"
+                />
+              </ReportErrorBoundary>
             ) : null}
           </div>
         )}

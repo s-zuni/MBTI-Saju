@@ -1,16 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Sparkles, Share2, AlertTriangle } from 'lucide-react';
+import { Loader2, Share2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { SERVICE_COSTS } from '../config/creditConfig';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { fullAnalysisSchema as analysisSchema } from '../config/schemas';
-import { calculateSaju, safeCalculateSaju } from '../utils/sajuUtils';
+import { safeCalculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
 import FreeSajuPreviewCard from './saju/FreeSajuPreviewCard';
 import FullSajuReportContent from './saju/FullSajuReportContent';
+import SajuGrid from './saju/SajuGrid';
+import ReportErrorBoundary from './common/ReportErrorBoundary';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface MbtiSajuModalProps {
@@ -176,7 +178,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   const handleShare = async () => {
     setIsSharing(true);
     try {
-      const shareText = `${analysis?.full_name || ''}님의 MBTI(${analysis?.mbti}) × 사주 융합 별명은 "${analysis?.fusionNickname || ''}"입니다! 🔮\n\n나도 내 운명 분석 받아보기 👉 ${window.location.origin}`;
+      const shareText = `${analysis?.full_name || ''}님의 사주 풀이 별명은 "${analysis?.fusionNickname || ''}"입니다.\n\n나도 내 사주 풀이 받아보기: ${window.location.origin}`;
       if (navigator.share) {
         await navigator.share({ title: '나의 운명 별명', text: shareText, url: window.location.origin });
       } else {
@@ -217,7 +219,11 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
       return null;
     }
 
-    const sajuData = calculateSaju(birthDate, birthTime);
+    const sajuData = safeCalculateSaju(birthDate, birthTime, gender);
+    if (!sajuData) {
+      alert('유효한 생년월일(1900~2050년)을 입력해주세요.');
+      return null;
+    }
     return {
       name,
       gender,
@@ -281,42 +287,53 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-center z-[1000] p-4">
-      <div className="relative w-full max-w-2xl bg-white rounded-[32px] max-h-[94vh] overflow-hidden flex flex-col">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex justify-center items-end sm:items-center z-[1000] p-0 sm:p-4"
+    >
+      <div className="relative w-full max-w-2xl bg-white rounded-t-[32px] sm:rounded-[32px] max-h-[94vh] overflow-hidden flex flex-col">
         <ServiceNavigation currentService="mbti" onNavigate={onNavigate} onClose={onClose} />
         <div className="p-8 pb-4 shrink-0">
           <div className="flex justify-between items-end">
             <h3 className="text-3xl font-black text-slate-950 tracking-tighter">운명 리포트</h3>
-            <button onClick={handleShare} disabled={isSharing} className="px-5 py-2.5 bg-slate-50 text-slate-950 rounded-full text-xs font-bold border border-slate-100 flex items-center gap-2">
-              {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-              공유하기
-            </button>
+            {analysis && (
+              <button onClick={handleShare} disabled={isSharing} className="px-5 py-2.5 bg-slate-50 text-slate-950 rounded-full text-xs font-bold border border-slate-100 flex items-center gap-2">
+                {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                공유하기
+              </button>
+            )}
           </div>
           <div className="h-[2px] w-full bg-slate-950 mt-6"></div>
         </div>
         <div className="px-8 pb-12 pt-4 overflow-y-auto grow custom-scrollbar">
           {isAnalysisLoading && !analysis ? (
-            <div className="flex flex-col justify-center items-center h-80 px-6 text-center">
-              <Loader2 className="w-12 h-12 text-violet-300 animate-spin mb-8 stroke-[1px]" />
-              <div className="space-y-3">
-                <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
-                  {currentLoadingMessage}
+            <div className="flex flex-col justify-center items-center py-16 px-6 text-center bg-[#FAF7F0] rounded-2xl border border-[#E6DFD1] space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                결제가 정상 완료되었습니다
+              </div>
+              <Loader2 className="w-10 h-10 text-indigo-900 animate-spin my-2 stroke-[1.75]" />
+              <div className="space-y-2">
+                <p className="text-slate-900 font-bold text-lg tracking-tight">
+                  {currentLoadingMessage || '사주 명식을 바탕으로 전체 풀이를 작성하고 있습니다...'}
                 </p>
-                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
-                  분석에는 최대 30초 정도 소요될 수 있습니다
+                <p className="text-stone-600 text-sm">
+                  완성된 항목부터 바로 아래에 실시간으로 표시됩니다.
                 </p>
               </div>
             </div>
-          ) : (analysisError || generationError) ? (
+          ) : (analysisError || generationError) && !analysis ? (
             <div className="flex flex-col justify-center items-center py-12 px-6 text-center animate-fade-up">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-5">
+                <AlertTriangle className="w-7 h-7 text-red-500" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">분석 중 오류가 발생했습니다</h3>
-              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">분석 중 오류가 발생했습니다</h3>
+              <p className="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
                 {analysisError?.message || generationError || "일시적인 서버 부하로 분석이 중단되었습니다."}
                 <br />
-                <span className="text-slate-900 font-bold underline underline-offset-4 decoration-violet-200">결제하신 분석은 다시 시도하실 수 있습니다.</span>
+                <span className="text-slate-900 font-bold">결제하신 이용권은 소진되지 않아 바로 다시 시도하실 수 있습니다.</span>
               </p>
               <button 
                 onClick={() => {
@@ -328,34 +345,63 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                     loadAnalysis();
                   }
                 }} 
-                className="px-8 py-4 bg-slate-950 text-white rounded-full font-black text-sm shadow-xl active:scale-95 transition-all"
+                className="px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-sm shadow-lg active:scale-95 transition-all"
               >
                 다시 시도하기
               </button>
             </div>
           ) : analysis ? (
-            <div ref={reportRef}>
-              <FullSajuReportContent
-                analysis={analysis}
-                isStreaming={isAnalysisLoading}
-                isDownloading={isDownloading}
-                isRegenerating={isRegenerating}
-                onDownloadReport={handleDownloadReport}
-                onRegenerate={handleRegenerate}
-                onOpenDeepReport={() => onOpenDeepReport?.()}
-                fromContext="mbti_saju_full_report"
-              />
-            </div>
+            (() => {
+              const analysisSaju = safeCalculateSaju(
+                analysis.birth_date || profile.birthDate,
+                analysis.birth_time || profile.birthTime || initialSession?.user?.user_metadata?.birth_time || null,
+                analysis.gender || profile.gender
+              );
+              return (
+                <div ref={reportRef} className="space-y-6">
+                  {analysisSaju && (
+                    <div className="space-y-2">
+                      <div className="flex items-baseline justify-between px-0.5">
+                        <h5 className="text-sm font-bold text-stone-900">만세력 사주 원국표 (4주 8자)</h5>
+                        <span className="text-xs text-stone-500">
+                          {analysisSaju.ganZhi.day}일주 · {analysisSaju.dayMaster.korean}({analysisSaju.dayMaster.chinese})
+                        </span>
+                      </div>
+                      <div className="[&>div]:!mb-0">
+                        <SajuGrid saju={analysisSaju} />
+                      </div>
+                    </div>
+                  )}
+                  <ReportErrorBoundary
+                    onRetry={() => {
+                      setGenerationError(null);
+                      if (lastPayloadRef.current) submitFull(lastPayloadRef.current);
+                      else loadAnalysis();
+                    }}
+                  >
+                    <FullSajuReportContent
+                      analysis={analysis}
+                      isStreaming={isAnalysisLoading}
+                      isDownloading={isDownloading}
+                      isRegenerating={isRegenerating}
+                      onDownloadReport={handleDownloadReport}
+                      onRegenerate={handleRegenerate}
+                      onOpenDeepReport={() => onOpenDeepReport?.()}
+                      fromContext="mbti_saju_full_report"
+                    />
+                  </ReportErrorBoundary>
+                </div>
+              );
+            })()
           ) : (
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-black">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-xs font-bold">
                   STEP 1~3 · 무료 만세력 확인 후 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원으로 전체 분석 열람
                 </span>
-                <h4 className="text-xl font-black text-slate-950 tracking-tight">MBTI × 사주 통합 운명 리포트</h4>
-                <p className="text-xs text-slate-500 font-medium">
-                  생년월일과 MBTI를 기입하면 만세력 4주 원국표와 프리뷰가 즉시 무료로 계산됩니다.
+                <h4 className="text-xl font-bold text-slate-950 tracking-tight">MBTI × 사주 통합 운명 리포트</h4>
+                <p className="text-sm text-slate-600">
+                  생년월일만 입력해도 만세력 4주 원국표와 프리뷰가 즉시 무료로 계산됩니다.
                 </p>
               </div>
               <GuestProfileCard
@@ -381,9 +427,8 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                   <button
                     onClick={handlePayAndGenerate}
                     disabled={isPaying}
-                    className="w-full py-4.5 bg-slate-950 hover:bg-violet-600 text-white rounded-full font-black text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-4 bg-slate-950 hover:bg-indigo-950 text-white rounded-full font-bold text-base shadow-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <Sparkles className="w-5 h-5" />
                     <span>생년월일을 입력하면 무료 만세력과 분석 프리뷰가 표시됩니다</span>
                   </button>
                 );

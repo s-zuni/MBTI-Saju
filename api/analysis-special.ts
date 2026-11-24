@@ -2,56 +2,42 @@ import { streamObject } from 'ai';
 import { z } from 'zod';
 import { getPreciseSajuData, buildRichSajuContext } from './_utils/saju';
 import { corsHeaders, handleCors, getCorsHeaders } from './_utils/cors';
-import { getAIProvider, isRetryableAIError, BASE_SYSTEM_PROMPT } from './_utils/ai-provider';
+import {
+    getAIProvider,
+    isRetryableAIError,
+    BASE_SYSTEM_PROMPT,
+    getTemporalAnchorBlock,
+    formatMbtiForPrompt,
+} from './_utils/ai-provider';
 import { authenticateUser, releaseServiceReceipt } from './_utils/auth';
-
-const luckySchema = z.object({
-    color: z.string().describe("행운의 색상"),
-    number: z.string().describe("행운의 숫자"),
-    direction: z.string().describe("행운의 방향")
-});
-
-const fortuneItemSchema = z.object({
-    fortune: z.string().describe("매우 상세하고 디테일한 운세 분석 내용 (분량을 풍부하게 작성하고, 최소 3~4개의 구체적인 단락으로 구성하여 가독성을 높이기 위해 줄바꿈(\\n\\n)을 적극 사용할 것)"),
-    lucky: luckySchema,
-    mission: z.string().describe("오늘의 미션 (2-30대 여성이 좋아할 만한 재치 있고 센스 있는 미션/조언)"),
-    charm_stats: z.array(z.object({
-        label: z.string().describe("매력 지수 항목 (예: 매력, 에너지, 연애운, 금전운 등)"),
-        value: z.number().describe("수치 (0-100)")
-    })).length(5).describe("오늘의 5대 매력/운세 스탯"),
-    lucky_ootd: z.string().describe("오늘의 추천 OOTD 스타일 (예: '청량한 크롭탑과 와이드 데님 팬츠')")
-});
-
-const fortuneSchemaSingle = z.object({
-    date: z.string().describe("운세 해당 날짜 (YYYY-MM-DD 형식)"),
-    fortune: fortuneItemSchema
-});
+import {
+    tripSchema,
+    jamidusuSchema,
+    kboSchema,
+    singleDayFortuneSchema,
+    dailyFortuneSchema,
+} from '../src/config/schemas';
 
 // 정적 시스템 프롬프트 (OpenAI Prompt Caching 최적화: 1,024+ 토큰 정적 접두사 유지)
 const STATIC_SPECIAL_SYSTEM_PROMPT = `
 ${BASE_SYSTEM_PROMPT}
 
-당신의 임무는 사주와 MBTI를 정밀 융합하여 실용적 라이프 가이드를 제안하는 냉철한 운명 분석가이자 라이프 컨설턴트입니다.
+당신의 임무는 사주와 성향(MBTI 입력 시 결합, 미입력 시 사주 기질 중심)을 정밀 융합하여 실용적 라이프 가이드를 제안하는 냉철하면서도 사려 깊은 운명 분석가이자 라이프 컨설턴트입니다.
     
 [AI 사주 직접 계산 엄금 및 사실 수용 규칙]
 ★ 중요: 너는 생년월일시를 바탕으로 사주 원국(연주, 월주, 일주, 시주), 오행 비율, 십신을 절대로 직접 계산하려고 시도하지 마라!
-★ 사용자 입력(User Prompt)에 제공되는 [System Context: Deterministic Saju Data] 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 검증 데이터이다. 제공된 데이터만을 사실로 받아들이고 이를 기반으로 트렌디한 해석 가이드를 제시하라.
+★ 사용자 입력(User Prompt)에 제공되는 [System Context: Deterministic Saju Data] 사주 데이터는 코드 엔진(manseryeok)이 계산한 100% 검증 데이터이다. 제공된 데이터만을 사실로 받아들이고 이를 기반으로 깊이 있는 해석 가이드를 제시하라.
 
 [핵심 규칙]
-1. 모든 답변은 사주의 흐름을 건조한 팩트로 해석하되, MBTI에 최적화된 매우 구체적이고 실행 가능한 행동 지침으로 전달하세요.
-2. 압도적인 디테일과 풍성한 분량: 사용자가 깊은 통찰과 만족을 느낄 수 있도록, 내용의 깊이를 더하고 분량을 풍성하게 작성하세요.
-3. 가독성 최우선: 분량이 많더라도 읽기 편하도록, 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)을 매우 자주 사용하세요.
-4. 모든 나열 방식은 반드시 '글머리표(-)'를 사용하여 시각적으로 깔끔하게 정리하세요.
-5. '오늘의 미션'은 사용자가 즉시 오프라인/일상에서 수행할 수 있는 실용적 챌린지 형태로 제안하세요.
-6. 'charm_stats'는 오늘 사용자의 기운이 어디에 집중되어 있는지 5가지 항목으로 분석하세요.
-7. 'lucky_ootd'는 구체적인 패션 스타일이나 아이템으로 추천하세요.
-8. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**)를 절대로 사용하지 마세요.
-9. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요.
-10. 절대로 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
-11. 오행(목, 화, 토, 금, 수)을 언급할 때 Wood, Fire 등의 영어는 절대로 사용하지 마세요.
+1. 사용자 입력의 [시간적 기준 정보](올해 2026년 병오년, 내년 2027년 정미년)를 반드시 기준으로 작성하며, 2023/2024/2025년을 올해로 언급하지 마세요.
+2. 현실적이고 냉정한 진단·예측(리스크와 흔들리는 지점 직시)과 더불어, 마무리는 마음을 다독이는 담백하고 따뜻한 조언과 구체적인 실행 지침으로 전달하세요.
+3. 압도적인 디테일과 3~5배 풍성한 분량: 단답형 한두 문장을 배제하고, 스키마에 명시된 분량 이상으로 충분히 구체적이고 입체적인 상황을 들어 서술하세요.
+4. 가독성 최우선: 한 단락이 길어지지 않도록 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)과 글머리표(-)를 적극 사용하세요.
+5. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**), __, # 및 이모티콘/이모지를 절대로 사용하지 마세요.
+6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
 `.trim();
 
-const schemas: Record<string, any> = {
+const schemas: Record<string, z.ZodType<any>> = {
     healing: z.object({
         place: z.string(),
         placeType: z.string(),
@@ -59,71 +45,13 @@ const schemas: Record<string, any> = {
         reason: z.string(),
         summary: z.string()
     }),
-    jamidusu: z.object({
-        main_character: z.string(),
-        destiny_palace: z.string(),
-        career_palace: z.string(),
-        wealth_style: z.string(),
-        love_style: z.string(),
-        lucky_items: z.array(z.object({
-            name: z.string().describe("길성 또는 행운 요소의 이름 (예: 문창성)"),
-            meaning: z.string().describe("초심자도 이해할 수 있는 쉬운 한 줄 풀이 (예: 학업·시험·글쓰기 운을 돕는 별)")
-        })),
-        summary: z.string()
-    }),
-    trip: z.object({
-        places: z.array(z.object({
-            name: z.string(),
-            reason: z.string(),
-            activity: z.string()
-        })),
-        itinerary: z.array(z.object({
-            day: z.string(),
-            schedule: z.array(z.string())
-        })),
-        summary: z.string(),
-        bestTime: z.string(),
-        tip: z.string()
-    }),
-    travel: z.object({
-        places: z.array(z.object({
-            name: z.string(),
-            reason: z.string(),
-            activity: z.string()
-        })),
-        itinerary: z.array(z.object({
-            day: z.string(),
-            schedule: z.array(z.string())
-        })),
-        summary: z.string(),
-        bestTime: z.string(),
-        tip: z.string()
-    }),
-    kbo: z.object({
-        score: z.number().describe("선택한 구단과의 궁합 점수 (0-100)"),
-        supportedTeamAnalysis: z.string().describe("사주와 MBTI 기반 궁합 분석 (서버 생성)"),
-        winFairyScore: z.number().describe("승리 요정 지수 (0-100)"),
-        bestTeam: z.string().describe("최강 궁합 구단"),
-        worstTeam: z.string().describe("최악 궁합 구단"),
-        dimensions: z.array(z.object({
-            label: z.string().describe("평가 척도 이름"),
-            value: z.number().describe("해당 척도 점수 (0-100)")
-        })).describe("5가지 평가 지표"),
-        date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
-        dailyMessage: z.string().describe("오늘의 KBO 운세 한 줄 메시지"),
-        recommendedSeat: z.string().describe("오늘의 직관 자리 추천 (사주와 MBTI 바탕)"),
-        luckyFood: z.string().describe("오늘, 행운의 직관음식 (사주와 MBTI 바탕)"),
-        tomorrowScore: z.number().describe("내일 궁합 점수"),
-        tomorrowWinFairyScore: z.number().describe("내일 승요지수")
-    }),
-    fortune: z.object({
-        today: fortuneItemSchema,
-        today_date: z.string().describe("오늘 날짜 (YYYY-MM-DD)"),
-        tomorrow: fortuneItemSchema,
-        tomorrow_date: z.string().describe("내일 날짜 (YYYY-MM-DD)")
-    }),
-    fortune_today: fortuneSchemaSingle,
-    fortune_tomorrow: fortuneSchemaSingle
+    jamidusu: jamidusuSchema,
+    trip: tripSchema,
+    travel: tripSchema,
+    kbo: kboSchema,
+    fortune: dailyFortuneSchema,
+    fortune_today: singleDayFortuneSchema,
+    fortune_tomorrow: singleDayFortuneSchema
 };
 
 const KBO_TEAMS = [
@@ -282,10 +210,19 @@ export default async function handler(req: Request) {
     }
 
     const { 
-        birthDate, birthTime, mbti, region, name, 
+        birthDate, birthTime, mbti, region, selectedRegion, tripType, duration, name, 
         startDate, endDate, targetBirthDate, targetBirthTime, targetGender, requirements,
         sajuData, targetSajuData
     } = body;
+
+    const finalRegion = region || selectedRegion || (tripType === 'international' ? '해외 추천 지역' : '전국');
+    const finalPeriod = startDate && endDate
+        ? `${startDate} ~ ${endDate}`
+        : duration
+            ? `${duration}일 일정`
+            : '자유 일정';
+    const mbtiPromptValue = formatMbtiForPrompt(mbti);
+    const temporalBlock = getTemporalAnchorBlock();
 
     // Always compute deterministic Saju data
     let saju = getPreciseSajuData({ birthDate, birthTime, gender: body.gender });
@@ -304,7 +241,7 @@ export default async function handler(req: Request) {
     let userQuery = '';
 
     if (targetType === 'healing') {
-        userQuery = `MBTI: ${mbti}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${region || '전국'}`;
+        userQuery = `MBTI: ${mbtiPromptValue}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${finalRegion}`;
     } else if (targetType === 'jamidusu') {
         // 프런트는 birthDate/birthTime/gender로 보내므로 target* 값이 없으면 이를 사용한다.
         const jmBirthDate = targetBirthDate ?? birthDate;
@@ -317,35 +254,38 @@ export default async function handler(req: Request) {
         userQuery = `[정통 자미두수 12궁 명반 분석 요청]
 성별: ${jmGender === 'male' ? '남성' : '여성'}
 생년월일시: ${jmBirthDate} ${jmBirthTime || '시간모름'}
+MBTI: ${mbtiPromptValue}
 사주: 일간 ${finalTargetSaju?.dayMaster?.korean || '모름'}, 오행분포 ${JSON.stringify(translateRatio(finalTargetSaju?.elementRatio))}
 
-[생성 작업 지침]
-1. 위 명식을 자미두수의 주요 별(자미, 칠살, 파군, 탐랑, 천기, 태음, 천동 등)이 가진 성향으로 치환하여 20대 여성이 호기심을 가질 만한 '나의 메인 수호별 캐릭터'를 도출하세요. (예: "어디서나 시선집중! 매력 만점 탐랑성", "거침없는 팩폭러 칠살성")
-2. 'destiny_palace'는 자미두수 명궁 관점에서 타고난 본성과 메인 주성의 특징을 트렌디하고 감각적인 설명으로 풀어주세요.
-3. 'career_palace'는 관록궁 관점에서 직업적 성향과 가장 빛날 수 있는 분야를 추천하세요.
-4. 'wealth_style'은 재백궁 관점에서 돈을 쓰는 성향과 재물운을 재미있게 분석하세요.
-5. 'love_style'은 부처궁 관점에서 나의 연애 스타일과 시너지가 나는 인연을 설명하세요.
-6. 'lucky_items'는 자미두수에서 나를 돕는 길성(예: 문창, 천괴, 좌보, 우필 등)이나 행운의 요소를 정확히 3개 제시하세요. 각 항목은 반드시 name(별/요소 이름)과 meaning(자미두수를 모르는 사람도 바로 이해할 수 있는 쉬운 한 줄 풀이)을 모두 채우세요. 이름만 적고 풀이를 빠뜨리는 일이 없어야 합니다.
-7. 절대로 결과에 영어를 포함하지 마세요. 모두 한국어로 작성하고 어려운 한자는 쉽게 풀어쓰되, 자미두수의 전문 용어(명궁, 주성, 관록궁 등)는 살려서 신비로움을 더해주세요.`;
+[생성 작업 지침 - 심층 분량 · 이모지 금지]
+1. main_character: 위 명식을 자미두수의 주요 주성(자미, 칠살, 파군, 탐랑, 천기, 태음, 천동 등)으로 치환해 묵직하고 인상적인 주성 호칭을 도출하세요. (이모지 금지)
+2. destiny_palace (명궁): 타고난 본성과 겉으로 드러나는 이미지 대비 내면의 현실적 딜레마를 350~450자(2~3문단 \\n\\n)로 서술하세요.
+3. career_palace (관록궁): 조직/독립 적합성, 성과가 나는 일처리 방식, 주의할 번아웃/마찰 패턴을 350~450자(2~3문단 \\n\\n)로 서술하세요.
+4. wealth_style (재백궁): 돈이 붙는 구조와 소비/투자 시 가장 조심해야 할 누수 패턴, 현실적 재물 전략을 350~450자(2~3문단 \\n\\n)로 서술하세요.
+5. love_style (부처궁): 끌리는 상대 유형, 연애에서 반복되는 갈등 구조, 오래 버티는 관계의 조건을 350~450자(2~3문단 \\n\\n)로 서술하세요.
+6. lucky_items: 자미두수에서 나를 돕는 길성이나 행운 요소 정확히 3개(name + meaning 100~160자 구체적 활용법).
+7. summary: 올해 기준 명반 전체를 꿰뚫는 현실적 과제와 따뜻하고 단단한 응원 총평을 400~550자(3문단 \\n\\n)로 작성하세요.
+8. 절대 영어나 이모지를 넣지 말고 어려운 한자는 풀어쓰되 명궁/관록궁/재백궁/부처궁의 깊이감을 살리세요.`;
 
     } else if (targetType === 'job') {
-        userQuery = `MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
+        userQuery = `MBTI: ${mbtiPromptValue}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (targetType === 'trip') {
         userQuery = `[여행지 및 일정 분석 요청]
-사용자 이름: ${name}
-MBTI: ${mbti}
+사용자 이름: ${name || '이용자'}
+MBTI: ${mbtiPromptValue}
 사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
 오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
-선호 지역: ${region}
-여행 기간: ${startDate} ~ ${endDate}
-요청사항: ${requirements}
+여행 구분: ${tripType === 'international' ? '해외여행' : '국내여행'}
+선호 지역: ${finalRegion}
+여행 기간: ${finalPeriod}
+요청사항: ${requirements || '특별한 요청 없음'}
 
 [생성 작업 지침]
-1. 20대 여성의 취향과 감성에 맞춘 트렌디하고 감각적인 여행 코스와 장소를 제안하세요. (예: 인스타그래머블 핫플, 감성 숙소, 웨이팅 맛집, 힐링 스팟 등)
-2. 사용자의 사주(일간, 오행의 부족/과다)와 MBTI 성향을 깊이 있게 분석하여, '왜 이곳이 당신에게 완벽한 맞춤 여행지인지' 설득력 있게 설명하세요.
-3. 각 추천 장소마다 인생샷을 건질 수 있는 'photoSpot'과 기운을 보완해줄 수 있는 'food'를 반드시 포함하세요.
-4. 함께 가면 시너지가 나는 여행 메이트(companion)와 이번 여행에 챙기면 좋은 행운의 아이템(luckyItem)을 추천하세요.
-5. 일정(itinerary) 구성 시 너무 뻔한 관광지가 아닌 현지인 느낌의 장소를 포함시키고, MBTI 특성을 고려한 일정을 구성하세요.`;
+1. concept: 이번 여행을 관통하는 핵심 테마 한 문장 (이모지 금지).
+2. places (3곳): 사용자의 사주(일간, 오행 부족/과다 보완)와 성향 기준으로, 왜 지금 이 시기에 이곳이 필요한지 냉정하게 짚어주는 reason(250~350자, 2문단)과 구체적 동선/활동 activity(180~250자), photoSpot, food를 모두 충실히 채우세요.
+3. itinerary: 요청한 여행 일수(${duration || 3}일 내외)에 맞춰 1일차~N일차별 오전/오후/저녁의 구체적이고 현실적인 일정을 구성하세요.
+4. companion & luckyItem: 함께 가면 시너지가 나는 동행 스타일/갈등 방지 포인트(180~250자)와 컨디션·기운 보완 아이템(100~150자)을 서술하세요.
+5. summary(300~450자), bestTime(150~220자), tip(180~250자): 헛된 미사여구 대신 실제 일정 조율과 마음 환기에 도움이 되는 현실 조언과 따뜻한 응원을 담으세요.`;
     } else if (targetType === 'kbo') {
         const isNoTeam = requirements === '없음 (아직 없음)';
         const currentTeam = isNoTeam ? '없음' : (requirements || 'KIA');
@@ -357,36 +297,38 @@ MBTI: ${mbti}
         const worstTeam = kboDeterministic.worstTeam;
 
         userQuery = `[KBO 야구단 궁합 및 직관 운세 분석 요청]
-        사용자 이름: ${name}
-        MBTI: ${mbti}
-        사주 일간: ${saju?.dayMaster?.korean || '알수없음'}
-        오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
-        현재 응원 구단: ${currentTeam} (추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'})
-        
-        [사전 계산된 데이터 (절대 준수)]
-        - 해당 구단과의 궁합 점수: ${currentTeamScore}점
-        - 오늘 직관 시 승리요정 지수: ${winFairyScore}점
-        - 나에게 가장 운명적인 최고 궁합 구단: ${bestTeam}
-        - 나와 상극인 주의해야 할 구단: ${worstTeam}
-        - 5대 지표: ${JSON.stringify(kboDeterministic.dimensions)}
+사용자 이름: ${name || '이용자'}
+MBTI: ${mbtiPromptValue}
+사주 일간: ${saju?.dayMaster?.korean || '알수없음'}
+오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
+현재 응원 구단: ${currentTeam} (추천 여부: ${isNoTeam ? '추천됨' : '기존 팬'})
 
-        [생성 지침]
-        1. supportedTeamAnalysis: 현재 구단(${currentTeam})과의 궁합 점수(${currentTeamScore}점)에 대해:
-           - 점수가 높다면 왜 천생연분인지, 낮다면 어떤 점을 주의해야 하는지 사주학적으로 풀어내세요.
-           - 2-30대 여성이 좋아할 만한 감성적이고 세련된 문체를 유지하세요.
-        2. dailyMessage: 오늘 이 구단과의 기운을 담은 짧고 재치있는 한 줄 (20자 이내).
-        3. recommendedSeat: 사주와 MBTI를 분석하여 사용자에게 가장 행운을 줄 수 있는 야구장 좌석 구역을 추천하세요. (예: "열정이 넘치는 응원석 1루 쪽", "차분히 분석하기 좋은 포수 뒤쪽 명당" 등)
-        4. luckyFood: 사용자의 오늘 기운을 북돋아 줄 야구장 먹거리나 주변 음식을 추천하세요. (예: "화(火)의 기운을 보충할 매콤한 떡볶이", "MBTI P 성향에 딱 맞는 즉석 구이 오징어" 등)
-        5. 주의: '추천 여부'가 '추천됨'인 경우에만 bestTeam과 worstTeam을 상세히 고려하세요. 기존 팬인 경우에는 bestTeam과 worstTeam은 결과에 포함만 시키되, 분석 내용(supportedTeamAnalysis)에서는 응원하는 구단 위주로 서술하세요.`;
+[사전 계산된 데이터 (절대 준수)]
+- 해당 구단과의 궁합 점수: ${currentTeamScore}점
+- 오늘 직관 시 승리요정 지수: ${winFairyScore}점
+- 나에게 가장 운명적인 최고 궁합 구단: ${bestTeam}
+- 나와 상극인 주의해야 할 구단: ${worstTeam}
+- 5대 지표: ${JSON.stringify(kboDeterministic.dimensions)}
+
+[생성 지침 - 심층 분량 · 이모지 금지]
+1. supportedTeamAnalysis: 현재 구단(${currentTeam})과의 궁합 점수(${currentTeamScore}점)에 대해 사주 오행·일간 및 성향 관점에서 잘 맞는 결, 경기 흐름이 꼬일 때 주의해야 할 감정 패턴, 직관을 더 즐겁게 만드는 따뜻한 조언까지 **450~600자(3문단 \\n\\n)**로 풍성하게 서술하세요.
+2. dailyMessage: 오늘 이 구단과의 기운을 담은 담백하고 선명한 한 줄 (40~80자, 이모지 금지).
+3. recommendedSeat: 사주와 성향 기준 추천 구장 좌석 구역과 이유 (100~160자).
+4. luckyFood: 오늘 기운을 보완하는 구장 먹거리와 이유 (100~160자).
+5. 기존 팬인 경우에도 bestTeam/worstTeam 필드는 사전 계산 데이터 그대로 채우되, 본문 분석은 현재 응원 구단 위주로 서술하세요.`;
     } else if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow' || targetType === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
         const dateTag = scope === 'tomorrow' || targetType === 'fortune_tomorrow' ? '내일' : '오늘';
         const targetDate = getDateString(dateTag === '내일' ? 1 : 0);
-        userQuery = `[대상 날짜: ${targetDate} (${dateTag})] 띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbti}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}. 반드시 '${dateTag}'의 운세만 생성하세요. 생성되는 운세의 date 필드는 반드시 '${targetDate}' 이어야 합니다.`;
+        userQuery = `[대상 날짜: ${targetDate} (${dateTag})]
+띠: ${zodiac}, 생년월일: ${birthDate}, MBTI: ${mbtiPromptValue}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}.
+반드시 '${dateTag}'(${targetDate})의 운세만 생성하세요. 생성되는 운세의 date 필드는 반드시 '${targetDate}' 이어야 합니다.
+- fortune 본문은 반드시 600~900자(4~5문단 \\n\\n)로 (1) 오늘/내일 전체 기운의 냉정한 현실 진단, (2) 일·학업과 재물에서 조심할 변수, (3) 대인·연애 관계에서의 태도, (4) 하루를 버텨내는 스스로를 위한 따뜻한 조언 순으로 풍성하게 서술하세요.
+- mission은 오늘 바로 해볼 수 있는 현실적 미션과 따뜻한 한마디(80~140자)로 작성하세요. 이모지와 ** 기호는 절대 사용하지 마세요.`;
     }
 
-    const finalUserQuery = `${sajuContextBlock}\n\n${userQuery}`;
+    const finalUserQuery = `${temporalBlock}\n\n${sajuContextBlock}\n\n${userQuery}`;
 
     let receiptReleased = false;
     const safeReleaseReceipt = async () => {

@@ -19,7 +19,7 @@ interface TripShareCardProps {
 
 const TripShareCard = forwardRef<HTMLDivElement, TripShareCardProps>(({ result, userName }, ref) => {
     const concept = result?.concept || '행운의 여행지 추천';
-    const places = result?.places || [];
+    const places = Array.isArray(result?.places) ? result.places.filter(Boolean) : [];
     const companion = result?.companion || '';
     const luckyItem = result?.luckyItem || '';
 

@@ -6,11 +6,13 @@ import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { compatibilitySchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { calculateSaju } from '../utils/sajuUtils';
+import { safeCalculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from './GuestProfileCard';
 import FunnelBottomCta from './FunnelBottomCta';
+import ReportErrorBoundary from './common/ReportErrorBoundary';
+import StreamingStatusBanner from './common/StreamingStatusBanner';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 interface PrefillData {
@@ -70,6 +72,8 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const reportRef = useRef<HTMLDivElement>(null);
     const ticketCheckedRef = useRef(false);
     const receiptTokenRef = useRef<string | null>(null);
+    const lastPayloadRef = useRef<any>(null);
+    const [hasStarted, setHasStarted] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
     const [isPaying, setIsPaying] = useState<boolean>(false);
     const [isPartnerMode, setIsPartnerMode] = useState<boolean>(true);
@@ -89,6 +93,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
         headers: () => buildServiceRequestHeaders(receiptTokenRef.current),
         onFinish: ({ object, error: validationError }) => {
             if (object) {
+                setLocalError(null);
                 if (refreshCredits) {
                     refreshCredits();
                 }
@@ -97,8 +102,12 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                 }
             } else {
                 console.error('[CompatibilityModal] Result validation failed:', validationError);
-                setLocalError('분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+                setLocalError('분석 결과를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
             }
+        },
+        onError: (err) => {
+            console.error('[CompatibilityModal] Analysis failed:', err);
+            setLocalError('분석 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
 
@@ -108,16 +117,24 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
         const ticket = consumePaidServiceTicket('COMPATIBILITY');
         if (ticket?.payload) {
             receiptTokenRef.current = ticket.receiptToken || null;
+            lastPayloadRef.current = ticket.payload;
+            setHasStarted(true);
             const p = ticket.payload;
             if (typeof p.isPartnerMode === 'boolean') setIsPartnerMode(p.isPartnerMode);
             if (p.relationshipType) setRelationshipType(p.relationshipType);
             if (p.targetName) setTargetName(p.targetName);
             if (p.targetBirthDate) setTargetBirthDate(p.targetBirthDate);
             if (p.targetBirthTime) setTargetBirthTime(p.targetBirthTime);
-            if (p.targetMbti) setTargetMbti(p.targetMbti);
+            if (p.targetMbti && p.targetMbti !== '미입력') setTargetMbti(p.targetMbti);
             submit(p);
         }
     }, [submit]);
+
+    const handleRetry = () => {
+        if (!lastPayloadRef.current) return;
+        setLocalError(null);
+        submit(lastPayloadRef.current);
+    };
 
     // 로딩 메시지 순환 효과
     useEffect(() => {
@@ -142,15 +159,24 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
             return;
         }
 
+        const userSajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        if (!userSajuData) {
+            setLocalError('본인의 유효한 생년월일(1900~2050년)을 입력해주세요.');
+            return;
+        }
+
+        let targetSajuData = null;
+        if (isPartnerMode) {
+            targetSajuData = safeCalculateSaju(targetBirthDate, targetBirthTime);
+            if (!targetSajuData) {
+                setLocalError('상대방의 유효한 생년월일(1900~2050년)을 입력해주세요.');
+                return;
+            }
+        }
+
         setIsPaying(true);
         try {
             setLocalError(null);
-            const userSajuData = calculateSaju(profile.birthDate, profile.birthTime);
-            
-            let targetSajuData = null;
-            if (isPartnerMode) {
-                targetSajuData = calculateSaju(targetBirthDate, targetBirthTime);
-            }
 
             const res = await startServicePayment({
                 serviceType: 'COMPATIBILITY',
@@ -210,9 +236,9 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     };
 
     return (
-        <div className="px-8 sm:p-12 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
+        <div className="px-6 sm:p-10 pb-12 pt-4 overflow-y-auto custom-scrollbar grow bg-white">
             {/* 분석 전 폼 */}
-            {!result && !isLoading && (
+            {!result && !isLoading && !hasStarted && (
                 <form onSubmit={handleFetchCompatibility} className="space-y-6 animate-fade-up">
                     <GuestProfileCard
                         profile={profile}
@@ -351,125 +377,125 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                 </form>
             )}
 
-            {(isLoading || result) && (
-                <div ref={reportRef} className="bg-white">
-                    {isLoading && !result ? (
-                        <div className="flex flex-col justify-center items-center h-80 px-6 text-center">
-                            <Loader2 className="w-12 h-12 text-pink-300 animate-spin mb-8 stroke-[1px]" />
-                            <div className="space-y-3">
-                                <p className="text-slate-900 font-black text-lg tracking-tight animate-fade-up">
-                                    {currentLoadingMessage}
-                                </p>
-                                <p className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
-                                    분석에는 최대 30초 정도 소요될 수 있습니다
-                                </p>
-                            </div>
-                        </div>
-                    ) : (analysisError || localError) ? (
-                        <div className="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-up">
-                            <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mb-6">
-                                <Heart className="w-8 h-8 text-pink-400 fill-pink-400" />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-950 mb-2">분석 중 오류가 발생했습니다</h3>
-                            <p className="text-slate-600 text-sm mb-4 leading-relaxed font-bold">
-                                {(analysisError?.message || localError) || "원인을 알 수 없는 오류가 발생했습니다."}
-                            </p>
-                            <button onClick={onReset} className="px-10 py-4 bg-slate-950 text-white rounded-full font-black">
-                                다시 시도하기
-                            </button>
-                        </div>
-                    ) : result ? (
-                        <div className="space-y-12 animate-fade-up">
-                            {/* 점수 원형 - 핑크 악센트 스타일 */}
-                            <div className="flex flex-col items-center py-10">
-                                <div className="relative w-40 h-40">
-                                    <div className="absolute inset-0 rounded-full border-[8px] border-pink-50"></div>
-                                    <div
-                                        className="absolute inset-0 rounded-full border-[8px] border-pink-400 transition-all duration-1000"
-                                        style={{ clipPath: `inset(0 0 0 ${100 - (result?.score || 0)}%)` }}
-                                    ></div>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-4xl font-black text-slate-900">{(result?.score ?? 0)}</span>
-                                        <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest">Points</span>
+            {(isLoading || result || hasStarted) && (
+                <div ref={reportRef} className="bg-white space-y-6">
+                    <StreamingStatusBanner
+                        isStreaming={isLoading}
+                        hasData={!!result}
+                        error={!result ? (localError || analysisError?.message || null) : null}
+                        onRetry={handleRetry}
+                        streamingTitle={currentLoadingMessage || '결제가 완료되어 궁합 풀이를 실시간으로 작성하고 있습니다'}
+                        streamingSubtitle="완성되는 항목부터 아래에 바로 표시됩니다."
+                        completedText="심층 궁합 풀이가 완료되었습니다."
+                    />
+
+                    {result && (
+                        <ReportErrorBoundary onRetry={handleRetry}>
+                            <div className="space-y-10 animate-fade-up text-left">
+                                {/* 점수 원형 */}
+                                <div className="flex flex-col items-center py-6">
+                                    <div className="relative w-36 h-36 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 144 144">
+                                            <circle cx="72" cy="72" r="60" stroke="#fce7f3" strokeWidth="10" fill="transparent" />
+                                            <circle
+                                                cx="72"
+                                                cy="72"
+                                                r="60"
+                                                stroke="#ec4899"
+                                                strokeWidth="10"
+                                                fill="transparent"
+                                                strokeDasharray={377}
+                                                strokeDashoffset={377 - (377 * Math.min(100, Math.max(0, result?.score || 0))) / 100}
+                                                strokeLinecap="round"
+                                                className="transition-all duration-1000 ease-out"
+                                            />
+                                        </svg>
+                                        <div className="absolute flex flex-col items-center justify-center">
+                                            <span className="text-3xl font-bold text-slate-950 leading-none">{result?.score ?? 0}</span>
+                                            <span className="text-xs font-bold text-pink-600 mt-1.5">궁합점수</span>
+                                        </div>
                                     </div>
+                                    {result?.summary && (
+                                        <h4 className="mt-6 text-lg sm:text-xl font-bold text-slate-900 tracking-tight text-center leading-relaxed max-w-md px-2 break-keep">
+                                            {stripMarkdown(result.summary)}
+                                        </h4>
+                                    )}
                                 </div>
-                                <h4 className="mt-8 text-xl font-black text-slate-900 tracking-tight text-center leading-tight max-w-sm px-4">
-                                    {stripMarkdown(result?.summary || '')}
-                                </h4>
-                            </div>
 
-                            {/* 키워드 */}
-                            <div className="flex justify-center gap-2 flex-wrap pb-10 border-b border-slate-100">
-                                {result?.keywords?.filter((k: any): k is string => !!k).map((k, i) => (
-                                    <span key={i} className="px-4 py-2 bg-pink-50 text-pink-600 rounded-lg text-xs font-bold border border-pink-100 shadow-sm">
-                                        #{k.trim()}
-                                    </span>
-                                ))}
-                            </div>
+                                {/* 키워드 */}
+                                {Array.isArray(result?.keywords) && result.keywords.length > 0 && (
+                                    <div className="flex justify-center gap-2 flex-wrap pb-8 border-b border-stone-200">
+                                        {result.keywords.filter((k: any): k is string => !!k).map((k, i) => (
+                                            <span key={i} className="px-3.5 py-1.5 bg-pink-50 text-pink-700 rounded-full text-sm font-semibold border border-pink-200">
+                                                #{k.replace(/^#/, '').trim()}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
 
-                            {/* 상세 분석 (3 color constraint - White/Slate/Black) */}
-                            <div className="grid gap-6">
-                                <section className="report-section">
-                                    <h4 className="report-section-title text-slate-900 flex items-center gap-2 mb-8">
-                                        <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center">
-                                            <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
-                                        </div>
-                                        심층 궁합 융합 분석
-                                    </h4>
-                                    <div className="space-y-6">
-                                        <div className="report-card !border-pink-100 hover:border-pink-200 transition-colors">
-                                            <div className="flex items-center gap-2 text-pink-500 mb-3">
-                                                <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
-                                                <h5 className="font-black text-lg">나의 MBTI와 어울리는 이상형</h5>
+                                {/* 상세 분석 */}
+                                <section className="report-section space-y-6">
+                                    <h4 className="report-section-title">심층 궁합 융합 분석</h4>
+                                    <div className="space-y-5">
+                                        {result?.details?.ideal_mbti && (
+                                            <div className="report-card border-pink-200/80 space-y-2">
+                                                <h5 className="font-bold text-lg sm:text-xl text-pink-700">성향과 일상 호흡 분석</h5>
+                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                    {stripMarkdown(result.details.ideal_mbti)}
+                                                </p>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{stripMarkdown(result?.details?.ideal_mbti || '')}</p>
-                                        </div>
-                                        <div className="report-card !border-pink-100 hover:border-pink-200 transition-colors">
-                                            <div className="flex items-center gap-2 text-pink-500 mb-3">
-                                                <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
-                                                <h5 className="font-black text-lg">나의 사주와 어울리는 인연</h5>
+                                        )}
+                                        {result?.details?.ideal_saju && (
+                                            <div className="report-card border-pink-200/80 space-y-2">
+                                                <h5 className="font-bold text-lg sm:text-xl text-pink-700">사주 원국과 오행 궁합</h5>
+                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                    {stripMarkdown(result.details.ideal_saju)}
+                                                </p>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{stripMarkdown(result?.details?.ideal_saju || '')}</p>
-                                        </div>
-                                        <div className="report-card bg-slate-950 text-white !border-none !shadow-2xl relative overflow-hidden group">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-pink-500/20 transition-colors"></div>
-                                            <div className="flex items-center gap-2 text-pink-300 mb-3 relative z-10">
-                                                <div className="w-1.5 h-4 bg-pink-400 rounded-full"></div>
-                                                <h5 className="font-black text-lg">종합 궁합 분석 및 조언</h5>
+                                        )}
+                                        {result?.details?.overall_compatibility && (
+                                            <div className="report-card bg-slate-900 text-white border-slate-800 space-y-3">
+                                                <h5 className="font-bold text-lg sm:text-xl text-pink-200">종합 궁합 분석 및 현실 조언</h5>
+                                                <p className="text-[15px] sm:text-base text-slate-100 leading-[1.95] whitespace-pre-wrap break-keep">
+                                                    {stripMarkdown(result.details.overall_compatibility)}
+                                                </p>
                                             </div>
-                                            <p className="text-[15px] font-medium text-slate-300 leading-relaxed relative z-10 whitespace-pre-wrap">{stripMarkdown(result?.details?.overall_compatibility || '')}</p>
-                                        </div>
+                                        )}
                                     </div>
                                 </section>
-                            </div>
 
-                            <div className="flex flex-col items-center pt-10 border-t border-slate-100 gap-4">
-                                <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
-                                    <button
-                                        onClick={handleDownloadPDF}
-                                        className="px-8 py-5 bg-slate-100 text-slate-950 rounded-full font-black flex items-center justify-center gap-3 hover:bg-slate-200 transition-all flex-1"
-                                    >
-                                        <Download className="w-5 h-5" /> PDF 저장
-                                    </button>
-                                    <button
-                                        onClick={handleShareLink}
-                                        className="px-8 py-5 bg-pink-500 text-white rounded-full font-black shadow-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all flex-1"
-                                    >
-                                        {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-                                        {copied ? '링크 복사됨!' : '친구와 결과 공유'}
-                                    </button>
-                                </div>
-                                <button
-                                    onClick={onReset}
-                                    className="text-slate-500 text-xs font-bold hover:text-slate-950 transition-colors underline underline-offset-4 mt-2"
-                                >
-                                    다른 인연 분석하기
-                                </button>
-                            </div>
+                                {!isLoading && (
+                                    <>
+                                        <div className="flex flex-col items-center pt-8 border-t border-stone-200 gap-4">
+                                            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                                                <button
+                                                    onClick={handleDownloadPDF}
+                                                    className="px-6 py-4 bg-stone-100 text-slate-950 rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-stone-200 transition-colors flex-1"
+                                                >
+                                                    <Download className="w-4 h-4" /> PDF 저장
+                                                </button>
+                                                <button
+                                                    onClick={handleShareLink}
+                                                    className="px-6 py-4 bg-pink-600 text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-pink-700 transition-colors flex-1"
+                                                >
+                                                    {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                                                    {copied ? '링크 복사됨!' : '친구와 결과 공유'}
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={onReset}
+                                                className="text-stone-600 text-sm font-semibold hover:text-slate-950 transition-colors underline underline-offset-4 mt-2"
+                                            >
+                                                다른 인연 분석하기
+                                            </button>
+                                        </div>
 
-                            <FunnelBottomCta from="compatibility_modal_result" />
-                        </div>
-                    ) : null}
+                                        <FunnelBottomCta from="compatibility_modal_result" />
+                                    </>
+                                )}
+                            </div>
+                        </ReportErrorBoundary>
+                    )}
                 </div>
             )}
         </div>

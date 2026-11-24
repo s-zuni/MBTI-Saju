@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, ChevronLeft, CreditCard, TrendingUp } from 'lucide-react';
+import { Download, ChevronLeft, CreditCard } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { goldSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
-import { calculateSaju } from '../utils/sajuUtils';
+import { safeCalculateSaju } from '../utils/sajuUtils';
+import { stripMarkdown } from '../utils/textUtils';
 import { useGuestProfile } from '../hooks/useGuestProfile';
 import GuestProfileCard from '../components/GuestProfileCard';
 import FunnelBottomCta from '../components/FunnelBottomCta';
+import ReportErrorBoundary from '../components/common/ReportErrorBoundary';
+import StreamingStatusBanner from '../components/common/StreamingStatusBanner';
 import { buildServiceRequestHeaders, consumePaidServiceTicket, startServicePayment } from '../utils/servicePayCheckout';
 
 type GoldType = 'wealth' | 'business' | 'job' | 'jobchange';
@@ -31,23 +34,25 @@ const renderWealthReport = (reportText: string) => {
 
     const renderFormattedText = (rawText: string) => {
         return rawText
-            .replace(/\*\*(.*?)\*\//g, '<strong>$1</strong>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .split('\n')
             .map((line, index) => {
-                const isBullet = line.trim().startsWith('-');
-                const content = isBullet ? line.trim().substring(1).trim() : line;
-                
+                const trimmed = line.trim();
+                if (!trimmed) return <div key={index} className="h-3" />;
+                const isBullet = trimmed.startsWith('-');
+                const content = stripMarkdown(isBullet ? trimmed.substring(1).trim() : trimmed);
+
                 if (isBullet) {
                     return (
-                        <li key={index} className="list-none flex items-start gap-2 text-slate-700 text-xs sm:text-sm leading-relaxed mb-1.5 break-keep">
-                            <span className="inline-block w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span dangerouslySetInnerHTML={{ __html: content }} />
+                        <li key={index} className="list-none flex items-start gap-2.5 text-slate-800 text-[15px] sm:text-base leading-[1.9] mb-2 break-keep">
+                            <span className="text-stone-400 font-bold select-none">•</span>
+                            <span>{content}</span>
                         </li>
                     );
                 }
                 return (
-                    <p key={index} className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3.5 break-keep" dangerouslySetInnerHTML={{ __html: content }} />
+                    <p key={index} className="text-slate-800 text-[15px] sm:text-base leading-[1.9] mb-3.5 break-keep">
+                        {content}
+                    </p>
                 );
             });
     };
@@ -56,36 +61,26 @@ const renderWealthReport = (reportText: string) => {
 
     if (parsedSections.length === 0) {
         return (
-            <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center text-slate-400 text-xs font-bold">
-                보고서를 분석하는 중입니다...
+            <div className="p-6 bg-stone-50 border border-stone-200 rounded-2xl text-center text-stone-600 text-sm font-semibold">
+                재물 심층 보고서를 작성하고 있습니다...
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <div className="text-center py-4 border-b border-dashed border-amber-200">
-                <div className="inline-block px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5">
-                    50년 명리 대가의 처방전
-                </div>
-                <h3 className="text-base font-black text-slate-900 tracking-tight">재물 운명 심층 팩폭 보고서</h3>
+            <div className="py-4 border-b border-stone-200">
+                <p className="text-sm font-semibold text-amber-700 mb-1">명리 재물 종합 처방</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">재물 운명 심층 리포트</h3>
             </div>
             
-            <div className="relative p-6 sm:p-8 bg-gradient-to-br from-amber-50/20 via-white to-orange-50/10 border-2 border-amber-200/50 rounded-[28px] shadow-sm space-y-6">
-                <div className="absolute top-4 right-4 text-amber-500/10 font-serif text-6xl select-none font-bold">財</div>
-                <div className="absolute bottom-4 left-4 text-amber-500/10 font-serif text-6xl select-none font-bold">運</div>
-
+            <div className="p-6 sm:p-8 bg-[#FAF7F0] border border-[#E6DFD1] rounded-2xl space-y-8">
                 {parsedSections.map((section, idx) => (
-                    <div key={idx} className="relative space-y-2 z-10">
-                        <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-5.5 h-5.5 bg-amber-500 text-white rounded-lg text-[10px] font-black">
-                                {idx + 1}
-                            </span>
-                            <h4 className="text-xs sm:text-sm font-black text-slate-950 tracking-tight">
-                                {section.header}
-                            </h4>
-                        </div>
-                        <div className="pl-6 border-l border-amber-200">
+                    <div key={idx} className={idx > 0 ? 'pt-6 border-t border-[#E6DFD1] space-y-3' : 'space-y-3'}>
+                        <h4 className="text-lg sm:text-xl font-bold text-slate-950 tracking-tight leading-snug">
+                            {idx + 1}. {stripMarkdown(section.header)}
+                        </h4>
+                        <div>
                             {renderFormattedText(section.content)}
                         </div>
                     </div>
@@ -140,6 +135,8 @@ const GoldPage: React.FC<{ session?: any }> = () => {
     };
 
     const receiptTokenRef = useRef<string | null>(null);
+    const lastPayloadRef = useRef<any>(null);
+    const [hasStarted, setHasStarted] = useState(false);
 
     const { object: result, submit, isLoading } = useObject({
         api: `/api/gold?type=${activeTab}`,
@@ -148,12 +145,14 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         onFinish: ({ object, error: validationError }) => {
             if (!object) {
                 console.error('[GoldPage] Result validation failed:', validationError);
-                setError('재물 사주 분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.');
+                setError('재물 사주 분석 결과를 생성하지 못했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
+            } else {
+                setError(null);
             }
         },
         onError: (err) => {
             console.error('[GoldPage] Analysis failed:', err);
-            setError('분석 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            setError('분석 중 일시적인 오류가 발생했습니다. 아래 [다시 시도하기]를 눌러 주세요.');
         }
     });
 
@@ -163,6 +162,8 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         const ticket = consumePaidServiceTicket(['GOLD_WEALTH', 'GOLD_BUSINESS', 'GOLD_JOB', 'GOLD_JOBCHANGE']);
         if (ticket?.payload) {
             receiptTokenRef.current = ticket.receiptToken || null;
+            lastPayloadRef.current = ticket.payload;
+            setHasStarted(true);
             const p = ticket.payload;
             if (p.type && ['wealth', 'business', 'job', 'jobchange'].includes(p.type)) {
                 setActiveTab(p.type);
@@ -179,10 +180,17 @@ const GoldPage: React.FC<{ session?: any }> = () => {
     useEffect(() => {
         if (pendingAutoPayload && (!pendingAutoPayload.type || activeTab === pendingAutoPayload.type)) {
             const payloadToRun = pendingAutoPayload;
+            lastPayloadRef.current = payloadToRun;
             setPendingAutoPayload(null);
             submit(payloadToRun);
         }
     }, [pendingAutoPayload, activeTab, submit]);
+
+    const handleRetry = () => {
+        if (!lastPayloadRef.current) return;
+        setError(null);
+        submit(lastPayloadRef.current);
+    };
 
     const handleTabChange = (tab: GoldType) => {
         setActiveTab(tab);
@@ -211,10 +219,14 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         }
 
         const serviceKey = getServiceKey(activeTab);
+        const sajuData = safeCalculateSaju(profile.birthDate, profile.birthTime);
+        if (!sajuData) {
+            setError('유효한 생년월일(1900~2050년)을 입력해주세요.');
+            return;
+        }
         setIsPaying(true);
         try {
             setError(null);
-            const sajuData = calculateSaju(profile.birthDate, profile.birthTime);
             const res = await startServicePayment({
                 serviceType: serviceKey,
                 serviceName: `재물 · 직장 사주 (${getTabLabel(activeTab)})`,
@@ -264,7 +276,8 @@ const GoldPage: React.FC<{ session?: any }> = () => {
     };
 
     const userName = profile.name || '이용자';
-    const userMbti = profile.mbti || 'ESTJ';
+    const userMbti = profile.mbti?.trim() || '';
+    const currentYear = new Date().getFullYear();
 
     const cost = SERVICE_COSTS[getServiceKey(activeTab)];
 
@@ -312,19 +325,16 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                 </div>
 
                 <div>
-                    {!result && !isLoading ? (
+                    {!result && !isLoading && !hasStarted ? (
                         <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
-                            <div className="p-8 border-b border-slate-100 text-center bg-gradient-to-br from-amber-50/30 to-slate-50/50">
-                                <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-2xl shadow-sm mb-4 border border-amber-100">
-                                    <TrendingUp className="w-6 h-6 text-amber-500" />
-                                </div>
-                                <h1 className="text-xl font-black text-slate-900 mb-1.5">
+                            <div className="p-8 border-b border-slate-100 text-center bg-[#FAF7F0]">
+                                <h1 className="text-2xl font-bold text-slate-900 mb-2">
                                     {activeTab === 'wealth' && '내 재물운 보기'}
                                     {activeTab === 'business' && '창업 및 사업 사주'}
                                     {activeTab === 'job' && '취직 사주'}
                                     {activeTab === 'jobchange' && '이직 사주'}
                                 </h1>
-                                <p className="text-slate-400 text-xs font-medium">50년 경력의 명리학자가 분석하는 차원이 다른 솔루션</p>
+                                <p className="text-stone-600 text-sm">명리학과 성향 데이터 기반 재물·커리어 전략</p>
                             </div>
 
                             <div className="p-8">
@@ -408,273 +418,283 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                                     <button 
                                         type="submit" 
                                         disabled={isPaying}
-                                        className="w-full py-4.5 bg-slate-900 hover:bg-amber-600 text-white rounded-2xl font-black text-sm shadow hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        className="w-full py-4 bg-slate-900 hover:bg-amber-600 text-white rounded-2xl font-bold text-base shadow transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
-                                        <TrendingUp className="w-4 h-4" />
                                         {isPaying ? '결제 창 여는 중...' : `재물 사주 분석하기 (${cost.toLocaleString()}원 결제)`}
                                     </button>
-                                    <p className="text-center text-[10px] text-slate-400 font-bold">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다.</p>
+                                    <p className="text-center text-xs text-slate-500 font-semibold">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다.</p>
                                 </form>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {/* 로딩 중 표시 */}
-                            {isLoading && !result && (
-                                <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-12 flex flex-col justify-center items-center py-20 px-6 text-center">
-                                    <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-                                    <p className="text-slate-900 font-black text-base animate-pulse">우주의 기운을 모아 재물그릇을 계산하고 있습니다...</p>
-                                </div>
-                            )}
+                        <div className="space-y-5">
+                            <StreamingStatusBanner
+                                isStreaming={isLoading}
+                                hasData={!!result}
+                                error={!result ? error : null}
+                                onRetry={handleRetry}
+                                streamingTitle="결제가 완료되어 재물 풀이를 실시간으로 작성하고 있습니다"
+                                streamingSubtitle="완성되는 항목부터 바로 아래에 표시됩니다."
+                                completedText="재물 사주 풀이가 완료되었습니다."
+                            />
 
-                            {/* 결과 표시 (Figma 디자인 완벽 반영) */}
                             {result && (
-                                <div className="space-y-4">
-                                    <div 
-                                        className="bg-white rounded-[32px] p-6 sm:p-10 border border-slate-200/80 shadow-sm space-y-8 animate-fade-in text-left"
-                                        ref={resultCardRef}
-                                    >
-                                        {/* 헤더 타이틀 */}
-                                        <h2 className="text-xl sm:text-2xl font-black text-[#0f172a] text-center tracking-tight">
-                                            {userName}님의 {activeTab === 'business' ? '창업·사업 사주' : activeTab === 'job' ? '취직 사주' : activeTab === 'jobchange' ? '이직 사주' : '재물 사주'} 분석
-                                        </h2>
+                                <ReportErrorBoundary onRetry={handleRetry}>
+                                    <div className="space-y-5">
+                                        <div 
+                                            className="bg-white rounded-2xl p-6 sm:p-9 border border-stone-200 space-y-10 animate-fade-in text-left"
+                                            ref={resultCardRef}
+                                        >
+                                            {/* 헤더 타이틀 */}
+                                            <h2
+                                                className="text-2xl sm:text-3xl font-bold text-slate-950 text-center tracking-tight"
+                                                style={{ fontFamily: "'NanumMyungjo', 'Noto Serif KR', serif" }}
+                                            >
+                                                {userName}님의 {activeTab === 'business' ? '창업·사업 사주' : activeTab === 'job' ? '취직 사주' : activeTab === 'jobchange' ? '이직 사주' : '재물 사주'} 분석
+                                            </h2>
 
-                                        {/* 재물지수 게이지 */}
-                                        <div className="flex flex-col items-center">
-                                            <div className="relative w-36 h-36 flex items-center justify-center">
-                                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 144 144">
-                                                    <circle 
-                                                        cx="72" 
-                                                        cy="72" 
-                                                        r="60" 
-                                                        stroke="#fef3c7" 
-                                                        strokeWidth="10" 
-                                                        fill="transparent" 
-                                                    />
-                                                    <circle 
-                                                        cx="72" 
-                                                        cy="72" 
-                                                        r="60" 
-                                                        stroke="#f59e0b" 
-                                                        strokeWidth="10" 
-                                                        fill="transparent" 
-                                                        strokeDasharray={377}
-                                                        strokeDashoffset={377 - (377 * Math.min(100, Math.max(0, result.score || 0))) / 100}
-                                                        strokeLinecap="round"
-                                                        className="transition-all duration-1000 ease-out"
-                                                    />
-                                                </svg>
-                                                <div className="absolute flex flex-col items-center justify-center">
-                                                    <span className="text-[32px] font-bold text-[#0f172a] leading-none">{result.score || 0}</span>
-                                                    <span className="text-[10px] font-bold text-[#f59e0b] mt-1.5 tracking-tight">재물지수</span>
+                                            {/* 재물지수 게이지 */}
+                                            <div className="flex flex-col items-center py-2">
+                                                <div className="relative w-36 h-36 flex items-center justify-center">
+                                                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 144 144">
+                                                        <circle 
+                                                            cx="72" 
+                                                            cy="72" 
+                                                            r="60" 
+                                                            stroke="#fef3c7" 
+                                                            strokeWidth="10" 
+                                                            fill="transparent" 
+                                                        />
+                                                        <circle 
+                                                            cx="72" 
+                                                            cy="72" 
+                                                            r="60" 
+                                                            stroke="#d97706" 
+                                                            strokeWidth="10" 
+                                                            fill="transparent" 
+                                                            strokeDasharray={377}
+                                                            strokeDashoffset={377 - (377 * Math.min(100, Math.max(0, result.score || 0))) / 100}
+                                                            strokeLinecap="round"
+                                                            className="transition-all duration-1000 ease-out"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute flex flex-col items-center justify-center">
+                                                        <span className="text-3xl font-bold text-slate-950 leading-none">{result.score || 0}</span>
+                                                        <span className="text-xs font-bold text-amber-700 mt-1.5">재물지수</span>
+                                                    </div>
                                                 </div>
+                                                {(result.wealthType || result.verdict) && (
+                                                    <p className="text-lg sm:text-xl font-bold text-slate-950 text-center mt-5 tracking-tight px-2 break-keep">
+                                                        {stripMarkdown(result.wealthType || result.verdict)}
+                                                    </p>
+                                                )}
                                             </div>
-                                            {(result.wealthType || result.verdict) && (
-                                                <p className="text-[18px] font-bold text-[#0f172a] text-center mt-5 tracking-tight px-4 break-keep">
-                                                    {result.wealthType || result.verdict}
-                                                </p>
+
+                                            {/* 총평 및 재물 형세 */}
+                                            {result.overview && (
+                                                <div className="space-y-3 text-left">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        총평 및 재물 형세
+                                                    </h3>
+                                                    <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                        {stripMarkdown(result.overview)}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* 사주 명리학 분석 */}
+                                            {result.sajuAnalysis && (
+                                                <div className="space-y-5 text-left">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        사주 명리학 분석
+                                                    </h3>
+                                                    <div className="space-y-6">
+                                                        {result.sajuAnalysis.dayMasterWealth && (
+                                                            <div className="space-y-2">
+                                                                <h4 className="text-lg font-bold text-amber-800">일간과 재성의 밸런스</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.sajuAnalysis.dayMasterWealth)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.sajuAnalysis.wealthStructure && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-blue-900">재물 원국 구조 (격국)</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.sajuAnalysis.wealthStructure)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.sajuAnalysis.elementBalance && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-slate-900">오행 균형과 재물 공급력</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.sajuAnalysis.elementBalance)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* 재물 대운 / 세운 흐름 (그리드 제거 -> 1단 수직 흐름) */}
+                                            {result.timingAnalysis && (
+                                                <div className="space-y-5 text-left">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        재물 대운 / 세운 흐름
+                                                    </h3>
+                                                    <div className="space-y-6">
+                                                        {result.timingAnalysis.currentYear && (
+                                                            <div className="space-y-2">
+                                                                <h4 className="text-lg font-bold text-indigo-900">{`올해 (${currentYear}년)`}</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.timingAnalysis.currentYear)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.timingAnalysis.nextYear && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-slate-900">{`내년 (${currentYear + 1}년)`}</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.timingAnalysis.nextYear)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.timingAnalysis.peakPeriod && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-amber-800">재물 피크 시기</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.timingAnalysis.peakPeriod)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.timingAnalysis.cautionPeriod && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-rose-700">주의가 필요한 위험기</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.timingAnalysis.cautionPeriod)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* 성향 기반 행동 처방전 */}
+                                            {result.mbtiAdvice && (
+                                                <div className="space-y-5 text-left">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        {userMbti ? `${userMbti} 기반 행동 처방전` : '성향 기반 행동 처방전'}
+                                                    </h3>
+                                                    <div className="space-y-6">
+                                                        {result.mbtiAdvice.strength && (
+                                                            <div className="space-y-2">
+                                                                <h4 className="text-lg font-bold text-amber-800">
+                                                                    강점 발휘 {userMbti ? `(${userMbti})` : ''}
+                                                                </h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.mbtiAdvice.strength)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.mbtiAdvice.weakness && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-slate-900">약점 제어</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.mbtiAdvice.weakness)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {result.mbtiAdvice.actionPlan && (
+                                                            <div className="space-y-2 pt-4 border-t border-stone-100">
+                                                                <h4 className="text-lg font-bold text-indigo-900">현실 실천 계획</h4>
+                                                                <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                    {stripMarkdown(result.mbtiAdvice.actionPlan)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* 재물운 보완 요소 */}
+                                            {result.luckyElements && result.luckyElements.length > 0 && (
+                                                <div className="space-y-3 text-left">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        재물운 보완 요소
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-2.5">
+                                                        {result.luckyElements.filter((el): el is string => !!el).map((el: string, idx: number) => (
+                                                            <span 
+                                                                key={idx} 
+                                                                className="bg-stone-100 border border-stone-200 rounded-full py-2 px-4 text-sm font-semibold text-slate-800"
+                                                            >
+                                                                {stripMarkdown(el)}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* 맞춤 적합도 분석 */}
+                                            {(result.fieldAnalysis || result.comparison) && (
+                                                <div className="space-y-4 text-left pt-2">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight pb-2 border-b border-stone-200">
+                                                        유형별 맞춤 분석
+                                                    </h3>
+                                                    {result.fieldAnalysis && (
+                                                        <div className="p-5 border border-stone-200 rounded-2xl bg-stone-50/70 space-y-2">
+                                                            <h4 className="text-lg font-bold text-slate-900">분야 적합도 판정</h4>
+                                                            <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.fieldAnalysis)}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {result.comparison && (
+                                                        <div className="p-5 border border-amber-200 bg-amber-50/40 rounded-2xl space-y-2">
+                                                            <h4 className="text-lg font-bold text-amber-900">현 직장 vs 이직 처 비교</h4>
+                                                            <p className="text-[15px] sm:text-base text-slate-800 leading-[1.9] whitespace-pre-wrap break-keep">
+                                                                {stripMarkdown(result.comparison)}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* 심층 보고서 */}
+                                            {result.mbtiSajuWealthReport && (
+                                                <div className="pt-4 text-left">
+                                                    {renderWealthReport(result.mbtiSajuWealthReport)}
+                                                </div>
                                             )}
                                         </div>
 
-                                        {/* 총평 및 재물 형세 */}
-                                        {result.overview && (
-                                            <div className="space-y-2 text-left">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">총평 및 재물 형세</h3>
-                                                <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                    {result.overview}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* 사주 명리학 분석 */}
-                                        {result.sajuAnalysis && (
-                                            <div className="space-y-4 text-left">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">사주 명리학 분석</h3>
-                                                <div className="space-y-4">
-                                                    {result.sajuAnalysis.dayMasterWealth && (
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shrink-0" />
-                                                                <h4 className="text-[16px] font-bold text-[#1e293b]">일간과 재성의 밸런스</h4>
-                                                            </div>
-                                                            <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep pl-4.5">
-                                                                {result.sajuAnalysis.dayMasterWealth}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {result.sajuAnalysis.wealthStructure && (
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb] shrink-0" />
-                                                                <h4 className="text-[16px] font-bold text-[#1e293b]">재물 원국 구조 (격국)</h4>
-                                                            </div>
-                                                            <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep pl-4.5">
-                                                                {result.sajuAnalysis.wealthStructure}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {result.sajuAnalysis.elementBalance && (
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0" />
-                                                                <h4 className="text-[16px] font-bold text-[#1e293b]">오행 균형과 재물 공급력</h4>
-                                                            </div>
-                                                            <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep pl-4.5">
-                                                                {result.sajuAnalysis.elementBalance}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* 재물 대운 / 세운 흐름 */}
-                                        {result.timingAnalysis && (
-                                            <div className="space-y-4 text-left">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">재물 대운 / 세운 흐름</h3>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <h4 className="text-[16px] font-bold text-[#003d91] whitespace-nowrap">올해 (2026년)</h4>
-                                                            <div className="flex-1 h-[1px] bg-slate-300 mx-2 hidden sm:block"></div>
-                                                        </div>
-                                                        <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                            {result.timingAnalysis.currentYear}
-                                                        </p>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <h4 className="text-[16px] font-bold text-[#1500ff]">내년 (2027년)</h4>
-                                                        <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                            {result.timingAnalysis.nextYear}
-                                                        </p>
-                                                    </div>
+                                        {!isLoading && (
+                                            <>
+                                                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                    <button 
+                                                        onClick={handleSaveImage}
+                                                        className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        <Download className="w-4 h-4" /> 이미지 저장
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setError(null);
+                                                            setHasStarted(false);
+                                                            navigate(`/gold?type=${activeTab}`);
+                                                        }}
+                                                        className="flex-1 py-4 bg-slate-950 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        새로운 조건으로 분석하기
+                                                    </button>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                                                    <div className="space-y-1">
-                                                        <h4 className="text-[16px] font-bold text-[#d97706]">재물 피크 시기</h4>
-                                                        <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                            {result.timingAnalysis.peakPeriod}
-                                                        </p>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <h4 className="text-[16px] font-bold text-[#e11d48]">주의가 필요한 위험기</h4>
-                                                        <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                            {result.timingAnalysis.cautionPeriod}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* MBTI 기반 행동 처방전 */}
-                                        {result.mbtiAdvice && (
-                                            <div className="space-y-4 text-left">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">MBTI 기반 행동 처방전</h3>
-                                                <div className="space-y-3.5">
-                                                    {result.mbtiAdvice.strength && (
-                                                        <div className="space-y-1">
-                                                            <h4 className="text-[16px] font-bold text-[#f59e0b]">
-                                                                강점 발휘 {userMbti ? `(${userMbti})` : ''}
-                                                            </h4>
-                                                            <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                                {result.mbtiAdvice.strength}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {result.mbtiAdvice.weakness && (
-                                                        <>
-                                                            <div className="border-b border-slate-200" />
-                                                            <div className="space-y-1">
-                                                                <h4 className="text-[16px] font-bold text-[#38bdf8]">약점 제어</h4>
-                                                                <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                                    {result.mbtiAdvice.weakness}
-                                                                </p>
-                                                            </div>
-                                                        </>
-                                                    )}
-
-                                                    {result.mbtiAdvice.actionPlan && (
-                                                        <>
-                                                            <div className="border-b border-slate-200" />
-                                                            <div className="space-y-1">
-                                                                <h4 className="text-[16px] font-bold text-[#a78bfa]">실천 계획</h4>
-                                                                <p className="text-[12px] sm:text-[13px] text-black leading-relaxed font-normal break-keep">
-                                                                    {result.mbtiAdvice.actionPlan}
-                                                                </p>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* 재물운 부스터 (행운의 요소) */}
-                                        {result.luckyElements && result.luckyElements.length > 0 && (
-                                            <div className="space-y-3 text-left">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">재물운 부스터 (행운의 요소)</h3>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {result.luckyElements.filter((el): el is string => !!el).map((el: string, idx: number) => (
-                                                        <div 
-                                                            key={idx} 
-                                                            className="bg-[#f8fafc] border border-slate-200 rounded-xl py-3 px-2 text-center text-[11px] font-bold text-[#475569] flex items-center justify-center break-keep shadow-sm"
-                                                        >
-                                                            {el}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* 맞춤 적합도 분석 (창업/취직/이직 시에만 제공) */}
-                                        {(result.fieldAnalysis || result.comparison) && (
-                                            <div className="space-y-4 text-left pt-2">
-                                                <h3 className="text-[20px] font-bold text-black tracking-tight">유형별 맞춤 분석</h3>
-                                                {result.fieldAnalysis && (
-                                                    <div className="p-4 border border-slate-200 rounded-2xl bg-slate-50/50">
-                                                        <h4 className="text-sm font-bold text-slate-800 mb-1.5">분야 적합도 판정</h4>
-                                                        <p className="text-[12px] text-black leading-relaxed break-keep font-normal">{result.fieldAnalysis}</p>
-                                                    </div>
-                                                )}
-                                                {result.comparison && (
-                                                    <div className="p-4 border border-amber-200 bg-amber-50/20 rounded-2xl">
-                                                        <h4 className="text-sm font-bold text-amber-800 mb-1.5">현 직장 vs 이직 처 비교</h4>
-                                                        <p className="text-[12px] text-slate-800 leading-relaxed break-keep font-normal">{result.comparison}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* 심층 보고서 */}
-                                        {result.mbtiSajuWealthReport && (
-                                            <div className="mt-8 text-left">
-                                                {renderWealthReport(result.mbtiSajuWealthReport)}
-                                            </div>
+                                                <FunnelBottomCta from={`gold_${activeTab}_result`} />
+                                            </>
                                         )}
                                     </div>
-
-                                    {/* 하단 제어 버튼 */}
-                                    <div className="grid grid-cols-2 gap-3 pt-2">
-                                        <button 
-                                            onClick={handleSaveImage}
-                                            className="py-4 bg-slate-100 hover:bg-slate-200 text-[#0f172a] rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.99]"
-                                        >
-                                            <Download className="w-4 h-4" /> 이미지 저장
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                setError(null);
-                                                navigate(0); // reload to reset
-                                            }}
-                                            className="py-4 bg-[#0f172a] hover:bg-slate-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.99]"
-                                        >
-                                            다시 분석하기
-                                        </button>
-                                    </div>
-
-                                    <FunnelBottomCta from={`gold_${activeTab}_result`} />
-                                </div>
+                                </ReportErrorBoundary>
                             )}
                         </div>
                     )}
