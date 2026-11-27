@@ -277,7 +277,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                         disabled={isPaying}
                                         className="w-full py-5 bg-slate-950 hover:bg-sky-700 text-white rounded-2xl font-bold text-lg shadow transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-60"
                                     >
-                                        <span>{isPaying ? '결제 창 여는 중...' : `운명의 여행지 찾기 (${SERVICE_COSTS.TRIP.toLocaleString()}원 결제)`}</span>
+                                        <span>{isPaying ? '결제 창 여는 중...' : '운명의 여행지 찾기'}</span>
                                         <span className="text-xs text-sky-200 font-normal">가입 없이 1회 단품 결제 · 즉시 분석</span>
                                     </button>
                                 </div>

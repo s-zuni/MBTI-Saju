@@ -2,7 +2,6 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 import SajuGrid from './SajuGrid';
 import { SajuResult } from '../../utils/sajuUtils';
-import { SERVICE_COSTS } from '../../config/creditConfig';
 
 interface FreeSajuPreviewCardProps {
   saju: SajuResult;
@@ -288,7 +287,7 @@ const FreeSajuPreviewCard: React.FC<FreeSajuPreviewCardProps> = ({
           >
             {isPaying
               ? '결제 창으로 이동하고 있습니다...'
-              : `분석 더보기 (${SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원)`}
+              : '분석 더보기'}
           </button>
 
           <p className="text-xs text-stone-500">

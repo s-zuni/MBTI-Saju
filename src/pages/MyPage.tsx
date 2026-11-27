@@ -872,8 +872,8 @@ const MyPage: React.FC<MyPageProps> = ({
                 </>
               ) : (
                 analysis 
-                  ? '내 운명 다시 분석하기 (990원)'
-                  : '내 운명 분석 시작하기 (990원)'
+                  ? '내 운명 다시 분석하기'
+                  : '내 운명 분석 시작하기'
               )}
             </button>
           </div>

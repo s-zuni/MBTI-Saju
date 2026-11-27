@@ -1,6 +1,5 @@
 import React from 'react';
 import { Loader2, Download, CheckCircle2 } from 'lucide-react';
-import { SERVICE_COSTS } from '../../config/creditConfig';
 import { SajuResult } from '../../utils/sajuUtils';
 import { stripMarkdown } from '../../utils/textUtils';
 import FunnelBottomCta from '../FunnelBottomCta';
@@ -586,7 +585,7 @@ const FullSajuReportContent: React.FC<FullSajuReportContentProps> = ({
             </button>
             {onRegenerate && (
               <button onClick={onRegenerate} disabled={isRegenerating} className="mt-4 text-stone-500 text-sm font-semibold underline underline-offset-4">
-                {isRegenerating ? '결제 창 여는 중...' : `정밀 데이터 재생성 (${SERVICE_COSTS.REGENERATE_MBTI_SAJU.toLocaleString()}원)`}
+                {isRegenerating ? '결제 창 여는 중...' : '정밀 데이터 재생성'}
               </button>
             )}
           </div>

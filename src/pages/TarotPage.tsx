@@ -4,7 +4,6 @@ import { generateImage } from '../utils/exportUtils';
 import TarotShareCard from '../components/TarotShareCard';
 import { TarotCard, TAROT_DECK } from '../data/tarotDeck';
 import SpreadSelector, { SpreadType } from '../components/tarot/SpreadSelector';
-import { SERVICE_COSTS } from '../config/creditConfig';
 import { stripMarkdown } from '../utils/textUtils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { tarotSchema } from '../config/schemas';
@@ -327,7 +326,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 disabled={isPaying}
                                                 className="w-full py-5 bg-slate-950 hover:bg-purple-600 text-white rounded-2xl font-black text-base shadow-xl transition-all active:scale-95 disabled:opacity-60"
                                             >
-                                                {isPaying ? '결제창 여는 중...' : `카드 해석 확인하기 (${SERVICE_COSTS.TAROT.toLocaleString()}원 결제)`}
+                                                {isPaying ? '결제창 여는 중...' : '카드 해석 확인하기'}
                                             </button>
                                         </div>
                                     )}

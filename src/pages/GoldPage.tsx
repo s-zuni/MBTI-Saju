@@ -423,7 +423,7 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                                         disabled={isPaying}
                                         className="w-full py-4 bg-slate-900 hover:bg-amber-600 text-white rounded-2xl font-bold text-base shadow transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
-                                        {isPaying ? '결제 창 여는 중...' : `재물 사주 분석하기 (${cost.toLocaleString()}원 결제)`}
+                                        {isPaying ? '결제 창 여는 중...' : '재물 사주 분석하기'}
                                     </button>
                                     <p className="text-center text-xs text-slate-500 font-semibold">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다.</p>
                                 </form>

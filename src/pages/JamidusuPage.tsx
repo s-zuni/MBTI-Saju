@@ -247,7 +247,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                     disabled={isPaying}
                                     className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-lg shadow hover:bg-indigo-800 transition-colors flex flex-col items-center justify-center gap-1 disabled:opacity-60"
                                 >
-                                    <span>{isPaying ? '결제 창 여는 중...' : `결과 확인하기 (${SERVICE_COSTS.JAMIDUSU.toLocaleString()}원 결제)`}</span>
+                                    <span>{isPaying ? '결제 창 여는 중...' : '결과 확인하기'}</span>
                                     <span className="text-xs text-stone-300 font-normal">회원가입 없이 1회 단품 결제 · 즉시 분석</span>
                                 </button>
                             </form>

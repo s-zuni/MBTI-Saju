@@ -745,7 +745,7 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                     className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-violet-700 text-white font-black text-sm sm:text-base shadow-lg shadow-slate-200 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
                   >
                     <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>무료 만세력 &amp; 내 메이트 실루엣 티저 먼저 보기 (0원)</span>
+                    <span>무료 만세력 &amp; 내 메이트 실루엣 티저 먼저 보기</span>
                   </button>
                 )
               )}
@@ -904,7 +904,7 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5" />
-                        <span>{SERVICE_COSTS.SAJU_MATE.toLocaleString()}원으로 찰떡 · 상극 메이트 정체 전체 보기</span>
+                        <span>찰떡 · 상극 메이트 정체 전체 보기</span>
                       </>
                     )}
                   </button>

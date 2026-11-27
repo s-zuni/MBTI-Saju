@@ -328,7 +328,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
                             disabled={isPaying}
                             className="mt-2.5 w-full py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors"
                         >
-                            {isPaying ? '결제 창 여는 중...' : `5회권 결제 (${chatPackPrice.toLocaleString()}원)`}
+                            {isPaying ? '결제 창 여는 중...' : '5회권 결제하기'}
                         </button>
                     </div>
 
@@ -381,7 +381,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
                             className="flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-black"
                         >
                             <CreditCard className="w-3 h-3" />
-                            {remainingQuota}회 · 490원
+                            {remainingQuota}회 · 충전
                         </button>
                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform">
                             <Menu className="w-6 h-6" />
@@ -408,7 +408,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ defaultService = 'general' }) => {
                         disabled={isPaying}
                         className="text-xs px-3.5 py-1.5 bg-slate-900 text-white rounded-full font-black hover:bg-violet-600 transition-colors"
                     >
-                        {isPaying ? '결제 창 여는 중...' : `5회 대화권 구매 (${chatPackPrice.toLocaleString()}원)`}
+                        {isPaying ? '결제 창 여는 중...' : '5회 대화권 구매하기'}
                     </button>
                 </div>
 

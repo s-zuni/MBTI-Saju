@@ -323,7 +323,7 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                             disabled={isPaying}
                             className="w-full py-6 bg-[#000666] text-white font-black text-xl rounded-[32px] shadow-2xl hover:bg-[#000444] transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2 disabled:opacity-60"
                         >
-                            <span>궁합 분석 시작하기 ({SERVICE_COSTS.KBO.toLocaleString()}원 결제)</span>
+                            <span>궁합 분석 시작하기</span>
                             <span className="text-xs text-[#E5E5E5]/70 font-bold tracking-widest">가입 없이 1회 단품 결제 · 즉시 분석</span>
                         </button>
                     </div>

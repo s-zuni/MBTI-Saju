@@ -289,7 +289,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                     disabled={isFortuneLoading}
                                     className="w-full py-4.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-base rounded-2xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                                 >
-                                    <span>오늘의 운세 무료로 확인하기 (0원)</span>
+                                    <span>오늘의 운세 무료로 확인하기</span>
                                 </button>
                             ) : (
                                 <button
@@ -299,7 +299,7 @@ const TodayFortunePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) =>
                                     className="w-full py-4.5 bg-slate-950 text-white font-bold text-base rounded-2xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60"
                                 >
                                     {isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 text-amber-300" />}
-                                    <span>내일의 운세 확인하기 ({tomorrowPrice.toLocaleString()}원 결제)</span>
+                                    <span>내일의 운세 확인하기</span>
                                 </button>
                             )}
                         </div>

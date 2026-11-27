@@ -608,7 +608,7 @@ const DeepReportModal: React.FC<DeepReportModalProps> = ({ isOpen, onClose, sess
              className="w-full py-5 bg-[#0A0A0A] text-white rounded-2xl font-manrope font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
            >
              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="material-symbols-outlined">auto_awesome</span>}
-             {amount.toLocaleString()}원 결제하고 리포트 신청하기
+             결제하고 리포트 신청하기
            </button>
            <p className="text-center text-xs text-slate-500 mt-4 font-bold leading-relaxed flex flex-col items-center gap-1">
              <span className="inline-flex items-center gap-1">

@@ -5,7 +5,6 @@ import { generatePDF } from '../utils/pdfGenerator';
 import ServiceNavigation, { ServiceType } from './ServiceNavigation';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { compatibilitySchema } from '../config/schemas';
-import { SERVICE_COSTS } from '../config/creditConfig';
 import { safeCalculateSaju } from '../utils/sajuUtils';
 import { getRandomLoadingMessage } from '../config/loadingMessages';
 import { useGuestProfile } from '../hooks/useGuestProfile';
@@ -371,7 +370,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                         {isLoading || isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Heart className="w-5 h-5 fill-white" />}
                         {isPaying
                             ? '결제 창 여는 중...'
-                            : `${isPartnerMode ? '심층 궁합 분석하기' : '나의 이상 궁합 찾기'} (${SERVICE_COSTS.COMPATIBILITY.toLocaleString()}원 결제)`}
+                            : (isPartnerMode ? '심층 궁합 분석하기' : '나의 이상 궁합 찾기')}
                     </button>
                     <p className="text-center text-[10px] text-slate-400 font-bold tracking-tight">결제 직후 현재 화면에서 바로 분석 결과를 확인하실 수 있습니다</p>
                 </form>
