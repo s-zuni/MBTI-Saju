@@ -1,5 +1,5 @@
 """
-Threads API 게시 모듈 (텍스트 전용).
+Threads API 게시 모듈 (텍스트 / 단일 이미지 / 다중 이미지 캐러셀 지원 — 본문 및 답글 모두 가능).
 
 필요한 .env:
   THREADS_USER_ID=...        # GET /me 로 확인한 Threads 사용자 ID
@@ -24,6 +24,7 @@ load_dotenv()
 THREADS_API = "https://graph.threads.net"
 THREADS_VERSION = os.getenv("THREADS_API_VERSION", "v1.0")
 MAX_TEXT_LEN = 500
+MAX_CAROUSEL_ITEMS = 20
 
 
 def clean_token(token: Optional[str]) -> str:
@@ -123,14 +124,78 @@ def get_recent_threads(
         return []
 
 
+def _wait_container_ready(
+    creation_id: str,
+    access_token: str,
+    timeout_sec: int = 30,
+    poll_interval: float = 2.0,
+) -> Optional[str]:
+    """이미지/캐러셀 컨테이너가 FINISHED 상태가 될 때까지 대기합니다. 성공 시 None, 오류 시 에러 문자열 반환."""
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        try:
+            r = requests.get(
+                _url(creation_id),
+                params={"fields": "status,error_message", "access_token": access_token},
+                timeout=15,
+            )
+            if r.ok:
+                body = r.json()
+                status = (body.get("status") or "").upper()
+                if status in ("FINISHED", "PUBLISHED"):
+                    return None
+                if status in ("ERROR", "EXPIRED"):
+                    return f"미디어 컨테이너 처리 실패({status}): {body.get('error_message', body)}"
+            else:
+                # 일부 컨테이너 타입에서 status 조회가 미지원인 경우 짧게 대기 후 진행
+                time.sleep(poll_interval)
+                return None
+        except Exception:
+            pass
+        time.sleep(poll_interval)
+    return None
+
+
+def _create_carousel_item(
+    user_id: str,
+    image_url: str,
+    access_token: str,
+) -> Dict[str, Any]:
+    """CAROUSEL 자식 IMAGE 컨테이너 1건을 생성하고 준비 완료까지 대기합니다."""
+    res = requests.post(
+        _url(f"{user_id}/threads"),
+        data={
+            "media_type": "IMAGE",
+            "image_url": image_url,
+            "is_carousel_item": "true",
+            "access_token": access_token,
+        },
+        timeout=30,
+    )
+    if not res.ok:
+        return {"error": _api_error(res), "status_code": res.status_code}
+    child_id = res.json().get("id")
+    if not child_id:
+        return {"error": f"캐러셀 항목 컨테이너 ID 누락: {res.text[:200]}"}
+    err = _wait_container_ready(child_id, access_token)
+    if err:
+        return {"error": err}
+    return {"id": child_id}
+
+
 def publish_text_to_threads(
     text: str,
     topic_tag: Optional[str] = None,
     user_id: Optional[str] = None,
     access_token: Optional[str] = None,
     reply_to_id: Optional[str] = None,
+    image_url: Optional[str] = None,
+    image_urls: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """텍스트 글 1건을 게시합니다(reply_to_id를 주면 해당 글에 대한 답글). 성공 시 {"id": ..., "permalink": ...}, 실패 시 {"error": ...}."""
+    """
+    글 1건을 게시합니다 (텍스트 / 단일 IMAGE / 다중 CAROUSEL 지원, reply_to_id로 답글 가능).
+    성공 시 {"id": ..., "permalink": ...}, 실패 시 {"error": ...}.
+    """
     user_id = user_id or os.getenv("THREADS_USER_ID", "")
     access_token = clean_token(access_token or os.getenv("THREADS_ACCESS_TOKEN", ""))
     if not user_id or not access_token:
@@ -141,19 +206,54 @@ def publish_text_to_threads(
     if len(text) > MAX_TEXT_LEN:
         return {"error": f"텍스트가 {MAX_TEXT_LEN}자를 초과합니다 ({len(text)}자)."}
 
-    payload = {"media_type": "TEXT", "text": text, "access_token": access_token}
+    raw_urls = list(image_urls) if image_urls else ([image_url] if image_url else [])
+    urls = [u.strip() for u in raw_urls if u and u.strip().startswith(("http://", "https://"))][:MAX_CAROUSEL_ITEMS]
+
+    if len(urls) >= 2:
+        print(f"[THREADS] 캐러셀 컨테이너 생성 (user {user_id}, {len(text)}자, 이미지 {len(urls)}장)...")
+        child_ids: List[str] = []
+        for idx, u in enumerate(urls, 1):
+            child = _create_carousel_item(user_id, u, access_token)
+            if "error" in child:
+                return {"error": f"캐러셀 이미지 {idx} 생성 실패: {child['error']}"}
+            child_ids.append(child["id"])
+        payload: Dict[str, Any] = {
+            "media_type": "CAROUSEL",
+            "children": ",".join(child_ids),
+            "text": text,
+            "access_token": access_token,
+        }
+    elif len(urls) == 1:
+        print(f"[THREADS] 이미지 컨테이너 생성 (user {user_id}, {len(text)}자, 이미지 1장)...")
+        payload = {
+            "media_type": "IMAGE",
+            "image_url": urls[0],
+            "text": text,
+            "access_token": access_token,
+        }
+    else:
+        print(f"[THREADS] 컨테이너 생성 (user {user_id}, {len(text)}자)...")
+        payload = {"media_type": "TEXT", "text": text, "access_token": access_token}
+
     if topic_tag and not reply_to_id:
         payload["topic_tag"] = topic_tag
     if reply_to_id:
         payload["reply_to_id"] = reply_to_id
 
-    print(f"[THREADS] 컨테이너 생성 (user {user_id}, {len(text)}자)...")
     res = requests.post(_url(f"{user_id}/threads"), data=payload, timeout=30)
     if not res.ok:
         return {"error": _api_error(res), "status_code": res.status_code}
     creation_id = res.json().get("id")
+    if not creation_id:
+        return {"error": f"컨테이너 ID 누락: {res.text[:200]}"}
 
-    time.sleep(3)  # 컨테이너 처리 대기 (텍스트는 짧게로 충분)
+    if urls:
+        wait_err = _wait_container_ready(creation_id, access_token)
+        if wait_err:
+            return {"error": wait_err}
+    else:
+        time.sleep(3)  # 컨테이너 처리 대기 (텍스트는 짧게로 충분)
+
     res = requests.post(
         _url(f"{user_id}/threads_publish"),
         data={"creation_id": creation_id, "access_token": access_token},
@@ -179,19 +279,32 @@ def publish_thread(
     topic_tag: Optional[str] = None,
     user_id: Optional[str] = None,
     access_token: Optional[str] = None,
+    post_images: Optional[Dict[int, List[str]]] = None,
 ) -> Dict[str, Any]:
-    """타래 게시: posts[0]=본문, 이후는 직전 글에 이어지는 답글. 반환: {"ids": [...], "permalink": 본문 링크,
-    "error": 중간 실패 시 메시지}. 본문이 실패하면 {"error": ...}, 답글 중간 실패 시 이미 올라간 ids와 error를 함께 반환."""
+    """타래 게시: posts[0]=본문, 이후는 직전 글에 이어지는 답글.
+    post_images: {post_index: [image_url, ...]} (0=본문, len(posts)-1=마지막 CTA 답글 등).
+    """
     if not posts:
         return {"error": "게시할 글이 없습니다."}
-    first = publish_text_to_threads(posts[0], topic_tag=topic_tag, user_id=user_id, access_token=access_token)
+    images_map = post_images or {}
+    first = publish_text_to_threads(
+        posts[0],
+        topic_tag=topic_tag,
+        user_id=user_id,
+        access_token=access_token,
+        image_urls=images_map.get(0),
+    )
     if "error" in first:
         return first
     ids = [first["id"]]
     for i, text in enumerate(posts[1:], start=1):
         time.sleep(2)
         r = publish_text_to_threads(
-            text, user_id=user_id, access_token=access_token, reply_to_id=ids[-1]
+            text,
+            user_id=user_id,
+            access_token=access_token,
+            reply_to_id=ids[-1],
+            image_urls=images_map.get(i),
         )
         if "error" in r:
             return {"ids": ids, "permalink": first.get("permalink", ""), "error": f"답글 {i} 게시 실패: {r['error']}"}

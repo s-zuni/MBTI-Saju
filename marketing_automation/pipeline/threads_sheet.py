@@ -14,7 +14,7 @@ import io
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote
@@ -47,6 +47,8 @@ class ScheduledSheetPost:
     cta_kind: str
     has_cta: bool
     col_map: Dict[str, int]
+    image_urls: List[str] = field(default_factory=list)
+    image_target: str = "cta"  # "main" (본문 첨부) | "cta" (CTA 답글 첨부)
 
 
 def get_kst_today_str(now: Optional[datetime.datetime] = None) -> str:
@@ -131,7 +133,7 @@ def fetch_sheet_values(
             svc = build("sheets", "v4", credentials=creds, cache_discovery=False)
             resp = svc.spreadsheets().values().get(
                 spreadsheetId=sid,
-                range=f"'{tab}'!A:M",
+                range=f"'{tab}'!A:O",
             ).execute()
             values = resp.get("values", [])
             if values:
@@ -187,7 +189,42 @@ def _resolve_columns(header_row: List[str]) -> Dict[str, int]:
             col_map["published_at"] = idx
         elif "링크" in h:
             col_map["permalink"] = idx
+        elif ("이미지" in h or "사진" in h) and ("위치" in h or "배치" in h or "target" in h.lower()):
+            col_map["image_target"] = idx
+        elif "이미지" in h or "사진" in h:
+            col_map["image_urls"] = idx
     return col_map
+
+
+def _parse_image_urls(raw: str) -> List[str]:
+    if not raw:
+        return []
+    parts = re.split(r"[\n,;]+", raw)
+    urls: List[str] = []
+    for p in parts:
+        u = p.strip()
+        if u.startswith(("http://", "https://")) and u not in urls:
+            urls.append(u)
+    return urls
+
+
+def _normalize_image_target(raw: str) -> str:
+    val = (raw or "").strip().lower()
+    if val in ("본문", "main", "body", "post", "첫글", "첫 글"):
+        return "main"
+    return "cta"
+
+
+def resolve_post_images(post: ScheduledSheetPost, total_posts: int) -> Dict[int, List[str]]:
+    """시트 행의 image_urls와 image_target('main' | 'cta')을 publish_thread용 {post_idx: [urls]}로 변환합니다."""
+    if not post.image_urls or total_posts <= 0:
+        return {}
+    if post.image_target == "main":
+        return {0: list(post.image_urls)}
+    # image_target == "cta": CTA 답글이 실제로 있을 때 마지막 답글에 첨부
+    if total_posts >= 2:
+        return {total_posts - 1: list(post.image_urls)}
+    return {}
 
 
 def _get_cell(row: List[str], col_map: Dict[str, int], key: str) -> str:
@@ -236,6 +273,9 @@ def parse_scheduled_posts(values: List[List[str]]) -> List[ScheduledSheetPost]:
         category = _get_cell(row, col_map, "category") or "사주"
         tag = _sanitize_tag(_get_cell(row, col_map, "tag")) or category
 
+        image_urls = _parse_image_urls(_get_cell(row, col_map, "image_urls"))
+        image_target = _normalize_image_target(_get_cell(row, col_map, "image_target"))
+
         parsed.append(
             ScheduledSheetPost(
                 row_number=r_idx + 1,
@@ -249,6 +289,8 @@ def parse_scheduled_posts(values: List[List[str]]) -> List[ScheduledSheetPost]:
                 cta_kind=cta_kind or "없음",
                 has_cta=has_cta,
                 col_map=col_map,
+                image_urls=image_urls,
+                image_target=image_target,
             )
         )
     return parsed

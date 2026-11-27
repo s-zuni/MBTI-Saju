@@ -3,14 +3,14 @@
 자동 생성하여 시트에 이어쓰는 모듈.
 
 설계 원칙:
-1. 30일 = 90행 (매일 morning / afternoon / evening 3슬롯).
+1. 30일 = 90행 (매일 morning / afternoon / evening 3슬롯), 15컬럼(A:O, 이미지 URL·위치 포함).
 2. 카테고리 비중: 사주 60%(54) / MBTI 20%(18) / 운세 20%(18: 타로 3택 6, 자미두수 6, 일반 운세 6).
-3. CTA 정책 (v2 확정 요금제 기준):
-   - 직접 링크 댓글(URL 포함): 매일 evening 1회 (30일당 정확히 30회 유지) — 글 주제별 1:1 맞춤 URL·요금제.
-   - 간접 유도 댓글(URL 없음): morning/afternoon 60행 중 48행(80%) — '프로필에서 무료 만세력 분석 하고 가' 스타일.
-   - 순수 무CTA('없음'): 나머지 12행 (약 2.5일에 1개꼴 완급 유지).
-   - 카톡 1:1 상담은 Threads 규칙에 따라 가격 미표기('질문 1회 무료').
-   - 폐지 정책('크레딧', '가입 무료', '첫 분석 무료', '회원가입 필수')·이모지·존댓말·한자·해시태그 절대 금지.
+3. CTA & 이미지 정책 (무료 분석 중심, 가격 표기 0건):
+   - 직접 링크 댓글(URL 포함): 매일 evening 1회 (30일당 정확히 30회 유지) — 무료 만세력/카톡 1:1 질문 1개 무료/3년 점수표 무료 미리보기/무료 오늘의 운세/말랑 사주 메이트 무료 미리보기.
+   - 간접 유도 댓글(URL 없음): morning/afternoon 60행 중 48행(80%) — '프로필에서 무료 만세력 분석 하고 가' / '카톡 1:1 질문 1개 무료' 계열.
+   - 순수 무CTA('없음'): 나머지 12행.
+   - 이미지 배치: 신규 치이카와 감성 '말랑 사주 메이트' 글(30일당 6편)은 **본문**에 캐릭터 사진 첨부, 나머지 CTA 답글이 있는 행은 **CTA** 답글에 실제 서비스 이미지 첨부.
+   - 폐지 정책('크레딧', '가입 무료', '첫 분석 무료', '회원가입 필수')·가격('원')·이모지·존댓말·한자·해시태그 절대 금지.
 4. 무중복 보장: 기존 시트의 모든 제목 + 이미 생성된 배치 제목과 정규화 대조하여 중복 제거.
 """
 import datetime
@@ -44,6 +44,26 @@ from pipeline.threads_sheet import (
 DEFAULT_REFILL_DAYS = 30
 BATCH_DAYS = 5  # 5일(15개) x 6배치 = 30일(90개)
 
+BASE_SITE = "https://www.mbtiju.com"
+
+SAJU_MATE_IMAGE_SETS: List[List[str]] = [
+    [f"{BASE_SITE}/images/saju-mates/mochi.jpg", f"{BASE_SITE}/images/saju-mates/bory.jpg", f"{BASE_SITE}/images/saju-mates/ttokki.jpg"],
+    [f"{BASE_SITE}/images/saju-mates/yuzu.jpg", f"{BASE_SITE}/images/saju-mates/dori.jpg"],
+    [f"{BASE_SITE}/images/saju-mates/horang.jpg", f"{BASE_SITE}/images/saju-mates/sori.jpg"],
+    [f"{BASE_SITE}/images/saju-mates/maru.jpg", f"{BASE_SITE}/images/saju-mates/poni.jpg"],
+    [f"{BASE_SITE}/images/saju-mates/mochi.jpg", f"{BASE_SITE}/images/saju-mates/horang.jpg", f"{BASE_SITE}/images/saju-mates/yuzu.jpg"],
+    [f"{BASE_SITE}/images/saju-mates/bory.jpg", f"{BASE_SITE}/images/saju-mates/dori.jpg", f"{BASE_SITE}/images/saju-mates/poni.jpg"],
+]
+
+SERVICE_CTA_IMAGES = {
+    "natal": f"{BASE_SITE}/assets/premium/report-natal.jpg",
+    "year": f"{BASE_SITE}/assets/premium/report-year.jpg",
+    "summary": f"{BASE_SITE}/assets/premium/report-summary.jpg",
+    "map": f"{BASE_SITE}/assets/premium/report-map.jpg",
+    "cover": f"{BASE_SITE}/assets/premium/report-cover.jpg",
+    "og": f"{BASE_SITE}/og-image.png",
+}
+
 _BANNED_PHRASES = (
     "크레딧",
     "가입 무료",
@@ -56,38 +76,38 @@ _BANNED_PHRASES = (
 
 # 5일 단위 순환 패턴 (6회 반복 = 30일, 90행)
 # 합계(5일당 15행): 사주 9 (60%), MBTI 3 (20%), 운세 3 (20%: 타로 1, 자미두수 1, 운세 1)
+# 매 5일 중 1편(offset 3 morning)은 말랑 사주 메이트(치이카와 감성) 본문 이미지 전용 슬롯 -> 30일 6편
 # CTA 모드(5일당 15행): evening 5개 direct, morning/afternoon 10개 중 8개 indirect + 2개 none
-# -> 30일 기준: 사주 54 / MBTI 18 / 운세 18, direct 30 / indirect 48 / none 12
-_FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str]]] = [
-    # offset 0: (slot, category, topic_tag, format_hint, cta_mode)
+_FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str, bool]]] = [
+    # offset 0: (slot, category, topic_tag, format_hint, cta_mode, is_mate)
     [
-        ("morning", "사주", "사주", "일간/십성/신살 기반 직장·인간관계 팩폭 단독 글", "indirect"),
-        ("afternoon", "MBTI", "MBTI", "같은 MBTI라도 사주 기질에 따라 갈리는 반전 또는 연애 속마음 비교 단독 글", "indirect"),
-        ("evening", "사주", "사주", "재회·이별·썸·연애 사주 급소 고민 처방 단독 글", "direct"),
+        ("morning", "사주", "사주", "일간/십성/신살 기반 직장·인간관계 팩폭 단독 글", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", "같은 MBTI라도 사주 기질에 따라 갈리는 반전 또는 연애 속마음 비교 단독 글", "indirect", False),
+        ("evening", "사주", "사주", "재회·이별·썸·연애 사주 급소 고민 처방 단독 글", "direct", False),
     ],
     # offset 1
     [
-        ("morning", "사주", "사주", "재물운·돈 습관·사업/창업/이직 사주 팩폭 단독 글", "indirect"),
-        ("afternoon", "운세", "타로", "타로 3택 선택형 글 (본문에 1번/2번/3번 선택지, reply1에 1번 해석, reply2에 2번·3번 해석)", "indirect"),
-        ("evening", "사주", "사주", "대운·내년 흐름·3년 전환기 징조 사주 단독 글", "direct"),
+        ("morning", "사주", "사주", "재물운·돈 습관·사업/창업/이직 사주 팩폭 단독 글", "indirect", False),
+        ("afternoon", "운세", "타로", "타로 3택 선택형 글 (본문에 1번/2번/3번 선택지, reply1에 1번 해석, reply2에 2번·3번 해석)", "indirect", False),
+        ("evening", "사주", "사주", "대운·내년 흐름·3년 전환기 징조 사주 단독 글", "direct", False),
     ],
     # offset 2
     [
-        ("morning", "사주", "사주", "특정 일간(갑을병정무기경신임계 중 택1) 또는 신살 일상 증거 팩폭 단독 글", "none"),
-        ("afternoon", "MBTI", "MBTI", "연애·카톡·질투·권태기 상황별 MBTI 3~4유형 리얼 반응 비교 단독 글", "indirect"),
-        ("evening", "사주", "사주", "남녀 극단 궁합·계절생 케미·부부/연인 궁합 포인트 단독 글", "direct"),
+        ("morning", "사주", "사주", "특정 일간(갑을병정무기경신임계 중 택1) 또는 신살 일상 증거 팩폭 단독 글", "none", False),
+        ("afternoon", "MBTI", "MBTI", "연애·카톡·질투·권태기 상황별 MBTI 3~4유형 리얼 반응 비교 단독 글", "indirect", False),
+        ("evening", "사주", "사주", "남녀 극단 궁합·계절생 케미·부부/연인 궁합 포인트 단독 글", "direct", False),
     ],
-    # offset 3
+    # offset 3 — 말랑 사주 메이트(치이카와 감성 캐릭터) 본문 사진 슬롯 포함
     [
-        ("morning", "사주", "사주", "오행(목화토금수) 과다/부족 또는 태어난 계절별 성격·돈·인간관계 팩폭 단독 글", "indirect"),
-        ("afternoon", "운세", "자미두수", "자미두수 12궁(명궁·부처궁·재백궁·천이궁·복덕궁·관록궁 중 택1) 일상 풀이 단독 글", "indirect"),
-        ("evening", "운세", "운세", "올해·이번 달 운세 흐름·인간관계 정리·개운 루틴·대운 징조 단독 글", "direct"),
+        ("morning", "사주", "사주", "말랑 사주 메이트 캐릭터(모찌·보리·토끼링·유자·도리·호랑·소리·마루·포니 중 2~3종 활용)와 사주 오행·일간 성격 매칭 팩폭 단독 글", "indirect", True),
+        ("afternoon", "운세", "자미두수", "자미두수 12궁(명궁·부처궁·재백궁·천이궁·복덕궁·관록궁 중 택1) 일상 풀이 단독 글", "indirect", False),
+        ("evening", "운세", "운세", "올해·이번 달 운세 흐름·인간관계 정리·개운 루틴·대운 징조 단독 글", "direct", False),
     ],
     # offset 4
     [
-        ("morning", "사주", "사주", "역발상 통념 파괴(착해서가 아니라 ~/무재 사주/무관 사주 등) 사주 팩폭 단독 글", "indirect"),
-        ("afternoon", "MBTI", "MBTI", "남녀 MBTI 조합 궁합 또는 짝사랑/이별 심리 해부 단독 글", "none"),
-        ("evening", "사주", "사주", "이직·퇴사·짝사랑·결혼 타이밍·반복 고민 등 현실 고민 처방 단독 글", "direct"),
+        ("morning", "사주", "사주", "역발상 통념 파괴(착해서가 아니라 ~/무재 사주/무관 사주 등) 사주 팩폭 단독 글", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", "남녀 MBTI 조합 궁합 또는 짝사랑/이별 심리 해부 단독 글", "none", False),
+        ("evening", "사주", "사주", "이직·퇴사·짝사랑·결혼 타이밍·반복 고민 등 현실 고민 처방 단독 글", "direct", False),
     ],
 ]
 
@@ -101,6 +121,7 @@ class SlotBlueprint:
     topic_tag: str
     format_hint: str
     cta_mode: str  # "direct" | "indirect" | "none"
+    is_mate: bool = False
 
 
 class GeneratedSlotItem(BaseModel):
@@ -170,7 +191,7 @@ def build_30day_blueprint(
         day_num = start_day + d_idx
         date_str = (start_date + datetime.timedelta(days=d_idx)).isoformat()
         pattern_day = _FIVE_DAY_PATTERN[d_idx % len(_FIVE_DAY_PATTERN)]
-        for slot, category, topic_tag, fmt_hint, cta_mode in pattern_day:
+        for slot, category, topic_tag, fmt_hint, cta_mode, is_mate in pattern_day:
             plan.append(
                 SlotBlueprint(
                     day_num=day_num,
@@ -180,13 +201,49 @@ def build_30day_blueprint(
                     topic_tag=topic_tag,
                     format_hint=fmt_hint,
                     cta_mode=cta_mode,
+                    is_mate=is_mate,
                 )
             )
     return plan
 
 
+def pick_service_images_for_row(
+    cta_type: str,
+    cta_text: str,
+    is_mate: bool = False,
+    day_num: int = 1,
+    slot: str = "morning",
+) -> Tuple[str, str]:
+    """
+    글 유형에 맞춰 (image_urls_str, image_target_label)을 반환합니다.
+    - 말랑 사주 메이트(치이카와 감성) 글: 본문('본문')에 캐릭터 이미지 2~3장 캐러셀 첨부
+    - 그 외 CTA 답글이 있는 행: CTA 답글('CTA')에 실제 서비스 이미지 1장 첨부
+    - CTA 답글이 없는 순수 글('없음'): ('', '')
+    """
+    if is_mate:
+        img_set = SAJU_MATE_IMAGE_SETS[day_num % len(SAJU_MATE_IMAGE_SETS)]
+        return ", ".join(img_set), "본문"
+
+    if not cta_text or cta_type == "없음":
+        return "", ""
+
+    slot_offset = {"morning": 0, "afternoon": 1, "evening": 2}.get(slot, 0)
+    seed = day_num * 3 + slot_offset
+
+    if "3년점수표" in cta_type:
+        pool = [SERVICE_CTA_IMAGES["year"], SERVICE_CTA_IMAGES["map"], SERVICE_CTA_IMAGES["summary"]]
+    elif "카톡1:1" in cta_type:
+        pool = [SERVICE_CTA_IMAGES["og"], SERVICE_CTA_IMAGES["natal"]]
+    elif "오늘운세" in cta_type:
+        pool = [SERVICE_CTA_IMAGES["summary"], SERVICE_CTA_IMAGES["og"]]
+    else:
+        pool = [SERVICE_CTA_IMAGES["natal"], SERVICE_CTA_IMAGES["summary"], SERVICE_CTA_IMAGES["cover"]]
+
+    return pool[seed % len(pool)], "CTA"
+
+
 # ─────────────────────────────────────────────────────────────
-# v2 확정 요금제 + 글 주제별 1:1 맞춤형 CTA 빌더 (결정론적 규칙)
+# 무료 분석 중심 주제별 1:1 맞춤형 CTA 빌더 (가격 표기 0건)
 # ─────────────────────────────────────────────────────────────
 def build_v2_custom_cta(
     main_post: str,
@@ -195,12 +252,12 @@ def build_v2_custom_cta(
     cta_mode: str,
     day_num: int = 1,
     slot: str = "morning",
+    is_mate: bool = False,
 ) -> Tuple[str, str]:
     """
-    글 제목·본문 주제에 맞춰 (cta_type, reply3_text)를 반환합니다.
-    - direct: URL 포함 (evening 슬롯 전용, 30일당 30회 유지)
-    - indirect: URL 없음 ('프로필에서 무료 만세력 분석 하고 가' 계열 간접 유도)
-    - none: ('없음', '')
+    가격 언급 없이 실제 무료 진입 4대 축(무료 만세력 분석 / 카톡 1:1 질문 1개 무료 /
+    3년 점수표 무료 미리보기 / 무료 오늘의 운세 / 사주 메이트 무료 미리보기) 중심으로
+    (cta_type, reply3_text)를 반환합니다.
     """
     if cta_mode == "none":
         return "없음", ""
@@ -211,174 +268,79 @@ def build_v2_custom_cta(
     slot_offset = {"morning": 0, "afternoon": 1, "evening": 2}.get(slot, 0)
     v_seed = day_num * 3 + slot_offset
 
-    is_jamidusu = "자미두수" in text or any(k in text for k in ("명궁", "부처궁", "재백궁", "천이궁", "복덕궁", "관록궁", "수호별"))
-    is_tarot = topic_tag == "타로" or "타로" in t_title
     is_3y = any(k in t_title for k in ("3년", "대운", "내년", "전환기", "징조", "공망")) or ("3년" in text and "대운" in text)
     is_reunion = any(k in text for k in ("재회", "전 애인", "헤어지", "이별", "연락 올"))
     is_crush = "짝사랑" in text
-    is_marriage = any(k in text for k in ("결혼", "배우자", "부부"))
     is_job = any(k in t_title for k in ("이직", "퇴사", "직장", "취직", "승진", "창업", "사업", "회사", "상사", "일머리"))
-    is_money = any(k in t_title for k in ("재물", "돈", "통장", "부자", "재성", "식신생재", "군겁쟁재"))
-    is_couple = any(k in t_title for k in ("궁합", "커플", "썸", "연애", "남자복", "권태기", "답장", "속마음")) or (
-        not is_job and not is_money and any(k in text for k in ("궁합", "커플", "썸", "연애", "권태기"))
-    )
-    if not is_job:
-        is_job = any(k in text for k in ("이직", "퇴사", "창업", "사업", "취직"))
-    if not is_money:
-        is_money = any(k in text for k in ("재물운", "돈줄", "식신생재", "군겁쟁재"))
-    is_travel = any(k in text for k in ("역마", "여행", "타지", "해외"))
-    is_deep_worry = any(k in text for k in ("고민", "남자복", "소개팅", "계속 꼬이", "반복"))
+    is_couple_worry = any(k in t_title for k in ("썸", "답장", "속마음", "권태기", "남자복", "소개팅", "고민"))
+    is_tarot = topic_tag == "타로" or "타로" in t_title
 
     if cta_mode == "direct":
-        if is_jamidusu:
+        if is_mate:
             return (
-                "직접-자미두수990",
-                "내 자미두수 12궁 수호별이랑 명반 흐름이 어떤지 회원가입 없이 990원으로 바로 열어봐\n기본 4주 원국은 무료 만세력 분석으로 먼저 볼 수 있음\nhttps://www.mbtiju.com/myluck?type=jamidusu",
+                "직접-사주메이트무료",
+                "회원가입 없이 생년월일이랑 MBTI만 넣으면 무료 만세력 4주 원국표랑 내 말랑 사주 메이트 무료 미리보기 바로 확인됨\nhttps://www.mbtiju.com/mate",
             )
-        if is_3y:
+        if is_3y or (is_job and day_num % 2 == 0):
             return (
-                "직접-3년리포트",
-                "앞으로 3년 중 언제 밟고 언제 조심해야 할지 대운 타이밍부터 숫자로 찍어봐\n회원가입 없이 올해 남은 기간+3년 치 재물·커리어·인연·건강 점수표는 무료 미리보기, 3년 심층 사주 리포트는 29,000원임\nhttps://www.mbtiju.com/premium",
+                "직접-3년점수표무료",
+                "앞으로 3년 중 언제 밟고 언제 조심해야 할지 대운 타이밍부터 숫자로 찍어봐\n회원가입 없이 올해 남은 기간+3년 치 재물·커리어·인연·건강 점수표를 무료로 먼저 확인할 수 있음\nhttps://www.mbtiju.com/premium",
             )
-        # 고민형 주제 일부(약 4~5일 주기)는 카톡 1:1 상담(질문 1회 무료, 가격 미표기)으로 연결
-        if (is_reunion or is_deep_worry) and (day_num % 7 in (1, 4)):
+        if is_reunion or is_crush or is_couple_worry:
             return (
-                "직접-카톡1:1",
-                "혼자 끙끙 앓던 그 고민 하나, 사주랑 MBTI 같이 넣고 카톡으로 짚어봐\n회원가입 없이 카톡 채널 1:1 사주·MBTI 상담에서 질문 1회 무료로 먼저 물어볼 수 있음\nAI 분석을 바탕으로 운세 서비스 전문가가 직접 검수해 평일 기준 24시간 이내 답변해줌\nhttps://pf.kakao.com/_xcdXJX/chat",
+                "직접-카톡1:1무료",
+                "혼자 끙끙 앓던 그 고민 하나, 사주랑 MBTI 같이 넣고 카톡으로 짚어봐\n회원가입 없이 카톡 채널 1:1 사주·MBTI 상담에서 질문 1개 무료로 먼저 물어볼 수 있음\nAI 분석을 바탕으로 운세 서비스 전문가가 직접 검수해 평일 기준 24시간 이내 답변해줌\nhttps://pf.kakao.com/_xcdXJX/chat",
             )
-        if is_reunion:
+        if category == "운세" and not ("자미두수" in text):
             return (
-                "직접-재회사주990",
-                "전 애인 연락 타이밍이랑 재회 가능성, 회원가입 없이 재회 사주 990원으로 바로 확인해봐\n가볍게 지금 속마음만 뽑아볼 거면 490원 신비타로도 바로 됨\nhttps://www.mbtiju.com/relationship",
-            )
-        if is_crush:
-            return (
-                "직접-짝사랑사주990",
-                "지금 짝사랑 밀어붙여야 할지 깔끔하게 접어야 할지, 회원가입 없이 짝사랑 사주 990원으로 바로 확인해봐\n상대 속마음은 490원 신비타로 3카드 리딩으로도 볼 수 있음\nhttps://www.mbtiju.com/relationship",
-            )
-        if is_marriage:
-            return (
-                "직접-결혼사주990",
-                "내 사주 결혼운·배우자 궁합이 어떤 흐름인지, 회원가입 없이 결혼·부부 궁합 사주 990원으로 바로 확인해봐\n내 4주 원국은 무료 만세력 분석부터 찍어볼 수 있음\nhttps://www.mbtiju.com/relationship",
-            )
-        if is_tarot or ("속마음" in text) or ("답장" in text):
-            return (
-                "직접-타로490",
-                "지금 머릿속에 떠오른 그 사람 속마음이랑 흐름, 회원가입 없이 490원 신비타로 3카드로 바로 뽑아봐\n둘의 사주 궁합까지 깊게 볼 거면 심층 궁합 사주 990원도 바로 됨\nhttps://www.mbtiju.com/myluck?type=tarot",
-            )
-        if is_couple:
-            return (
-                "직접-연애궁합990",
-                "우리 둘이 서로 살려주는 조합인지 부딪히는 구조인지, 회원가입 없이 MBTI x 사주 심층 궁합 990원으로 바로 확인해봐\n연인·재회·짝사랑 사주도 전부 990원임\nhttps://www.mbtiju.com/relationship",
-            )
-        if is_job:
-            return (
-                "직접-이직사주990",
-                "지금 움직여도 되는 달인지 버텨야 하는 타이밍인지, 회원가입 없이 이직·취직·창업 사주 990원으로 바로 확인해봐\n기본 사주 원국표는 무료 만세력 분석으로 먼저 볼 수 있음\nhttps://www.mbtiju.com/gold",
-            )
-        if is_money:
-            return (
-                "직접-재물사주990",
-                "내 사주 돈줄이 언제 뚫리고 어디서 새는지, 회원가입 없이 재물운 사주 990원으로 바로 확인해봐\n오늘의 운세랑 만세력 4주 원국표는 0원 무료로 먼저 찍어볼 수 있음\nhttps://www.mbtiju.com/gold",
-            )
-        if is_travel:
-            return (
-                "직접-여행490",
-                "내 사주 기운 살려주는 방향이랑 장소가 궁금하면 회원가입 없이 490원 행운의 여행지 분석 바로 확인해봐\n내 사주 역마·오행은 무료 만세력 분석으로 먼저 볼 수 있음\nhttps://www.mbtiju.com/myluck?type=trip",
-            )
-        if category == "운세":
-            if day_num % 2 == 0:
-                return (
-                    "직접-운세무료490",
-                    "오늘 조심해야 할 흐름은 회원가입 없이 무료 오늘의 운세(0원)로 먼저 확인해봐\n내일의 운세랑 신비타로 3카드 리딩도 490원으로 바로 볼 수 있음\nhttps://www.mbtiju.com/myluck?type=today",
-                )
-            return (
-                "직접-타로490",
-                "지금 헷갈리는 선택이나 인간관계 흐름, 회원가입 없이 490원 신비타로 3카드 리딩으로 바로 뽑아봐\n오늘의 운세는 0원 무료로 먼저 확인됨\nhttps://www.mbtiju.com/myluck?type=tarot",
-            )
-        if day_num % 6 == 0:
-            return (
-                "직접-AI채팅490",
-                "내 사주 원국 보면서 궁금한 거 바로 물어보고 싶으면 회원가입 없이 AI 사주·타로 채팅 5회권 490원으로 써봐\n기본 만세력 4주 원국표는 0원 무료로 바로 나옴\nhttps://www.mbtiju.com/saju",
+                "직접-무료오늘운세",
+                "요즘 흐름이 헷갈리면 오늘 조심해야 할 포인트부터 매일 체크해봐\n회원가입 없이 오늘의 운세랑 만세력 4주 원국 분석 모두 무료로 바로 확인할 수 있음\nhttps://www.mbtiju.com/myluck?type=today",
             )
         return (
-            "직접-사주990",
-            "내 사주 8글자에 어떤 오행·신살이 깔려 있는지 회원가입 없이 무료 만세력 분석부터 찍어봐\nMBTI x 사주 통합 정밀 풀이도 990원으로 바로 확인할 수 있음\nhttps://www.mbtiju.com",
+            "직접-무료만세력",
+            "내 사주 8글자에 어떤 오행·신살이 깔려 있는지부터 알아야 패턴이 보임\n회원가입 없이 생년월일만으로 무료 만세력 4주 원국 분석이랑 사주 프리뷰 바로 확인해봐\nhttps://www.mbtiju.com",
         )
 
-    # ── cta_mode == "indirect" (URL 절대 금지, 프로필 유입 간접 유도) ──
+    # ── cta_mode == "indirect" (URL 절대 금지, 무료 분석 중심 프로필 유입 유도) ──
+    if is_mate:
+        return (
+            "간접-사주메이트무료",
+            "내 사주랑 똑 닮은 말랑 사주 메이트가 뭔지 궁금하면 프로필에서 무료 만세력 분석이랑 메이트 무료 미리보기 찍고 가",
+        )
+    if is_reunion or is_crush or is_couple_worry:
+        variants = [
+            ("간접-카톡1:1무료", "혼자 밤새 고민하다 지치지 말고 프로필 카톡 1:1 상담에서 질문 1개 무료로 먼저 물어보고 가\n회원가입 없이 바로 접수됨"),
+            ("간접-카톡1:1무료", "지금 답답한 연애·속마음 고민 하나만 프로필 카톡 1:1 상담에서 질문 1개 무료로 먼저 받아보고 가"),
+        ]
+        return variants[v_seed % len(variants)]
     if is_tarot:
         variants = [
-            ("간접-타로490", "3택 말고 내 상황 딱 맞춰서 뽑아보고 싶으면 프로필에서 490원 신비타로 해보고 가\n회원가입 없이 3카드 리딩 바로 나옴"),
-            ("간접-타로490/무료운세", "지금 떠오른 고민 더 깊게 보고 싶으면 프로필에서 490원 신비타로 뽑고 가\n무료 오늘의 운세랑 무료 만세력 분석도 바로 됨"),
+            ("간접-무료오늘운세", "오늘 내 운 흐름이 어느 쪽으로 열리는지 프로필에서 무료 오늘의 운세랑 무료 만세력 분석부터 보고 가"),
+            ("간접-카톡1:1무료", "3택 말고 내 상황 그대로 짚어서 물어보려면 프로필 카톡 1:1 상담에서 질문 1개 무료로 먼저 물어보고 가"),
         ]
         return variants[v_seed % len(variants)]
-    if is_jamidusu:
-        if is_travel:
-            return (
-                "간접-자미두수990/여행490",
-                "내 자미두수 천이궁·명궁 흐름 궁금하면 프로필에서 990원 자미두수 풀이 보고 가\n내 사주에 맞는 행운의 여행지 분석도 490원임",
-            )
-        return (
-            "간접-자미두수990",
-            "내 명궁이랑 수호별이 뭔지 궁금하면 프로필에서 990원 자미두수 풀이 보고 가\n회원가입 없이 무료 만세력 분석부터 먼저 찍어봐도 됨",
-        )
-    if is_reunion:
-        return (
-            "간접-재회990/타로490",
-            "전 애인 연락 타이밍 혼자 추측하지 말고 프로필에서 990원 재회 사주나 490원 신비타로 보고 가\n회원가입 없이 바로 확인됨",
-        )
-    if is_crush:
-        return (
-            "간접-짝사랑990",
-            "짝사랑 계속 밀어붙일지 헷갈리면 프로필에서 990원 짝사랑 사주 보고 가\n가볍게 속마음만 볼 거면 490원 타로도 가입 없이 바로 됨",
-        )
-    if is_job:
-        return (
-            "간접-만세력/이직990",
-            "내 사주에 이동운·직장운 언제 열리는지 프로필에서 무료 만세력 분석부터 하고 가\n취직·이직·창업 사주도 회원가입 없이 990원임",
-        )
-    if is_money:
-        return (
-            "간접-만세력/재물990",
-            "내 사주 돈 그릇이랑 재성 흐름 궁금하면 프로필에서 무료 만세력 분석부터 하고 가\n재물운 사주도 회원가입 없이 990원이면 바로 나옴",
-        )
-    if is_marriage or is_couple:
-        variants = [
-            ("간접-궁합990", "우리 둘 사주랑 MBTI 궁합 어떤지 궁금하면 프로필에서 990원 심층 궁합 보고 가\n무료 만세력 원국 분석부터 가입 없이 바로 됨"),
-            ("간접-궁합990/타로490", "지금 상대 속마음이랑 둘 케미 궁금하면 프로필에서 490원 신비타로나 990원 연인 궁합 사주 보고 가"),
-            ("간접-만세력/궁합990", "상대랑 내 일간·오행이 맞는지 궁금하면 프로필에서 무료 만세력 분석 하고 가\n연인·부부 궁합 사주도 990원임"),
-        ]
-        return variants[v_seed % len(variants)]
-    if is_travel:
-        return (
-            "간접-만세력/여행490",
-            "내 사주에 역마 기운 있는지 프로필에서 무료 만세력 분석 하고 가\n내 사주에 맞는 행운의 여행지 추천도 490원임",
-        )
     if is_3y:
         return (
-            "간접-만세력/3년점수표",
+            "간접-3년점수표무료",
             "내 앞으로 3년 대운 흐름이 어떤지 궁금하면 프로필에서 무료 만세력 분석이랑 3년 운세 점수표 무료 미리보기 찍고 가",
         )
     if category == "MBTI":
         variants = [
-            ("간접-만세력/사주990", "같은 MBTI라도 사주 오행 따라 성향이 완전 갈림\n프로필에서 무료 만세력 분석 하고 가 (MBTI 사주 통합 풀이도 990원임)"),
-            ("간접-사주990", "겉 MBTI랑 다른 내 진짜 속기질 궁금하면 프로필에서 무료 만세력 분석 찍고 990원 MBTI 사주 풀이도 보고 가"),
+            ("간접-무료만세력", "같은 MBTI라도 사주 오행 따라 성향이 완전 갈림\n프로필에서 회원가입 없이 무료 만세력 분석부터 하고 가"),
+            ("간접-무료만세력", "겉 MBTI랑 다른 내 진짜 속기질 궁금하면 프로필에서 무료 만세력 분석부터 찍고 가"),
         ]
         return variants[v_seed % len(variants)]
 
-    # 기본 사주/일간/신살/오행 간접 유도 변주
     base_variants = [
         ("간접-무료만세력", "내 사주에 이 글자 있는지 아직 모르면 프로필에서 무료 만세력 분석 하고 가\n회원가입 없이 생년월일만 넣으면 4주 원국표 바로 나옴"),
         ("간접-무료만세력", "본인 일간이랑 부족한 오행이 뭔지 모르면 프로필에서 무료 만세력 분석부터 찍고 가\n회원가입 없이 바로 확인됨"),
-        ("간접-만세력/사주990", "내 사주 원국에 어떤 신살·십성 깔려 있는지 프로필에서 무료 만세력 분석 하고 가\nMBTI x 사주 정밀 풀이도 회원가입 없이 990원임"),
+        ("간접-무료만세력", "내 사주 원국에 어떤 신살·십성 깔려 있는지 프로필에서 무료 만세력 분석 하고 가\n가입 절차 없이 바로 볼 수 있음"),
     ]
     return base_variants[v_seed % len(base_variants)]
 
 
 def _sanitize_generated_body(text: str) -> str:
     cleaned = _ensure_bracket_title(_clean_post(text or ""))
-    # 혹시 LLM이 금지 표현이나 URL을 본문에 섞었으면 제거/정리
     cleaned = re.sub(r"https?://\S+", "", cleaned).strip()
     return _clean_post(cleaned)
 
@@ -401,7 +363,7 @@ def _generate_batch_with_llm(
             f"- Day {bp.day_num} ({bp.scheduled_date}) | slot={bp.slot} | 카테고리={bp.category} | 태그={bp.topic_tag} | 가이드={bp.format_hint}{tarot_note}"
         )
 
-    avoid_sample = list(avoid_titles)[-120:]  # 최근 120개 제목 전달로 중복 원천 차단
+    avoid_sample = list(avoid_titles)[-120:]
     avoid_block = "\n".join(f"- {t}" for t in avoid_sample) if avoid_sample else "(없음)"
 
     system_prompt = (
@@ -441,7 +403,6 @@ def _generate_batch_with_llm(
                     mapped[key] = item
             if len(mapped) >= len(batch):
                 return mapped
-            # 일부 슬롯만 빠졌더라도 마지막 시도면 있는 것 반환, 아니면 재시도
             if attempt == 2 and mapped:
                 return mapped
             last_err = RuntimeError(f"배치 슬롯 부족: {len(mapped)}/{len(batch)}")
@@ -461,7 +422,7 @@ def generate_30day_sheet_rows(
     llm_caller: Optional[Callable] = None,
 ) -> Tuple[List[List[str]], int, int]:
     """
-    기존 시트와 겹치지 않는 새 N일치(기본 30일 = 90행) 시트 행(13컬럼)을 생성합니다.
+    기존 시트와 겹치지 않는 새 N일치(기본 30일 = 90행) 시트 행(15컬럼 A:O)을 생성합니다.
     반환: (rows_values, start_day_num, end_day_num)
     """
     start_day, start_date = compute_next_plan_anchor(
@@ -487,7 +448,6 @@ def generate_30day_sheet_rows(
         batch = blueprint[offset : offset + batch_size]
         generated_map = _generate_batch_with_llm(batch, used_titles, llm_caller=llm_caller)
 
-        # 누락·중복·금지어 항목이 있으면 누락분만 최대 1회 추가 보충
         missing: List[SlotBlueprint] = []
         accepted: Dict[Tuple[int, str], GeneratedSlotItem] = {}
         for bp in batch:
@@ -533,10 +493,17 @@ def generate_30day_sheet_rows(
                 cta_mode=bp.cta_mode,
                 day_num=bp.day_num,
                 slot=bp.slot,
+                is_mate=bp.is_mate,
             )
             cta_clean = _clean_post(cta_text) if cta_text else ""
+            img_urls_str, img_target = pick_service_images_for_row(
+                cta_type=cta_type,
+                cta_text=cta_clean,
+                is_mate=bp.is_mate,
+                day_num=bp.day_num,
+                slot=bp.slot,
+            )
 
-            # 최종 안전 검증
             for check_txt in (main_clean, r1_clean, r2_clean, cta_clean):
                 if check_txt and _has_banned_phrase(check_txt):
                     raise RuntimeError(f"금지어 감지됨 (Day {bp.day_num} {bp.slot})")
@@ -557,6 +524,8 @@ def generate_30day_sheet_rows(
                 cta_type,
                 "",
                 "",
+                img_urls_str,
+                img_target,
             ])
 
     end_day = start_day + days - 1
@@ -582,7 +551,7 @@ def append_rows_to_sheet(
     svc = build("sheets", "v4", credentials=creds, cache_discovery=False)
     svc.spreadsheets().values().append(
         spreadsheetId=sid,
-        range=f"'{tab}'!A:M",
+        range=f"'{tab}'!A:O",
         valueInputOption="RAW",
         insertDataOption="INSERT_ROWS",
         body={"values": rows_values},
@@ -637,7 +606,6 @@ def replenish_sheet_if_exhausted(
         llm_caller=llm_caller,
     )
 
-    # 쓰기 직전 라이브 시트 재확인 (동시 실행으로 이미 다른 잡이 채웠는지 이중 방지)
     if not force:
         latest_rows = load_sheet_rows(sheet_id=sheet_id, tab_name=tab_name)
         latest_pending = count_pending_posts(latest_rows, recent_published_texts=recent_published_texts)

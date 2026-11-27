@@ -141,6 +141,7 @@ def main():
         load_and_pick_scheduled_post,
         load_sheet_rows,
         mark_sheet_row_published,
+        resolve_post_images,
     )
     from pipeline.threads_sheet_refill import replenish_sheet_if_exhausted
 
@@ -237,9 +238,15 @@ def main():
             posts=posts,
             has_cta=has_cta,
         )
+        post_images = resolve_post_images(selected_sheet_post, len(thread.posts))
+        img_summary = ""
+        if post_images:
+            pos_label = "본문" if 0 in post_images else "CTA 답글"
+            cnt = sum(len(v) for v in post_images.values())
+            img_summary = f" | 이미지: {pos_label} {cnt}장"
         print(
             f"[1/2] 📋 시트 계획 로드 완료 ({selected_sheet_post.day_label}, Row {selected_sheet_post.row_number}, {time.time() - t0:.1f}초) "
-            f"| 카테고리: {thread.category} | 총 {len(thread.posts)}개 글"
+            f"| 카테고리: {thread.category} | 총 {len(thread.posts)}개 글{img_summary}"
         )
     except Exception as e:
         err_msg = f"❌ <b>[Threads 시트 로드/보충 실패 — AI 폴백 차단됨]</b>\n<code>{html.escape(str(e))}</code>"
@@ -255,12 +262,14 @@ def main():
         print("[TEST] --no-publish 모드이므로 게시하지 않고 종료합니다.")
         print("=== 생성된 글 목록 ===")
         for idx, p in enumerate(thread.posts, 1):
-            print(f"[{idx}] {p}\n")
+            imgs = post_images.get(idx - 1, [])
+            img_note = f"\n  [첨부 이미지 {len(imgs)}장]: {', '.join(imgs)}" if imgs else ""
+            print(f"[{idx}] {p}{img_note}\n")
         return
 
     # 2. Threads API 게시
     print("[2/2] 🚀 Threads API 타래 게시 중...")
-    result = publish_thread(thread.posts, topic_tag=thread.topic_tag)
+    result = publish_thread(thread.posts, topic_tag=thread.topic_tag, post_images=post_images)
 
     if "error" in result:
         err_msg = (
@@ -277,11 +286,17 @@ def main():
 
     cta_badge = " (🔗 CTA 포함)" if thread.has_cta else ""
     source_badge = f"📋 시트 계획 ({selected_sheet_post.day_label} · Row {selected_sheet_post.row_number})"
+    img_line = ""
+    if post_images:
+        pos_label = "본문" if 0 in post_images else "CTA 답글"
+        cnt = sum(len(v) for v in post_images.values())
+        img_line = f"• <b>사진:</b> {pos_label} {cnt}장 첨부\n"
 
     success_msg = (
         f"🧵 <b>[Threads 자동 게시 완료]</b> [{thread.category}{cta_badge}]\n\n"
         f"• <b>소스:</b> {source_badge}\n"
         f"• <b>슬롯:</b> {slot.upper()}\n"
+        f"{img_line}"
         f"• <b>내용:</b>\n<i>\"{html.escape(preview_short)}\"</i>\n\n"
         f"🔗 <b>스레드 바로가기:</b> <a href=\"{permalink}\">{permalink or '스레드 열기'}</a>"
     )
