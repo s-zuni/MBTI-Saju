@@ -27,7 +27,7 @@
                 {
                     "type": "header",
                     "key": "user-agent",
-                    "value": "(?i).*(kakaotalk|facebookexternalhit|facebot|twitterbot|slackbot|discordbot|telegrambot|whatsapp|naver|yeti|daum|threads|meta-externalagent|linkedinbot).*"
+                    "value": "(?i).*(kakaotalk-scrap|facebookexternalhit|facebot|twitterbot|slackbot|discordbot|telegrambot|whatsapp|naverbot|yeti|daumoa|meta-externalagent|linkedinbot).*"
                 }
             ],
             "destination": "/api/og-mate"
