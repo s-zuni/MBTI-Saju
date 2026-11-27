@@ -581,16 +581,32 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
     }
   };
 
-  const renderParagraphs = (text?: string) => {
+  const renderParagraphs = (
+    text?: string,
+    options?: { textClass?: string; dotClass?: string }
+  ) => {
     if (!text) return null;
+    const textClass = options?.textClass || 'text-slate-700';
+    const dotClass = options?.dotClass || 'bg-violet-500';
     return stripMarkdown(text)
       .split(/\n+/)
-      .filter((p) => p.trim())
-      .map((p, idx) => (
-        <p key={idx} className="text-[14px] sm:text-[15px] text-slate-700 leading-[1.82] break-keep">
-          {p.trim()}
-        </p>
-      ));
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((line, idx) => {
+        if (/^[-•*]\s+/.test(line)) {
+          return (
+            <div key={idx} className={`flex items-start gap-2.5 text-[14px] sm:text-[15px] ${textClass} leading-[1.78] break-keep`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${dotClass} shrink-0 mt-2.5`} />
+              <span>{line.replace(/^[-•*]\s+/, '').trim()}</span>
+            </div>
+          );
+        }
+        return (
+          <p key={idx} className={`text-[14px] sm:text-[15px] ${textClass} leading-[1.82] break-keep`}>
+            {line}
+          </p>
+        );
+      });
   };
 
   const shareResultPayload = useMemo(() => {
@@ -666,12 +682,13 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug break-keep">
-            내 사주와 <span className="text-emerald-600">찰떡인 말랑 메이트</span> &amp;{' '}
-            <span className="text-rose-500">피해야 할 상극 메이트</span>
+            나의 <span className="text-violet-600">사주 본캐 유형</span>과{' '}
+            <span className="text-emerald-600">찰떡</span> ·{' '}
+            <span className="text-rose-500">상극 메이트</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2.5 leading-relaxed max-w-xl mx-auto break-keep">
-            생년월일시(만세력 4주 8자)와 MBTI를 교차 분석해, 내 부족한 오행을 채워줄 단짝 캐릭터와
-            함께 있으면 기 빨리는 상극 캐릭터를 일러스트·스토리 카드로 알려드려요.
+            생년월일시(만세력 4주 8자)와 MBTI를 교차 분석해, 내가 9종 캐릭터 중 어떤 유형인지부터
+            부족한 오행을 채워줄 찰떡 단짝과 기 빨리는 상극 캐릭터까지 한 번에 알려드려요.
           </p>
 
           {/* 9종 말랑 메이트 미리보기 스트립 */}
@@ -817,7 +834,7 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                       사주 · MBTI 교차 매칭 완료! 정체 확인 대기 중
                     </span>
                     <h3 className="text-xl font-black text-slate-900 break-keep">
-                      {userName}님의 찰떡 메이트 &amp; 상극 경보 메이트가 포착되었어요
+                      {userName}님의 본캐 유형 &amp; 찰떡 · 상극 메이트가 포착되었어요
                     </h3>
                   </div>
 
@@ -877,11 +894,11 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>5대 케미 스탯 레이더 차트 &amp; 사주×MBTI 해설</span>
+                      <span>5대 케미 스탯 &amp; 현실 판별 신호 3가지</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>현실 연애·직장·친구 관계 실전 대처 처방</span>
+                      <span>현실 연애·직장·친구 처방 &amp; 5분 개운 루틴</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -942,9 +959,80 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                       {displayMeta.mbti && <span>· {displayMeta.mbti.toUpperCase()}</span>}
                     </div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug break-keep">
-                      {stripMarkdown(displayResult.headline || '내 사주와 찰떡인 말랑 메이트 & 상극 리포트')}
+                      {stripMarkdown(displayResult.headline || '내 사주 본캐 유형과 찰떡 · 상극 메이트 리포트')}
                     </h2>
                   </div>
+
+                  {/* Hero Card 1: My Character Type (내가 어떤 유형인지 최상단 공개) */}
+                  {mirrorChar && (
+                    <div className="bg-gradient-to-br from-violet-50 via-white to-fuchsia-50/60 rounded-3xl border-2 border-violet-200 shadow-md overflow-hidden">
+                      <div className="bg-violet-100/70 px-5 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-violet-200/70">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-black text-violet-800">
+                          <Sparkles className="w-4 h-4 text-violet-600" />
+                          {displayName}님의 사주 × MBTI 본캐 유형
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white text-violet-700 border border-violet-200 text-[11px] font-black">
+                          {mirrorChar.elementBadge}
+                        </span>
+                      </div>
+
+                      <div className="p-6 sm:p-7 space-y-5">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+                          <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-3xl bg-white border-2 border-violet-100 p-2.5 shrink-0 shadow-sm">
+                            <img
+                              src={mirrorChar.imagePath}
+                              alt={mirrorChar.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2.5">
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                              <span className="px-2.5 py-0.5 rounded-full bg-violet-600 text-white text-[11px] font-black">
+                                내 본캐 유형
+                              </span>
+                              <span className="px-2.5 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200 text-[11px] font-bold">
+                                {mirrorChar.sajuTrait}
+                              </span>
+                            </div>
+                            <div>
+                              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+                                {mirrorChar.name}
+                              </h3>
+                              <p className="text-xs sm:text-sm font-bold text-violet-700 mt-0.5 break-keep">
+                                {mirrorChar.subtitle}
+                              </p>
+                            </div>
+                            <p className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed break-keep">
+                              “{mirrorChar.tagline}”
+                            </p>
+                            <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-0.5">
+                              {mirrorChar.keywords.map((kw) => (
+                                <span
+                                  key={kw}
+                                  className="px-2.5 py-0.5 rounded-full bg-white text-violet-700 border border-violet-200/80 text-[11px] font-bold"
+                                >
+                                  #{kw}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {displayResult.mirrorSummary && (
+                          <div className="bg-white/90 rounded-2xl border border-violet-100 p-4 sm:p-5 space-y-2.5">
+                            <h4 className="text-xs sm:text-sm font-black text-violet-900">
+                              왜 {displayName}님의 유형이 &lsquo;{mirrorChar.name}&rsquo;일까?
+                            </h4>
+                            <div className="space-y-2.5">
+                              {renderParagraphs(displayResult.mirrorSummary, {
+                                dotClass: 'bg-violet-500',
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Best vs Worst Match Visual Comparison */}
                   <div className="grid sm:grid-cols-2 gap-5">
@@ -1031,27 +1119,51 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                     )}
                   </div>
 
-                  {/* Bonus: Mirror Character + 5D Chemistry Radar Chart */}
+                  {/* Saju Balance Summary + 5D Chemistry Radar Chart */}
                   <div className="grid sm:grid-cols-2 gap-5">
-                    {mirrorChar && (
-                      <div className="bg-gradient-to-br from-violet-50/90 to-white rounded-3xl border border-violet-200 p-6 flex flex-col justify-between space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-20 h-20 rounded-2xl bg-white border border-violet-200 p-1.5 shrink-0 shadow-xs">
-                            <img
-                              src={mirrorChar.imagePath}
-                              alt={mirrorChar.name}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <div>
-                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[11px] font-black mb-1">
-                              보너스 · 내 사주 속 숨은 본캐
-                            </span>
-                            <h4 className="text-xl font-black text-slate-900">{mirrorChar.name}</h4>
-                            <p className="text-xs font-semibold text-slate-500">{mirrorChar.elementBadge}</p>
-                          </div>
+                    {displaySaju && deterministicMatch && (
+                      <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-between space-y-4">
+                        <div className="space-y-1">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[11px] font-black">
+                            내 사주 원국 · 오행 기운 지도
+                          </span>
+                          <h4 className="text-base font-black text-slate-900">
+                            {displaySaju.ganZhi.day}일주 ({displaySaju.dayMaster.korean})
+                            {displayMeta.mbti ? ` × ${displayMeta.mbti.toUpperCase()}` : ''}
+                          </h4>
+                          <p className="text-xs text-slate-500 font-medium break-keep">
+                            강한 기운{' '}
+                            <strong className="text-slate-800">
+                              {ELEMENT_LABELS[deterministicMatch.dominantElement].ko}({ELEMENT_LABELS[deterministicMatch.dominantElement].hanja})
+                            </strong>
+                            {' · '}부족한 기운{' '}
+                            <strong className="text-emerald-700">
+                              {ELEMENT_LABELS[deterministicMatch.lackingElement].ko}({ELEMENT_LABELS[deterministicMatch.lackingElement].hanja})
+                            </strong>
+                          </p>
                         </div>
-                        <div className="space-y-2">{renderParagraphs(displayResult.mirrorSummary)}</div>
+                        <div className="space-y-2.5">
+                          {elementKeys.map((key) => {
+                            const meta = ELEMENT_LABELS[key];
+                            const pct = displaySaju.elementRatio[key] || 0;
+                            return (
+                              <div key={key} className="space-y-1">
+                                <div className="flex items-center justify-between text-xs font-bold">
+                                  <span className="text-slate-700">
+                                    {meta.ko}({meta.hanja})
+                                  </span>
+                                  <span className="text-slate-500">{pct}%</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`${meta.barColor} h-full rounded-full`}
+                                    style={{ width: `${Math.max(pct, 6)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
@@ -1142,11 +1254,29 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                       {displayResult.bestMatch.luckySynergyTip && (
                         <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
                           <Wand2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                          <div className="space-y-1">
+                          <div className="space-y-2 flex-1">
                             <p className="text-xs font-black text-slate-900">찰떡 인연 시너지 극대화 팁</p>
-                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed break-keep">
-                              {stripMarkdown(displayResult.bestMatch.luckySynergyTip)}
-                            </p>
+                            <div className="space-y-2">
+                              {renderParagraphs(displayResult.bestMatch.luckySynergyTip, {
+                                textClass: 'text-slate-600',
+                                dotClass: 'bg-emerald-500',
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {displayResult.bestMatch.realPersonSignals && (
+                        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/35 border border-emerald-200/70 space-y-2.5">
+                          <h4 className="text-xs sm:text-sm font-black text-emerald-800 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>현실에서 {bestChar.name} 유형을 단번에 알아보는 3가지 신호</span>
+                          </h4>
+                          <div className="space-y-2">
+                            {renderParagraphs(displayResult.bestMatch.realPersonSignals, {
+                              textClass: 'text-slate-700',
+                              dotClass: 'bg-emerald-500',
+                            })}
                           </div>
                         </div>
                       )}
@@ -1182,12 +1312,30 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                         <div className="space-y-2.5">{renderParagraphs(displayResult.worstMatch.clashScenario)}</div>
                       </div>
 
+                      {displayResult.worstMatch.redFlagSignals && (
+                        <div className="p-4 sm:p-5 rounded-2xl bg-rose-50/35 border border-rose-200/70 space-y-2.5">
+                          <h4 className="text-xs sm:text-sm font-black text-rose-800 flex items-center gap-1.5">
+                            <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
+                            <span>깊어지기 전 미리 알아채는 {worstChar.name} 유형 경보 신호</span>
+                          </h4>
+                          <div className="space-y-2">
+                            {renderParagraphs(displayResult.worstMatch.redFlagSignals, {
+                              textClass: 'text-slate-700',
+                              dotClass: 'bg-rose-500',
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {displayResult.worstMatch.survivalGuide && (
-                        <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-1.5">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 text-white space-y-2">
                           <p className="text-xs font-black text-amber-300">현실 멘탈 방어 · 거리두기 처방전</p>
-                          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed break-keep">
-                            {stripMarkdown(displayResult.worstMatch.survivalGuide)}
-                          </p>
+                          <div className="space-y-2">
+                            {renderParagraphs(displayResult.worstMatch.survivalGuide, {
+                              textClass: 'text-slate-200',
+                              dotClass: 'bg-amber-300',
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1205,25 +1353,38 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
                       </div>
 
                       {displayResult.luckyItem && (
-                        <div className="grid sm:grid-cols-2 gap-3 pt-2">
-                          <div className="bg-white rounded-2xl border border-[#E6DFD1] p-4 flex items-start gap-3">
-                            <Gift className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-xs font-black text-slate-900 mb-1">부족 오행 보완 아이템</p>
-                              <p className="text-xs text-slate-600 leading-relaxed break-keep">
-                                {stripMarkdown(displayResult.luckyItem.item || '')}
-                              </p>
+                        <div className="space-y-3 pt-2">
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="bg-white rounded-2xl border border-[#E6DFD1] p-4 flex items-start gap-3">
+                              <Gift className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-black text-slate-900 mb-1">부족 오행 보완 아이템</p>
+                                <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed break-keep">
+                                  {stripMarkdown(displayResult.luckyItem.item || '')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="bg-white rounded-2xl border border-[#E6DFD1] p-4 flex items-start gap-3">
+                              <Palette className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-black text-slate-900 mb-1">행운 밸런스 컬러</p>
+                                <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed break-keep">
+                                  {stripMarkdown(displayResult.luckyItem.color || '')}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                          <div className="bg-white rounded-2xl border border-[#E6DFD1] p-4 flex items-start gap-3">
-                            <Palette className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-xs font-black text-slate-900 mb-1">행운 밸런스 컬러</p>
-                              <p className="text-xs text-slate-600 leading-relaxed break-keep">
-                                {stripMarkdown(displayResult.luckyItem.color || '')}
-                              </p>
+                          {displayResult.luckyItem.ritual && (
+                            <div className="bg-white rounded-2xl border border-[#E6DFD1] p-4 flex items-start gap-3">
+                              <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-black text-slate-900 mb-1">오늘 바로 실천하는 5분 개운 루틴</p>
+                                <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed break-keep">
+                                  {stripMarkdown(displayResult.luckyItem.ritual)}
+                                </p>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>

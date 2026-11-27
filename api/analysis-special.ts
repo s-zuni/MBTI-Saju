@@ -384,14 +384,25 @@ MBTI: ${safeMbtiPromptValue}
   - 기질/아키타입: ${mirror.archetype}
 - 5대 케미 스탯(dimensions): ${JSON.stringify(mateMatch.dimensions)}
 
-[생성 작업 지침 - 심층 분량 · 이모지/마크다운 금지]
+[생성 작업 지침 - 심층 1.5배 분량 · 구체적 상황 묘사 · 이모지/마크다운 금지]
 1. bestCharacterId, worstCharacterId, mirrorCharacterId, bestScore, worstAlertScore, dimensions 필드는 위 사전 계산된 값과 단 한 글자도 틀리지 않게 그대로 채우세요.
 2. headline은 24자 이내의 재치 있고 자연스러운 순수 한국어 한 줄로 작성하고(영어·영문 약어·이모지·마크다운 금지), bestMatch.chemistryTitle과 worstMatch.warningTitle도 각각 22자 이내의 간결한 순수 한국어 구절로 작성하세요.
-3. 다른 사람의 MBTI 4글자 코드를 임의로 지어내지 말고, 모든 제목·한줄 요약·본문은 입력된 MBTI 4글자 외에 영어 단어나 영문 약어를 섞지 않은 생생한 순수 한국어 표현으로 서술하세요.
-4. bestMatch: 사용자의 부족한 오행(${lackingInfo.ko})과 일간(${saju?.dayMaster?.korean || ''})을 ${best.name}의 기운(${best.elementBadge})이 어떻게 보완하는지 명리학적으로 짚고, 둘이 만나면 벌어지는 귀엽고 현실적인 힐링 케미 장면을 생생하게 쓰세요.
-5. worstMatch: 사용자의 강한 오행(${dominantInfo.ko})과 ${worst.name}의 기운(${worst.elementBadge})이 왜 충돌하거나 감정 배터리를 방전시키는지 냉철하게 분석하고, 현실에서 이런 유형의 사람을 만났을 때 상처받지 않는 실전 대처법을 제시하세요.
-6. realLifeAdvice: 캐릭터 궁합을 넘어 실제 연애·친구·직장 인간관계에서 어떤 사람을 가까이하고 어떤 패턴을 경계해야 하는지 따뜻하고 현실적으로 마무리하세요.
-7. 절대 **, __, # 같은 마크다운 기호나 이모지를 사용하지 마세요.`;
+3. 다른 사람의 MBTI 4글자 코드를 임의로 지어내지 말고, 모든 제목·한줄 요약·소제목·본문은 입력된 MBTI 4글자 외에 영어 단어나 영문 약어를 섞지 않은 생생한 순수 한국어 표현으로 서술하세요.
+4. 추상적인 덕담이나 뻔한 요약 대신, 위 [System Context: Deterministic Saju Data]에 주어진 실제 일간·월지 계절감·오행 분포·십성·신살과 사용자 성향(${safeMbtiPromptValue})을 직접 근거로 들어 구체적인 말투, 일상 상황, 결정적 대화 장면을 묘사하세요.
+5. mirrorSummary(280~380자, 2문단 \\n\\n): 사용자가 9종 캐릭터 중 어떤 유형(${mirror.name})에 해당하는지 첫 문장에서 선명하게 밝히고, ${mirror.name}와 닮은 내 사주 일간·오행·십성 기질, 겉과 다른 속마음 매력, 혼자 있을 때 드러나는 행동 습관을 구체적으로 서술하세요.
+6. bestMatch:
+   - sajuReason(550~700자, 3문단 \\n\\n): 사용자의 부족한 오행(${lackingInfo.ko})과 일간(${saju?.dayMaster?.korean || ''})·십성을 ${best.name}의 기운(${best.elementBadge})이 어떻게 보완하는지, MBTI·기질 호흡은 어디서 맞물리는지, 함께할 때 운과 실행력이 어떻게 살아나는지 3문단으로 깊이 분석하세요.
+   - scenario(450~600자, 3문단 \\n\\n): 주말 카페·산책, 늦은 밤 메신저 대화, 일·감정이 흔들릴 때 서로 건네는 말투와 행동을 한 편의 장면처럼 구체적으로 그리세요.
+   - luckySynergyTip(240~340자, 2문단 \\n\\n): 이 유형의 인연과 호흡을 극대화하는 대화 순서, 만남 리듬, 역할 분담을 구체적으로 제안하세요.
+   - realPersonSignals(200~280자): 현실 주변에서 이 찰떡 메이트 유형의 사람을 바로 알아볼 수 있는 특징 3가지를 '- '로 시작하는 3줄(\\n 구분)로 작성하세요.
+7. worstMatch:
+   - conflictReason(550~700자, 3문단 \\n\\n): 사용자의 강한 오행(${dominantInfo.ko})과 ${worst.name}의 기운(${worst.elementBadge})이 왜 충돌하거나 감정 배터리를 방전시키는지, 판단 기준과 감정 속도가 어디서 어긋나는지, 내가 유독 참다가 지치는 원인을 3문단으로 분석하세요.
+   - clashScenario(450~600자, 3문단 \\n\\n): 연락 텀·말투 오해, 협업·여행·연애 결정 순간의 갈등, 혼자 집에 와서 진이 빠지는 현실 장면을 생생하게 묘사하세요.
+   - survivalGuide(280~400자, 2문단 \\n\\n): 이런 성향의 사람을 만났을 때 상처받지 않고 선을 긋는 실전 답변 문장, 피해야 할 대화 주제, 거리두기 기준을 구체적으로 알려주세요.
+   - redFlagSignals(200~280자): 관계가 깊어지기 전 미리 알아채는 상극 경보 신호 3가지를 '- '로 시작하는 3줄(\\n 구분)로 작성하세요.
+8. realLifeAdvice(600~800자, 3~4문단 \\n\\n): 연애·썸, 친구·지인, 직장·협업 영역별로 나누어 현실 대인관계 적용법을 제시하고, 올해(2026년 병오년) 하반기~내년(2027년 정미년) 흐름 속에서 바로 실천할 관계 선택 기준을 따뜻하고 명확하게 마무리하세요.
+9. luckyItem: item(120~180자, 소품 종류와 배치·휴대법), color(100~160자, 색감 톤과 코디 적용법), ritual(130~200자, 감정 소모된 날 5분 안에 기운을 되돌리는 실행 루틴)을 각각 구체적으로 채우세요.
+10. 절대 **, __, # 같은 마크다운 기호나 이모지를 사용하지 마세요.`;
     } else if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow' || targetType === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];

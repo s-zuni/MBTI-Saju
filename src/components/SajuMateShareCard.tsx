@@ -458,7 +458,7 @@ const SajuMateShareCard = forwardRef<HTMLDivElement, SajuMateShareCardProps>(
                   marginBottom: '4px',
                 }}
               >
-                내 사주 속 숨은 본캐 메이트
+                나의 말랑 사주 본캐 유형
               </p>
               <p
                 style={{
