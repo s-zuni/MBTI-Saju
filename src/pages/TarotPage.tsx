@@ -219,7 +219,10 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         setIsSharing(true);
         try {
             const fileName = `MBTIJU_Tarot_Story_${new Date().getTime()}`;
-            await generateImage(shareRef.current, fileName);
+            await generateImage(shareRef.current, fileName, 2, {
+                title: '신비타로 리딩 결과 | MBTIJU',
+                text: 'MBTIJU에서 확인한 나의 타로 리딩 결과입니다.'
+            });
             alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
         } catch (err) {
             alert('이미지 생성 중 오류가 발생했습니다.');
@@ -410,7 +413,7 @@ const TarotPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                 )}
                                                 
                                                 {/* Hidden Instagram sharing card */}
-                                                <div className="fixed left-[-9999px] top-[-9999px]">
+                                                <div className="fixed left-[-9999px] top-0 pointer-events-none" aria-hidden="true">
                                                     {reading && (
                                                         <TarotShareCard
                                                             ref={shareRef}

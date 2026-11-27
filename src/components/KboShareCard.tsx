@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { getTeamInfo } from '../config/teamConfig';
+import { stripMarkdown } from '../utils/textUtils';
 
 interface KboShareCardProps {
     result: {
@@ -12,62 +13,145 @@ interface KboShareCardProps {
     userName: string;
 }
 
+const truncateText = (text: string, maxLen: number): string => {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= maxLen) return normalized;
+    return `${normalized.slice(0, maxLen - 1).trimEnd()}…`;
+};
+
 const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, selectedTeam, userName }, ref) => {
     const teamInfo = getTeamInfo(selectedTeam);
-    const primaryColor = teamInfo?.primaryColor || '#000000';
+    const primaryColor = teamInfo?.primaryColor || '#0F172A';
 
     // score와 winFairyScore가 스트리밍 중인 경우를 대비해 기본값 설정
-    const score = result.score || 0;
-    const winFairyScore = result.winFairyScore || 0;
-    const luckySeat = result.recommendedSeat || '';
-    const luckyFood = result.luckyFood || '';
+    const score = typeof result.score === 'number' ? result.score : 0;
+    const winFairyScore = typeof result.winFairyScore === 'number' ? result.winFairyScore : 0;
+    const safeLuckySeat = truncateText(stripMarkdown(result.recommendedSeat || ''), 36) || '-';
+    const safeLuckyFood = truncateText(stripMarkdown(result.luckyFood || ''), 36) || '-';
 
     return (
         <div
             ref={ref}
-            className="relative w-[1000px] h-[1000px] bg-white overflow-hidden flex flex-col p-20 select-none"
-            style={{ 
+            style={{
+                position: 'relative',
+                width: '1000px',
+                height: '1000px',
+                backgroundColor: '#FFFFFF',
+                padding: '64px 72px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxSizing: 'border-box',
+                userSelect: 'none',
+                overflow: 'hidden',
                 fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
-                backgroundColor: '#ffffff'
             }}
         >
-            {/* Background Grid - Very Subtle */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
-                <div className="absolute inset-0" style={{
-                    backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)`,
-                    backgroundSize: '125px 125px'
-                }} />
-            </div>
+            {/* Top Accent Bar */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '10px',
+                    backgroundColor: primaryColor,
+                }}
+            />
 
             {/* Top Header Section */}
-            <div className="flex justify-between items-start z-10">
-                <div className="space-y-1">
-                    <h1 className="text-[36px] font-black tracking-[-0.05em] text-slate-900 leading-none">MBTIJU</h1>
-                    <p className="text-[12px] font-bold text-slate-400 tracking-[0.25em] uppercase">정교한 사주 분석 리포트</p>
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    paddingTop: '8px',
+                }}
+            >
+                <div>
+                    <h1
+                        style={{
+                            margin: 0,
+                            fontSize: '36px',
+                            fontWeight: 900,
+                            letterSpacing: '-0.04em',
+                            lineHeight: 1.15,
+                            color: '#0F172A',
+                        }}
+                    >
+                        MBTIJU
+                    </h1>
+                    <p
+                        style={{
+                            margin: '6px 0 0 0',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            letterSpacing: '0.2em',
+                            lineHeight: 1.4,
+                            color: '#64748B',
+                        }}
+                    >
+                        정교한 사주 분석 리포트
+                    </p>
                 </div>
-                <div className="text-right">
-                    <p className="text-[14px] font-black text-slate-300 tracking-[0.2em] leading-[1.4] uppercase">
-                        KBO 팬<br />운명 리포트
+                <div style={{ textAlign: 'right' }}>
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            letterSpacing: '0.16em',
+                            lineHeight: 1.4,
+                            color: '#64748B',
+                        }}
+                    >
+                        KBO 팬 · 운명 리포트
                     </p>
                 </div>
             </div>
 
             {/* Main Title Section */}
-            <div className="mt-40 flex-grow z-10">
-                <p 
-                    className="text-[18px] font-black tracking-[0.4em] mb-12 uppercase"
-                    style={{ color: primaryColor }}
+            <div style={{ marginTop: '36px', marginBottom: '24px' }}>
+                <p
+                    style={{
+                        margin: '0 0 24px 0',
+                        fontSize: '18px',
+                        fontWeight: 800,
+                        letterSpacing: '0.35em',
+                        lineHeight: 1.4,
+                        color: primaryColor,
+                    }}
                 >
                     분석 기록
                 </p>
-                
-                <div className="space-y-4">
-                    <h2 className="text-[84px] font-medium leading-none text-slate-900 tracking-tight" style={{ fontFamily: "'Noto Serif KR', serif" }}>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <h2
+                        style={{
+                            margin: 0,
+                            fontSize: '68px',
+                            fontWeight: 500,
+                            lineHeight: 1.2,
+                            letterSpacing: '-0.02em',
+                            color: '#0F172A',
+                            fontFamily: "'Noto Serif KR', serif",
+                            wordBreak: 'keep-all',
+                        }}
+                    >
                         {userName}님의
                     </h2>
-                    <h2 
-                        className="text-[92px] font-bold leading-tight tracking-tight" 
-                        style={{ fontFamily: "'Noto Serif KR', serif", color: primaryColor }}
+                    <h2
+                        style={{
+                            margin: 0,
+                            fontSize: '78px',
+                            fontWeight: 700,
+                            lineHeight: 1.22,
+                            letterSpacing: '-0.02em',
+                            color: primaryColor,
+                            paddingBottom: '6px',
+                            fontFamily: "'Noto Serif KR', serif",
+                            wordBreak: 'keep-all',
+                        }}
                     >
                         {selectedTeam} 궁합
                     </h2>
@@ -75,48 +159,163 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
             </div>
 
             {/* Bottom Data Section */}
-            <div className="grid grid-cols-12 gap-8 items-end z-10 pb-12">
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: '5fr 4fr 3fr',
+                    gap: '28px',
+                    alignItems: 'end',
+                    paddingTop: '24px',
+                    borderTop: '1px solid #E2E8F0',
+                }}
+            >
                 {/* Compatibility Score */}
-                <div className="col-span-5">
-                    <p className="text-[20px] font-bold text-slate-500 tracking-[0.15em] mb-8 uppercase">궁합 지수</p>
-                    <div className="flex items-baseline">
-                        <span className="text-[180px] font-bold leading-none tracking-tighter" style={{ color: primaryColor }}>
+                <div>
+                    <p
+                        style={{
+                            margin: '0 0 16px 0',
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            letterSpacing: '0.12em',
+                            lineHeight: 1.4,
+                            color: '#64748B',
+                        }}
+                    >
+                        궁합 지수
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                        <span
+                            style={{
+                                fontSize: '152px',
+                                fontWeight: 700,
+                                lineHeight: 1.1,
+                                letterSpacing: '-0.04em',
+                                color: primaryColor,
+                                paddingBottom: '4px',
+                            }}
+                        >
                             {score}
                         </span>
                     </div>
                 </div>
 
                 {/* Victory Fairy Probability & Lucky Seat */}
-                <div className="col-span-4">
-                    <p className="text-[20px] font-bold text-slate-500 tracking-[0.15em] mb-8 uppercase">승리 요정 확률</p>
-                    <div className="flex items-baseline mb-12">
-                        <span className="text-[100px] font-bold leading-none text-slate-900">{winFairyScore}</span>
-                        <span className="text-[32px] font-medium text-slate-300 ml-2 tracking-tighter">%</span>
+                <div>
+                    <p
+                        style={{
+                            margin: '0 0 12px 0',
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            letterSpacing: '0.12em',
+                            lineHeight: 1.4,
+                            color: '#64748B',
+                        }}
+                    >
+                        승리 요정 확률
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '28px' }}>
+                        <span
+                            style={{
+                                fontSize: '88px',
+                                fontWeight: 700,
+                                lineHeight: 1.1,
+                                color: '#0F172A',
+                            }}
+                        >
+                            {winFairyScore}
+                        </span>
+                        <span
+                            style={{
+                                fontSize: '30px',
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                                color: '#64748B',
+                                marginLeft: '6px',
+                            }}
+                        >
+                            %
+                        </span>
                     </div>
-                    
-                    <div className="space-y-3">
-                        <p className="text-[20px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>행운의 자리</p>
-                        <p className="text-[22px] font-bold leading-relaxed text-slate-800 max-w-[280px] break-keep">
-                            {luckySeat}
+
+                    <div>
+                        <p
+                            style={{
+                                margin: '0 0 8px 0',
+                                fontSize: '18px',
+                                fontWeight: 800,
+                                letterSpacing: '0.08em',
+                                lineHeight: 1.4,
+                                color: primaryColor,
+                            }}
+                        >
+                            행운의 자리
+                        </p>
+                        <p
+                            style={{
+                                margin: 0,
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                lineHeight: 1.45,
+                                paddingBottom: '4px',
+                                color: '#1E293B',
+                                wordBreak: 'keep-all',
+                            }}
+                        >
+                            {safeLuckySeat}
                         </p>
                     </div>
                 </div>
 
                 {/* Lucky Food */}
-                <div className="col-span-3">
-                    <div className="space-y-3">
-                        <p className="text-[20px] font-black text-slate-500 uppercase tracking-widest">행운의 음식</p>
-                        <p className="text-[22px] font-bold leading-relaxed text-slate-800 break-keep">
-                            {luckyFood}
-                        </p>
-                    </div>
+                <div>
+                    <p
+                        style={{
+                            margin: '0 0 8px 0',
+                            fontSize: '18px',
+                            fontWeight: 800,
+                            letterSpacing: '0.08em',
+                            lineHeight: 1.4,
+                            color: '#64748B',
+                        }}
+                    >
+                        행운의 음식
+                    </p>
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: '20px',
+                            fontWeight: 700,
+                            lineHeight: 1.45,
+                            paddingBottom: '4px',
+                            color: '#1E293B',
+                            wordBreak: 'keep-all',
+                        }}
+                    >
+                        {safeLuckyFood}
+                    </p>
                 </div>
             </div>
 
-            {/* Subtle Branding Tag */}
-            <div className="absolute bottom-10 right-20 flex items-center gap-4 opacity-20 pointer-events-none">
-                <div className="w-12 h-[1px] bg-slate-900"></div>
-                <span className="text-[10px] font-bold text-slate-900 tracking-[0.4em] uppercase">
+            {/* Bottom Watermark */}
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: '12px',
+                    paddingTop: '16px',
+                }}
+            >
+                <div style={{ width: '40px', height: '1px', backgroundColor: '#64748B' }} />
+                <span
+                    style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        letterSpacing: '0.28em',
+                        lineHeight: 1.4,
+                        color: '#64748B',
+                    }}
+                >
                     MBTIJU 특별 리포트
                 </span>
             </div>

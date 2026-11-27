@@ -22,6 +22,7 @@ const PAY_PER_SERVICE_ITEMS = [
             { title: 'MBTI × 사주 심층 궁합', desc: '나와 상대방의 사주·MBTI 케미와 관계 전략 진단', path: '/?openService=compatibility', icon: Heart },
             { title: '연애 · 재회 · 결혼 사주', desc: '연인/부부/재회/짝사랑 맞춤 인연 풀이', path: '/relationship?type=couple', icon: Heart },
             { title: '재물 · 창업 · 취직 · 이직 사주', desc: '돈의 흐름과 커리어 타이밍을 짚어주는 재물 명리', path: '/gold?type=wealth', icon: TrendingUp },
+            { title: '말랑 사주 메이트 궁합 (신규)', desc: '내 사주·MBTI와 찰떡인 9종 오리지널 캐릭터 & 피해야 할 상극 캐릭터 리포트', path: '/mate', icon: Sparkles },
         ],
     },
     {
@@ -61,11 +62,11 @@ const PricingPage: React.FC<PricingPageProps> = () => {
                 <div className="max-w-4xl mx-auto px-4 py-12 text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-amber-300 text-xs font-black mb-4">
                         <CreditCard className="w-4 h-4" />
-                        회원가입 ZERO · 필요한 만큼만 건별 결제
+                        회원가입 없이 · 필요한 만큼만 건별 결제
                     </div>
                     <h1 className="text-3xl font-black mb-3">서비스 이용 요금 안내</h1>
                     <p className="text-slate-300 text-sm md:text-base">
-                        번거로운 가입이나 크레딧 충전 없이, 원하는 서비스에서 바로 입력하고 990원 / 490원으로 즉시 결과를 확인하세요.
+                        번거로운 회원가입 없이, 원하는 서비스에서 바로 입력하고 990원 / 490원으로 즉시 결과를 확인하세요.
                     </p>
                 </div>
             </div>

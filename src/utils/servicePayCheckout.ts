@@ -27,6 +27,7 @@ const DEFAULT_RETURN_PATHS: Partial<Record<ServiceType, string>> = {
   LOVE_MARRIAGE: '/relationship?type=marriage',
   LOVE_REUNION: '/relationship?type=reunion',
   LOVE_CRUSH: '/relationship?type=crush',
+  SAJU_MATE: '/mate',
 };
 
 export interface PendingServiceOrder<T = any> {

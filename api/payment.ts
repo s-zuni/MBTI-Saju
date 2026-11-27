@@ -28,7 +28,7 @@ function parseSingleServiceType(
 
 async function compensateTossCancel(encryptedSecretKey: string, paymentKey: string, reason: string) {
     try {
-        await fetch(new URL(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}/cancel`), {
+        const res = await fetch(new URL(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}/cancel`), {
             method: 'POST',
             body: JSON.stringify({ cancelReason: reason }),
             headers: {
@@ -36,6 +36,10 @@ async function compensateTossCancel(encryptedSecretKey: string, paymentKey: stri
                 'Content-Type': 'application/json',
             },
         });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            console.error('[compensateTossCancel] failed HTTP', res.status, paymentKey, errText);
+        }
     } catch (cancelErr) {
         console.error('[compensateTossCancel] failed:', cancelErr);
     }

@@ -75,7 +75,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
           <div>
             <div className="inline-flex items-center gap-2 mb-6">
               <span className="w-2 h-2 rounded-full bg-[#FFB7B2]" />
-              <span className="text-xs font-bold tracking-widest text-violet-600">3-YEAR DEEP REPORT</span>
+              <span className="text-xs font-bold tracking-widest text-violet-600">3년 심층 사주 리포트</span>
             </div>
             <h1 className="text-[2rem] md:text-5xl font-black tracking-tight leading-[1.2]">
               올해 남은 달부터<br />
@@ -141,7 +141,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       <section className="py-20 md:py-28 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl">
-            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">STORY</div>
+            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">구성 안내</div>
             <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight">
               나의 뼈대에서 시작해,<br />다가올 3년의 이야기까지
             </h2>
@@ -169,7 +169,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       <section className="py-20 md:py-28 px-6 bg-slate-50 border-y border-slate-100">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl mb-12">
-            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">SAMPLE</div>
+            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">미리보기</div>
             <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight">실제 리포트는 이렇게 생겼어요</h2>
             <p className="mt-4 text-sm text-slate-500">{SAMPLE_CAPTION}</p>
           </div>
@@ -197,7 +197,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       <section className="py-20 md:py-28 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl mb-12">
-            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">METHOD</div>
+            <div className="text-xs font-bold tracking-widest text-violet-600 mb-3">분석 방식</div>
             <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight">점수와 시기는 계산으로 정합니다</h2>
             <p className="mt-4 text-sm md:text-base text-slate-600 leading-relaxed">
               운의 흐름에 해당하는 숫자와 날짜는 글솜씨가 아니라 계산값입니다. 해석과 조언만 문장으로 풀어드립니다.
@@ -223,7 +223,7 @@ const DeepReportLandingPage: React.FC<DeepReportLandingPageProps> = ({ onOpenDee
       {/* 가격 / CTA */}
       <section className="py-20 md:py-28 px-6 bg-slate-950 text-white">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="text-xs font-bold tracking-widest text-[#FFB7B2] mb-4">PRICE</div>
+          <div className="text-xs font-bold tracking-widest text-[#FFB7B2] mb-4">요금 안내</div>
           <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight">
             지금 신청하면 {DEEP_REPORT_DISCOUNT_RATE}% 할인
           </h2>

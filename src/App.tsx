@@ -57,6 +57,7 @@ const ZhDeepReportLandingPage = lazy(() => import('./pages/ZhDeepReportLandingPa
 
 // Consolidated fortune page
 const MyLuckPage = lazy(() => import('./pages/MyLuckPage'));
+const SajuMatePage = lazy(() => import('./pages/SajuMatePage'));
 const ConsultationPage = lazy(() => import('./pages/ConsultationPage'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
@@ -271,8 +272,8 @@ function AppContent({
                               <h3 className="text-xl font-bold mb-3 group-hover:text-violet-600 transition-colors">심도 있는 성격 매칭</h3>
                               <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">당신의 무의식과 타고난 운명이 어떻게 연결되어 있는지 과학적으로 분석합니다.</p>
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-1 bg-violet-50 text-violet-600 text-[10px] font-bold rounded-md">5,300+ 이용 중</span>
-                                <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md">인기</span>
+                                <span className="px-2 py-1 bg-violet-50 text-violet-600 text-[10px] font-bold rounded-md">A4 20장 정밀 분석</span>
+                                <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md">29,000원</span>
                               </div>
                             </button>
 
@@ -292,8 +293,8 @@ function AppContent({
                               <h3 className="text-xl font-bold mb-3 group-hover:text-blue-600 transition-colors">KBO 팬 궁합</h3>
                               <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">MBTI와 사주를 분석해 나와 가장 잘 맞는 KBO 프로야구 구단을 알려드립니다.</p>
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md">1,500+ 이용 중</span>
-                                <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">NEW</span>
+                                <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md">비회원 · 490원</span>
+                                <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">사주 × 야구</span>
                               </div>
                             </button>
 
@@ -307,8 +308,8 @@ function AppContent({
                               <h3 className="text-xl font-bold mb-3 group-hover:text-pink-600 transition-colors">인간관계 솔루션</h3>
                               <p className="text-sm text-slate-500 leading-relaxed font-medium mb-4">당신이 조심해야 할 운명과 시너지를 낼 수 있는 인연의 색깔을 알려드립니다.</p>
                               <div className="flex items-center gap-2">
-                                <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold rounded-md">3,300+ 이용 중</span>
-                                <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md">만족도 99%</span>
+                                <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold rounded-md">비회원 · 990원</span>
+                                <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md">연애 · 궁합</span>
                               </div>
                             </button>
                           </div>
@@ -385,6 +386,7 @@ function AppContent({
                   <Route path="/trip" element={<Navigate to="/myluck?type=trip" replace />} />
                   <Route path="/jamidusu" element={<Navigate to="/myluck?type=jamidusu" replace />} />
                   <Route path="/kbo" element={<Navigate to="/myluck?type=kbo" replace />} />
+                  <Route path="/mate" element={<SajuMatePage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>

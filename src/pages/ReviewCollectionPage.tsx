@@ -411,7 +411,7 @@ const ReviewCollectionPage: React.FC = () => {
                         
                         {/* Overall Score */}
                         <div className="md:col-span-2 text-center md:border-r border-slate-100 md:pr-8 py-2">
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-1">TOTAL RATING</span>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-1">평균 만족도</span>
                             <div className="flex items-baseline justify-center gap-1.5 mb-2">
                                 <span className="text-5xl font-black text-slate-900 font-sans tracking-tight">{averageRating}</span>
                                 <span className="text-xl font-bold text-slate-300">/ 5.0</span>

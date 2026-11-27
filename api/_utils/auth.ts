@@ -23,7 +23,8 @@ export const SERVICE_COSTS = {
     LOVE_MARRIED: 990,
     LOVE_MARRIAGE: 990,
     LOVE_REUNION: 990,
-    LOVE_CRUSH: 990
+    LOVE_CRUSH: 990,
+    SAJU_MATE: 990
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;

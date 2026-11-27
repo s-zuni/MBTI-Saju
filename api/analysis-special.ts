@@ -18,7 +18,9 @@ import {
     kboSchema,
     singleDayFortuneSchema,
     dailyFortuneSchema,
+    sajuMateSchema,
 } from '../src/config/schemas';
+import { calculateSajuMateMatch, ELEMENT_LABELS, normalizeMbtiInput } from '../src/config/sajuMateConfig';
 
 // 정적 시스템 프롬프트 (OpenAI Prompt Caching 최적화: 1,024+ 토큰 정적 접두사 유지)
 const STATIC_SPECIAL_SYSTEM_PROMPT = `
@@ -36,7 +38,7 @@ ${BASE_SYSTEM_PROMPT}
 3. 압도적인 디테일과 3~5배 풍성한 분량: 단답형 한두 문장을 배제하고, 스키마에 명시된 분량 이상으로 충분히 구체적이고 입체적인 상황을 들어 서술하세요.
 4. 가독성 최우선: 한 단락이 길어지지 않도록 문단과 문장을 적절히 나누고 줄 바꿈(\\n\\n)과 글머리표(-)를 적극 사용하세요.
 5. 절대적 금지 사항 (CRITICAL): 답변 어디에도 마크다운 강조 기호인 별표 두 개(**), __, # 및 이모티콘/이모지를 절대로 사용하지 마세요.
-6. MBTI 용어를 제외한 모든 언어는 한국어만 사용하세요. 한국어 단어 뒤에 영어 번역을 괄호로 병기하지 마세요. (예: "목(Wood)" (X), "목(木)" (O))
+6. 순수 한국어 엄수: 입력된 MBTI 4글자 코드를 제외한 모든 제목·한줄 요약·소제목·본문에 영어 단어, 영문 약어, 영문 괄호 번역(예: "목(Wood)", "시너지(Synergy)", "베스트", "팁" 등 영문 표기)을 절대로 쓰지 마세요.
 `.trim();
 
 const schemas: Record<string, z.ZodType<any>> = {
@@ -51,6 +53,7 @@ const schemas: Record<string, z.ZodType<any>> = {
     trip: tripSchema,
     travel: tripSchema,
     kbo: kboSchema,
+    saju_mate: sajuMateSchema,
     fortune: dailyFortuneSchema,
     fortune_today: singleDayFortuneSchema,
     fortune_tomorrow: singleDayFortuneSchema
@@ -155,7 +158,7 @@ export default async function handler(req: Request) {
         else if (scope === 'tomorrow') targetType = 'fortune_tomorrow';
     }
     
-    const currentSchema = schemas[targetType] || schemas.trip;
+    const currentSchema = schemas[targetType];
 
     if (!currentSchema) {
         return new Response(JSON.stringify({ error: `Invalid analysis type: ${rawType}` }), { 
@@ -184,10 +187,14 @@ export default async function handler(req: Request) {
     } else if (targetType === 'kbo') {
         serviceType = 'KBO';
         allowedServiceTypes = ['KBO'];
+    } else if (targetType === 'saju_mate') {
+        serviceType = 'SAJU_MATE';
+        allowedServiceTypes = ['SAJU_MATE'];
     } else {
-        serviceType = 'FORTUNE_TODAY';
-        allowedServiceTypes = ['TRIP', 'COMPATIBILITY_TRIP', 'FORTUNE_TODAY', 'MBTI_SAJU', 'REGENERATE_MBTI_SAJU'];
-        requirePaymentReceipt = false;
+        return new Response(JSON.stringify({ error: '지원하지 않는 분석 유형입니다.' }), {
+            status: 400,
+            headers: reqCorsHeaders,
+        });
     }
 
     const cacheKey = buildCacheKey(targetType, body);
@@ -241,10 +248,10 @@ export default async function handler(req: Request) {
     };
 
     let userQuery = '';
+    let lockName = name;
+    let lockMbti = mbti;
 
-    if (targetType === 'healing') {
-        userQuery = `MBTI: ${mbtiPromptValue}, 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}, 선호 지역: ${finalRegion}`;
-    } else if (targetType === 'jamidusu') {
+    if (targetType === 'jamidusu') {
         // 프런트는 birthDate/birthTime/gender로 보내므로 target* 값이 없으면 이를 사용한다.
         const jmBirthDate = targetBirthDate ?? birthDate;
         const jmBirthTime = targetBirthTime ?? birthTime;
@@ -270,8 +277,6 @@ MBTI: ${mbtiPromptValue}
 7. summary: 올해 기준 명반 전체를 꿰뚫는 현실적 과제와 따뜻하고 단단한 응원 총평을 400~550자(3문단 \\n\\n)로 작성하세요.
 8. 절대 영어나 이모지를 넣지 말고 어려운 한자는 풀어쓰되 명궁/관록궁/재백궁/부처궁의 깊이감을 살리세요.`;
 
-    } else if (targetType === 'job') {
-        userQuery = `MBTI: ${mbtiPromptValue}, 사주 일간: ${saju?.dayMaster?.korean || '알수없음'}, 오행분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}`;
     } else if (targetType === 'trip') {
         userQuery = `[여행지 및 일정 분석 요청]
 사용자 이름: ${name || '이용자'}
@@ -322,6 +327,71 @@ MBTI: ${mbtiPromptValue}
 3. recommendedSeat: 사주와 성향 기준 추천 구장 좌석 구역과 이유 (100~160자).
 4. luckyFood: 오늘 기운을 보완하는 구장 먹거리와 이유 (100~160자).
 5. 숫자/점수 필드(score, winFairyScore, tomorrowScore, tomorrowWinFairyScore, bestTeam, worstTeam, dimensions, date)는 위 사전 계산된 데이터 그대로 채우고, 본문 분석은 현재 응원 구단 위주로 서술하세요.`;
+    } else if (targetType === 'saju_mate') {
+        const birthDateStr = String(birthDate || '');
+        const birthYear = Number(birthDateStr.split('-')[0]);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDateStr) || Number.isNaN(birthYear) || birthYear < 1900 || birthYear > 2050) {
+            if (requirePaymentReceipt) {
+                await releaseServiceReceipt(authResult.supabaseAdmin, authResult.receiptToken);
+            }
+            return new Response(JSON.stringify({ error: '올바른 생년월일(YYYY-MM-DD)을 입력해주세요.' }), {
+                status: 400,
+                headers: reqCorsHeaders,
+            });
+        }
+        const safeName = String(name || '이용자').replace(/[\r\n]/g, ' ').trim().slice(0, 20) || '이용자';
+        const normalizedMbti = normalizeMbtiInput(mbti);
+        const safeMbtiPromptValue = formatMbtiForPrompt(normalizedMbti);
+        lockName = safeName;
+        lockMbti = normalizedMbti;
+
+        const mateMatch = calculateSajuMateMatch({
+            birthDate: birthDateStr,
+            birthTime: birthTime || '',
+            gender: body.gender || 'female',
+            mbti: normalizedMbti,
+            dayMasterKorean: saju?.dayMaster?.korean || '',
+            elementRatio: saju?.elementRatio,
+        });
+        const best = mateMatch.bestCharacter;
+        const worst = mateMatch.worstCharacter;
+        const mirror = mateMatch.mirrorCharacter;
+        const lackingInfo = ELEMENT_LABELS[mateMatch.lackingElement];
+        const dominantInfo = ELEMENT_LABELS[mateMatch.dominantElement];
+
+        userQuery = `[말랑 사주 메이트 궁합 분석 요청]
+사용자 이름: ${safeName}
+성별: ${body.gender === 'male' ? '남성' : '여성'}
+MBTI: ${safeMbtiPromptValue}
+사주 일간: ${saju?.dayMaster?.korean || '알수없음'} (${saju?.dayMaster?.chinese || ''})
+오행 분포: ${JSON.stringify(translateRatio(saju?.elementRatio))}
+가장 강한 오행: ${dominantInfo.ko}(${dominantInfo.hanja})
+가장 부족한 오행: ${lackingInfo.ko}(${lackingInfo.hanja})
+
+[사전 계산된 매칭 결과 (절대 변경 금지 · 그대로 반영)]
+- bestCharacterId: "${best.id}"
+  - 이름: ${best.name} (${best.subtitle})
+  - 기질/아키타입: ${best.archetype}
+  - 상징 오행/십성: ${best.elementBadge} / ${best.sajuTrait}
+  - 찰떡 궁합 점수(bestScore): ${mateMatch.bestScore}
+- worstCharacterId: "${worst.id}"
+  - 이름: ${worst.name} (${worst.subtitle})
+  - 기질/아키타입: ${worst.archetype}
+  - 상징 오행/십성: ${worst.elementBadge} / ${worst.sajuTrait}
+  - 상극 경보 지수(worstAlertScore): ${mateMatch.worstAlertScore}
+- mirrorCharacterId: "${mirror.id}"
+  - 이름: ${mirror.name} (${mirror.subtitle})
+  - 기질/아키타입: ${mirror.archetype}
+- 5대 케미 스탯(dimensions): ${JSON.stringify(mateMatch.dimensions)}
+
+[생성 작업 지침 - 심층 분량 · 이모지/마크다운 금지]
+1. bestCharacterId, worstCharacterId, mirrorCharacterId, bestScore, worstAlertScore, dimensions 필드는 위 사전 계산된 값과 단 한 글자도 틀리지 않게 그대로 채우세요.
+2. headline은 24자 이내의 재치 있고 자연스러운 순수 한국어 한 줄로 작성하고(영어·영문 약어·이모지·마크다운 금지), bestMatch.chemistryTitle과 worstMatch.warningTitle도 각각 22자 이내의 간결한 순수 한국어 구절로 작성하세요.
+3. 다른 사람의 MBTI 4글자 코드를 임의로 지어내지 말고, 모든 제목·한줄 요약·본문은 입력된 MBTI 4글자 외에 영어 단어나 영문 약어를 섞지 않은 생생한 순수 한국어 표현으로 서술하세요.
+4. bestMatch: 사용자의 부족한 오행(${lackingInfo.ko})과 일간(${saju?.dayMaster?.korean || ''})을 ${best.name}의 기운(${best.elementBadge})이 어떻게 보완하는지 명리학적으로 짚고, 둘이 만나면 벌어지는 귀엽고 현실적인 힐링 케미 장면을 생생하게 쓰세요.
+5. worstMatch: 사용자의 강한 오행(${dominantInfo.ko})과 ${worst.name}의 기운(${worst.elementBadge})이 왜 충돌하거나 감정 배터리를 방전시키는지 냉철하게 분석하고, 현실에서 이런 유형의 사람을 만났을 때 상처받지 않는 실전 대처법을 제시하세요.
+6. realLifeAdvice: 캐릭터 궁합을 넘어 실제 연애·친구·직장 인간관계에서 어떤 사람을 가까이하고 어떤 패턴을 경계해야 하는지 따뜻하고 현실적으로 마무리하세요.
+7. 절대 **, __, # 같은 마크다운 기호나 이모지를 사용하지 마세요.`;
     } else if (targetType === 'fortune_today' || targetType === 'fortune_tomorrow' || targetType === 'fortune') {
         const yearStr = birthDate?.split('-')[0] || '1990';
         const zodiac = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"][(parseInt(yearStr) - 4) % 12];
@@ -334,7 +404,7 @@ MBTI: ${mbtiPromptValue}
 - mission은 오늘 바로 해볼 수 있는 현실적 미션과 따뜻한 한마디(80~140자)로 작성하세요. 이모지와 ** 기호는 절대 사용하지 마세요.`;
     }
 
-    const factualLockBlock = buildSingleFactualLockBlock({ saju, mbti, name });
+    const factualLockBlock = buildSingleFactualLockBlock({ saju, mbti: lockMbti, name: lockName });
     const finalUserQuery = `${temporalBlock}\n\n${sajuContextBlock}\n\n${userQuery}\n\n${factualLockBlock}`;
 
     let receiptReleased = false;
@@ -382,7 +452,7 @@ MBTI: ${mbtiPromptValue}
                 });
                 return wrapResponseWithFactualGuard(
                     result.toTextStreamResponse({ headers: reqCorsHeaders }),
-                    { expectedSingleMbti: mbti }
+                    { expectedSingleMbti: lockMbti }
                 );
             } catch (error) {
                 lastError = error;

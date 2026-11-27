@@ -1,21 +1,61 @@
 import html2canvas from 'html2canvas';
 
+export interface ShareImageOptions {
+    title?: string;
+    text?: string;
+}
+
 /**
  * 특정 HTML 요소를 이미지(PNG)로 캡처하여 디바이스 네이티브 공유(인스타 스토리 등)를 띄우거나 기기에 저장(다운로드)합니다.
  * @param element 캡처할 요소
  * @param fileName 저장할 파일 이름
  * @param scale 선명도를 위한 스케일링 (기본값: 3)
+ * @param shareOptions Web Share API 공유 시 사용할 제목/본문 옵션
  */
-export const generateImage = async (element: HTMLElement, fileName: string, scale: number = 3): Promise<boolean> => {
+export const generateImage = async (
+    element: HTMLElement,
+    fileName: string,
+    scale: number = 3,
+    shareOptions?: ShareImageOptions
+): Promise<boolean> => {
     try {
+        if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+            await (document as any).fonts.ready.catch(() => undefined);
+        }
+
+        const imgs = Array.from(element.querySelectorAll('img'));
+        await Promise.all(
+            imgs.map((img) =>
+                img.complete && img.naturalWidth > 0
+                    ? typeof img.decode === 'function'
+                        ? img.decode().catch(() => undefined)
+                        : Promise.resolve()
+                    : new Promise<void>((res) => {
+                          const done = () => res();
+                          img.addEventListener('load', done, { once: true });
+                          img.addEventListener('error', done, { once: true });
+                          setTimeout(done, 4000);
+                      })
+            )
+        );
+
+        const width = element.offsetWidth || 1080;
+        const height = element.offsetHeight || 1920;
+        const maxPixels = 12_000_000;
+        const safeScale =
+            width * scale * height * scale > maxPixels
+                ? Math.max(1, Math.sqrt(maxPixels / (width * height)))
+                : scale;
+
         const canvas = await html2canvas(element, {
-            scale: scale,
+            scale: safeScale,
             useCORS: true,
             logging: false,
             backgroundColor: null, // 투명 배경 유지 시도
-            windowWidth: element.offsetWidth,
-            windowHeight: element.offsetHeight,
-            scrollY: -window.scrollY,
+            windowWidth: width,
+            windowHeight: height,
+            scrollX: 0,
+            scrollY: 0,
             imageTimeout: 15000,
         });
 
@@ -36,8 +76,8 @@ export const generateImage = async (element: HTMLElement, fileName: string, scal
                         try {
                             await navigator.share({
                                 files: [file],
-                                title: 'KBO Destiny',
-                                text: '나의 운명적인 KBO 구단 분석 결과입니다! ✨'
+                                title: shareOptions?.title || 'MBTIJU 분석 결과',
+                                text: shareOptions?.text || 'MBTIJU에서 확인한 나만의 사주·성향 분석 결과입니다.'
                             });
                             
                             // 메모리 정리

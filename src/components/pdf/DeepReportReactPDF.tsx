@@ -530,7 +530,7 @@ const ArcCard: React.FC<{ arc?: StoryArc | null | undefined }> = ({ arc }) => {
   if (!arc || !arc.thread) return null;
   return (
     <View wrap={false} style={{ padding: 14, backgroundColor: '#0F172A', borderRadius: 12, marginBottom: 12 }}>
-      <Text style={{ fontSize: 9, color: '#FBBF24', letterSpacing: 2, marginBottom: 5, fontWeight: 'bold' }}>THE STORY OF YOUR 3 YEARS</Text>
+      <Text style={{ fontFamily: 'NotoSansKR', fontSize: 9, color: '#FBBF24', letterSpacing: 2, marginBottom: 5, fontWeight: 'bold' }}>당신의 향후 3년 운명 이야기</Text>
       <Text style={{ fontSize: 13, color: '#F8FAFC', fontWeight: 'bold', lineHeight: 1.5, marginBottom: 3 }}>{arc.thread}</Text>
       {arc.motif ? <Text style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 9 }}>{arc.motif}</Text> : null}
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -716,7 +716,7 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
             </Svg>
             <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13, letterSpacing: 2.5, marginLeft: 9 }}>MBTIJU</Text>
           </View>
-          <Text style={{ fontFamily: 'NanumGothic', fontSize: 8.5, letterSpacing: 2, color: '#64748B' }}>3-YEAR DEEP REPORT</Text>
+          <Text style={{ fontFamily: 'NanumGothic', fontSize: 8.5, letterSpacing: 2, color: '#64748B' }}>3년 심층 사주 리포트</Text>
         </View>
 
         <View style={{ flexGrow: 1, justifyContent: 'center', paddingRight: 28 }}>
@@ -735,15 +735,15 @@ export const DeepReportReactPDF: React.FC<Props> = ({ sajuData, parsedContent, c
         <View style={{ borderTop: '1.5pt solid #0F172A', paddingTop: 16 }}>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ flex: 0.9, paddingRight: 10 }}>
-              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PREPARED FOR</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>의뢰인</Text>
               <Text style={{ fontFamily: 'NotoSansKR', fontWeight: 'bold', fontSize: 13 }}>{clientName} 님</Text>
             </View>
             <View style={{ flex: 1.7, paddingRight: 10 }}>
-              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>PERIOD</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>분석 기간</Text>
               <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{c.currentYear ? `${c.currentYear.year} 남은 기간 + ` : ''}{range.replace('~', '–')}</Text>
             </View>
             <View style={{ flex: 1.2 }}>
-              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>ISSUED</Text>
+              <Text style={{ fontFamily: 'NanumGothic', fontSize: 8, letterSpacing: 1.5, color: '#64748B', marginBottom: 5 }}>발행일</Text>
               <Text style={{ fontFamily: 'NanumGothic', fontWeight: 700, fontSize: 13 }}>{dateText}</Text>
             </View>
           </View>

@@ -87,7 +87,7 @@ const PaymentSuccess: React.FC = () => {
                 }
 
                 if (orderId.startsWith('ord_')) clearPendingCheckout();
-                track('checkout_success', { amount: Number(amount), kind: orderId.split('_')[0] ?? 'unknown' });
+                track('checkout_success', { amount: Number(amount), kind: orderId.split('_')[0] ?? 'unknown', serviceType: data?.data?.serviceType || null });
 
                 if (currentSession?.user) {
                     await supabase.auth.refreshSession();
@@ -101,6 +101,9 @@ const PaymentSuccess: React.FC = () => {
                         data?.data?.remainingUses,
                         data?.data?.serviceType
                     );
+                    if (data?.data?.serviceType === 'SAJU_MATE') {
+                        track('saju_mate_payment_success', { amount: Number(amount) });
+                    }
                     const nextPath = ticket?.returnPath || '/myluck?type=today';
                     setApprovedServiceName(ticket?.serviceName || '운세 서비스');
                     setReturnTargetPath(nextPath);

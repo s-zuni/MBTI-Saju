@@ -1,15 +1,18 @@
 import React, { forwardRef } from 'react';
+import { stripMarkdown } from '../utils/textUtils';
+
+interface TripPlace {
+    name: string;
+    reason: string;
+    activity: string;
+    photoSpot?: string;
+    food?: string;
+}
 
 interface TripShareCardProps {
     result: {
         concept?: string;
-        places?: Array<{
-            name: string;
-            reason: string;
-            activity: string;
-            photoSpot?: string;
-            food?: string;
-        }>;
+        places?: TripPlace[];
         companion?: string;
         luckyItem?: string;
         summary?: string;
@@ -17,104 +20,382 @@ interface TripShareCardProps {
     userName: string;
 }
 
+const truncateText = (text: string, maxLen: number): string => {
+    const normalized = stripMarkdown(text).replace(/\s+/g, ' ').trim();
+    if (normalized.length <= maxLen) return normalized;
+    return `${normalized.slice(0, Math.max(0, maxLen - 1)).trimEnd()}…`;
+};
+
 const TripShareCard = forwardRef<HTMLDivElement, TripShareCardProps>(({ result, userName }, ref) => {
-    const concept = result?.concept || '행운의 여행지 추천';
-    const places = Array.isArray(result?.places) ? result.places.filter(Boolean) : [];
-    const companion = result?.companion || '';
-    const luckyItem = result?.luckyItem || '';
+    const safeUserName = truncateText(userName || '사용자', 16) || '사용자';
+    const safeConcept = truncateText(result?.concept || '행운의 여행지 추천', 38) || '행운의 여행지 추천';
+    const places = Array.isArray(result?.places) ? result.places.filter(Boolean).slice(0, 3) : [];
+    const safeCompanion = result?.companion ? truncateText(result.companion, 42) : '';
+    const safeLuckyItem = result?.luckyItem ? truncateText(result.luckyItem, 42) : '';
+    const hasBottomCards = Boolean(safeCompanion || safeLuckyItem);
 
     return (
         <div
             ref={ref}
-            className="relative w-[1000px] h-[1000px] bg-gradient-to-br from-sky-400 via-sky-100 to-indigo-300 overflow-hidden flex flex-col p-16 select-none"
-            style={{ 
+            style={{
+                width: '1000px',
+                height: '1000px',
+                padding: '56px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #E0F2FE 0%, #EFF6FF 50%, #E0E7FF 100%)',
+                boxSizing: 'border-box',
+                userSelect: 'none',
+                position: 'relative',
+                overflow: 'hidden',
                 fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+                color: '#0F172A',
             }}
         >
-            {/* Decorative circles */}
-            <div className="absolute top-[-200px] right-[-200px] w-[500px] h-[500px] bg-white/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute bottom-[-150px] left-[-150px] w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
             {/* Header */}
-            <div className="flex justify-between items-center z-10 pb-8 border-b border-white/30">
-                <div className="space-y-1">
-                    <h1 className="text-[32px] font-black tracking-tight text-slate-900 leading-none">MBTIJU</h1>
-                    <p className="text-[12px] font-bold text-slate-700 tracking-[0.2em]">사주 × MBTI 행운 분석</p>
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '24px',
+                    borderBottom: '2px solid #BAE6FD',
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <h1
+                        style={{
+                            margin: 0,
+                            fontSize: '32px',
+                            fontWeight: 900,
+                            letterSpacing: '-0.02em',
+                            color: '#0F172A',
+                            lineHeight: 1.1,
+                        }}
+                    >
+                        MBTIJU
+                    </h1>
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            color: '#334155',
+                            letterSpacing: '0.18em',
+                        }}
+                    >
+                        사주 × MBTI 행운 분석
+                    </p>
                 </div>
-                <div className="text-right">
-                    <span className="inline-block px-4 py-1.5 bg-slate-950 text-white rounded-full text-xs font-black tracking-widest uppercase">
-                        TRAVEL REPORT
+                <div>
+                    <span
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 18px',
+                            backgroundColor: '#0F172A',
+                            color: '#FFFFFF',
+                            borderRadius: '9999px',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            letterSpacing: '0.08em',
+                            lineHeight: 1.2,
+                        }}
+                    >
+                        행운 여행지 분석
                     </span>
                 </div>
             </div>
 
             {/* User Title & Concept */}
-            <div className="mt-12 mb-8 z-10 text-center">
-                <h2 className="text-[28px] font-black text-slate-900 mb-4">
-                    {userName}님의 운명적 여행 테마
+            <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                <h2
+                    style={{
+                        margin: '0 0 14px 0',
+                        fontSize: '28px',
+                        fontWeight: 900,
+                        color: '#0F172A',
+                        lineHeight: 1.25,
+                    }}
+                >
+                    {safeUserName}님의 운명적 여행 테마
                 </h2>
-                <div className="inline-block bg-white/80 backdrop-blur-md px-8 py-5 rounded-[24px] border border-white/50 shadow-md max-w-[850px] mx-auto">
-                    <p className="text-[24px] font-black text-slate-800 leading-snug break-keep">
-                        "{concept}"
+                <div
+                    style={{
+                        display: 'inline-block',
+                        backgroundColor: '#FFFFFF',
+                        border: '2px solid #BAE6FD',
+                        borderRadius: '24px',
+                        padding: '18px 32px',
+                        maxWidth: '860px',
+                        boxShadow: 'none',
+                        boxSizing: 'border-box',
+                    }}
+                >
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: '24px',
+                            fontWeight: 900,
+                            color: '#1E293B',
+                            lineHeight: 1.38,
+                            wordBreak: 'keep-all',
+                        }}
+                    >
+                        "{safeConcept}"
                     </p>
                 </div>
             </div>
 
             {/* Best Places (Grid) */}
-            <div className="grid grid-cols-3 gap-6 z-10 my-auto">
-                {places.slice(0, 3).map((place, idx) => (
-                    <div 
-                        key={idx} 
-                        className="bg-white/95 backdrop-blur-sm p-6 rounded-[28px] border border-white/60 shadow-lg flex flex-col justify-between h-[360px]"
-                    >
-                        <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-black text-sm shadow-sm">
-                                    0{idx + 1}
-                                </span>
-                                <h3 className="text-[20px] font-black text-slate-900 truncate">
-                                    {place.name}
-                                </h3>
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '20px',
+                    width: '100%',
+                }}
+            >
+                {places.map((place, idx) => {
+                    const safeName = truncateText(place.name || '', 12);
+                    const safeReason = truncateText(place.reason || '', 56);
+                    const safePhotoSpot = truncateText(place.photoSpot || '핫플레이스', 16) || '핫플레이스';
+
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                backgroundColor: '#FFFFFF',
+                                border: '2px solid #BAE6FD',
+                                borderRadius: '28px',
+                                padding: '24px',
+                                boxShadow: 'none',
+                                boxSizing: 'border-box',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                height: '330px',
+                            }}
+                        >
+                            <div>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        marginBottom: '16px',
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: '9999px',
+                                            backgroundColor: '#0EA5E9',
+                                            color: '#FFFFFF',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 900,
+                                            fontSize: '14px',
+                                            lineHeight: 1.2,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        0{idx + 1}
+                                    </span>
+                                    <h3
+                                        style={{
+                                            margin: 0,
+                                            fontSize: '19px',
+                                            fontWeight: 900,
+                                            color: '#0F172A',
+                                            lineHeight: 1.42,
+                                            paddingBottom: '4px',
+                                            wordBreak: 'keep-all',
+                                        }}
+                                    >
+                                        {safeName}
+                                    </h3>
+                                </div>
+                                <p
+                                    style={{
+                                        margin: '0 0 8px 0',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        color: '#64748B',
+                                        letterSpacing: '0.06em',
+                                    }}
+                                >
+                                    추천 이유
+                                </p>
+                                <p
+                                    style={{
+                                        margin: 0,
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        lineHeight: 1.42,
+                                        paddingBottom: '4px',
+                                        wordBreak: 'keep-all',
+                                    }}
+                                >
+                                    {safeReason}
+                                </p>
                             </div>
-                            <p className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">추천 이유</p>
-                            <p className="text-[14px] font-semibold text-slate-700 leading-relaxed break-keep line-clamp-4">
-                                {place.reason}
-                            </p>
+
+                            <div
+                                style={{
+                                    marginTop: '14px',
+                                    paddingTop: '14px',
+                                    borderTop: '1px solid #E2E8F0',
+                                }}
+                            >
+                                <p
+                                    style={{
+                                        margin: '0 0 4px 0',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        color: '#0284C7',
+                                        letterSpacing: '0.08em',
+                                    }}
+                                >
+                                    인생샷 스팟
+                                </p>
+                                <p
+                                    style={{
+                                        margin: 0,
+                                        fontSize: '13px',
+                                        fontWeight: 700,
+                                        color: '#1E293B',
+                                        lineHeight: 1.35,
+                                        wordBreak: 'keep-all',
+                                    }}
+                                >
+                                    {safePhotoSpot}
+                                </p>
+                            </div>
                         </div>
-                        
-                        <div className="mt-4 pt-4 border-t border-slate-100">
-                            <p className="text-[11px] font-bold text-sky-600 uppercase tracking-widest mb-1">인생샷 스팟</p>
-                            <p className="text-[13px] font-bold text-slate-800 truncate">
-                                {place.photoSpot || '핫플레이스'}
-                            </p>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Companion & Lucky Item */}
-            <div className="grid grid-cols-2 gap-6 z-10 mt-8">
-                {companion && (
-                    <div className="bg-slate-950 text-white p-6 rounded-[24px] shadow-lg flex flex-col justify-center">
-                        <span className="text-[11px] font-bold text-sky-400 uppercase tracking-widest mb-1">최고의 여행 메이트</span>
-                        <p className="text-[16px] font-bold break-keep">{companion}</p>
-                    </div>
-                )}
-                {luckyItem && (
-                    <div className="bg-white/90 backdrop-blur-sm p-6 rounded-[24px] border border-white/60 shadow-md flex flex-col justify-center">
-                        <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-widest mb-1">행운의 아이템</span>
-                        <p className="text-[16px] font-bold text-slate-900 break-keep">{luckyItem}</p>
-                    </div>
-                )}
-            </div>
+            {hasBottomCards && (
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: safeCompanion && safeLuckyItem ? 'repeat(2, 1fr)' : '1fr',
+                        gap: '20px',
+                        marginTop: '20px',
+                    }}
+                >
+                    {safeCompanion && (
+                        <div
+                            style={{
+                                backgroundColor: '#0F172A',
+                                color: '#FFFFFF',
+                                padding: '22px 24px',
+                                borderRadius: '24px',
+                                boxShadow: 'none',
+                                boxSizing: 'border-box',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: '#38BDF8',
+                                    letterSpacing: '0.08em',
+                                    marginBottom: '6px',
+                                }}
+                            >
+                                최고의 여행 메이트
+                            </span>
+                            <p
+                                style={{
+                                    margin: 0,
+                                    fontSize: '16px',
+                                    fontWeight: 700,
+                                    color: '#FFFFFF',
+                                    lineHeight: 1.4,
+                                    wordBreak: 'keep-all',
+                                }}
+                            >
+                                {safeCompanion}
+                            </p>
+                        </div>
+                    )}
+                    {safeLuckyItem && (
+                        <div
+                            style={{
+                                backgroundColor: '#FFFFFF',
+                                border: '2px solid #C7D2FE',
+                                padding: '22px 24px',
+                                borderRadius: '24px',
+                                boxShadow: 'none',
+                                boxSizing: 'border-box',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: '#4F46E5',
+                                    letterSpacing: '0.08em',
+                                    marginBottom: '6px',
+                                }}
+                            >
+                                행운의 아이템
+                            </span>
+                            <p
+                                style={{
+                                    margin: 0,
+                                    fontSize: '16px',
+                                    fontWeight: 700,
+                                    color: '#0F172A',
+                                    lineHeight: 1.4,
+                                    wordBreak: 'keep-all',
+                                }}
+                            >
+                                {safeLuckyItem}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Watermark */}
-            <div className="mt-auto pt-8 flex items-center justify-center gap-4 opacity-40 z-10">
-                <div className="w-16 h-[1px] bg-slate-900"></div>
-                <span className="text-[11px] font-bold text-slate-950 tracking-[0.4em] uppercase">
-                    MBTIJU SPECIAL REPORT
+            <div
+                style={{
+                    marginTop: '20px',
+                    paddingTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '16px',
+                }}
+            >
+                <div style={{ width: '64px', height: '1px', backgroundColor: '#475569' }} />
+                <span
+                    style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#475569',
+                        letterSpacing: '0.35em',
+                    }}
+                >
+                    MBTIJU 맞춤 리포트
                 </span>
-                <div className="w-16 h-[1px] bg-slate-900"></div>
+                <div style={{ width: '64px', height: '1px', backgroundColor: '#475569' }} />
             </div>
         </div>
     );

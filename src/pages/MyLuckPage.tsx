@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, Compass, Moon, Plane, Star, CircleDot, CreditCard, LucideIcon } from 'lucide-react';
+import { ChevronLeft, Compass, Moon, Plane, Star, CircleDot, CreditCard, Sparkles, LucideIcon } from 'lucide-react';
 import { trackOnce } from '../utils/analytics';
 
 import TodayFortunePage from './TodayFortunePage';
@@ -8,8 +8,9 @@ import TarotPage from './TarotPage';
 import TripPage from './TripPage';
 import JamidusuPage from './JamidusuPage';
 import KboPage from './KboPage';
+import SajuMatePage from './SajuMatePage';
 
-export type LuckType = 'today' | 'tarot' | 'trip' | 'jamidusu' | 'kbo';
+export type LuckType = 'today' | 'tarot' | 'trip' | 'jamidusu' | 'kbo' | 'mate';
 
 interface TabOption {
   id: LuckType;
@@ -20,6 +21,7 @@ interface TabOption {
 
 const TABS: TabOption[] = [
   { id: 'today', label: '오늘/내일 운세', priceLabel: '오늘 무료 · 내일 490원', icon: Compass },
+  { id: 'mate', label: '말랑 메이트', priceLabel: '990원', icon: Sparkles },
   { id: 'tarot', label: '타로', priceLabel: '490원', icon: Moon },
   { id: 'trip', label: '여행', priceLabel: '490원', icon: Plane },
   { id: 'jamidusu', label: '자미두수', priceLabel: '990원', icon: Star },
@@ -98,6 +100,7 @@ const MyLuckPage: React.FC<{ session?: any }> = () => {
           {activeTab === 'trip' && <TripPage isEmbedded />}
           {activeTab === 'jamidusu' && <JamidusuPage isEmbedded />}
           {activeTab === 'kbo' && <KboPage isEmbedded />}
+          {activeTab === 'mate' && <SajuMatePage isEmbedded />}
         </div>
       </div>
     </div>

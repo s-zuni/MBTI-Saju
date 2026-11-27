@@ -400,7 +400,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
                 <span className="inline-flex items-center px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-xs font-bold">
-                  STEP 1~3 · 무료 만세력 확인 후 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원으로 전체 분석 열람
+                  1~3단계 · 무료 만세력 확인 후 {SERVICE_COSTS.MBTI_SAJU.toLocaleString()}원으로 전체 분석 열람
                 </span>
                 <h4 className="text-xl font-bold text-slate-950 tracking-tight">MBTI × 사주 통합 운명 리포트</h4>
                 <p className="text-sm text-slate-600">
@@ -411,7 +411,7 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
                 profile={profile}
                 onChange={updateProfile}
                 showName
-                title="STEP 1 · 나의 사주 · MBTI 정보 기입"
+                title="1단계 · 나의 사주 · MBTI 정보 기입"
               />
               {(() => {
                 const previewSaju = safeCalculateSaju(profile.birthDate, profile.birthTime || null, profile.gender);

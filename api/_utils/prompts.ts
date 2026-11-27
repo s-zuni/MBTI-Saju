@@ -131,6 +131,10 @@ ${EASTERN_SAJU_FOUNDATION}
 ${MBTI_DYNAMICS_FOUNDATION}
 
 ${FEW_SHOT_EXAMPLE}
+
+[순수 한국어 작성 규칙 (CRITICAL)]
+- 모든 제목, 부제목, 소제목, 한줄 요약, 키워드, 본문 어디에도 영어 단어·영문 약어·영문 라벨(예: BEST, REPORT, GUIDE, TIP, MATCH, SYNERGY, WARNING, STORY, CARE, HEALING, MAX 등)을 절대 섞지 마세요.
+- 사용자가 입력한 MBTI 4글자 유형(예: ENTP)만 예외적으로 원문 그대로 표기하고, 그 외 모든 어휘는 자연스러운 한국어(필요 시 사주 용어 한자 병기)로만 작성하세요.
 `.trim();
 
 export const ZH_TW_BASE_SYSTEM_PROMPT = `[角色設定 (Persona)]

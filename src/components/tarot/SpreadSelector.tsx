@@ -93,7 +93,7 @@ const SpreadSelector: React.FC<SpreadSelectorProps> = ({ onSelect, tier, onUpgra
                             {locked && (
                                 <div className="absolute top-4 right-4 flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[10px] font-black text-slate-400 border border-slate-200">
                                     <Lock className="w-3 h-3" />
-                                    <span>DEEP</span>
+                                    <span>심층</span>
                                 </div>
                             )}
 

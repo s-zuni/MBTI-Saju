@@ -152,7 +152,10 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         setIsSharing(true);
         try {
             const fileName = `MBTIJU_Trip_Story_${new Date().getTime()}`;
-            await generateImage(shareRef.current, fileName);
+            await generateImage(shareRef.current, fileName, 2, {
+                title: '행운의 여행지 추천 | MBTIJU',
+                text: 'MBTIJU에서 확인한 나의 사주 맞춤 여행지입니다.',
+            });
             alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
         } catch (err) {
             alert('이미지 생성 중 오류가 발생했습니다.');
@@ -434,7 +437,7 @@ const TripPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                             </section>
 
                                             {/* Hidden Instagram sharing card */}
-                                            <div className="fixed left-[-9999px] top-[-9999px]">
+                                            <div className="fixed left-[-9999px] top-0 pointer-events-none" aria-hidden="true">
                                                 {result && (
                                                     <TripShareCard
                                                         ref={shareRef}

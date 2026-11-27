@@ -275,3 +275,35 @@ export const loveSajuSchema = z.object({
     keywords: z.array(z.string()),
 });
 
+
+// 말랑 사주 메이트 궁합 (Saju Mate Compatibility)
+export const sajuMateSchema = z.object({
+    headline: z.string().describe("내 사주·MBTI와 캐릭터 궁합을 24자 이내의 자연스러운 순수 한국어 한 줄로 요약한 매력적인 타이틀 (영어·이모지 금지)"),
+    bestCharacterId: z.string().describe("서버에서 사전 계산해 고정 전달한 찰떡 캐릭터 ID (mochi/bory/ttokki/yuzu/dori/horang/sori/maru/poni 중 하나)"),
+    worstCharacterId: z.string().describe("서버에서 사전 계산해 고정 전달한 상극 캐릭터 ID"),
+    mirrorCharacterId: z.string().describe("서버에서 사전 계산해 고정 전달한 숨은 본캐 캐릭터 ID"),
+    bestScore: z.number().describe("사전 계산된 찰떡 궁합 점수 그대로 기입"),
+    worstAlertScore: z.number().describe("사전 계산된 상극 경보 지수 그대로 기입"),
+    dimensions: z.array(z.object({
+        label: z.string(),
+        value: z.number(),
+    })).describe("사전 계산된 5대 케미 스탯 그대로 기입"),
+    mirrorSummary: z.string().describe("내 사주 원국과 성향 속에 숨어 있는 본캐 메이트와의 닮은 점과 매력 포인트 (150~220자, 이모지 금지)"),
+    bestMatch: z.object({
+        chemistryTitle: z.string().describe("찰떡 메이트와의 케미를 22자 이내의 귀여우면서도 선명한 순수 한국어 별명으로 압축 (영어·이모지 금지)"),
+        sajuReason: z.string().describe("내 사주 일간·부족 오행과 MBTI(또는 기질)가 왜 이 메이트와 완벽히 맞물리는지 명리학적 근거를 담아 350~450자(2문단 \\n\\n)로 서술"),
+        scenario: z.string().describe("둘이 함께 있을 때 벌어지는 일상·대화·힐링 케미 장면을 생생하게 280~380자(2문단 \\n\\n)로 묘사"),
+        luckySynergyTip: z.string().describe("이 유형의 인연과 함께할 때 운과 에너지를 극대화하는 실전 팁 (140~200자)"),
+    }),
+    worstMatch: z.object({
+        warningTitle: z.string().describe("상극 메이트와 부딪힐 때의 대환장 포인트를 22자 이내의 순수 한국어 한 줄로 표현 (영어·이모지 금지)"),
+        conflictReason: z.string().describe("오행 상극·과다 기운 및 성향 충돌로 왜 감정 배터리가 방전되는지 냉철하게 350~450자(2문단 \\n\\n)로 분석"),
+        clashScenario: z.string().describe("둘이 붙어 있으면 결국 갈등이나 피로가 터지는 현실 대환장 시나리오를 생생하게 280~380자(2문단 \\n\\n)로 묘사"),
+        survivalGuide: z.string().describe("현실에서 이런 성향의 사람을 만났을 때 상처받지 않고 거리를 지키는 대처 처방 (180~260자)"),
+    }),
+    realLifeAdvice: z.string().describe("캐릭터 궁합 결과를 실제 연애·친구·직장 인간관계에 적용하는 담백하고 따뜻한 종합 조언 (350~480자, 2~3문단 \\n\\n)"),
+    luckyItem: z.object({
+        item: z.string().describe("부족한 오행을 보완해 주는 데일리 행운 아이템과 활용 이유 (60~110자)"),
+        color: z.string().describe("기운의 균형을 맞춰 주는 행운 컬러와 이유 (50~90자)"),
+    }),
+});

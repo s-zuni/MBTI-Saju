@@ -132,7 +132,7 @@ const FeatureGrids: React.FC = () => {
             가입 없는 단품 운세 서비스
           </h2>
           <p className="text-[13px] text-slate-400 font-medium mt-0.5">
-            크레딧 충전 없이 원하는 서비스만 490원 · 990원으로 바로 이용하세요
+            회원가입 없이 원하는 서비스만 490원 · 990원으로 바로 이용하세요
           </p>
         </div>
 
@@ -175,6 +175,36 @@ const FeatureGrids: React.FC = () => {
                 </p>
               </div>
               <ChevronRight className="w-[16px] h-[16px] text-slate-400 flex-shrink-0" strokeWidth={2.5} />
+            </button>
+
+            {/* 말랑 사주 메이트 궁합 NEW 990원 카드 */}
+            <button
+              onClick={() => navigate('/mate')}
+              className="w-full bg-gradient-to-r from-[#FFF5F3] via-white to-[#FAF5FF] rounded-2xl border border-rose-200/90 p-4 text-left flex items-center gap-3 hover:border-rose-400 transition-colors"
+              style={cardShadow}
+            >
+              <div className="w-11 h-11 rounded-xl bg-white border border-rose-100 flex items-center justify-center flex-shrink-0 overflow-hidden p-0.5 shadow-xs">
+                <img
+                  src="/images/saju-mates/mochi.jpg"
+                  alt="말랑 사주 메이트"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[15px] font-bold text-slate-900">말랑 사주 메이트 궁합</span>
+                  <span className="text-[10px] font-black px-1.5 py-[2px] rounded-md leading-none bg-rose-500 text-white">
+                    신규
+                  </span>
+                  <span className="text-[10px] font-black px-1.5 py-[2px] rounded-md leading-none bg-rose-50 text-rose-600">
+                    990원
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-500 font-medium mt-0.5 truncate">
+                  내 사주·MBTI와 찰떡인 9종 오리지널 캐릭터 &amp; 상극 찾기
+                </p>
+              </div>
+              <ChevronRight className="w-[16px] h-[16px] text-rose-400 flex-shrink-0" strokeWidth={2.5} />
             </button>
 
             {/* 재물 / 연애 사주 아코디언 */}
@@ -250,7 +280,7 @@ const FeatureGrids: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] text-indigo-300 font-black uppercase tracking-widest">PREMIUM</span>
+                    <span className="text-[10px] text-indigo-300 font-black uppercase tracking-widest">프리미엄</span>
                     <span className="text-[10px] bg-amber-400 text-amber-900 px-1.5 py-[2px] rounded font-black leading-none">
                       29,000원
                     </span>

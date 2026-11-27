@@ -25,7 +25,8 @@ const BottomNav: React.FC<BottomNavProps> = () => {
       isActive:
         (isRootPath && currentTab === 'saju') ||
         location.pathname.startsWith('/gold') ||
-        location.pathname.startsWith('/relationship'),
+        location.pathname.startsWith('/relationship') ||
+        location.pathname.startsWith('/mate'),
       onClick: () => navigate('/?tab=saju'),
     },
     {

@@ -20,7 +20,16 @@ export type FunnelEvent =
     | 'free_preview_calculate'
     | 'free_preview_more_analysis_pay_click'
     | 'funnel_bottom_report_click'
-    | 'funnel_bottom_kakao_consult_click';
+    | 'funnel_bottom_kakao_consult_click'
+    | 'hero_saju_mate_banner_click'
+    | 'saju_mate_free_preview_open'
+    | 'saju_mate_payment_click'
+    | 'saju_mate_story_download'
+    | 'saju_mate_link_share'
+    | 'saju_mate_landing_view'
+    | 'saju_mate_payment_success'
+    | 'saju_mate_result_view'
+    | 'saju_mate_error';
 
 const ANON_KEY = 'mbtiju_anon_id';
 

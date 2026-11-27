@@ -44,7 +44,7 @@ const KakaoConsultCard: React.FC<KakaoConsultCardProps> = ({ from, variant = 'fu
 
     return (
         <div className={`bg-white rounded-3xl border border-slate-200 p-6 md:p-8 ${className}`}>
-            <p className="text-xs font-black text-violet-600 tracking-widest mb-2">KAKAOTALK 1:1</p>
+            <p className="text-xs font-black text-violet-600 tracking-widest mb-2">카카오톡 1:1 상담</p>
             <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight mb-2">
                 고민 하나만 콕 집어, 카톡으로 물어보세요
             </h3>

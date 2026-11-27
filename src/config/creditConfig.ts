@@ -71,7 +71,8 @@ export const SERVICE_COSTS = {
   LOVE_MARRIED: 990,
   LOVE_MARRIAGE: 990,
   LOVE_REUNION: 990,
-  LOVE_CRUSH: 990
+  LOVE_CRUSH: 990,
+  SAJU_MATE: 990
 } as const;
 
 export type ServiceType = keyof typeof SERVICE_COSTS;
@@ -100,7 +101,8 @@ export const SERVICE_NAMES: Record<ServiceType, string> = {
   LOVE_MARRIED: '부부 궁합 사주',
   LOVE_MARRIAGE: '결혼 궁합 사주',
   LOVE_REUNION: '재회 사주',
-  LOVE_CRUSH: '짝사랑 사주'
+  LOVE_CRUSH: '짝사랑 사주',
+  SAJU_MATE: '말랑 사주 메이트 궁합'
 };
 
 export function getServicePrice(serviceType: ServiceType | string): number {

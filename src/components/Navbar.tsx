@@ -53,6 +53,7 @@ const Navbar: React.FC = () => {
 
   const menuItems = [
     { label: '오늘의 운세', path: '/myluck?type=today' },
+    { label: '말랑 메이트', path: '/mate' },
     { label: '자미두수', path: '/myluck?type=jamidusu' },
     { label: '타로', path: '/myluck?type=tarot' },
     { label: '연애 사주', path: '/relationship' },

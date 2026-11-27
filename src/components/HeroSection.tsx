@@ -90,10 +90,64 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
           <button
             type="button"
             onClick={() => navigate('/premium')}
-            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-500 hover:text-violet-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-violet-50/90 hover:bg-violet-100 border border-violet-200 text-xs font-extrabold text-violet-700 transition-colors"
           >
-            <FileText className="w-3.5 h-3.5 text-violet-500" />
+            <FileText className="w-3.5 h-3.5 text-violet-600" />
             <span>전문가 수기 검수 · 3년 심층 사주 리포트(A4 20장) 바로가기 &rarr;</span>
+          </button>
+        </div>
+
+        {/* 신규 서비스 홈 배너: 말랑 사주 메이트 궁합 */}
+        <div className="mt-5 max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.3s' }}>
+          <button
+            type="button"
+            onClick={() => {
+              track('hero_saju_mate_banner_click');
+              navigate('/mate');
+            }}
+            className="w-full text-left rounded-2xl bg-gradient-to-r from-[#FFF1EE] via-[#FDF4FF] to-[#EEF6FF] border border-rose-200/80 hover:border-rose-300 py-3 px-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center justify-between gap-3 group"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex -space-x-2 shrink-0">
+                <img
+                  src="/images/saju-mates/mochi.jpg"
+                  alt="모찌"
+                  loading="lazy"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-white shadow-sm object-contain p-0.5"
+                />
+                <img
+                  src="/images/saju-mates/ttokki.jpg"
+                  alt="토끼링"
+                  loading="lazy"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-white shadow-sm object-contain p-0.5"
+                />
+                <img
+                  src="/images/saju-mates/yuzu.jpg"
+                  alt="유자"
+                  loading="lazy"
+                  className="hidden sm:block w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm object-contain p-0.5"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black leading-none">
+                    신규 · 990원
+                  </span>
+                  <span className="text-[11px] font-extrabold text-violet-700 truncate">
+                    인스타 스토리 카드 제공
+                  </span>
+                </div>
+                <p className="text-sm font-black text-slate-900 leading-snug break-keep">
+                  내 사주와 찰떡인 말랑 메이트 &amp; 피해야 할 상극 찾기
+                </p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
+                  9종 오리지널 메이트 무료 티저 먼저 확인하기
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 w-7 h-7 rounded-full bg-white border border-rose-200 flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </button>
         </div>
       </div>
