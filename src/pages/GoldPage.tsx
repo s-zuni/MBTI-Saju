@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ChevronLeft, CreditCard } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { generateReportImage } from '../utils/exportUtils';
+import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { goldSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -260,21 +261,37 @@ const GoldPage: React.FC<{ session?: any }> = () => {
         }
     };
 
+    const goldLabelMap: Record<GoldType, string> = {
+        wealth: '재물운 · 부자 사주 리포트',
+        business: '창업 · 사업운 사주 리포트',
+        job: '취업 · 합격운 사주 리포트',
+        jobchange: '이직 · 커리어 사주 리포트',
+    };
+
     const handleSaveImage = async () => {
         if (!resultCardRef.current || !result) return;
         try {
-            const canvas = await html2canvas(resultCardRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
+            await generateReportImage(resultCardRef.current, `MBTIJU_재물사주_${activeTab}_${Date.now()}`, {
+                reportTitle: goldLabelMap[activeTab],
+                reportSubtitle: `${profile.name || '이용자'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+                accentColor: '#B45309',
+                title: `${goldLabelMap[activeTab]} | MBTIJU`,
+                text: 'MBTIJU에서 확인한 나의 재물·커리어 사주 분석 결과입니다.',
             });
-            const image = canvas.toDataURL('image/png', 1.0);
-            const link = document.createElement('a');
-            link.download = `재물사주_${activeTab}_${new Date().getTime()}.png`;
-            link.href = image;
-            link.click();
         } catch (err) {
             alert('이미지 저장 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleSavePDF = async () => {
+        if (!resultCardRef.current || !result) return;
+        try {
+            await generatePDF(resultCardRef.current, `MBTIJU_재물사주_${activeTab}_${Date.now()}`, {
+                reportTitle: goldLabelMap[activeTab],
+                reportSubtitle: `${profile.name || '이용자'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+            });
+        } catch (err) {
+            alert('PDF 저장 중 오류가 발생했습니다.');
         }
     };
 
@@ -680,6 +697,12 @@ const GoldPage: React.FC<{ session?: any }> = () => {
                                                         className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
                                                     >
                                                         <Download className="w-4 h-4" /> 이미지 저장
+                                                    </button>
+                                                    <button 
+                                                        onClick={handleSavePDF}
+                                                        className="flex-1 py-4 bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        <Download className="w-4 h-4" /> PDF 저장
                                                     </button>
                                                     <button 
                                                         onClick={() => {

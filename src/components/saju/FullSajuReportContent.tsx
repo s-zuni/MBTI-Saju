@@ -573,7 +573,7 @@ const FullSajuReportContent: React.FC<FullSajuReportContentProps> = ({
           <span>이어지는 풀이 항목을 계속 작성하고 있습니다...</span>
         </div>
       ) : (
-        <>
+        <div data-pdf-ignore="true">
           <div className="mt-10 pt-8 border-t border-stone-200 flex flex-col items-center">
             <button
               onClick={onDownloadReport}
@@ -591,7 +591,7 @@ const FullSajuReportContent: React.FC<FullSajuReportContentProps> = ({
           </div>
 
           <FunnelBottomCta from={fromContext} onOpenDeepReport={onOpenDeepReport} />
-        </>
+        </div>
       )}
     </div>
   );

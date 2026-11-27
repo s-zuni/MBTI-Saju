@@ -234,7 +234,10 @@ const FreePreview: React.FC<FreePreviewProps> = () => {
     setIsDownloading(true);
     try {
       const { generatePDF } = await import('../utils/pdfGenerator');
-      await generatePDF(reportRef.current, `MBTIJU-Soul-Report-${fullAnalysis.full_name || '사주'}`);
+      await generatePDF(reportRef.current, `MBTIJU-Soul-Report-${fullAnalysis.full_name || '사주'}`, {
+        reportTitle: `${fullAnalysis.full_name || profile.name || '이용자'}님 MBTI × 사주 통합 리포트`,
+        reportSubtitle: `${sajuResult ? `${sajuResult.ganZhi.day}일주` : '만세력'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+      });
     } catch (err) {
       console.error('Download failed:', err);
       alert('리포트 저장 중 오류가 발생했습니다.');

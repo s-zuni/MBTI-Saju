@@ -26,6 +26,7 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
     // score와 winFairyScore가 스트리밍 중인 경우를 대비해 기본값 설정
     const score = typeof result.score === 'number' ? result.score : 0;
     const winFairyScore = typeof result.winFairyScore === 'number' ? result.winFairyScore : 0;
+    const safeUserName = truncateText(stripMarkdown(userName || '사용자'), 10) || '사용자';
     const safeLuckySeat = truncateText(stripMarkdown(result.recommendedSeat || ''), 36) || '-';
     const safeLuckyFood = truncateText(stripMarkdown(result.luckyFood || ''), 36) || '-';
 
@@ -129,7 +130,7 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
                     <h2
                         style={{
                             margin: 0,
-                            fontSize: '68px',
+                            fontSize: safeUserName.length > 6 ? '56px' : '68px',
                             fontWeight: 500,
                             lineHeight: 1.2,
                             letterSpacing: '-0.02em',
@@ -138,12 +139,12 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
                             wordBreak: 'keep-all',
                         }}
                     >
-                        {userName}님의
+                        {safeUserName}님의
                     </h2>
                     <h2
                         style={{
                             margin: 0,
-                            fontSize: '78px',
+                            fontSize: selectedTeam.length > 8 ? '68px' : '78px',
                             fontWeight: 700,
                             lineHeight: 1.22,
                             letterSpacing: '-0.02em',
@@ -186,15 +187,26 @@ const KboShareCard = forwardRef<HTMLDivElement, KboShareCardProps>(({ result, se
                     <div style={{ display: 'flex', alignItems: 'baseline' }}>
                         <span
                             style={{
-                                fontSize: '152px',
+                                fontSize: '148px',
                                 fontWeight: 700,
-                                lineHeight: 1.1,
+                                lineHeight: 1.05,
                                 letterSpacing: '-0.04em',
                                 color: primaryColor,
                                 paddingBottom: '4px',
                             }}
                         >
                             {score}
+                        </span>
+                        <span
+                            style={{
+                                fontSize: '34px',
+                                fontWeight: 700,
+                                lineHeight: 1.2,
+                                color: '#64748B',
+                                marginLeft: '6px',
+                            }}
+                        >
+                            점
                         </span>
                     </div>
                 </div>

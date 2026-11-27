@@ -199,7 +199,10 @@ const MbtiSajuModal: React.FC<MbtiSajuModalProps> = ({ isOpen, onClose, onNaviga
     setIsDownloading(true);
     try {
       const { generatePDF } = await import('../utils/pdfGenerator');
-      await generatePDF(reportRef.current, `MBTIJU-Soul-Report-${analysis.full_name}`);
+      await generatePDF(reportRef.current, `MBTIJU-Soul-Report-${analysis.full_name}`, {
+        reportTitle: `${analysis.full_name || profile.name || '이용자'}님 MBTI × 사주 통합 리포트`,
+        reportSubtitle: `${analysis.mbti && analysis.mbti !== '미입력' ? analysis.mbti : '사주 원국 분석'}`,
+      });
     } catch (error) {
       console.error("Download failed", error);
       alert("리포트 저장 중 오류가 발생했습니다.");

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ChevronLeft, CreditCard, Calendar, AlertCircle } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { generateReportImage } from '../utils/exportUtils';
+import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { loveSajuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -360,21 +361,38 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
         }
     };
 
+    const relLabelMap: Record<LoveSajuType, string> = {
+        couple: '연인 심층 궁합 리포트',
+        married: '부부 평생 궁합 리포트',
+        marriage: '결혼 타이밍 · 배우자운 리포트',
+        reunion: '재회 가능성 · 인연 분석 리포트',
+        crush: '짝사랑 공략 · 호감도 리포트',
+    };
+
     const handleSaveImage = async () => {
         if (!resultCardRef.current || !result) return;
         try {
-            const canvas = await html2canvas(resultCardRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
+            await generateReportImage(resultCardRef.current, `MBTIJU_연애궁합_${activeTab}_${Date.now()}`, {
+                reportTitle: relLabelMap[activeTab],
+                reportSubtitle: `${profile.name || '이용자'} & ${targetName.trim() || '상대방'}`,
+                accentColor: '#BE123C',
+                title: `${relLabelMap[activeTab]} | MBTIJU`,
+                text: 'MBTIJU에서 확인한 사주 × MBTI 인연 분석 결과입니다.',
             });
-            const image = canvas.toDataURL('image/png', 1.0);
-            const link = document.createElement('a');
-            link.download = `연애사주_${activeTab}_${new Date().getTime()}.png`;
-            link.href = image;
-            link.click();
         } catch (err) {
             alert('이미지 저장 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleSavePDF = async () => {
+        if (!resultCardRef.current || !result) return;
+        try {
+            await generatePDF(resultCardRef.current, `MBTIJU_연애궁합_${activeTab}_${Date.now()}`, {
+                reportTitle: relLabelMap[activeTab],
+                reportSubtitle: `${profile.name || '이용자'} & ${targetName.trim() || '상대방'}`,
+            });
+        } catch (err) {
+            alert('PDF 저장 중 오류가 발생했습니다.');
         }
     };
 
@@ -824,6 +842,12 @@ const RelationshipPage: React.FC<{ session?: any }> = () => {
                                                         className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
                                                     >
                                                         <Download className="w-4 h-4" /> 이미지 저장
+                                                    </button>
+                                                    <button 
+                                                        onClick={handleSavePDF}
+                                                        className="flex-1 py-4 bg-rose-50 hover:bg-rose-100 text-rose-950 border border-rose-200 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                                                    >
+                                                        <Download className="w-4 h-4" /> PDF 저장
                                                     </button>
                                                     <button 
                                                         onClick={() => {

@@ -539,11 +539,14 @@ const SajuMatePage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }
     setIsSharing(true);
     track('saju_mate_story_download');
     try {
-      await generateImage(shareRef.current, `MBTIJU_SajuMate_${Date.now()}`, 1, {
+      const done = await generateImage(shareRef.current, `MBTIJU_SajuMate_${Date.now()}`, 2, {
         title: '말랑 사주 메이트 궁합 | MBTIJU',
         text: `${displayName}님의 말랑 사주 메이트 궁합 결과입니다!`,
+        backgroundColor: '#FFF7F5',
       });
-      alert('인스타그램 스토리용 궁합 카드가 준비되었습니다!');
+      if (done) {
+        alert('인스타그램 스토리용 궁합 카드가 준비되었습니다!');
+      }
     } catch (err) {
       console.error(err);
       alert('이미지 저장 중 오류가 발생했습니다.');

@@ -216,7 +216,10 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
     const handleDownloadPDF = async () => {
         if (!reportRef.current || !result) return;
         try {
-            await generatePDF(reportRef.current, `Compatibility_Report_${targetName || 'Ideal'}`);
+            await generatePDF(reportRef.current, `Compatibility_Report_${targetName || 'Ideal'}`, {
+                reportTitle: isPartnerMode ? `${targetName || '상대'}님과의 심층 궁합 리포트` : '이상형 사주 × MBTI 궁합 리포트',
+                reportSubtitle: `${profile.name || '이용자'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+            });
         } catch (err) {
             alert('PDF 생성 중 오류가 발생했습니다.');
         }
@@ -464,7 +467,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                 </section>
 
                                 {!isLoading && (
-                                    <>
+                                    <div data-pdf-ignore="true">
                                         <div className="flex flex-col items-center pt-8 border-t border-stone-200 gap-4">
                                             <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
                                                 <button
@@ -490,7 +493,7 @@ const CompatibilityModalContent: React.FC<CompatibilityContentProps> = ({
                                         </div>
 
                                         <FunnelBottomCta from="compatibility_modal_result" />
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </ReportErrorBoundary>

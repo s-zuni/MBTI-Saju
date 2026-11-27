@@ -178,26 +178,56 @@ const DAY_MASTER_DESC: Record<string, string> = {
     '계수': '비, 시냇물, 지혜, 섬세함, 참모, 아이디어',
 };
 
+function parseBirthTime(birthTime?: string | null): { hour: number; minute: number; isTimeUnknown: boolean } {
+    const trimmed = (birthTime || '').trim();
+    if (!trimmed || trimmed === 'unknown' || trimmed.includes('모름') || trimmed.includes('미상')) {
+        return { hour: 12, minute: 0, isTimeUnknown: true };
+    }
+
+    // 시진 구간("23:00-01:00", "01:00-03:00", "자시 (23:30 ~ 01:30)" 등)은 시작 경계 대신 구간 중앙값으로 해석한다.
+    // :00~:00 2시간 구간은 진태양시 보정(-30분)으로 직전 시진으로 1칸 밀리는 문제를 막기 위해 +30분(서울 표준 시진 중앙)을 적용한다.
+    const rangeMatch = trimmed.match(/(\d{1,2}):(\d{2})\s*[-~]\s*(\d{1,2}):(\d{2})/);
+    if (rangeMatch) {
+        const sh = Number(rangeMatch[1]);
+        const sm = Number(rangeMatch[2]);
+        const eh = Number(rangeMatch[3]);
+        const em = Number(rangeMatch[4]);
+        if ([sh, sm, eh, em].every((n) => !Number.isNaN(n)) && sh <= 23 && eh <= 24 && sm < 60 && em < 60) {
+            const startMin = sh * 60 + sm;
+            let endMin = eh * 60 + em;
+            if (endMin <= startMin) endMin += 24 * 60;
+            let midMin = Math.round((startMin + endMin) / 2);
+            if (sm === 0 && em === 0 && endMin - startMin === 120) {
+                midMin += 30;
+            }
+            midMin = ((midMin % 1440) + 1440) % 1440;
+            return {
+                hour: Math.floor(midMin / 60),
+                minute: midMin % 60,
+                isTimeUnknown: false,
+            };
+        }
+    }
+
+    const singleMatch = trimmed.match(/(\d{1,2}):(\d{2})/);
+    if (singleMatch) {
+        const h = Number(singleMatch[1]);
+        const m = Number(singleMatch[2]);
+        if (!Number.isNaN(h) && !Number.isNaN(m) && h >= 0 && h <= 23 && m >= 0 && m < 60) {
+            return { hour: h, minute: m, isTimeUnknown: false };
+        }
+    }
+
+    return { hour: 12, minute: 0, isTimeUnknown: true };
+}
+
 export function calculateSaju(birthDate: string, birthTime: string | null, gender?: string): SajuResult {
     const cleanDate = birthDate.replace(/[-./]/g, '');
     const year = Number(cleanDate.substring(0, 4)) || 1990;
     const month = Number(cleanDate.substring(4, 6)) || 1;
     const day = Number(cleanDate.substring(6, 8)) || 1;
 
-    let hour = 12;
-    let minute = 0;
-    let isTimeUnknown = !birthTime;
-
-    if (birthTime) {
-        const timeParts = birthTime.trim().split('-')[0]!.split(':').map(Number);
-        hour = timeParts[0] ?? 12;
-        minute = timeParts[1] ?? 0;
-        if (isNaN(hour) || isNaN(minute)) {
-            hour = 12;
-            minute = 0;
-            isTimeUnknown = true;
-        }
-    }
+    const { hour, minute, isTimeUnknown } = parseBirthTime(birthTime);
 
     const normalizedGender = (gender === 'female' || gender === '여성' || gender === 'F') ? 'female' : 'male';
     const dayBoundary: DayBoundary = 'jasi';

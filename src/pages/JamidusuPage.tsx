@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, ChevronLeft, CreditCard } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { generateReportImage } from '../utils/exportUtils';
+import { generatePDF } from '../utils/pdfGenerator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { jamidusuSchema } from '../config/schemas';
 import { SERVICE_COSTS } from '../config/creditConfig';
@@ -145,18 +146,27 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
     const handleSaveImage = async () => {
         if (!resultCardRef.current || !result) return;
         try {
-            const canvas = await html2canvas(resultCardRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
+            await generateReportImage(resultCardRef.current, `MBTIJU_자미두수_명반_${Date.now()}`, {
+                reportTitle: '자미두수 12궁 수호별 명반 리포트',
+                reportSubtitle: `${profile.name || '이용자'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+                accentColor: '#3730A3',
+                title: '자미두수 명반 분석 | MBTIJU',
+                text: 'MBTIJU에서 확인한 나의 자미두수 수호별 리포트입니다.',
             });
-            const image = canvas.toDataURL('image/png', 1.0);
-            const link = document.createElement('a');
-            link.download = `나의_수호별_${new Date().getTime()}.png`;
-            link.href = image;
-            link.click();
         } catch (err) {
             alert('이미지 저장 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleSavePDF = async () => {
+        if (!resultCardRef.current || !result) return;
+        try {
+            await generatePDF(resultCardRef.current, `MBTIJU_자미두수_명반_${Date.now()}`, {
+                reportTitle: '자미두수 12궁 수호별 명반 리포트',
+                reportSubtitle: `${profile.name || '이용자'}${profile.mbti ? ` · ${profile.mbti}` : ''}`,
+            });
+        } catch (err) {
+            alert('PDF 저장 중 오류가 발생했습니다.');
         }
     };
 
@@ -355,7 +365,13 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             onClick={handleSaveImage} 
                                                             className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-900 transition-colors flex items-center justify-center gap-2"
                                                         >
-                                                            <Download className="w-5 h-5" /> 결과 이미지 저장
+                                                            <Download className="w-5 h-5" /> 이미지 저장
+                                                        </button>
+                                                        <button 
+                                                            onClick={handleSavePDF} 
+                                                            className="flex-1 py-4 bg-indigo-50 text-indigo-950 border border-indigo-200 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <Download className="w-5 h-5" /> PDF 저장
                                                         </button>
                                                         <button 
                                                             onClick={() => {
@@ -364,7 +380,7 @@ const JamidusuPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
                                                             }} 
                                                             className="flex-1 py-4 bg-stone-100 text-slate-800 rounded-xl font-bold text-sm hover:bg-stone-200 transition-colors"
                                                         >
-                                                            다른 생년월일로 다시 보기
+                                                            다시 보기
                                                         </button>
                                                     </div>
 

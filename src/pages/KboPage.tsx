@@ -244,11 +244,14 @@ const KboPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded }) => {
         setIsSharing(true);
         try {
             const fileName = `MBTIJU_KBO_Story_${new Date().getTime()}`;
-            await generateImage(shareRef.current, fileName, 2, {
+            const done = await generateImage(shareRef.current, fileName, 2, {
                 title: 'KBO 팬궁합 | MBTIJU',
                 text: 'MBTIJU에서 확인한 나의 KBO 구단 궁합 결과입니다.',
+                backgroundColor: '#FFFFFF',
             });
-            alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
+            if (done) {
+                alert('인스타그램 스토리용 이미지가 다운로드되었습니다.');
+            }
         } catch (err) {
             alert('이미지 생성 중 오류가 발생했습니다.');
         } finally {
