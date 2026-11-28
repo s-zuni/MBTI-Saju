@@ -72,6 +72,8 @@ _BANNED_PHRASES = (
     "1,000만",
     "만족도 99",
     "실시간 상담",
+    "AI 분석",
+    "AI분석",
 )
 
 # 5일 단위 순환 패턴 (6회 반복 = 30일, 90행)
@@ -289,7 +291,7 @@ def build_v2_custom_cta(
         if is_reunion or is_crush or is_couple_worry:
             return (
                 "직접-카톡1:1무료",
-                "혼자 끙끙 앓던 그 고민 하나, 사주랑 MBTI 같이 넣고 카톡으로 짚어봐\n회원가입 없이 카톡 채널 1:1 사주·MBTI 상담에서 질문 1개 무료로 먼저 물어볼 수 있음\nAI 분석을 바탕으로 운세 서비스 전문가가 직접 검수해 평일 기준 24시간 이내 답변해줌\nhttps://pf.kakao.com/_xcdXJX/chat",
+                "혼자 끙끙 앓던 그 고민 하나, 사주랑 MBTI 같이 넣고 카톡으로 짚어봐\n회원가입 없이 카톡 채널 1:1 사주·MBTI 상담에서 질문 1개 무료로 먼저 물어볼 수 있음\n전문가가 검증하는 사주·MBTI 답변을 평일 기준 24시간 이내 보내줌\nhttps://pf.kakao.com/_xcdXJX/chat",
             )
         if category == "운세" and not ("자미두수" in text):
             return (

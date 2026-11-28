@@ -150,7 +150,8 @@ class CtaTextRulesTest(unittest.TestCase):
             self.assertNotIn("9,900", th_tpl)
             self.assertNotIn("19,900", th_tpl)
             self.assertNotRegex(th_tpl, r"\d[\d,]*\s*원")
-            self.assertIn("AI 분석을 바탕으로 운세 서비스 전문가가 직접 검수", th_tpl)
+            self.assertIn("전문가가 검증하는", th_tpl)
+            self.assertNotIn("AI 분석", th_tpl)
             self.assertIn("24시간", th_tpl)
             # 금지 표현
             self.assertNotIn("실시간", th_tpl)

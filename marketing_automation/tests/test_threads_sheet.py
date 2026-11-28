@@ -42,10 +42,12 @@ class BracketTitleAndCtaPolicyTest(unittest.TestCase):
                 self.assertNotRegex(th_tpl, r"\d[\d,]*\s*원")
                 self.assertNotIn("크레딧", th_tpl)
                 self.assertNotIn("첫 분석 무료", th_tpl)
+                self.assertNotIn("AI 분석", th_tpl)
         for v in tc.CTA_VARIANTS:
             self.assertNotRegex(v, r"\d[\d,]*\s*원")
             self.assertNotIn("크레딧", v)
             self.assertNotIn("첫 분석 무료", v)
+            self.assertNotIn("AI 분석", v)
 
 
 class ThreadsSheetSelectionAndImagesTest(unittest.TestCase):
@@ -174,6 +176,7 @@ class ThreadsSheetRefillTest(unittest.TestCase):
         for body, cat, tag, mode, dnum, is_mate, expected_url, expected_pos in cases:
             ctype, text = tsr.build_v2_custom_cta(body, cat, tag, mode, day_num=dnum, is_mate=is_mate)
             self.assertNotRegex(text, r"\d[\d,]*\s*원")
+            self.assertNotIn("AI 분석", text)
             self.assertIn("무료", text)
             self.assertFalse(tc._has_polite_ending([text]))
             if expected_url:
