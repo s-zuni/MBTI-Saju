@@ -9,7 +9,7 @@
    - 직접 링크 댓글(URL 포함): 매일 evening 1회 (30일당 정확히 30회 유지) — 무료 만세력/카톡 1:1 질문 1개 무료/3년 점수표 무료 미리보기/무료 오늘의 운세/말랑 사주 메이트 무료 미리보기.
    - 간접 유도 댓글(URL 없음): morning/afternoon 60행 중 48행(80%) — '프로필에서 무료 만세력 분석 하고 가' / '카톡 1:1 질문 1개 무료' 계열.
    - 순수 무CTA('없음'): 나머지 12행.
-   - 이미지 배치: 신규 치이카와 감성 '말랑 사주 메이트' 글(30일당 6편)은 **본문**에 캐릭터 사진 첨부, 나머지 CTA 답글이 있는 행은 **CTA** 답글에 실제 서비스 이미지 첨부.
+   - 이미지 배치: 신규 오리지널 캐릭터 '말랑 사주 메이트' 글(30일당 6편)은 **본문**에 캐릭터 사진 첨부, 나머지 CTA 답글이 있는 행은 **CTA** 답글에 실제 서비스 이미지 첨부.
    - 폐지 정책('크레딧', '가입 무료', '첫 분석 무료', '회원가입 필수')·가격('원')·이모지·존댓말·한자·해시태그 절대 금지.
 4. 무중복 보장: 기존 시트의 모든 제목 + 이미 생성된 배치 제목과 정규화 대조하여 중복 제거.
 """
@@ -78,7 +78,7 @@ _BANNED_PHRASES = (
 
 # 5일 단위 순환 패턴 (6회 반복 = 30일, 90행)
 # 합계(5일당 15행): 사주 9 (60%), MBTI 3 (20%), 운세 3 (20%: 타로 1, 자미두수 1, 운세 1)
-# 매 5일 중 1편(offset 3 morning)은 말랑 사주 메이트(치이카와 감성) 본문 이미지 전용 슬롯 -> 30일 6편
+# 매 5일 중 1편(offset 3 morning)은 말랑 사주 메이트 본문 이미지 전용 슬롯 -> 30일 6편
 # CTA 모드(5일당 15행): evening 5개 direct, morning/afternoon 10개 중 8개 indirect + 2개 none
 _FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str, bool]]] = [
     # offset 0: (slot, category, topic_tag, format_hint, cta_mode, is_mate)
@@ -99,7 +99,7 @@ _FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str, bool]]] = [
         ("afternoon", "MBTI", "MBTI", "연애·카톡·질투·권태기 상황별 MBTI 3~4유형 리얼 반응 비교 단독 글", "indirect", False),
         ("evening", "사주", "사주", "남녀 극단 궁합·계절생 케미·부부/연인 궁합 포인트 단독 글", "direct", False),
     ],
-    # offset 3 — 말랑 사주 메이트(치이카와 감성 캐릭터) 본문 사진 슬롯 포함
+    # offset 3 — 말랑 사주 메이트(오리지널 캐릭터) 본문 사진 슬롯 포함
     [
         ("morning", "사주", "사주", "말랑 사주 메이트 캐릭터(모찌·보리·토끼링·유자·도리·호랑·소리·마루·포니 중 2~3종 활용)와 사주 오행·일간 성격 매칭 팩폭 단독 글", "indirect", True),
         ("afternoon", "운세", "자미두수", "자미두수 12궁(명궁·부처궁·재백궁·천이궁·복덕궁·관록궁 중 택1) 일상 풀이 단독 글", "indirect", False),
@@ -112,6 +112,88 @@ _FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str, bool]]] = [
         ("evening", "사주", "사주", "이직·퇴사·짝사랑·결혼 타이밍·반복 고민 등 현실 고민 처방 단독 글", "direct", False),
     ],
 ]
+
+
+# ─────────────────────────────────────────────────────────────
+# 시즌 테마: 2027 정미년 신년 시리즈 (THREADS_REFILL_THEME=jeongmi 또는 CLI --theme jeongmi)
+# 2026-11 실측(최근 60일 156개 글): MBTI 조회 중앙값 496 vs 사주 171 vs 타로 90 / 자미두수 110.
+# 최고 글(118,452회)은 '상황 하나 + MBTI 4그룹 한 줄 반응 + 마지막 반말 질문' 형식, 오후 1~2시 발행.
+# 그래서 오후 슬롯은 매일 그 검증된 형식으로 고정하고, 타로·자미두수는 이 시즌에 뺀다.
+# 5일 15행: MBTI 6(40%) / 사주 7 / 사주 메이트 2
+# ─────────────────────────────────────────────────────────────
+_MBTI_SITUATION_HINT = (
+    "검증된 MBTI 4그룹 반응 형식: 첫 줄 <상황 + MBTI별 진짜 반응> 제목, 빈 줄, 상황을 눈앞에 그리는 공감 한 줄, "
+    "빈 줄, 그다음 'ISTJ·INTJ —' 처럼 MBTI 2개씩 묶은 4줄(각 줄은 구체적 행동 하나, 25~45자), 빈 줄, "
+    "'니 ○○은 이 중 몇 번이었냐' 같은 반말 질문 한 줄로 끝. 16유형이 모두 자기를 찾을 수 있게 4그룹이 서로 겹치지 않게 묶을 것. 상황: "
+)
+_JEONGMI_FIVE_DAY_PATTERN: List[List[Tuple[str, str, str, str, str, bool]]] = [
+    [
+        ("morning", "사주", "사주", "병오년이 끝나기 전에 정리하면 정미년에 확 풀리는 것 3가지 (인간관계·돈 습관·미뤄둔 결정) 사주 단독 글", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", _MBTI_SITUATION_HINT + "연말 모임에서 전 애인 소식 들었을 때", "indirect", False),
+        ("evening", "사주", "사주", "정미년에 재물·커리어 흐름이 크게 바뀌는 태어난 계절(봄·여름·가을·겨울생) 비교 단독 글, 단정 대신 '흐름이 바뀌는 시기' 톤", "direct", False),
+    ],
+    [
+        ("morning", "사주", "사주", "인생 크게 풀리기 직전에 나타나는 징조를 정미년 입춘(2월 4일) 전후 시기와 엮은 단독 글. 제목은 짧고 결론을 숨길 것", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", _MBTI_SITUATION_HINT + "새해 첫날 썸 상대한테 새해 인사 먼저 받았을 때", "indirect", False),
+        ("evening", "사주", "사주", "말랑 사주 메이트 캐릭터(모찌·보리·토끼링·유자·도리·호랑·소리·마루·포니 중 2~3종)별로 정미년에 제일 잘 풀리는 메이트와 조심할 메이트 단독 글", "direct", True),
+    ],
+    [
+        ("morning", "MBTI", "MBTI", "한 유형 저격형: '겉으론 착한 <MBTI 1개>, 실은 제일 무서운 이유'처럼 MBTI 하나를 집어 겉과 속 반전 + 그 반전이 사주 일간 기운 때문이라는 한 줄 + '주변에 이런 <MBTI> 하나쯤 있지 않냐'로 끝 (지난번 INFP 편과 다른 유형)", "none", False),
+        ("afternoon", "MBTI", "MBTI", _MBTI_SITUATION_HINT + "회사 송년회에서 상사가 2차 가자고 할 때", "indirect", False),
+        ("evening", "사주", "사주", "재회·연락 고민을 연말연시 시기와 엮은 처방 단독 글 (지금 절대 하면 안 되는 행동 2가지 + 양자택일 질문)", "direct", False),
+    ],
+    [
+        ("morning", "사주", "사주", "정미년에 유독 사람이 꼬이는 사주 vs 사람을 정리하게 되는 사주 비교 단독 글 (일간·태어난 계절 단서 함께)", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", _MBTI_SITUATION_HINT + "새해 목표 세워놓고 3일 만에 무너졌을 때", "indirect", False),
+        ("evening", "사주", "사주", "말랑 사주 메이트 9종 중 연애할 때 제일 피곤한 메이트 순위 TOP 3 단독 글 (3위부터 공개)", "direct", True),
+    ],
+    [
+        ("morning", "MBTI", "MBTI", "같은 MBTI인데 정미년 흐름이 완전히 갈리는 이유를 사주 일간 차이로 푸는 단독 글 (예: 같은 ENFP라도 화 기운 강한 사람 vs 수 기운 강한 사람)", "indirect", False),
+        ("afternoon", "MBTI", "MBTI", _MBTI_SITUATION_HINT + "연인이 크리스마스·새해 계획 아무것도 안 세웠을 때", "indirect", False),
+        ("evening", "사주", "사주", "앞으로 3년 대운 흐름이 정미년부터 바뀌는 사람 특징 단독 글 (올해 하반기에 겪었을 법한 일 3가지로 자기 대입 유도)", "direct", False),
+    ],
+]
+
+# 같은 패턴을 6번 돌리면 MBTI 상황이 반복되므로, 회차(0~5)별로 상황을 바꿔 끼운다.
+_JEONGMI_MBTI_SITUATIONS: List[List[str]] = [
+    ["연말 모임에서 전 애인 소식 들었을 때", "새해 첫날 썸 상대한테 새해 인사 먼저 받았을 때", "회사 송년회에서 상사가 2차 가자고 할 때", "새해 목표 세워놓고 3일 만에 무너졌을 때", "연인이 크리스마스·새해 계획 아무것도 안 세웠을 때"],
+    ["단톡방에서 나만 빼고 약속 잡힌 걸 알았을 때", "연인이 갑자기 '우리 얘기 좀 해'라고 카톡 보냈을 때", "월급날 통장 보고 현타 왔을 때", "친구가 내 비밀을 다른 사람한테 말한 걸 알았을 때", "좋아하는 사람이 내 스토리만 보고 답장은 안 할 때"],
+    ["전 애인한테 새벽 2시에 '자니?' 왔을 때", "소개팅 상대가 첫 만남에 지각했을 때", "상사가 퇴근 10분 전에 일 던졌을 때", "연인이 이성 친구랑 단둘이 밥 먹는다고 할 때", "설 연휴에 친척이 연애·취업 질문할 때"],
+    ["썸 상대가 내 카톡에 'ㅇㅇ'만 보냈을 때", "친한 친구가 갑자기 연락 끊었을 때", "연인이 기념일을 까먹었을 때", "회사에서 억울하게 혼났을 때", "헤어지고 일주일 됐을 때"],
+    ["좋아하는 사람이 다른 사람이랑 웃고 있는 걸 봤을 때", "모임에서 아무도 내 말에 리액션 안 할 때", "연인이 '나 요즘 좀 지쳐'라고 할 때", "새해 첫 출근날 아침", "전 애인이 결혼한다는 소식 들었을 때"],
+    ["연인이 핸드폰 화면 뒤집어 놓을 때", "친구가 내 연애에 훈수 둘 때", "썸 상대가 '우리 무슨 사이야?' 물었을 때", "연차 쓰고 쉬는데 회사 단톡 울릴 때", "입춘 앞두고 올해 운세 보러 갈지 고민될 때"],
+]
+
+_THEME_CONTEXT = {
+    "jeongmi": (
+        "[시즌 컨텍스트: 2027 정미년 신년 시리즈]\n"
+        "- 지금은 병오년(2026) 마지막 구간이고, 사주에서 새해(정미년)는 2027년 입춘(2월 4일)부터 시작된다. 1월 1일이 아니라 입춘 기준이라는 점을 자연스럽게 활용해도 좋다.\n"
+        "- 정미년의 천간 정(丁)은 촛불·등불 같은 음의 불, 지지 미(未)는 여름 끝의 마른 흙. 이 이상의 구체적 날짜·사건 예언은 지어내지 말 것.\n"
+        "- '무조건 대박', '반드시 망함' 같은 단정·공포 조장 금지. '흐름이 바뀌는 시기', '이때 조심하면 좋은 것' 톤.\n"
+        "- MBTI 슬롯은 정미년을 억지로 넣지 말고 상황 공감에 집중할 것 (실측상 MBTI 상황형이 가장 멀리 퍼짐).\n"
+        "- 본문에 한자 표기 금지 규칙은 그대로 유지(정미년, 병오년처럼 한글만)."
+    ),
+}
+
+
+def _active_theme(theme: Optional[str] = None) -> str:
+    t = (theme if theme is not None else os.getenv("THREADS_REFILL_THEME", "")).strip().lower()
+    return t if t in _THEME_CONTEXT else ""
+
+
+def _pattern_for(theme: str, cycle: int) -> List[List[Tuple[str, str, str, str, str, bool]]]:
+    if theme != "jeongmi":
+        return _FIVE_DAY_PATTERN
+    situations = _JEONGMI_MBTI_SITUATIONS[cycle % len(_JEONGMI_MBTI_SITUATIONS)]
+    out = []
+    for d, day in enumerate(_JEONGMI_FIVE_DAY_PATTERN):
+        new_day = []
+        for slot, cat, tag, hint, mode, mate in day:
+            if hint.startswith(_MBTI_SITUATION_HINT):
+                hint = _MBTI_SITUATION_HINT + situations[d]
+            new_day.append((slot, cat, tag, hint, mode, mate))
+        out.append(new_day)
+    return out
 
 
 @dataclass(frozen=True)
@@ -186,13 +268,16 @@ def build_30day_blueprint(
     start_day: int,
     start_date: datetime.date,
     days: int = DEFAULT_REFILL_DAYS,
+    theme: Optional[str] = None,
 ) -> List[SlotBlueprint]:
     """지정한 일수(기본 30일 = 90행)의 슬롯·카테고리·CTA 모드 청사진을 생성합니다."""
+    active = _active_theme(theme)
     plan: List[SlotBlueprint] = []
     for d_idx in range(days):
         day_num = start_day + d_idx
         date_str = (start_date + datetime.timedelta(days=d_idx)).isoformat()
-        pattern_day = _FIVE_DAY_PATTERN[d_idx % len(_FIVE_DAY_PATTERN)]
+        pattern = _pattern_for(active, d_idx // 5)
+        pattern_day = pattern[d_idx % len(pattern)]
         for slot, category, topic_tag, fmt_hint, cta_mode, is_mate in pattern_day:
             plan.append(
                 SlotBlueprint(
@@ -218,7 +303,7 @@ def pick_service_images_for_row(
 ) -> Tuple[str, str]:
     """
     글 유형에 맞춰 (image_urls_str, image_target_label)을 반환합니다.
-    - 말랑 사주 메이트(치이카와 감성) 글: 본문('본문')에 캐릭터 이미지 2~3장 캐러셀 첨부
+    - 말랑 사주 메이트 글: 본문('본문')에 캐릭터 이미지 2~3장 캐러셀 첨부
     - 그 외 CTA 답글이 있는 행: CTA 답글('CTA')에 실제 서비스 이미지 1장 첨부
     - CTA 답글이 없는 순수 글('없음'): ('', '')
     """
@@ -270,7 +355,7 @@ def build_v2_custom_cta(
     slot_offset = {"morning": 0, "afternoon": 1, "evening": 2}.get(slot, 0)
     v_seed = day_num * 3 + slot_offset
 
-    is_3y = any(k in t_title for k in ("3년", "대운", "내년", "전환기", "징조", "공망")) or ("3년" in text and "대운" in text)
+    is_3y = any(k in t_title for k in ("3년", "대운", "내년", "전환기", "징조", "공망", "정미년", "새해", "신년", "2027")) or ("3년" in text and "대운" in text)
     is_reunion = any(k in text for k in ("재회", "전 애인", "헤어지", "이별", "연락 올"))
     is_crush = "짝사랑" in text
     is_job = any(k in t_title for k in ("이직", "퇴사", "직장", "취직", "승진", "창업", "사업", "회사", "상사", "일머리"))
@@ -283,15 +368,16 @@ def build_v2_custom_cta(
                 "직접-사주메이트무료",
                 "회원가입 없이 생년월일이랑 MBTI만 넣으면 무료 만세력 4주 원국표랑 내 말랑 사주 메이트 무료 미리보기 바로 확인됨\nhttps://www.mbtiju.com/mate",
             )
-        if is_3y or (is_job and day_num % 2 == 0):
-            return (
-                "직접-3년점수표무료",
-                "앞으로 3년 중 언제 밟고 언제 조심해야 할지 대운 타이밍부터 숫자로 찍어봐\n회원가입 없이 올해 남은 기간+3년 치 재물·커리어·인연·건강 점수표를 무료로 먼저 확인할 수 있음\nhttps://www.mbtiju.com/premium",
-            )
+        # 연애·재회 고민 글은 제목에 '새해'·'정미년' 같은 시기어가 섞여도 카톡 상담이 우선
         if is_reunion or is_crush or is_couple_worry:
             return (
                 "직접-카톡1:1무료",
                 "혼자 끙끙 앓던 그 고민 하나, 사주랑 MBTI 같이 넣고 카톡으로 짚어봐\n회원가입 없이 카톡 채널 1:1 사주·MBTI 상담에서 질문 1개 무료로 먼저 물어볼 수 있음\n전문가가 검증하는 사주·MBTI 답변을 평일 기준 24시간 이내 보내줌\nhttps://pf.kakao.com/_xcdXJX/chat",
+            )
+        if is_3y or (is_job and day_num % 2 == 0):
+            return (
+                "직접-3년점수표무료",
+                "앞으로 3년 중 언제 밟고 언제 조심해야 할지 대운 타이밍부터 숫자로 찍어봐\n회원가입 없이 올해 남은 기간+3년 치 재물·커리어·인연·건강 점수표를 무료로 먼저 확인할 수 있음\nhttps://www.mbtiju.com/premium",
             )
         if category == "운세" and not ("자미두수" in text):
             return (
@@ -341,10 +427,28 @@ def build_v2_custom_cta(
     return base_variants[v_seed % len(base_variants)]
 
 
+_HANJA_RE = re.compile(r"[一-鿿]")
+MIN_BODY_CHARS = 120  # 제목 제외 본문 최소 글자 수 (제목만 있는 글이 발행되던 문제 방지)
+
+
 def _sanitize_generated_body(text: str) -> str:
     cleaned = _ensure_bracket_title(_clean_post(text or ""))
     cleaned = re.sub(r"https?://\S+", "", cleaned).strip()
+    # 괄호 한자 병기 '목(木)', '정미(丁未)' 는 괄호째 제거
+    cleaned = re.sub(r"\s?\([一-鿿\s,·]+\)", "", cleaned)
     return _clean_post(cleaned)
+
+
+def _body_quality_issue(body: str) -> str:
+    """발행 불가 사유를 반환(문제 없으면 빈 문자열)."""
+    rest = "\n".join((body or "").strip().splitlines()[1:]).strip()
+    if len(rest) < MIN_BODY_CHARS:
+        return f"본문 부족({len(rest)}자)"
+    if _HANJA_RE.search(body or ""):
+        return "한자 포함"
+    if _has_polite_ending([body]):
+        return "존댓말 포함"
+    return ""
 
 
 def _has_banned_phrase(text: str) -> bool:
@@ -355,6 +459,7 @@ def _generate_batch_with_llm(
     batch: Sequence[SlotBlueprint],
     avoid_titles: Sequence[str],
     llm_caller: Optional[Callable] = None,
+    theme: Optional[str] = None,
 ) -> Dict[Tuple[int, str], GeneratedSlotItem]:
     """5일치(15개 슬롯) 배치를 LLM Structured JSON으로 생성합니다."""
     caller = llm_caller or generate_json
@@ -375,10 +480,14 @@ def _generate_batch_with_llm(
         "- 모든 글은 서로 주제·일간·신살·MBTI 조합·질문 결이 겹치지 않게 다양하게 작성할 것.\n"
         "- 타로 3택 슬롯이 아닌 일반 슬롯은 reply1과 reply2를 반드시 빈 문자열('')로 둘 것."
     )
+    active = _active_theme(theme)
+    if active:
+        system_prompt += "\n\n" + _THEME_CONTEXT[active]
 
     user_prompt = (
         f"아래 {len(batch)}개 슬롯에 맞춰 Threads 게시용 글을 JSON으로 정확히 {len(batch)}개 작성해라.\n"
-        "각 항목의 day_num과 slot은 아래 목록과 정확히 일치해야 한다.\n\n"
+        "각 항목의 day_num과 slot은 아래 목록과 정확히 일치해야 한다.\n"
+        "main_post에는 <제목> 한 줄 + 빈 줄 + 본문(7~12줄, 공백 포함 220~350자)을 모두 넣어라. 제목만 쓰면 실패로 처리된다.\n\n"
         "[생성할 슬롯 목록]\n"
         + "\n".join(slot_spec_lines)
         + "\n\n[기존에 이미 작성·발행된 제목 목록 — 절대 주제나 제목이 겹치지 않게 작성]\n"
@@ -422,6 +531,7 @@ def generate_30day_sheet_rows(
     min_start_date: Optional[str] = None,
     batch_days: int = BATCH_DAYS,
     llm_caller: Optional[Callable] = None,
+    theme: Optional[str] = None,
 ) -> Tuple[List[List[str]], int, int]:
     """
     기존 시트와 겹치지 않는 새 N일치(기본 30일 = 90행) 시트 행(15컬럼 A:O)을 생성합니다.
@@ -432,7 +542,7 @@ def generate_30day_sheet_rows(
         today_kst=today_kst,
         min_start_date=min_start_date,
     )
-    blueprint = build_30day_blueprint(start_day=start_day, start_date=start_date, days=days)
+    blueprint = build_30day_blueprint(start_day=start_day, start_date=start_date, days=days, theme=theme)
 
     used_titles: List[str] = []
     used_norms = set()
@@ -448,7 +558,7 @@ def generate_30day_sheet_rows(
 
     for offset in range(0, len(blueprint), batch_size):
         batch = blueprint[offset : offset + batch_size]
-        generated_map = _generate_batch_with_llm(batch, used_titles, llm_caller=llm_caller)
+        generated_map = _generate_batch_with_llm(batch, used_titles, llm_caller=llm_caller, theme=theme)
 
         missing: List[SlotBlueprint] = []
         accepted: Dict[Tuple[int, str], GeneratedSlotItem] = {}
@@ -460,27 +570,39 @@ def generate_30day_sheet_rows(
             body = _sanitize_generated_body(item.main_post)
             title = extract_bracket_title(body)
             norm = _normalize_for_dedup(title)
-            if not body or len(norm) < 4 or norm in used_norms or _has_banned_phrase(body):
+            if not body or len(norm) < 4 or norm in used_norms or _has_banned_phrase(body) or _body_quality_issue(body):
                 missing.append(bp)
                 continue
             accepted[(bp.day_num, bp.slot)] = item
             used_titles.append(title)
             used_norms.add(norm)
 
-        if missing:
-            retry_map = _generate_batch_with_llm(missing, used_titles, llm_caller=llm_caller)
+        for _retry in range(3):
+            if not missing:
+                break
+            # 실패 슬롯은 3개씩 잘게 나눠 재생성 (큰 배치에서 폴백 모델이 제목만 쓰는 문제 완화)
+            retry_map: Dict[Tuple[int, str], GeneratedSlotItem] = {}
+            for j in range(0, len(missing), 3):
+                try:
+                    retry_map.update(_generate_batch_with_llm(missing[j:j + 3], used_titles, llm_caller=llm_caller, theme=theme))
+                except RuntimeError as e:
+                    print(f"[SHEET-REFILL][WARN] 재생성 실패: {e}")
+            still: List[SlotBlueprint] = []
             for bp in missing:
                 item = retry_map.get((bp.day_num, bp.slot))
-                if item is None:
-                    raise RuntimeError(f"Day {bp.day_num} {bp.slot} 슬롯 생성 누락")
-                body = _sanitize_generated_body(item.main_post)
+                body = _sanitize_generated_body(item.main_post) if item else ""
                 title = extract_bracket_title(body)
                 norm = _normalize_for_dedup(title)
-                if not body or _has_banned_phrase(body):
-                    raise RuntimeError(f"Day {bp.day_num} {bp.slot} 슬롯 품질 검증 실패")
+                if not body or _has_banned_phrase(body) or _body_quality_issue(body) or norm in used_norms:
+                    still.append(bp)
+                    continue
                 accepted[(bp.day_num, bp.slot)] = item
                 used_titles.append(title)
                 used_norms.add(norm)
+            missing = still
+        if missing:
+            bp = missing[0]
+            raise RuntimeError(f"Day {bp.day_num} {bp.slot} 슬롯 품질 검증 실패 (재시도 3회)")
 
         for bp in batch:
             item = accepted[(bp.day_num, bp.slot)]
@@ -572,6 +694,7 @@ def replenish_sheet_if_exhausted(
     min_start_date: Optional[str] = None,
     slot_to_check: Optional[str] = None,
     llm_caller: Optional[Callable] = None,
+    theme: Optional[str] = None,
 ) -> Dict[str, object]:
     """
     시트의 대기 글이 모두 소진(pending <= threshold)되었을 때(또는 force=True일 때)
@@ -606,6 +729,7 @@ def replenish_sheet_if_exhausted(
         today_kst=today_kst,
         min_start_date=min_start_date,
         llm_caller=llm_caller,
+        theme=theme,
     )
 
     if not force:
@@ -648,11 +772,26 @@ if __name__ == "__main__":
     parser.add_argument("--days", type=int, default=DEFAULT_REFILL_DAYS, help="생성할 일수 (기본 30일 = 90행)")
     parser.add_argument("--force", action="store_true", help="남은 대기 글이 있어도 강제로 새 계획을 시트 하단에 추가")
     parser.add_argument("--sheet-id", type=str, default="", help="구글 시트 ID 덮어쓰기 (선택)")
+    parser.add_argument("--theme", type=str, default=None, help="시즌 테마 (jeongmi = 2027 정미년 신년 시리즈). 미지정 시 THREADS_REFILL_THEME")
+    parser.add_argument("--dry-run", action="store_true", help="시트에 쓰지 않고 생성 결과만 CSV로 저장")
+    parser.add_argument("--out", type=str, default="threads_refill_preview.csv", help="--dry-run 결과 CSV 경로")
     args = parser.parse_args()
 
-    res = replenish_sheet_if_exhausted(
-        days=args.days,
-        force=args.force,
-        sheet_id=args.sheet_id or None,
-    )
-    print(res)
+    if args.dry_run:
+        import csv
+        existing = load_sheet_rows(sheet_id=args.sheet_id or None)
+        rows, s_day, e_day = generate_30day_sheet_rows(existing_rows=existing, days=args.days, theme=args.theme)
+        with open(args.out, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["Day", "예정일", "슬롯", "카테고리", "태그", "상태", "본문", "답글1", "답글2", "CTA", "CTA종류",
+                        "발행시각", "링크", "이미지URL", "이미지위치"])
+            w.writerows(rows)
+        print(f"[SHEET-REFILL] dry-run: Day {s_day}~{e_day} {len(rows)}행 → {args.out}")
+    else:
+        res = replenish_sheet_if_exhausted(
+            days=args.days,
+            force=args.force,
+            sheet_id=args.sheet_id or None,
+            theme=args.theme,
+        )
+        print(res)

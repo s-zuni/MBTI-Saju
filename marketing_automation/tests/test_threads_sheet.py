@@ -145,6 +145,9 @@ class ThreadsPublisherImagePayloadTest(unittest.TestCase):
             self.assertEqual(mock_post.call_args_list[2].kwargs["data"]["children"], "child_1,child_2")
 
 
+FILLER = "카톡 알림 떠도 미리보기로만 읽고 세 시간 뒤에 답장함 " * 4
+
+
 class ThreadsSheetRefillTest(unittest.TestCase):
     def test_compute_next_plan_anchor(self):
         rows = ts.parse_scheduled_posts([
@@ -187,6 +190,13 @@ class ThreadsSheetRefillTest(unittest.TestCase):
             self.assertTrue(bool(img_urls))
             self.assertEqual(img_pos, expected_pos)
 
+    def test_body_quality_rejects_title_only_hanja_and_polite(self):
+        self.assertIn("본문 부족", tsr._body_quality_issue("<제목만 있는 글>"))
+        self.assertEqual(tsr._body_quality_issue("<제목>\n\n" + FILLER), "")
+        self.assertEqual(tsr._body_quality_issue("<제목>\n\n" + FILLER + " 丙"), "한자 포함")
+        cleaned = tsr._sanitize_generated_body("<제목>\n\n정미(丁未)년은 목(木) 기운 얘기임\n" + FILLER)
+        self.assertNotRegex(cleaned, r"[一-鿿]")
+
     def test_generate_30day_sheet_rows_with_mock_llm(self):
         existing = ts.parse_scheduled_posts(SAMPLE_VALUES)
 
@@ -201,7 +211,7 @@ class ThreadsSheetRefillTest(unittest.TestCase):
                         tsr.GeneratedSlotItem(
                             day_num=d,
                             slot=sl,
-                            main_post=f"<Day {d} {sl} 타로 3택 테스트>\n\n1번 / 2번 / 3번 중 하나 골라봐",
+                            main_post=f"<Day {d} {sl} 타로 3택 테스트>\n\n" + FILLER + "\n\n1번 / 2번 / 3번 중 하나 골라봐",
                             reply1="1번 고른 사람\n\n좋은 소식 올 흐름임",
                             reply2="2번 고른 사람\n\n조금 기다려라\n\n3번 고른 사람\n\n먼저 연락해봐",
                         )
@@ -211,7 +221,7 @@ class ThreadsSheetRefillTest(unittest.TestCase):
                         tsr.GeneratedSlotItem(
                             day_num=d,
                             slot=sl,
-                            main_post=f"<Day {d} {sl} {tag} 사찰 팩폭>\n\n일상 특징 3가지임\n너도 해당됨?",
+                            main_post=f"<Day {d} {sl} {tag} 사찰 팩폭>\n\n일상 특징 3가지임\n" + FILLER + "\n너도 해당됨?",
                             reply1="",
                             reply2="",
                         )
@@ -229,7 +239,7 @@ class ThreadsSheetRefillTest(unittest.TestCase):
         self.assertTrue(all(len(r) == 15 for r in rows_values))
         # 가격 언급 0건
         self.assertFalse(any(re.search(r"\d[\d,]*\s*원", r[9]) for r in rows_values))
-        # 본문 이미지 6편(치이카와 메이트), CTA 이미지 72편, 이미지 없음 12편
+        # 본문 이미지 6편(말랑 사주 메이트), CTA 이미지 72편, 이미지 없음 12편
         self.assertEqual(sum(1 for r in rows_values if r[14] == "본문"), 6)
         self.assertEqual(sum(1 for r in rows_values if r[14] == "CTA"), 72)
         self.assertEqual(sum(1 for r in rows_values if r[14] == ""), 12)

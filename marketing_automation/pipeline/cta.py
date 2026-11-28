@@ -93,9 +93,6 @@ CTA_PLANS = {
     ],
 }
 
-# 3년 리포트 상세 페이지로 보낼 종류 (나머지는 메인 주소: 무료 체험/각 서비스 진입점, consult는 카톡 채널)
-_PREMIUM_KINDS = {"report3y", "couple", "career"}
-
 # 고민형 주제 판별 키워드 (재회, 이별, 썸, 연락, 짝사랑, 결혼 고민, 이직/퇴사 고민, 어떡해 등)
 _CONSULT_WORDS = ("재회", "이별", "헤어", "썸", "연락", "답장", "짝사랑", "고민", "퇴사", "어떡해", "미련", "속마음")
 
@@ -196,18 +193,50 @@ def pick_reel_cta(series: str = "", topic: str = "", use_consult: Optional[bool]
     return f"{share_narr} {narr}", f"{share_cap}{chr(10)}{cap}"
 
 
+# Threads 무료 진입 CTA: 처음 보는 사람에게 유료 상세(/premium)부터 보여주지 않고
+# 말랑 사주 메이트(/mate) 또는 홈 무료 만세력 원국으로 보낸다.
+THREADS_FREE_CTAS = {
+    "mate": [
+        "내 사주가 9마리 말랑 메이트 중 누군지 궁금하면\n회원가입 없이 생년월일이랑 MBTI만 넣고 무료로 확인해봐\n{url}",
+        "나랑 찰떡인 메이트, 상극인 메이트까지 바로 나옴\n가입 없이 생년월일만 넣으면 무료 미리보기 가능\n{url}",
+    ],
+    "natal": [
+        "내 사주 8글자에 뭐가 깔려 있는지부터 봐야 패턴이 보임\n회원가입 없이 생년월일만 넣으면 만세력 원국표랑 기본 풀이 무료로 바로 나옴\n{url}",
+        "MBTI는 알아도 내 일간이 뭔지 모르면 반쪽임\n가입 없이 무료 만세력 원국부터 뽑아봐\n{url}",
+    ],
+}
+
+
+def _mate_ratio() -> float:
+    """무료 CTA 중 /mate로 보낼 비율(0~1). MATE_CTA_RATIO 환경변수(기본 0.5)."""
+    try:
+        return min(max(float(os.getenv("MATE_CTA_RATIO", "0.5")), 0.0), 1.0)
+    except ValueError:
+        return 0.5
+
+
 def pick_threads_cta(url: str, topic: str = "", category: str = "", kakao_url: Optional[str] = None) -> str:
-    """Threads용 CTA. 상담 kind는 카톡 채널 주소를 쓰고, 3년 리포트 계열은 premium 주소, 나머지는 메인 주소를 쓴다."""
+    """Threads용 CTA.
+
+    - 고민형(consult): 카톡 채널 주소
+    - 3년·대운·흐름이 주제에 명시된 글(report3y): /premium (신청 화면의 무료 3개년 점수표 안내)
+    - 그 외 전부: 무료 진입(말랑 사주 메이트 /mate 또는 홈 무료 만세력 원국)
+    """
     series = {"MBTI": "MBTI", "운세": ""}.get(category, "")
     kind = infer_cta_kind(series, topic, category)
-    _, _, tpl = random.choice(CTA_PLANS[kind])
+    base = url.rsplit("/premium", 1)[0].rstrip("/")
     if kind == "consult":
-        target = kakao_url or KAKAO_CHAT_URL
-    elif kind in _PREMIUM_KINDS:
-        target = url
-    else:
-        target = url.rsplit("/premium", 1)[0]
-    return tpl.format(url=target)
+        _, _, tpl = random.choice(CTA_PLANS[kind])
+        return tpl.format(url=kakao_url or KAKAO_CHAT_URL)
+    if kind in ("jamidosu", "tarot", "travel"):
+        _, _, tpl = random.choice(CTA_PLANS[kind])
+        return tpl.format(url=base)
+    if kind == "report3y" and any(w in (topic or "") for w in _FLOW_WORDS):
+        _, _, tpl = CTA_PLANS["report3y"][0]  # 무료 점수표 안내 문구
+        return tpl.format(url=f"{base}/premium")
+    if random.random() < _mate_ratio():
+        return random.choice(THREADS_FREE_CTAS["mate"]).format(url=f"{base}/mate")
+    return random.choice(THREADS_FREE_CTAS["natal"]).format(url=base)
 
 
 def adapt_caption_for_youtube(caption: str, kakao_url: Optional[str] = None) -> str:

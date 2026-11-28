@@ -5,7 +5,7 @@ Threads 전용 타래(본문 + 답글) 생성. 릴스/캐러셀 주제와 무관
 Gemini에 추상화된 '패턴'으로만 전달합니다 (원문 문장/주제를 그대로 따라하지 않도록 금지).
 
 비중: 사주 60% / MBTI 20% / 기타 운세(타로·자미두수·신점·띠) 20%
-CTA: 하루 3개 중 1개의 글에만, 타래 맨 끝 짧은 답글로 mbtiju.com/premium 안내.
+CTA: 하루 3개 중 1개의 글에만, 타래 맨 끝 짧은 답글로 무료 진입(mbtiju.com 원국 / mbtiju.com/mate) 안내.
 """
 import datetime
 import json
@@ -29,7 +29,7 @@ from pipeline.mbti_saju_content import MBTI_KEYWORDS
 
 MAX_LEN = 480  # API 한도 500자에 여유
 MIN_POSTS, MAX_POSTS = 1, 4  # 단독 글 1개가 기본, 필요할 때만 답글 1~3
-CTA_URL = "https://mbtiju.com/premium"
+CTA_URL = "https://www.mbtiju.com"  # 무료 진입(홈 만세력/메이트). /premium은 3년·대운 주제에서만 cta.py가 붙임
 DEFAULT_THREADS_MODEL = "gemini-3.1-pro-preview"
 
 # ─────────────────────────────────────────────────────────────

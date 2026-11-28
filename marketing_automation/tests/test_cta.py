@@ -183,6 +183,16 @@ class ThreadsCtaUrlTest(unittest.TestCase):
         self.assertNotIn("kakao", res)
 
 
+    def test_generic_topic_routes_to_free_entry(self):
+        with mock.patch.object(cta.random, "random", return_value=0.0):
+            res = cta.pick_threads_cta("https://www.mbtiju.com", topic="겨울생 특징")
+        self.assertIn("https://www.mbtiju.com/mate", res)
+        with mock.patch.object(cta.random, "random", return_value=0.99):
+            res = cta.pick_threads_cta("https://www.mbtiju.com", topic="겨울생 특징")
+        self.assertTrue(res.rstrip().endswith("https://www.mbtiju.com"))
+        self.assertNotIn("/premium", res)
+        self.assertNotRegex(res, r"\d[\d,]*\s*원")
+
 class YoutubeAdaptationTest(unittest.TestCase):
     def test_consult_caption_replaces_profile_link_with_kakao_url(self):
         cap = "💬 댓글에 [상담] 남겨주세요!\n👉 프로필 링크에서 카톡 1:1 상담으로 내 고민을 바로 물어보세요!"

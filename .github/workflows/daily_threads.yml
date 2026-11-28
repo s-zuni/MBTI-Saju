@@ -31,6 +31,10 @@ on:
         description: 'refill 모드에서 남은 글이 있어도 새 30일 계획 강제 추가'
         type: boolean
         default: false
+      theme:
+        description: '시트 보충 시즌 테마 (빈칸=기본 / jeongmi=2027 정미년 신년 시리즈)'
+        required: false
+        default: ''
 
 concurrency:
   group: daily-threads-publish
@@ -75,6 +79,7 @@ jobs:
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           THREADS_SHEET_ID: ${{ vars.THREADS_SHEET_ID || '1Ty-mQNQYD0lS6xFXx66Jn3ML54V583tDHURoX5VXWnc' }}
           THREADS_SHEET_TAB: ${{ vars.THREADS_SHEET_TAB || '30일_게시계획' }}
+          THREADS_REFILL_THEME: ${{ github.event.inputs.theme || vars.THREADS_REFILL_THEME || '' }}
         run: |
           ARGS="--mode ${{ github.event.inputs.mode || 'sheet' }}"
           if [ -n "${{ github.event.inputs.slot }}" ] && [ "${{ github.event.inputs.slot }}" != "auto" ]; then
