@@ -49,7 +49,7 @@ const KakaoConsultCard: React.FC<KakaoConsultCardProps> = ({ from, variant = 'fu
                 고민 하나만 콕 집어, 카톡으로 물어보세요
             </h3>
             <p className="text-sm text-slate-500 font-medium leading-relaxed mb-5">
-                사주와 MBTI를 함께 보고, AI 분석을 바탕으로 운세 서비스 전문가가 직접 검수해 답변드려요.
+                사주와 MBTI를 함께 보고, 운세 서비스 전문가가 AI 분석 초안을 직접 검수해 답변드려요.
             </p>
 
             <ul className="space-y-2 mb-6">

@@ -35,7 +35,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-violet-200 shadow-sm mb-6 animate-fade-in">
           <Sparkles className="w-4 h-4 text-violet-600 fill-violet-600" />
           <span className="text-xs font-extrabold text-violet-950 tracking-tight">
-            회원가입 없이 30초 무료 만세력 · 오늘의 운세 0원
+            회원가입 없이 바로 무료 만세력 · 오늘의 운세 0원
           </span>
         </div>
 
@@ -66,7 +66,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onStart }) => {
             className="w-full sm:w-auto px-7 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-full font-black text-sm sm:text-base shadow-xl shadow-violet-200 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-95"
           >
             <Sparkles className="w-4 h-4" />
-            <span>30초 무료 사주 · 만세력 분석하기</span>
+            <span>무료 사주 · 만세력 바로 분석하기</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
